@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,27 @@ const ConfigurationStep: React.FC<ConfigurationStepProps> = ({
   setFormData,
   onNext
 }) => {
+  // Auto-calculate financial year end when start date changes
+  useEffect(() => {
+    if (formData.financialYearStart) {
+      const startDate = new Date(formData.financialYearStart);
+      // Add 364 days (52 weeks - 1 day) to get the end date
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 364);
+      
+      const formattedEndDate = endDate.toISOString().split('T')[0];
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        financialYearEnd: formattedEndDate 
+      }));
+    }
+  }, [formData.financialYearStart, setFormData]);
+
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, financialYearStart: e.target.value }));
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -34,25 +55,19 @@ const ConfigurationStep: React.FC<ConfigurationStepProps> = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="fyStart">Financial Year Start</Label>
-            <Input
-              id="fyStart"
-              type="date"
-              value={formData.financialYearStart}
-              onChange={(e) => setFormData(prev => ({ ...prev, financialYearStart: e.target.value }))}
-            />
-          </div>
-          <div>
-            <Label htmlFor="fyEnd">Financial Year End</Label>
-            <Input
-              id="fyEnd"
-              type="date"
-              value={formData.financialYearEnd}
-              onChange={(e) => setFormData(prev => ({ ...prev, financialYearEnd: e.target.value }))}
-            />
-          </div>
+        <div>
+          <Label htmlFor="fyStart">Financial Year Start Date</Label>
+          <Input
+            id="fyStart"
+            type="date"
+            value={formData.financialYearStart}
+            onChange={handleStartDateChange}
+          />
+          {formData.financialYearEnd && (
+            <p className="text-sm text-gray-500 mt-1">
+              Financial year will end on: {new Date(formData.financialYearEnd).toLocaleDateString()}
+            </p>
+          )}
         </div>
         
         <div>
@@ -78,7 +93,7 @@ const ConfigurationStep: React.FC<ConfigurationStepProps> = ({
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={onNext}>
+          <Button onClick={onNext} disabled={!formData.financialYearStart}>
             Next
           </Button>
         </div>

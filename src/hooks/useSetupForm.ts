@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
@@ -16,11 +15,17 @@ export const useSetupForm = () => {
   } = useApp();
   const { toast } = useToast();
 
+  // Initialize with default financial year start as April 1st of current year
+  const currentYear = new Date().getFullYear();
+  const defaultStartDate = `${currentYear}-04-01`;
+  
   const [formData, setFormData] = useState({
-    financialYearStart: '',
-    financialYearEnd: '',
+    financialYearStart: defaultStartDate,
+    financialYearEnd: `${currentYear + 1}-03-31`, // Auto-calculated
     iterationLength: 'fortnightly' as 'fortnightly' | 'monthly' | '6-weekly',
   });
+
+  const [roleRates, setRoleRates] = useState<{ [roleId: string]: number }>({});
 
   const handleCSVUpload = (event: React.ChangeEvent<HTMLInputElement>, type: string) => {
     const file = event.target.files?.[0];
@@ -76,6 +81,7 @@ export const useSetupForm = () => {
   const completeSetup = () => {
     console.log('Starting setup completion...');
     console.log('Form data:', formData);
+    console.log('Role rates:', roleRates);
 
     // Validate required fields
     if (!formData.financialYearStart || !formData.financialYearEnd) {
@@ -144,6 +150,8 @@ export const useSetupForm = () => {
   return {
     formData,
     setFormData,
+    roleRates,
+    setRoleRates,
     handleCSVUpload,
     completeSetup
   };
