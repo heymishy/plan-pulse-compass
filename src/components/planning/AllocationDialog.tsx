@@ -197,7 +197,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
     onClose();
   };
 
-  const activeProjects = projects.filter(p => p.status === 'active');
+  const selectableProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
   const availableEpics = formData.projectId 
     ? epics.filter(epic => epic.projectId === formData.projectId)
     : [];
@@ -274,7 +274,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
                     <SelectValue placeholder="Select project first" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activeProjects.map(project => (
+                    {selectableProjects.map(project => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
                       </SelectItem>

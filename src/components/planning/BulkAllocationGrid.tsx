@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Team, Cycle, Project, Epic, RunWorkCategory, Allocation } from '@/types';
@@ -55,7 +54,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
   const [selectedRunWorkCategoryId, setSelectedRunWorkCategoryId] = useState('');
   const [gridAllocations, setGridAllocations] = useState<Record<string, GridAllocation>>({});
 
-  const activeProjects = projects.filter(p => p.status === 'active');
+  const selectableProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
   const availableEpics = selectedProjectId 
     ? epics.filter(epic => epic.projectId === selectedProjectId)
     : [];
@@ -195,7 +194,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activeProjects.map(project => (
+                    {selectableProjects.map(project => (
                       <SelectItem key={project.id} value={project.id}>
                         {project.name}
                       </SelectItem>
