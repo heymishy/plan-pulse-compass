@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,6 +68,7 @@ const Setup = () => {
           }
         }
       } catch (error) {
+        console.error('CSV parsing error:', error);
         toast({
           title: "Import Error",
           description: `Failed to parse ${type} CSV. Please check the format.`,
@@ -80,34 +80,71 @@ const Setup = () => {
   };
 
   const completeSetup = () => {
-    // Create default run work categories
-    const defaultRunWorkCategories = [
-      { id: '1', name: 'Production Support', description: 'Ongoing production support work', color: '#ef4444' },
-      { id: '2', name: 'Certificate Management', description: 'SSL/TLS certificate management', color: '#f97316' },
-      { id: '3', name: 'Compliance', description: 'Regulatory compliance work', color: '#eab308' },
-      { id: '4', name: 'Technical Debt', description: 'Technical debt reduction', color: '#22c55e' },
-    ];
+    console.log('Starting setup completion...');
+    console.log('Form data:', formData);
 
-    // Create basic configuration
-    const config = {
-      financialYear: {
-        id: '1',
-        name: `FY ${new Date(formData.financialYearStart).getFullYear()}`,
-        startDate: formData.financialYearStart,
-        endDate: formData.financialYearEnd,
-      },
-      iterationLength: formData.iterationLength,
-      quarters: [],
-    };
+    // Validate required fields
+    if (!formData.financialYearStart || !formData.financialYearEnd) {
+      toast({
+        title: "Configuration Required",
+        description: "Please set the financial year dates before completing setup.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setConfig(config);
-    setRunWorkCategories(defaultRunWorkCategories);
-    setIsSetupComplete(true);
-    
-    toast({
-      title: "Setup Complete",
-      description: "Your planning app is now ready to use!",
-    });
+    try {
+      // Create default run work categories
+      const defaultRunWorkCategories = [
+        { id: 'run-1', name: 'Production Support', description: 'Ongoing production support work', color: '#ef4444' },
+        { id: 'run-2', name: 'Certificate Management', description: 'SSL/TLS certificate management', color: '#f97316' },
+        { id: 'run-3', name: 'Compliance', description: 'Regulatory compliance work', color: '#eab308' },
+        { id: 'run-4', name: 'Technical Debt', description: 'Technical debt reduction', color: '#22c55e' },
+      ];
+
+      // Create basic configuration with proper structure
+      const startYear = new Date(formData.financialYearStart).getFullYear();
+      const config = {
+        financialYear: {
+          id: `fy-${startYear}`,
+          name: `FY ${startYear}`,
+          startDate: formData.financialYearStart,
+          endDate: formData.financialYearEnd,
+        },
+        iterationLength: formData.iterationLength,
+        quarters: [], // Will be populated later when quarters are created
+      };
+
+      console.log('Setting configuration:', config);
+      console.log('Setting run work categories:', defaultRunWorkCategories);
+
+      // Set all the data in the context
+      setConfig(config);
+      setRunWorkCategories(defaultRunWorkCategories);
+      
+      // Mark setup as complete
+      setIsSetupComplete(true);
+      
+      console.log('Setup completion successful');
+      
+      toast({
+        title: "Setup Complete",
+        description: "Your planning app is now ready to use!",
+      });
+
+      // Small delay to ensure state is persisted before potential navigation
+      setTimeout(() => {
+        console.log('Setup process finished');
+      }, 100);
+      
+    } catch (error) {
+      console.error('Setup completion error:', error);
+      toast({
+        title: "Setup Error",
+        description: "There was an error completing the setup. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const steps = [
