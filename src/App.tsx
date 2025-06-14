@@ -9,6 +9,7 @@ import Navigation from "@/components/Navigation";
 import Dashboard from "@/pages/Dashboard";
 import Teams from "@/pages/Teams";
 import Projects from "@/pages/Projects";
+import Planning from "@/pages/Planning";
 import Setup from "@/pages/Setup";
 import NotFound from "./pages/NotFound";
 
@@ -26,9 +27,9 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/teams" element={<Teams />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/planning" element={<Planning />} />
               <Route path="/setup" element={<Setup />} />
-              <Route path="/projects" element={<div className="p-6">Projects page coming soon...</div>} />
-              <Route path="/planning" element={<div className="p-6">Planning page coming soon...</div>} />
               <Route path="/allocations" element={<div className="p-6">Allocations page coming soon...</div>} />
               <Route path="/milestones" element={<div className="p-6">Milestones page coming soon...</div>} />
               <Route path="/reports" element={<div className="p-6">Reports page coming soon...</div>} />
