@@ -125,6 +125,39 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
       return;
     }
 
+    // Validate epic assignment to team
+    if (formData.workType === 'epic') {
+      const selectedEpic = epics.find(e => e.id === formData.epicId);
+      const selectedTeam = teams.find(t => t.id === formData.teamId);
+      
+      if (selectedEpic && selectedTeam && selectedEpic.assignedTeamId && selectedEpic.assignedTeamId !== formData.teamId) {
+        const assignedTeam = teams.find(t => t.id === selectedEpic.assignedTeamId);
+        toast({
+          title: "Warning",
+          description: `Epic "${selectedEpic.name}" is assigned to ${assignedTeam?.name}, but you're allocating it to ${selectedTeam.name}. Consider reassigning the epic first.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Check for over-allocation
+    const existingAllocations = allocations.filter(a => 
+      a.teamId === formData.teamId && 
+      a.cycleId === cycleId && 
+      a.iterationNumber === parseInt(formData.iterationNumber) &&
+      a.id !== allocation?.id
+    );
+    
+    const totalExistingPercentage = existingAllocations.reduce((sum, a) => sum + a.percentage, 0);
+    if (totalExistingPercentage + percentage > 100) {
+      toast({
+        title: "Warning",
+        description: `This allocation would result in ${totalExistingPercentage + percentage}% allocation for this team in this iteration. Consider adjusting the percentage.`,
+        variant: "destructive",
+      });
+    }
+
     const allocationData: Allocation = {
       id: allocation?.id || crypto.randomUUID(),
       teamId: formData.teamId,
@@ -157,6 +190,12 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
     projects.find(p => p.id === epic.projectId && p.status === 'active')
   );
 
+  const getEpicTeamInfo = (epic: Epic) => {
+    if (!epic.assignedTeamId) return null;
+    const team = teams.find(t => t.id === epic.assignedTeamId);
+    return team ? `Assigned to: ${team.name}` : 'Assigned team not found';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
@@ -177,7 +216,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
                 <SelectContent>
                   {teams.map(team => (
                     <SelectItem key={team.id} value={team.id}>
-                      {team.name}
+                      {team.name} ({team.capacity}h/week)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -224,14 +263,38 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
                 <SelectContent>
                   {availableEpics.map(epic => {
                     const project = projects.find(p => p.id === epic.projectId);
+                    const teamInfo = getEpicTeamInfo(epic);
+                    const isAssignedToSelectedTeam = epic.assignedTeamId === formData.teamId;
+                    
                     return (
                       <SelectItem key={epic.id} value={epic.id}>
-                        {project?.name} - {epic.name}
+                        <div className="flex flex-col">
+                          <span>{project?.name} - {epic.name}</span>
+                          {teamInfo && (
+                            <span className={`text-xs ${isAssignedToSelectedTeam ? 'text-green-600' : 'text-orange-600'}`}>
+                              {teamInfo}
+                            </span>
+                          )}
+                        </div>
                       </SelectItem>
                     );
                   })}
                 </SelectContent>
               </Select>
+              {formData.epicId && formData.teamId && (
+                (() => {
+                  const selectedEpic = availableEpics.find(e => e.id === formData.epicId);
+                  if (selectedEpic?.assignedTeamId && selectedEpic.assignedTeamId !== formData.teamId) {
+                    const assignedTeam = teams.find(t => t.id === selectedEpic.assignedTeamId);
+                    return (
+                      <p className="text-sm text-orange-600">
+                        ⚠️ This epic is assigned to {assignedTeam?.name}
+                      </p>
+                    );
+                  }
+                  return null;
+                })()
+              )}
             </div>
           )}
 

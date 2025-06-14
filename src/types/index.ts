@@ -1,3 +1,4 @@
+
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -56,6 +57,10 @@ export interface Epic {
   description?: string;
   estimatedEffort: number; // story points or hours
   status: 'not-started' | 'in-progress' | 'completed';
+  assignedTeamId?: string; // Team responsible for this epic
+  startDate?: string;
+  targetEndDate?: string;
+  actualEndDate?: string;
 }
 
 export interface RunWorkCategory {
