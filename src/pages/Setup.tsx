@@ -7,10 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Upload, Settings, Calendar } from 'lucide-react';
+import { CheckCircle, Upload, Settings, Download } from 'lucide-react';
+import { downloadSampleCSV, parsePeopleCSV, parseProjectsCSV, parseRolesCSV } from '@/utils/csvUtils';
 
 const Setup = () => {
-  const { setConfig, setIsSetupComplete, setRunWorkCategories } = useApp();
+  const { 
+    setConfig, 
+    setIsSetupComplete, 
+    setRunWorkCategories,
+    setPeople,
+    setTeams,
+    setProjects,
+    setRoles
+  } = useApp();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -27,11 +36,45 @@ const Setup = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      // Parse CSV logic would go here
-      toast({
-        title: "CSV Upload",
-        description: `${type} CSV uploaded successfully`,
-      });
+      
+      try {
+        switch (type) {
+          case 'People': {
+            const { people, teams } = parsePeopleCSV(text);
+            setPeople(people);
+            setTeams(teams);
+            toast({
+              title: "Import Successful",
+              description: `Imported ${people.length} people and ${teams.length} teams`,
+            });
+            break;
+          }
+          case 'Projects': {
+            const projects = parseProjectsCSV(text);
+            setProjects(projects);
+            toast({
+              title: "Import Successful",
+              description: `Imported ${projects.length} projects`,
+            });
+            break;
+          }
+          case 'Roles': {
+            const roles = parseRolesCSV(text);
+            setRoles(roles);
+            toast({
+              title: "Import Successful",
+              description: `Imported ${roles.length} roles`,
+            });
+            break;
+          }
+        }
+      } catch (error) {
+        toast({
+          title: "Import Error",
+          description: `Failed to parse ${type} CSV. Please check the format.`,
+          variant: "destructive",
+        });
+      }
     };
     reader.readAsText(file);
   };
@@ -186,7 +229,18 @@ const Setup = () => {
               
               <TabsContent value="people" className="space-y-4">
                 <div>
-                  <Label htmlFor="peopleCSV">People CSV</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="peopleCSV">People CSV</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadSampleCSV('people-sample.csv')}
+                      className="flex items-center"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download Sample
+                    </Button>
+                  </div>
                   <p className="text-sm text-gray-500 mb-2">
                     Format: name, email, role, team name, team id
                   </p>
@@ -201,7 +255,21 @@ const Setup = () => {
               
               <TabsContent value="projects" className="space-y-4">
                 <div>
-                  <Label htmlFor="projectsCSV">Projects CSV</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="projectsCSV">Projects CSV</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadSampleCSV('projects-sample.csv')}
+                      className="flex items-center"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download Sample
+                    </Button>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-2">
+                    Format: name, description, status, start date, end date, budget
+                  </p>
                   <Input
                     id="projectsCSV"
                     type="file"
@@ -213,7 +281,18 @@ const Setup = () => {
               
               <TabsContent value="roles" className="space-y-4">
                 <div>
-                  <Label htmlFor="rolesCSV">Roles CSV</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="rolesCSV">Roles CSV</Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadSampleCSV('roles-sample.csv')}
+                      className="flex items-center"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Download Sample
+                    </Button>
+                  </div>
                   <p className="text-sm text-gray-500 mb-2">
                     Format: role name, default rate
                   </p>
