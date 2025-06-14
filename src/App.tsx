@@ -11,6 +11,7 @@ import Teams from "@/pages/Teams";
 import Projects from "@/pages/Projects";
 import Planning from "@/pages/Planning";
 import Setup from "@/pages/Setup";
+import Allocations from "@/pages/Allocations";
 import Milestones from "@/pages/Milestones";
 import Reports from "@/pages/Reports";
 import Canvas from "@/pages/Canvas";
@@ -33,7 +34,7 @@ const App = () => (
               <Route path="/projects" element={<Projects />} />
               <Route path="/planning" element={<Planning />} />
               <Route path="/setup" element={<Setup />} />
-              <Route path="/allocations" element={<div className="p-6">Allocations page coming soon...</div>} />
+              <Route path="/allocations" element={<Allocations />} />
               <Route path="/milestones" element={<Milestones />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/canvas" element={<Canvas />} />
