@@ -10,9 +10,13 @@ import AllocationTimeline from '@/components/allocations/AllocationTimeline';
 import AllocationMatrix from '@/components/allocations/AllocationMatrix';
 import CapacityChart from '@/components/allocations/CapacityChart';
 import AllocationStats from '@/components/allocations/AllocationStats';
+import TeamQuarterPlans from '@/components/allocations/TeamQuarterPlans';
+import AllocationImportDialog from '@/components/allocations/AllocationImportDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const Allocations = () => {
   const { teams, cycles, allocations, config, projects, epics, runWorkCategories } = useApp();
+  const { toast } = useToast();
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
 
@@ -36,6 +40,13 @@ const Allocations = () => {
   const filteredTeams = selectedTeamId === 'all' ? teams : teams.filter(t => t.id === selectedTeamId);
   const filteredAllocations = allocations.filter(a => a.cycleId === selectedCycleId);
 
+  const handleImportComplete = () => {
+    toast({
+      title: "Import Successful",
+      description: "Team allocations have been imported successfully.",
+    });
+  };
+
   if (!config) {
     return (
       <div className="p-6">
@@ -55,6 +66,7 @@ const Allocations = () => {
           <h1 className="text-2xl font-bold text-gray-900">Team Allocations</h1>
           <p className="text-gray-600">Visual views of team capacity and allocation planning</p>
         </div>
+        <AllocationImportDialog onImportComplete={handleImportComplete} />
       </div>
 
       {/* Filters */}
@@ -104,8 +116,12 @@ const Allocations = () => {
 
       {/* Visual Views */}
       {selectedCycleId && iterations.length > 0 ? (
-        <Tabs defaultValue="timeline" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="quarter-plans" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="quarter-plans" className="flex items-center space-x-2">
+              <Target className="h-4 w-4" />
+              <span>Quarter Plans</span>
+            </TabsTrigger>
             <TabsTrigger value="timeline" className="flex items-center space-x-2">
               <Calendar className="h-4 w-4" />
               <span>Timeline View</span>
@@ -119,6 +135,17 @@ const Allocations = () => {
               <span>Capacity Chart</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="quarter-plans">
+            <TeamQuarterPlans
+              teams={filteredTeams}
+              iterations={iterations}
+              allocations={filteredAllocations}
+              projects={projects}
+              epics={epics}
+              runWorkCategories={runWorkCategories}
+            />
+          </TabsContent>
 
           <TabsContent value="timeline">
             <AllocationTimeline
