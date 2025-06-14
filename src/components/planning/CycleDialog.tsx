@@ -22,7 +22,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Plus, Trash2 } from 'lucide-react';
+import { Calendar, Plus, Trash2, Zap } from 'lucide-react';
 import { format, addWeeks, addMonths } from 'date-fns';
 
 interface CycleDialogProps {
@@ -45,6 +45,46 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
 
   const quarters = cycles.filter(c => c.type === 'quarterly');
   const iterations = cycles.filter(c => c.type === 'iteration');
+
+  const generateStandardQuarters = () => {
+    if (!config?.financialYear) {
+      toast({
+        title: "Error",
+        description: "Financial year not configured. Please complete setup first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const fyStart = new Date(config.financialYear.startDate);
+    const fyYear = fyStart.getFullYear();
+    const newQuarters: Cycle[] = [];
+
+    // Generate 4 quarters based on financial year start
+    for (let i = 0; i < 4; i++) {
+      const quarterStart = new Date(fyStart);
+      quarterStart.setMonth(quarterStart.getMonth() + (i * 3));
+      
+      const quarterEnd = new Date(quarterStart);
+      quarterEnd.setMonth(quarterEnd.getMonth() + 3);
+      quarterEnd.setDate(quarterEnd.getDate() - 1); // Last day of the quarter
+
+      newQuarters.push({
+        id: crypto.randomUUID(),
+        type: 'quarterly',
+        name: `Q${i + 1} ${fyYear}`,
+        startDate: quarterStart.toISOString().split('T')[0],
+        endDate: quarterEnd.toISOString().split('T')[0],
+        status: i === 0 ? 'active' : 'planning',
+      });
+    }
+
+    setCycles(prev => [...prev, ...newQuarters]);
+    toast({
+      title: "Success",
+      description: `Generated 4 quarters for FY ${fyYear}`,
+    });
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -182,9 +222,30 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
 
           {selectedTab === 'quarters' && (
             <div className="space-y-4">
+              {/* Generate Standard Quarters */}
+              {config?.financialYear && quarters.length === 0 && (
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center text-blue-700">
+                      <Zap className="h-5 w-5 mr-2" />
+                      Quick Setup
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-blue-600 mb-4">
+                      Generate standard quarters based on your financial year ({format(new Date(config.financialYear.startDate), 'MMM yyyy')} - {format(new Date(config.financialYear.endDate), 'MMM yyyy')})
+                    </p>
+                    <Button onClick={generateStandardQuarters} className="w-full">
+                      <Zap className="h-4 w-4 mr-2" />
+                      Generate Standard Quarters
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Create New Quarter</CardTitle>
+                  <CardTitle className="text-lg">Create Custom Quarter</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
@@ -234,7 +295,7 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
                     <div className="col-span-2">
                       <Button type="submit" className="w-full">
                         <Plus className="h-4 w-4 mr-2" />
-                        Create Quarter
+                        Create Custom Quarter
                       </Button>
                     </div>
                   </form>
