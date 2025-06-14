@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useEncryptedLocalStorage, useLocalStorage } from '@/hooks/useLocalStorage';
 import { Person, Role, Team, Project, Allocation, Cycle, AppConfig, Division, Epic, RunWorkCategory } from '@/types';
 
@@ -44,6 +44,8 @@ export const useApp = () => {
 };
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  console.log('AppProvider: Initializing context...');
+
   // Encrypted sensitive data
   const [people, setPeople] = useEncryptedLocalStorage<Person[]>('planning-people', []);
   const [projects, setProjects] = useEncryptedLocalStorage<Project[]>('planning-projects', []);
@@ -58,6 +60,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [runWorkCategories, setRunWorkCategories] = useLocalStorage<RunWorkCategory[]>('planning-run-categories', []);
   const [config, setConfig] = useLocalStorage<AppConfig | null>('planning-config', null);
   const [isSetupComplete, setIsSetupComplete] = useLocalStorage<boolean>('planning-setup-complete', false);
+
+  // Debug logging for context state changes
+  useEffect(() => {
+    console.log('AppProvider: Context state updated:', {
+      peopleCount: people.length,
+      projectsCount: projects.length,
+      rolesCount: roles.length,
+      teamsCount: teams.length,
+      divisionsCount: divisions.length,
+      epicsCount: epics.length,
+      allocationsCount: allocations.length,
+      cyclesCount: cycles.length,
+      runWorkCategoriesCount: runWorkCategories.length,
+      hasConfig: !!config,
+      isSetupComplete,
+    });
+  }, [people, projects, roles, teams, divisions, epics, allocations, cycles, runWorkCategories, config, isSetupComplete]);
 
   const value: AppContextType = {
     people, setPeople,
