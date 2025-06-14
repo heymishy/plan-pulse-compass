@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/context/AppContext";
 import Navigation from "@/components/Navigation";
 import Dashboard from "@/pages/Dashboard";
+import Teams from "@/pages/Teams";
 import Setup from "@/pages/Setup";
 import NotFound from "./pages/NotFound";
 
@@ -23,8 +24,8 @@ const App = () => (
             <Navigation />
             <Routes>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/teams" element={<Teams />} />
               <Route path="/setup" element={<Setup />} />
-              <Route path="/teams" element={<div className="p-6">Teams page coming soon...</div>} />
               <Route path="/projects" element={<div className="p-6">Projects page coming soon...</div>} />
               <Route path="/planning" element={<div className="p-6">Planning page coming soon...</div>} />
               <Route path="/allocations" element={<div className="p-6">Allocations page coming soon...</div>} />
