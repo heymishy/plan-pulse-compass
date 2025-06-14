@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Settings, Upload, CheckCircle } from 'lucide-react';
+import { Settings, DollarSign, Upload, CheckCircle } from 'lucide-react';
 
 interface SetupWizardStepsProps {
   currentStep: number;
@@ -9,8 +9,9 @@ interface SetupWizardStepsProps {
 const SetupWizardSteps: React.FC<SetupWizardStepsProps> = ({ currentStep }) => {
   const steps = [
     { id: 0, title: 'Configuration', icon: Settings },
-    { id: 1, title: 'Import Data', icon: Upload },
-    { id: 2, title: 'Complete', icon: CheckCircle },
+    { id: 1, title: 'Financial', icon: DollarSign },
+    { id: 2, title: 'Import Data', icon: Upload },
+    { id: 3, title: 'Complete', icon: CheckCircle },
   ];
 
   return (

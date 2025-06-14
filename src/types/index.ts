@@ -1,4 +1,3 @@
-
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -7,6 +6,7 @@ export interface Person {
   roleId: string;
   teamId: string;
   isActive: boolean;
+  salary?: number; // Individual salary override
 }
 
 export interface Role {
