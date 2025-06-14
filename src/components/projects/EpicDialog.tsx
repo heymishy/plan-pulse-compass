@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Epic } from '@/types';
@@ -129,7 +128,7 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
       description: formData.description.trim() || undefined,
       estimatedEffort: parseFloat(formData.estimatedEffort),
       status: formData.status,
-      assignedTeamId: formData.assignedTeamId || undefined,
+      assignedTeamId: formData.assignedTeamId === 'none' ? undefined : formData.assignedTeamId || undefined,
       startDate: formData.startDate || undefined,
       targetEndDate: formData.targetEndDate || undefined,
       actualEndDate: formData.status === 'completed' ? (epic?.actualEndDate || new Date().toISOString().split('T')[0]) : undefined,
@@ -228,7 +227,7 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 <SelectValue placeholder="Select team" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No team assigned</SelectItem>
+                <SelectItem value="none">No team assigned</SelectItem>
                 {teams.map(team => (
                   <SelectItem key={team.id} value={team.id}>
                     {team.name} ({team.capacity}h/week)
