@@ -11,6 +11,7 @@ import Teams from "@/pages/Teams";
 import Projects from "@/pages/Projects";
 import Planning from "@/pages/Planning";
 import Setup from "@/pages/Setup";
+import Milestones from "@/pages/Milestones";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +32,7 @@ const App = () => (
               <Route path="/planning" element={<Planning />} />
               <Route path="/setup" element={<Setup />} />
               <Route path="/allocations" element={<div className="p-6">Allocations page coming soon...</div>} />
-              <Route path="/milestones" element={<div className="p-6">Milestones page coming soon...</div>} />
+              <Route path="/milestones" element={<Milestones />} />
               <Route path="/reports" element={<div className="p-6">Reports page coming soon...</div>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
