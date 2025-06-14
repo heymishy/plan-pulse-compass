@@ -306,6 +306,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="unassigned">No category assigned</SelectItem>
                   {runWorkCategories.map(category => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
