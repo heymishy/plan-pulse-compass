@@ -1,4 +1,3 @@
-
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -98,7 +97,6 @@ export interface AppConfig {
   financialYear: FinancialYear;
   iterationLength: 'fortnightly' | 'monthly' | '6-weekly';
   quarters: Cycle[];
-  runWorkCategories: RunWorkCategory[];
 }
 
 export type ViewMode = 'table' | 'card' | 'canvas';
