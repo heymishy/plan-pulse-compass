@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, Upload, Settings, Calendar } from 'lucide-react';
 
 const Setup = () => {
-  const { setConfig, setIsSetupComplete } = useApp();
+  const { setConfig, setIsSetupComplete, setRunWorkCategories } = useApp();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -37,6 +37,14 @@ const Setup = () => {
   };
 
   const completeSetup = () => {
+    // Create default run work categories
+    const defaultRunWorkCategories = [
+      { id: '1', name: 'Production Support', description: 'Ongoing production support work', color: '#ef4444' },
+      { id: '2', name: 'Certificate Management', description: 'SSL/TLS certificate management', color: '#f97316' },
+      { id: '3', name: 'Compliance', description: 'Regulatory compliance work', color: '#eab308' },
+      { id: '4', name: 'Technical Debt', description: 'Technical debt reduction', color: '#22c55e' },
+    ];
+
     // Create basic configuration
     const config = {
       financialYear: {
@@ -47,15 +55,10 @@ const Setup = () => {
       },
       iterationLength: formData.iterationLength,
       quarters: [],
-      runWorkCategories: [
-        { id: '1', name: 'Production Support', description: 'Ongoing production support work', color: '#ef4444' },
-        { id: '2', name: 'Certificate Management', description: 'SSL/TLS certificate management', color: '#f97316' },
-        { id: '3', name: 'Compliance', description: 'Regulatory compliance work', color: '#eab308' },
-        { id: '4', name: 'Technical Debt', description: 'Technical debt reduction', color: '#22c55e' },
-      ],
     };
 
     setConfig(config);
+    setRunWorkCategories(defaultRunWorkCategories);
     setIsSetupComplete(true);
     
     toast({
