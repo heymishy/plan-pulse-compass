@@ -8,6 +8,7 @@ import { AppProvider } from "@/context/AppContext";
 import Navigation from "@/components/Navigation";
 import Dashboard from "@/pages/Dashboard";
 import Teams from "@/pages/Teams";
+import Projects from "@/pages/Projects";
 import Setup from "@/pages/Setup";
 import NotFound from "./pages/NotFound";
 
