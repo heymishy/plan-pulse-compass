@@ -50,9 +50,9 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const getAllocationName = (allocation: Allocation) => {
-    if (allocation.projectId && allocation.epicId) {
-      const project = projects.find(p => p.id === allocation.projectId);
+    if (allocation.epicId) {
       const epic = epics.find(e => e.id === allocation.epicId);
+      const project = epic ? projects.find(p => p.id === epic.projectId) : null;
       return `${project?.name || 'Unknown'} - ${epic?.name || 'Unknown'}`;
     } else if (allocation.runWorkCategoryId) {
       const category = runWorkCategories.find(c => c.id === allocation.runWorkCategoryId);
@@ -162,12 +162,14 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
                       </div>
                     </TableCell>
                     {iterations.map(iteration => {
-                      const iterationAllocation = allocation.iterations?.[iteration.id];
+                      // For now, show the allocation percentage for the iteration that matches
+                      // the allocation's iterationNumber. This is a simplified approach.
+                      const isCurrentIteration = iteration.name.includes(allocation.iterationNumber.toString());
                       return (
                         <TableCell key={iteration.id} className="text-center">
-                          {iterationAllocation ? (
+                          {isCurrentIteration ? (
                             <Badge variant="secondary">
-                              {iterationAllocation}%
+                              {allocation.percentage}%
                             </Badge>
                           ) : (
                             <span className="text-gray-400">-</span>
