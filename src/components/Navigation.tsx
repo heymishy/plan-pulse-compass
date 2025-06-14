@@ -10,7 +10,8 @@ import {
   BarChart3,
   Users,
   FolderOpen,
-  Target
+  Target,
+  Share2
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -23,6 +24,7 @@ const Navigation = () => {
     { path: '/planning', icon: Calendar, label: 'Planning' },
     { path: '/allocations', icon: CalendarCheck, label: 'Allocations' },
     { path: '/milestones', icon: Target, label: 'Milestones' },
+    { path: '/canvas', icon: Share2, label: 'Canvas' },
     { path: '/reports', icon: BarChart3, label: 'Reports' },
     { path: '/setup', icon: Settings, label: 'Setup' },
   ];
