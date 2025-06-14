@@ -89,8 +89,8 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
           ? {
               ...team,
               name: formData.name.trim(),
-              divisionId: formData.divisionId || undefined,
-              managerId: formData.managerId || undefined,
+              divisionId: formData.divisionId === 'none' ? undefined : formData.divisionId,
+              managerId: formData.managerId === 'none' ? undefined : formData.managerId,
               capacity,
             }
           : team
@@ -105,8 +105,8 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
       const newTeam: Team = {
         id: crypto.randomUUID(),
         name: formData.name.trim(),
-        divisionId: formData.divisionId || undefined,
-        managerId: formData.managerId || undefined,
+        divisionId: formData.divisionId === 'none' ? undefined : formData.divisionId,
+        managerId: formData.managerId === 'none' ? undefined : formData.managerId,
         capacity,
       };
       
@@ -154,7 +154,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
                 <SelectValue placeholder="Select division" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Division</SelectItem>
+                <SelectItem value="none">No Division</SelectItem>
                 {divisions.map(division => (
                   <SelectItem key={division.id} value={division.id}>
                     {division.name}
@@ -174,7 +174,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
                 <SelectValue placeholder="Select manager" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No Manager</SelectItem>
+                <SelectItem value="none">No Manager</SelectItem>
                 {potentialManagers.map(person => (
                   <SelectItem key={person.id} value={person.id}>
                     {person.name}
