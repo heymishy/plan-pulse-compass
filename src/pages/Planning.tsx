@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Calendar, Users, Target } from 'lucide-react';
+import { Plus, Calendar, Users, Target, Grid3X3, List } from 'lucide-react';
 import PlanningMatrix from '@/components/planning/PlanningMatrix';
+import BulkAllocationGrid from '@/components/planning/BulkAllocationGrid';
 import AllocationDialog from '@/components/planning/AllocationDialog';
 import CycleDialog from '@/components/planning/CycleDialog';
 import { Allocation, Cycle } from '@/types';
@@ -15,6 +16,7 @@ const Planning = () => {
   const { teams, cycles, setCycles, allocations, config, projects, epics, runWorkCategories } = useApp();
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'matrix' | 'bulk'>('matrix');
   const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
   const [isCycleDialogOpen, setIsCycleDialogOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
@@ -94,38 +96,64 @@ const Planning = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Quarter:</label>
-          <Select value={selectedCycleId} onValueChange={setSelectedCycleId}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select quarter" />
-            </SelectTrigger>
-            <SelectContent>
-              {quarterCycles.map(cycle => (
-                <SelectItem key={cycle.id} value={cycle.id}>
-                  {cycle.name} ({cycle.status})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* Filters and View Toggle */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium">Quarter:</label>
+            <Select value={selectedCycleId} onValueChange={setSelectedCycleId}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select quarter" />
+              </SelectTrigger>
+              <SelectContent>
+                {quarterCycles.map(cycle => (
+                  <SelectItem key={cycle.id} value={cycle.id}>
+                    {cycle.name} ({cycle.status})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium">Team:</label>
+            <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams</SelectItem>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
         <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Team:</label>
-          <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Teams</SelectItem>
-              {teams.map(team => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <label className="text-sm font-medium">View:</label>
+          <div className="flex items-center border rounded-md">
+            <Button
+              variant={viewMode === 'matrix' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('matrix')}
+              className="rounded-r-none"
+            >
+              <List className="h-4 w-4 mr-1" />
+              Matrix
+            </Button>
+            <Button
+              variant={viewMode === 'bulk' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('bulk')}
+              className="rounded-l-none"
+            >
+              <Grid3X3 className="h-4 w-4 mr-1" />
+              Bulk Entry
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -171,17 +199,32 @@ const Planning = () => {
         </Card>
       </div>
 
-      {/* Planning Matrix */}
+      {/* Planning Views */}
       {selectedCycleId && iterations.length > 0 && (
-        <PlanningMatrix
-          teams={filteredTeams}
-          iterations={iterations}
-          allocations={allocations.filter(a => a.cycleId === selectedCycleId)}
-          onEditAllocation={handleEditAllocation}
-          projects={projects}
-          epics={epics}
-          runWorkCategories={runWorkCategories}
-        />
+        <>
+          {viewMode === 'matrix' && (
+            <PlanningMatrix
+              teams={filteredTeams}
+              iterations={iterations}
+              allocations={allocations.filter(a => a.cycleId === selectedCycleId)}
+              onEditAllocation={handleEditAllocation}
+              projects={projects}
+              epics={epics}
+              runWorkCategories={runWorkCategories}
+            />
+          )}
+
+          {viewMode === 'bulk' && (
+            <BulkAllocationGrid
+              teams={teams}
+              iterations={iterations}
+              cycleId={selectedCycleId}
+              projects={projects}
+              epics={epics}
+              runWorkCategories={runWorkCategories}
+            />
+          )}
+        </>
       )}
 
       {(!selectedCycleId || iterations.length === 0) && (

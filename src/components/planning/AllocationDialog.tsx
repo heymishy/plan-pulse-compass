@@ -51,6 +51,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
     teamId: '',
     iterationNumber: '',
     workType: 'epic' as 'epic' | 'run-work',
+    projectId: '',
     epicId: '',
     runWorkCategoryId: '',
     percentage: '',
@@ -59,10 +60,12 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
 
   useEffect(() => {
     if (allocation) {
+      const epic = allocation.epicId ? epics.find(e => e.id === allocation.epicId) : null;
       setFormData({
         teamId: allocation.teamId,
         iterationNumber: allocation.iterationNumber.toString(),
         workType: allocation.epicId ? 'epic' : 'run-work',
+        projectId: epic?.projectId || '',
         epicId: allocation.epicId || '',
         runWorkCategoryId: allocation.runWorkCategoryId || '',
         percentage: allocation.percentage.toString(),
@@ -73,16 +76,24 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
         teamId: '',
         iterationNumber: '',
         workType: 'epic',
+        projectId: '',
         epicId: '',
         runWorkCategoryId: '',
         percentage: '',
         notes: '',
       });
     }
-  }, [allocation, isOpen]);
+  }, [allocation, isOpen, epics]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      // Reset epic when project changes
+      if (field === 'projectId') {
+        newData.epicId = '';
+      }
+      return newData;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -186,9 +197,10 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
     onClose();
   };
 
-  const availableEpics = epics.filter(epic => 
-    projects.find(p => p.id === epic.projectId && p.status === 'active')
-  );
+  const activeProjects = projects.filter(p => p.status === 'active');
+  const availableEpics = formData.projectId 
+    ? epics.filter(epic => epic.projectId === formData.projectId)
+    : [];
 
   const getEpicTeamInfo = (epic: Epic) => {
     if (!epic.assignedTeamId) return null;
@@ -254,48 +266,69 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
           </div>
 
           {formData.workType === 'epic' && (
-            <div className="space-y-2">
-              <Label htmlFor="epic">Epic *</Label>
-              <Select value={formData.epicId} onValueChange={(value) => handleInputChange('epicId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select epic" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableEpics.map(epic => {
-                    const project = projects.find(p => p.id === epic.projectId);
-                    const teamInfo = getEpicTeamInfo(epic);
-                    const isAssignedToSelectedTeam = epic.assignedTeamId === formData.teamId;
-                    
-                    return (
-                      <SelectItem key={epic.id} value={epic.id}>
-                        <div className="flex flex-col">
-                          <span>{project?.name} - {epic.name}</span>
-                          {teamInfo && (
-                            <span className={`text-xs ${isAssignedToSelectedTeam ? 'text-green-600' : 'text-orange-600'}`}>
-                              {teamInfo}
-                            </span>
-                          )}
-                        </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="project">Project *</Label>
+                <Select value={formData.projectId} onValueChange={(value) => handleInputChange('projectId', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select project first" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeProjects.map(project => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
                       </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              {formData.epicId && formData.teamId && (
-                (() => {
-                  const selectedEpic = availableEpics.find(e => e.id === formData.epicId);
-                  if (selectedEpic?.assignedTeamId && selectedEpic.assignedTeamId !== formData.teamId) {
-                    const assignedTeam = teams.find(t => t.id === selectedEpic.assignedTeamId);
-                    return (
-                      <p className="text-sm text-orange-600">
-                        ⚠️ This epic is assigned to {assignedTeam?.name}
-                      </p>
-                    );
-                  }
-                  return null;
-                })()
-              )}
-            </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="epic">Epic *</Label>
+                <Select 
+                  value={formData.epicId} 
+                  onValueChange={(value) => handleInputChange('epicId', value)}
+                  disabled={!formData.projectId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={formData.projectId ? "Select epic" : "Select project first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableEpics.map(epic => {
+                      const teamInfo = getEpicTeamInfo(epic);
+                      const isAssignedToSelectedTeam = epic.assignedTeamId === formData.teamId;
+                      
+                      return (
+                        <SelectItem key={epic.id} value={epic.id}>
+                          <div className="flex flex-col">
+                            <span>{epic.name}</span>
+                            {teamInfo && (
+                              <span className={`text-xs ${isAssignedToSelectedTeam ? 'text-green-600' : 'text-orange-600'}`}>
+                                {teamInfo}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                {formData.epicId && formData.teamId && (
+                  (() => {
+                    const selectedEpic = availableEpics.find(e => e.id === formData.epicId);
+                    if (selectedEpic?.assignedTeamId && selectedEpic.assignedTeamId !== formData.teamId) {
+                      const assignedTeam = teams.find(t => t.id === selectedEpic.assignedTeamId);
+                      return (
+                        <p className="text-sm text-orange-600">
+                          ⚠️ This epic is assigned to {assignedTeam?.name}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()
+                )}
+              </div>
+            </>
           )}
 
           {formData.workType === 'run-work' && (
