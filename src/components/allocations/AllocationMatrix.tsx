@@ -1,9 +1,31 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
+import { useApp } from '@/context/AppContext';
 import { Team, Cycle, Allocation, Project, Epic, RunWorkCategory } from '@/types';
-import { calculateTeamCapacity } from '@/utils/capacityUtils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AllocationMatrixProps {
   teams: Team[];
@@ -20,127 +42,170 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
   allocations,
   projects,
   epics,
-  runWorkCategories,
+  runWorkCategories
 }) => {
-  const getTeamIterationAllocations = (teamId: string, iterationNumber: number) => {
-    return allocations.filter(a => a.teamId === teamId && a.iterationNumber === iterationNumber);
+  const { setAllocations } = useApp();
+  const { toast } = useToast();
+  const [selectedAllocations, setSelectedAllocations] = useState<Set<string>>(new Set());
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const getAllocationName = (allocation: Allocation) => {
+    if (allocation.projectId && allocation.epicId) {
+      const project = projects.find(p => p.id === allocation.projectId);
+      const epic = epics.find(e => e.id === allocation.epicId);
+      return `${project?.name || 'Unknown'} - ${epic?.name || 'Unknown'}`;
+    } else if (allocation.runWorkCategoryId) {
+      const category = runWorkCategories.find(c => c.id === allocation.runWorkCategoryId);
+      return category?.name || 'Unknown Category';
+    }
+    return 'Unknown Allocation';
   };
 
-  const getCapacityColor = (percentage: number) => {
-    if (percentage === 0) return 'bg-gray-100';
-    if (percentage < 100) return 'bg-yellow-100';
-    if (percentage === 100) return 'bg-green-100';
-    return 'bg-red-100';
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAllocations(new Set(allocations.map(allocation => allocation.id)));
+    } else {
+      setSelectedAllocations(new Set());
+    }
   };
 
-  const getCapacityTextColor = (percentage: number) => {
-    if (percentage === 0) return 'text-gray-500';
-    if (percentage < 100) return 'text-yellow-700';
-    if (percentage === 100) return 'text-green-700';
-    return 'text-red-700';
+  const handleSelectAllocation = (allocationId: string, checked: boolean) => {
+    const newSelected = new Set(selectedAllocations);
+    if (checked) {
+      newSelected.add(allocationId);
+    } else {
+      newSelected.delete(allocationId);
+    }
+    setSelectedAllocations(newSelected);
   };
+
+  const handleBulkDelete = () => {
+    setAllocations(prevAllocations => 
+      prevAllocations.filter(allocation => !selectedAllocations.has(allocation.id))
+    );
+
+    toast({
+      title: "Allocations Deleted",
+      description: `Successfully deleted ${selectedAllocations.size} allocation${selectedAllocations.size !== 1 ? 's' : ''}`,
+    });
+
+    setSelectedAllocations(new Set());
+    setShowDeleteDialog(false);
+  };
+
+  const isAllSelected = allocations.length > 0 && selectedAllocations.size === allocations.length;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Allocation Matrix</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Allocation Matrix</CardTitle>
+          {selectedAllocations.size > 0 && (
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-blue-700">
+                {selectedAllocations.size} allocation{selectedAllocations.size !== 1 ? 's' : ''} selected
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Selected
+              </Button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="text-left p-3 border font-semibold bg-gray-50">Team</th>
-                {iterations.map((iteration, index) => (
-                  <th key={iteration.id} className="text-center p-3 border font-semibold bg-gray-50 min-w-32">
-                    <div>Iteration {index + 1}</div>
-                    <div className="text-xs text-gray-500 font-normal">
-                      {new Date(iteration.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
-                      {new Date(iteration.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </div>
-                  </th>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all allocations"
+                  />
+                </TableHead>
+                <TableHead>Team</TableHead>
+                <TableHead>Work Item</TableHead>
+                {iterations.map(iteration => (
+                  <TableHead key={iteration.id} className="text-center min-w-24">
+                    {iteration.name}
+                  </TableHead>
                 ))}
-                <th className="text-center p-3 border font-semibold bg-gray-50">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teams.map(team => {
-                let totalAllocatedHours = 0;
-                let totalCapacityHours = 0;
-
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allocations.map((allocation) => {
+                const team = teams.find(t => t.id === allocation.teamId);
                 return (
-                  <tr key={team.id} className="border">
-                    <td className="p-3 border font-medium bg-gray-50">
-                      <div>
-                        {team.name}
-                        <div className="text-xs text-gray-500">
-                          {team.capacity}h/week
-                        </div>
+                  <TableRow key={allocation.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedAllocations.has(allocation.id)}
+                        onCheckedChange={(checked) => handleSelectAllocation(allocation.id, checked as boolean)}
+                        aria-label={`Select allocation`}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {team?.name || 'Unknown Team'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="font-medium">{getAllocationName(allocation)}</div>
+                        <Badge variant="outline" className="text-xs">
+                          {allocation.percentage}% capacity
+                        </Badge>
                       </div>
-                    </td>
-                    {iterations.map((iteration, index) => {
-                      const teamAllocations = getTeamIterationAllocations(team.id, index + 1);
-                      const capacity = calculateTeamCapacity(team, index + 1, allocations, iterations);
-                      
-                      totalAllocatedHours += capacity.capacityHours * (capacity.allocatedPercentage / 100);
-                      totalCapacityHours += capacity.capacityHours;
-
+                    </TableCell>
+                    {iterations.map(iteration => {
+                      const iterationAllocation = allocation.iterations?.[iteration.id];
                       return (
-                        <td key={iteration.id} className={`p-3 border text-center ${getCapacityColor(capacity.allocatedPercentage)}`}>
-                          <div className={`font-semibold ${getCapacityTextColor(capacity.allocatedPercentage)}`}>
-                            {capacity.allocatedPercentage}%
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            {Math.round(capacity.capacityHours * (capacity.allocatedPercentage / 100))}h / {Math.round(capacity.capacityHours)}h
-                          </div>
-                          {teamAllocations.length > 0 && (
-                            <div className="mt-1 space-y-1">
-                              {teamAllocations.map(allocation => (
-                                <div key={allocation.id} className="text-xs">
-                                  <Badge variant="outline" className="text-xs">
-                                    {allocation.percentage}%
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
+                        <TableCell key={iteration.id} className="text-center">
+                          {iterationAllocation ? (
+                            <Badge variant="secondary">
+                              {iterationAllocation}%
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">-</span>
                           )}
-                        </td>
+                        </TableCell>
                       );
                     })}
-                    <td className="p-3 border text-center bg-gray-50">
-                      <div className="font-semibold">
-                        {totalCapacityHours > 0 ? Math.round((totalAllocatedHours / totalCapacityHours) * 100) : 0}%
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {Math.round(totalAllocatedHours)}h / {Math.round(totalCapacityHours)}h
-                      </div>
-                    </td>
-                  </tr>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+              {allocations.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3 + iterations.length} className="text-center py-8 text-gray-500">
+                    No allocations found for this quarter
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
 
-        {/* Matrix Legend */}
-        <div className="mt-4 flex items-center space-x-4 text-sm">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-green-100 border"></div>
-            <span>100% allocated</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-yellow-100 border"></div>
-            <span>Under allocated</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-red-100 border"></div>
-            <span>Over allocated</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-gray-100 border"></div>
-            <span>No allocation</span>
-          </div>
-        </div>
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Allocations</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete {selectedAllocations.size} allocation{selectedAllocations.size !== 1 ? 's' : ''}? 
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

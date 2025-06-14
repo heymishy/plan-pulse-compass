@@ -1,12 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Eye, Calendar, Target, DollarSign } from 'lucide-react';
-import { format } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Edit, Eye, Calendar, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProjectCardsProps {
   projects: Project[];
@@ -15,131 +26,144 @@ interface ProjectCardsProps {
 }
 
 const ProjectCards: React.FC<ProjectCardsProps> = ({ projects, onEditProject, onViewProject }) => {
-  const { epics } = useApp();
+  const { setProjects, setEpics } = useApp();
+  const { toast } = useToast();
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const getStatusBadge = (status: Project['status']) => {
+  const getStatusBadge = (status: string) => {
     const statusConfig = {
-      planning: { variant: 'secondary' as const, label: 'Planning' },
-      active: { variant: 'default' as const, label: 'Active' },
-      completed: { variant: 'outline' as const, label: 'Completed' },
-      cancelled: { variant: 'destructive' as const, label: 'Cancelled' },
+      planning: { label: 'Planning', variant: 'secondary' as const },
+      active: { label: 'Active', variant: 'default' as const },
+      completed: { label: 'Completed', variant: 'outline' as const },
+      cancelled: { label: 'Cancelled', variant: 'destructive' as const },
     };
     
-    const config = statusConfig[status];
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.planning;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getProjectEpics = (projectId: string) => {
-    return epics.filter(epic => epic.projectId === projectId);
+  const handleSelectProject = (projectId: string, checked: boolean) => {
+    const newSelected = new Set(selectedProjects);
+    if (checked) {
+      newSelected.add(projectId);
+    } else {
+      newSelected.delete(projectId);
+    }
+    setSelectedProjects(newSelected);
   };
 
-  const getCompletedMilestones = (project: Project) => {
-    return project.milestones.filter(m => m.status === 'completed').length;
-  };
+  const handleBulkDelete = () => {
+    // Remove selected projects
+    setProjects(prevProjects => prevProjects.filter(project => !selectedProjects.has(project.id)));
+    
+    // Remove epics associated with deleted projects
+    setEpics(prevEpics => prevEpics.filter(epic => !selectedProjects.has(epic.projectId)));
 
-  const getMilestoneProgress = (project: Project) => {
-    if (project.milestones.length === 0) return 0;
-    return (getCompletedMilestones(project) / project.milestones.length) * 100;
+    toast({
+      title: "Projects Deleted",
+      description: `Successfully deleted ${selectedProjects.size} project${selectedProjects.size !== 1 ? 's' : ''} and their associated epics`,
+    });
+
+    setSelectedProjects(new Set());
+    setShowDeleteDialog(false);
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {projects.map((project) => {
-        const projectEpics = getProjectEpics(project.id);
-        const completedMilestones = getCompletedMilestones(project);
-        const milestoneProgress = getMilestoneProgress(project);
-        
-        return (
-          <Card key={project.id} className="relative">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <CardTitle className="text-lg">{project.name}</CardTitle>
+    <div className="space-y-4">
+      {selectedProjects.size > 0 && (
+        <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+          <span className="text-sm text-blue-700">
+            {selectedProjects.size} project{selectedProjects.size !== 1 ? 's' : ''} selected
+          </span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Selected
+          </Button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projects.map((project) => (
+          <Card key={project.id} className="hover:shadow-md transition-shadow relative">
+            <div className="absolute top-3 left-3">
+              <Checkbox
+                checked={selectedProjects.has(project.id)}
+                onCheckedChange={(checked) => handleSelectProject(project.id, checked as boolean)}
+                aria-label={`Select ${project.name}`}
+              />
+            </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-12">
+              <div className="space-y-1">
+                <CardTitle className="text-lg font-semibold">{project.name}</CardTitle>
                 {getStatusBadge(project.status)}
               </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onViewProject(project.id)}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEditProject(project.id)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
               {project.description && (
                 <p className="text-sm text-gray-600 line-clamp-2">
                   {project.description}
                 </p>
               )}
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-1">
-                  <Calendar className="h-3 w-3 text-gray-400" />
-                  <span>Start: {format(new Date(project.startDate), 'MMM dd, yyyy')}</span>
-                </div>
-                {project.endDate && (
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-3 w-3 text-gray-400" />
-                    <span>End: {format(new Date(project.endDate), 'MMM dd, yyyy')}</span>
-                  </div>
-                )}
-              </div>
 
-              {project.budget && (
-                <div className="flex items-center space-x-1 text-sm">
-                  <DollarSign className="h-3 w-3 text-gray-400" />
-                  <span>Budget: ${project.budget.toLocaleString()}</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Start:
+                  </span>
+                  <span>{new Date(project.startDate).toLocaleDateString()}</span>
                 </div>
-              )}
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {projectEpics.length} epic{projectEpics.length !== 1 ? 's' : ''}
-                  </Badge>
-                  <div className="flex items-center space-x-1">
-                    <Target className="h-3 w-3 text-gray-400" />
-                    <span className="text-xs text-gray-600">
-                      {completedMilestones}/{project.milestones.length} milestones
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    End:
+                  </span>
+                  <span>{new Date(project.endDate).toLocaleDateString()}</span>
                 </div>
-              </div>
-
-              {project.milestones.length > 0 && (
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600">Progress</span>
-                    <span className="text-gray-600">{Math.round(milestoneProgress)}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div
-                      className={`h-1.5 rounded-full ${
-                        milestoneProgress === 100 ? 'bg-green-500' :
-                        milestoneProgress > 50 ? 'bg-blue-500' :
-                        'bg-yellow-500'
-                      }`}
-                      style={{ width: `${milestoneProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onViewProject(project.id)}
-                  className="flex-1"
-                >
-                  <Eye className="h-3 w-3 mr-1" />
-                  View
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEditProject(project.id)}
-                  className="flex-1"
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Edit
-                </Button>
               </div>
             </CardContent>
           </Card>
-        );
-      })}
+        ))}
+      </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Projects</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedProjects.size} project{selectedProjects.size !== 1 ? 's' : ''}? 
+              This action cannot be undone and will also delete all associated epics.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
