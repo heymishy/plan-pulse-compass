@@ -17,9 +17,10 @@ import { Project, ProjectReportData, ProjectHealthStatus, ProjectRisk } from '@/
 import { generateProjectReportData } from '@/utils/reportUtils';
 import { formatCurrency } from '@/utils/currency';
 import { format, formatISO } from 'date-fns';
-import { DollarSign, BarChart, TrendingUp, Target, Users, FileText, Download, Save, ShieldAlert, AlertTriangle, History } from 'lucide-react';
+import { DollarSign, BarChart, GanttChart, Target, Users, FileText, Download, Save, ShieldAlert, AlertTriangle, History } from 'lucide-react';
 import ReportSection from '../reports/ReportSection';
 import MilestoneTimeline from '../reports/MilestoneTimeline';
+import EpicTimeline from '../reports/EpicTimeline';
 import { toast } from 'sonner';
 
 interface ProjectReportDialogProps {
@@ -97,6 +98,7 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
 
   const { financials, progress, teams, risks } = reportData;
   const allMilestones = [...progress.completedMilestones, ...progress.inProgressMilestones, ...progress.upcomingMilestones];
+  const allEpics = [...progress.completedEpics, ...progress.inProgressEpics, ...progress.upcomingEpics];
 
   const statusOptions: { value: ProjectHealthStatus, label: string }[] = [
     { value: 'on-track', label: 'On Track' },
@@ -212,17 +214,12 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
             </TabsContent>
 
             <TabsContent value="progress" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ReportSection title="Epics" icon={<TrendingUp />}>
-                    <h4 className="font-semibold mb-2">Completed ({progress.completedEpics.length})</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-600 mb-4">{progress.completedEpics.map(e => <li key={e.id}>{e.name}</li>)}</ul>
-                    <h4 className="font-semibold mb-2">In Progress ({progress.inProgressEpics.length})</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-600">{progress.inProgressEpics.map(e => <li key={e.id}>{e.name}</li>)}</ul>
-                </ReportSection>
-                <ReportSection title="Milestone Timeline" icon={<Target />}>
-                  <MilestoneTimeline milestones={allMilestones} />
-                </ReportSection>
-              </div>
+              <ReportSection title="Epic Timeline" icon={<GanttChart />}>
+                <EpicTimeline epics={allEpics} />
+              </ReportSection>
+              <ReportSection title="Milestone Timeline" icon={<Target />}>
+                <MilestoneTimeline milestones={allMilestones} />
+              </ReportSection>
             </TabsContent>
 
             <TabsContent value="teams" className="mt-4 space-y-4">
