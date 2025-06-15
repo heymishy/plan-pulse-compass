@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Team, Cycle, Project, Epic, RunWorkCategory, Allocation } from '@/types';
@@ -101,23 +102,22 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
     }
   };
 
-  const getExistingAllocation = (teamId: string, iterationNumber: number, epicId?: string, runWorkCategoryId?: string, projectId?: string) => {
+  const getExistingAllocation = (teamId: string, iterationNumber: number, epicId?: string, runWorkCategoryId?: string) => {
     return allocations.find(a => 
       a.teamId === teamId && 
       a.cycleId === cycleId && 
       a.iterationNumber === iterationNumber &&
       ((epicId && a.epicId === epicId) ||
-       (runWorkCategoryId && a.runWorkCategoryId === runWorkCategoryId) ||
-       (projectId && a.epicId && epics.find(e => e.id === a.epicId && e.projectId === projectId)))
+       (runWorkCategoryId && a.runWorkCategoryId === runWorkCategoryId))
     );
   };
 
-  const getCurrentValue = (teamId: string, iterationNumber: number, workId: string, epicId?: string, runWorkCategoryId?: string, projectId?: string) => {
+  const getCurrentValue = (teamId: string, iterationNumber: number, workId: string, epicId?: string, runWorkCategoryId?: string) => {
     const key = getGridKey(teamId, iterationNumber, workId);
     const gridValue = gridAllocations[key];
     if (gridValue) return gridValue.percentage.toString();
     
-    const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId, projectId);
+    const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId);
     return existing ? existing.percentage.toString() : '';
   };
 
@@ -152,14 +152,8 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
     const newAllocations: Allocation[] = [];
     const updatedAllocations: Allocation[] = [];
 
-    Object.values(gridAllocations).forEach(({ teamId, iterationNumber, percentage, epicId, runWorkCategoryId, projectId }) => {
-      // For project allocations, we don't create direct project allocations in the current data model
-      // Projects are tracked through their epics, so we skip project-only allocations for now
-      if (projectId && !epicId && !runWorkCategoryId) {
-        return;
-      }
-
-      const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId, projectId);
+    Object.values(gridAllocations).forEach(({ teamId, iterationNumber, percentage, epicId, runWorkCategoryId }) => {
+      const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId);
       
       const allocationData: Allocation = {
         id: existing?.id || crypto.randomUUID(),
@@ -395,7 +389,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
               Allocate work for {teams.find(t => t.id === selectedTeamId)?.name}
             </h3>
             <p className="text-sm text-gray-600">
-              Set allocation percentages for projects, epics, and run work categories across iterations
+              Set allocation percentages for epics and run work categories across iterations
             </p>
           </div>
           
@@ -412,36 +406,6 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Team Projects */}
-                {teamProjects.map(project => (
-                  <TableRow key={`project-${project.id}`}>
-                    <TableCell className="font-medium">
-                      <div>
-                        <div className="text-purple-600 font-semibold">{project.name}</div>
-                        <div className="text-xs text-gray-500">Project • {project.status}</div>
-                      </div>
-                    </TableCell>
-                    {iterations.map((_, index) => {
-                      const iterationNumber = index + 1;
-                      const workId = `project-${project.id}`;
-                      return (
-                        <TableCell key={index} className="text-center">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="1"
-                            className="w-20 text-center"
-                            placeholder="%"
-                            value={getCurrentValue(selectedTeamId, iterationNumber, workId, undefined, undefined, project.id)}
-                            onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, workId, e.target.value, { projectId: project.id })}
-                          />
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-                
                 {/* Team Epics */}
                 {teamEpics.map(epic => {
                   const project = projects.find(p => p.id === epic.projectId);
@@ -510,7 +474,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
           
           <div className="mt-4 text-sm text-gray-600">
             <p>• Enter percentage values (1-100) for each work item across iterations</p>
-            <p>• Purple items are projects, blue items are epics, colored items are run work categories</p>
+            <p>• Blue items are epics, colored items are run work categories</p>
             <p>• Empty cells will remove existing allocations</p>
             <p>• Changes are saved only when you click "Save Allocations"</p>
           </div>
