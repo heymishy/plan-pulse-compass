@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { deriveKey, encryptData, decryptData } from '@/utils/crypto';
 
@@ -39,8 +40,8 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
         if (item) {
           const parsedItem = JSON.parse(item);
           
-          // Check if the data is in the new encrypted format
           if (parsedItem && typeof parsedItem.iv === 'string' && typeof parsedItem.encrypted === 'string') {
+            // Data is already encrypted, decrypt it
             const derivedKey = await getDerivedKey();
             const decrypted = await decryptData(parsedItem, derivedKey);
             if (isMounted) {
@@ -48,14 +49,22 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
             }
             console.log(`Successfully loaded and decrypted data for key "${key}"`);
           } else {
-            // Data is not in the expected format, treat as corrupted
-            throw new Error('Data is not in the expected encrypted format.');
+            // Data is unencrypted (old format), migrate it
+            console.log(`Old data format detected for key "${key}". Migrating to encrypted format.`);
+            if (isMounted) {
+              setStoredValue(parsedItem);
+            }
+            // Asynchronously encrypt and update localStorage
+            const derivedKey = await getDerivedKey();
+            const encrypted = await encryptData(JSON.stringify(parsedItem), derivedKey);
+            window.localStorage.setItem(key, JSON.stringify(encrypted));
+            console.log(`Successfully migrated and encrypted data for key "${key}"`);
           }
         } else if (isMounted) {
           setStoredValue(initialValue);
         }
       } catch (error) {
-        console.error(`Error reading or decrypting data from localStorage key "${key}". Using initial value.`, error);
+        console.error(`Error reading, decrypting, or migrating data from localStorage key "${key}". Data may be corrupted. Clearing data.`, error);
         window.localStorage.removeItem(key); // Remove corrupted/invalid data
         if (isMounted) {
           setStoredValue(initialValue);
@@ -72,7 +81,7 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
     return () => {
       isMounted = false;
     };
-  }, [key, getDerivedKey]); // Removed `initialValue` from dependencies to prevent infinite loop
+  }, [key, getDerivedKey]);
 
   const setValue = useCallback(async (value: T | ((val: T) => T)) => {
     try {
