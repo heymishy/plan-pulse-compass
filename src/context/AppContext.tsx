@@ -18,6 +18,7 @@ interface AppContextType {
   setDivisions: (divisions: Division[] | ((prev: Division[]) => Division[])) => void;
   projects: Project[];
   setProjects: (projects: Project[] | ((prev: Project[]) => Project[])) => void;
+  updateProject: (projectId: string, updatedProject: Project) => void;
   epics: Epic[];
   setEpics: (epics: Epic[] | ((prev: Epic[]) => Epic[])) => void;
   allocations: Allocation[];
@@ -87,6 +88,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [iterationReviews, setIterationReviews] = useLocalStorage<IterationReview[]>('planning-iteration-reviews', []);
   const [iterationSnapshots, setIterationSnapshots] = useLocalStorage<IterationSnapshot[]>('planning-iteration-snapshots', []);
 
+  const updateProject = (projectId: string, updatedProject: Project) => {
+    setProjects(prevProjects => 
+      prevProjects.map(p => p.id === projectId ? updatedProject : p)
+    );
+  };
+
   // Debug logging for context state changes
   useEffect(() => {
     console.log('AppProvider: Context state updated:', {
@@ -115,6 +122,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     teams, setTeams,
     divisions, setDivisions,
     projects, setProjects,
+    updateProject,
     epics, setEpics,
     allocations, setAllocations,
     cycles, setCycles,
