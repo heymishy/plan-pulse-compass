@@ -1,0 +1,9 @@
+
+team_id,team_name,division_id,division_name,capacity,division_budget,division_description
+team-1,Frontend Team,div-eng,Engineering,40,500000,Software development and engineering
+team-2,Backend Team,div-eng,Engineering,40,500000,Software development and engineering
+team-3,Platform Team,div-eng,Engineering,38,500000,Software development and engineering
+team-4,Design Team,div-design,Design,32,200000,User experience and visual design
+team-5,Product Team,div-product,Product,35,300000,Product management and strategy
+team-6,QA Team,div-eng,Engineering,35,500000,Quality assurance and testing
+team-7,Data Team,div-data,Data & Analytics,30,400000,Data science and analytics

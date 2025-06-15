@@ -1,0 +1,350 @@
+
+import { Person, Role, Team, Project, Skill, PersonSkill, SkillCategory, Division } from '@/types';
+
+export interface EnhancedPersonCSVRow {
+  name: string;
+  email: string;
+  role: string;
+  team_name: string;
+  team_id: string;
+  employment_type?: string;
+  annual_salary?: string;
+  hourly_rate?: string;
+  daily_rate?: string;
+  start_date?: string;
+  end_date?: string;
+  is_active?: string;
+  skills?: string;
+  skill_proficiencies?: string;
+  years_experience?: string;
+  certifications?: string;
+  division_name?: string;
+  division_id?: string;
+  team_manager_email?: string;
+  team_capacity?: string;
+}
+
+export interface TeamWithDivisionCSVRow {
+  team_id: string;
+  team_name: string;
+  division_id?: string;
+  division_name?: string;
+  manager_email?: string;
+  capacity?: string;
+  division_budget?: string;
+  division_description?: string;
+}
+
+export const parseCSV = (text: string): string[][] => {
+  const lines = text.trim().split('\n');
+  return lines.map(line => {
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim().replace(/^"|"$/g, ''));
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim().replace(/^"|"$/g, ''));
+    return values;
+  });
+};
+
+export const parseEnhancedPeopleCSV = (text: string): {
+  people: Person[];
+  teams: Team[];
+  divisions: Division[];
+  skills: Skill[];
+  personSkills: PersonSkill[];
+  roles: Role[];
+} => {
+  const rows = parseCSV(text);
+  const headers = rows[0].map(h => h.toLowerCase().replace(/\s+/g, '_'));
+  const dataRows = rows.slice(1);
+  
+  const people: Person[] = [];
+  const teamsMap = new Map<string, Team>();
+  const divisionsMap = new Map<string, Division>();
+  const skillsMap = new Map<string, Skill>();
+  const rolesMap = new Map<string, Role>();
+  const personSkills: PersonSkill[] = [];
+  
+  dataRows.forEach((row, index) => {
+    if (row.length < 5) return;
+    
+    const rowData: Record<string, string> = {};
+    headers.forEach((header, i) => {
+      rowData[header] = row[i] || '';
+    });
+    
+    const personId = `person-${index + 1}`;
+    const teamId = rowData.team_id || `team-${rowData.team_name?.toLowerCase().replace(/\s+/g, '-')}`;
+    const divisionId = rowData.division_id || (rowData.division_name ? `division-${rowData.division_name.toLowerCase().replace(/\s+/g, '-')}` : undefined);
+    const roleId = `role-${rowData.role?.toLowerCase().replace(/\s+/g, '-')}`;
+    
+    // Create role if not exists
+    if (rowData.role && !rolesMap.has(roleId)) {
+      const defaultRate = parseFloat(rowData.hourly_rate || rowData.daily_rate || '100');
+      rolesMap.set(roleId, {
+        id: roleId,
+        name: rowData.role,
+        rateType: rowData.hourly_rate ? 'hourly' : rowData.daily_rate ? 'daily' : 'hourly',
+        defaultRate: defaultRate,
+        defaultHourlyRate: rowData.hourly_rate ? defaultRate : undefined,
+        defaultDailyRate: rowData.daily_rate ? defaultRate : undefined,
+        defaultAnnualSalary: rowData.annual_salary ? parseFloat(rowData.annual_salary) : undefined,
+      });
+    }
+    
+    // Create division if specified
+    if (rowData.division_name && divisionId && !divisionsMap.has(divisionId)) {
+      divisionsMap.set(divisionId, {
+        id: divisionId,
+        name: rowData.division_name,
+        description: rowData.division_description || undefined,
+        budget: rowData.division_budget ? parseFloat(rowData.division_budget) : undefined,
+      });
+    }
+    
+    // Create team if not exists
+    if (!teamsMap.has(teamId)) {
+      teamsMap.set(teamId, {
+        id: teamId,
+        name: rowData.team_name || 'Unknown Team',
+        divisionId: divisionId,
+        capacity: rowData.team_capacity ? parseFloat(rowData.team_capacity) : 40,
+      });
+    }
+    
+    // Parse employment details
+    const employmentType = (rowData.employment_type?.toLowerCase() === 'contractor' ? 'contractor' : 'permanent') as 'permanent' | 'contractor';
+    const isActive = rowData.is_active?.toLowerCase() !== 'false' && rowData.is_active?.toLowerCase() !== '0';
+    
+    // Create person
+    const person: Person = {
+      id: personId,
+      name: rowData.name,
+      email: rowData.email,
+      roleId: roleId,
+      teamId: teamId,
+      isActive: isActive,
+      employmentType: employmentType,
+      startDate: rowData.start_date || new Date().toISOString().split('T')[0],
+      endDate: rowData.end_date || undefined,
+    };
+    
+    // Add financial details based on employment type
+    if (employmentType === 'permanent' && rowData.annual_salary) {
+      person.annualSalary = parseFloat(rowData.annual_salary);
+    } else if (employmentType === 'contractor') {
+      person.contractDetails = {
+        hourlyRate: rowData.hourly_rate ? parseFloat(rowData.hourly_rate) : undefined,
+        dailyRate: rowData.daily_rate ? parseFloat(rowData.daily_rate) : undefined,
+      };
+    }
+    
+    people.push(person);
+    
+    // Parse skills if provided
+    if (rowData.skills) {
+      const skillNames = rowData.skills.split(';').map(s => s.trim()).filter(Boolean);
+      const proficiencies = rowData.skill_proficiencies?.split(';').map(s => s.trim()).filter(Boolean) || [];
+      const experiences = rowData.years_experience?.split(';').map(s => s.trim()).filter(Boolean) || [];
+      const certifications = rowData.certifications?.split(';').map(s => s.trim()).filter(Boolean) || [];
+      
+      skillNames.forEach((skillName, skillIndex) => {
+        const skillId = `skill-${skillName.toLowerCase().replace(/\s+/g, '-')}`;
+        
+        // Create skill if not exists
+        if (!skillsMap.has(skillId)) {
+          skillsMap.set(skillId, {
+            id: skillId,
+            name: skillName,
+            category: 'other',
+            createdDate: new Date().toISOString(),
+          });
+        }
+        
+        // Create person skill
+        const proficiency = (proficiencies[skillIndex] || 'intermediate') as PersonSkill['proficiencyLevel'];
+        const experience = experiences[skillIndex] ? parseFloat(experiences[skillIndex]) : undefined;
+        const certificationList = certifications[skillIndex] ? [certifications[skillIndex]] : undefined;
+        
+        personSkills.push({
+          id: crypto.randomUUID(),
+          personId: personId,
+          skillId: skillId,
+          proficiencyLevel: proficiency,
+          yearsOfExperience: experience,
+          certifications: certificationList,
+        });
+      });
+    }
+  });
+  
+  return {
+    people,
+    teams: Array.from(teamsMap.values()),
+    divisions: Array.from(divisionsMap.values()),
+    skills: Array.from(skillsMap.values()),
+    personSkills,
+    roles: Array.from(rolesMap.values()),
+  };
+};
+
+export const parseTeamsWithDivisionsCSV = (text: string): {
+  teams: Team[];
+  divisions: Division[];
+} => {
+  const rows = parseCSV(text);
+  const headers = rows[0].map(h => h.toLowerCase().replace(/\s+/g, '_'));
+  const dataRows = rows.slice(1);
+  
+  const teamsMap = new Map<string, Team>();
+  const divisionsMap = new Map<string, Division>();
+  
+  dataRows.forEach(row => {
+    if (row.length < 2) return;
+    
+    const rowData: Record<string, string> = {};
+    headers.forEach((header, i) => {
+      rowData[header] = row[i] || '';
+    });
+    
+    const teamId = rowData.team_id;
+    const divisionId = rowData.division_id || (rowData.division_name ? `division-${rowData.division_name.toLowerCase().replace(/\s+/g, '-')}` : undefined);
+    
+    // Create division if specified
+    if (rowData.division_name && divisionId && !divisionsMap.has(divisionId)) {
+      divisionsMap.set(divisionId, {
+        id: divisionId,
+        name: rowData.division_name,
+        description: rowData.division_description || undefined,
+        budget: rowData.division_budget ? parseFloat(rowData.division_budget) : undefined,
+      });
+    }
+    
+    // Create team
+    teamsMap.set(teamId, {
+      id: teamId,
+      name: rowData.team_name,
+      divisionId: divisionId,
+      capacity: rowData.capacity ? parseFloat(rowData.capacity) : 40,
+    });
+  });
+  
+  return {
+    teams: Array.from(teamsMap.values()),
+    divisions: Array.from(divisionsMap.values()),
+  };
+};
+
+export const exportEnhancedPeopleCSV = (
+  people: Person[],
+  teams: Team[],
+  divisions: Division[],
+  roles: Role[],
+  skills: Skill[],
+  personSkills: PersonSkill[]
+): string => {
+  const headers = [
+    'name', 'email', 'role', 'team_name', 'team_id', 'employment_type',
+    'annual_salary', 'hourly_rate', 'daily_rate', 'start_date', 'end_date',
+    'is_active', 'skills', 'skill_proficiencies', 'years_experience',
+    'certifications', 'division_name', 'division_id', 'team_capacity'
+  ];
+  
+  const rows = people.map(person => {
+    const team = teams.find(t => t.id === person.teamId);
+    const division = team?.divisionId ? divisions.find(d => d.id === team.divisionId) : undefined;
+    const role = roles.find(r => r.id === person.roleId);
+    const personSkillsList = personSkills.filter(ps => ps.personId === person.id);
+    
+    const skillNames = personSkillsList.map(ps => {
+      const skill = skills.find(s => s.id === ps.skillId);
+      return skill?.name || 'Unknown';
+    }).join(';');
+    
+    const proficiencyLevels = personSkillsList.map(ps => ps.proficiencyLevel).join(';');
+    const experiences = personSkillsList.map(ps => ps.yearsOfExperience || '').join(';');
+    const certifications = personSkillsList.map(ps => ps.certifications?.join(',') || '').join(';');
+    
+    return [
+      person.name,
+      person.email,
+      role?.name || person.roleId,
+      team?.name || 'Unknown',
+      person.teamId,
+      person.employmentType,
+      person.annualSalary?.toString() || '',
+      person.contractDetails?.hourlyRate?.toString() || '',
+      person.contractDetails?.dailyRate?.toString() || '',
+      person.startDate,
+      person.endDate || '',
+      person.isActive.toString(),
+      skillNames,
+      proficiencyLevels,
+      experiences,
+      certifications,
+      division?.name || '',
+      division?.id || '',
+      team?.capacity?.toString() || ''
+    ];
+  });
+  
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+    
+  return csvContent;
+};
+
+export const exportTeamsWithDivisionsCSV = (
+  teams: Team[],
+  divisions: Division[]
+): string => {
+  const headers = [
+    'team_id', 'team_name', 'division_id', 'division_name',
+    'capacity', 'division_budget', 'division_description'
+  ];
+  
+  const rows = teams.map(team => {
+    const division = team.divisionId ? divisions.find(d => d.id === team.divisionId) : undefined;
+    
+    return [
+      team.id,
+      team.name,
+      division?.id || '',
+      division?.name || '',
+      team.capacity?.toString() || '40',
+      division?.budget?.toString() || '',
+      division?.description || ''
+    ];
+  });
+  
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+    
+  return csvContent;
+};
+
+export const downloadCSV = (content: string, filename: string) => {
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};

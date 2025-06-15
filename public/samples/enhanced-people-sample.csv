@@ -1,0 +1,7 @@
+
+name,email,role,team_name,team_id,employment_type,annual_salary,hourly_rate,daily_rate,start_date,end_date,is_active,skills,skill_proficiencies,years_experience,certifications,division_name,division_id,team_capacity
+John Smith,john.smith@company.com,Senior Developer,Frontend Team,team-1,permanent,120000,,,2023-01-15,,true,React;JavaScript;TypeScript,expert;advanced;advanced,5;7;3,React Certification,Engineering,div-eng,40
+Jane Doe,jane.doe@company.com,Product Manager,Product Team,team-2,permanent,110000,,,2022-06-01,,true,Product Management;Agile;Stakeholder Management,expert;advanced;expert,8;5;10,,Product,div-product,35
+Mike Johnson,mike.johnson@company.com,UX Designer,Design Team,team-3,contractor,,85,680,2023-02-01,2024-02-01,true,Figma;User Research;Prototyping,expert;advanced;expert,6;4;7,UX Certification,Design,div-design,32
+Sarah Wilson,sarah.wilson@company.com,Backend Developer,Backend Team,team-4,permanent,115000,,,2023-03-01,,true,Python;AWS;Database Design,advanced;expert;advanced,4;6;5,AWS Solutions Architect,Engineering,div-eng,40
+Tom Brown,tom.brown@company.com,DevOps Engineer,Platform Team,team-5,contractor,,120,960,2023-04-01,,true,Kubernetes;Docker;CI/CD;Terraform,expert;expert;advanced;advanced,7;8;5;4,Kubernetes Certification,Engineering,div-eng,38
