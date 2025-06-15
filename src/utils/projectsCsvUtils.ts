@@ -1,4 +1,3 @@
-
 import { Project, Epic, Milestone } from '@/types';
 
 export interface ProjectCSVRow {
@@ -318,7 +317,7 @@ export const exportProjectsCSV = (projects: Project[]): string => {
   });
   
   return [headers, ...rows]
-    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
     .join('\n');
 };
 
@@ -348,7 +347,7 @@ export const exportEpicsCSV = (epics: Epic[], projects: Project[]): string => {
   });
   
   return [headers, ...rows]
-    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
     .join('\n');
 };
 
@@ -356,6 +355,14 @@ export const exportCombinedProjectEpicCSV = (
   projects: Project[],
   epics: Epic[]
 ): string => {
+  console.log('Exporting combined projects and epics. Data received:', {
+    projectsCount: projects.length,
+    epicsCount: epics.length,
+  });
+  if (projects.length > 0) {
+      console.log('First project:', projects[0]);
+  }
+
   const headers = [
     'project_name', 'project_description', 'project_status', 'project_start_date',
     'project_end_date', 'project_budget', 'epic_name', 'epic_description',
@@ -406,7 +413,7 @@ export const exportCombinedProjectEpicCSV = (
   });
   
   return [headers, ...rows]
-    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
     .join('\n');
 };
 

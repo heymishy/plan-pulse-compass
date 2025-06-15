@@ -14,9 +14,7 @@ const EnhancedImportExport = () => {
     people, setPeople, 
     teams, setTeams, 
     divisions, setDivisions,
-    roles, setRoles,
-    skills, setSkills, 
-    personSkills, setPersonSkills 
+    roles, setRoles
   } = useApp();
   
   const [importStatus, setImportStatus] = useState<{
@@ -49,16 +47,10 @@ const EnhancedImportExport = () => {
         const newRoles = result.roles.filter(r => !existingIds.has(r.id));
         return [...prev, ...newRoles];
       });
-      setSkills(prev => {
-        const existingIds = new Set(prev.map(s => s.id));
-        const newSkills = result.skills.filter(s => !existingIds.has(s.id));
-        return [...prev, ...newSkills];
-      });
-      setPersonSkills(prev => [...prev, ...result.personSkills]);
       
       setImportStatus({
         type: 'success',
-        message: `Successfully imported ${result.people.length} people, ${result.teams.length} teams, ${result.divisions.length} divisions, ${result.skills.length} skills, and ${result.personSkills.length} skill assignments.`
+        message: `Successfully imported ${result.people.length} people, ${result.teams.length} teams, ${result.divisions.length} divisions, and ${result.roles.length} roles.`
       });
     } catch (error) {
       setImportStatus({
@@ -105,7 +97,7 @@ const EnhancedImportExport = () => {
   };
 
   const handleExportEnhancedPeople = () => {
-    const csvContent = exportEnhancedPeopleCSV(people, teams, divisions, roles, skills, personSkills);
+    const csvContent = exportEnhancedPeopleCSV(people, teams, divisions, roles);
     downloadCSV(csvContent, 'enhanced-people-export.csv');
   };
 
@@ -118,9 +110,9 @@ const EnhancedImportExport = () => {
     downloadCSV(content, filename);
   };
 
-  const sampleEnhancedPeople = `name,email,role,team_name,team_id,employment_type,annual_salary,hourly_rate,daily_rate,start_date,end_date,is_active,skills,skill_proficiencies,years_experience,certifications,division_name,division_id,team_capacity
-John Smith,john.smith@company.com,Senior Developer,Frontend Team,team-1,permanent,120000,,,2023-01-15,,true,React;JavaScript;TypeScript,expert;advanced;advanced,5;7;3,React Certification,Engineering,div-eng,40
-Jane Doe,jane.doe@company.com,Consultant,Advisory Team,team-2,contractor,,150,1200,2023-03-01,2024-03-01,true,Strategy;Business Analysis,expert;advanced,10;8,,Consulting,div-consult,35`;
+  const sampleEnhancedPeople = `name,email,role,team_name,team_id,employment_type,annual_salary,hourly_rate,daily_rate,start_date,end_date,is_active,division_name,division_id,team_capacity
+John Smith,john.smith@company.com,Senior Developer,Frontend Team,team-1,permanent,120000,,,2023-01-15,,true,Engineering,div-eng,40
+Jane Doe,jane.doe@company.com,Consultant,Advisory Team,team-2,contractor,,150,1200,2023-03-01,2024-03-01,true,Consulting,div-consult,35`;
 
   const sampleTeamsWithDivisions = `team_id,team_name,division_id,division_name,capacity,division_budget,division_description
 team-1,Frontend Team,div-eng,Engineering,40,500000,Software development and engineering

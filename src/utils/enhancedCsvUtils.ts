@@ -1,5 +1,4 @@
-
-import { Person, Role, Team, Project, Skill, PersonSkill, SkillCategory, Division } from '@/types';
+import { Person, Role, Team, Division, PersonSkill, Skill } from '@/types';
 
 export interface EnhancedPersonCSVRow {
   name: string;
@@ -62,8 +61,6 @@ export const parseEnhancedPeopleCSV = (text: string): {
   people: Person[];
   teams: Team[];
   divisions: Division[];
-  skills: Skill[];
-  personSkills: PersonSkill[];
   roles: Role[];
 } => {
   const rows = parseCSV(text);
@@ -73,9 +70,7 @@ export const parseEnhancedPeopleCSV = (text: string): {
   const people: Person[] = [];
   const teamsMap = new Map<string, Team>();
   const divisionsMap = new Map<string, Division>();
-  const skillsMap = new Map<string, Skill>();
   const rolesMap = new Map<string, Role>();
-  const personSkills: PersonSkill[] = [];
   
   dataRows.forEach((row, index) => {
     if (row.length < 5) return;
@@ -164,50 +159,12 @@ export const parseEnhancedPeopleCSV = (text: string): {
     }
     
     people.push(person);
-    
-    // Parse skills if provided
-    if (rowData.skills) {
-      const skillNames = rowData.skills.split(';').map(s => s.trim()).filter(Boolean);
-      const proficiencies = rowData.skill_proficiencies?.split(';').map(s => s.trim()).filter(Boolean) || [];
-      const experiences = rowData.years_experience?.split(';').map(s => s.trim()).filter(Boolean) || [];
-      const certifications = rowData.certifications?.split(';').map(s => s.trim()).filter(Boolean) || [];
-      
-      skillNames.forEach((skillName, skillIndex) => {
-        const skillId = `skill-${skillName.toLowerCase().replace(/\s+/g, '-')}`;
-        
-        // Create skill if not exists
-        if (!skillsMap.has(skillId)) {
-          skillsMap.set(skillId, {
-            id: skillId,
-            name: skillName,
-            category: 'other',
-            createdDate: new Date().toISOString(),
-          });
-        }
-        
-        // Create person skill
-        const proficiency = (proficiencies[skillIndex] || 'intermediate') as PersonSkill['proficiencyLevel'];
-        const experience = experiences[skillIndex] ? parseFloat(experiences[skillIndex]) : undefined;
-        const certificationList = certifications[skillIndex] ? [certifications[skillIndex]] : undefined;
-        
-        personSkills.push({
-          id: crypto.randomUUID(),
-          personId: personId,
-          skillId: skillId,
-          proficiencyLevel: proficiency,
-          yearsOfExperience: experience,
-          certifications: certificationList,
-        });
-      });
-    }
   });
   
   return {
     people,
     teams: Array.from(teamsMap.values()),
     divisions: Array.from(divisionsMap.values()),
-    skills: Array.from(skillsMap.values()),
-    personSkills,
     roles: Array.from(rolesMap.values()),
   };
 };
@@ -263,15 +220,19 @@ export const exportEnhancedPeopleCSV = (
   people: Person[],
   teams: Team[],
   divisions: Division[],
-  roles: Role[],
-  skills: Skill[],
-  personSkills: PersonSkill[]
+  roles: Role[]
 ): string => {
+  console.log('Exporting enhanced people. Data received:', {
+    peopleCount: people.length,
+    teamsCount: teams.length,
+    divisionsCount: divisions.length,
+    rolesCount: roles.length,
+  });
+
   const headers = [
     'name', 'email', 'role', 'team_name', 'team_id', 'employment_type',
     'annual_salary', 'hourly_rate', 'daily_rate', 'start_date', 'end_date',
-    'is_active', 'skills', 'skill_proficiencies', 'years_experience',
-    'certifications', 'division_name', 'division_id', 'team_capacity',
+    'is_active', 'division_name', 'division_id', 'team_capacity',
     'role_default_annual_salary', 'role_default_hourly_rate', 'role_default_daily_rate'
   ];
   
@@ -279,16 +240,6 @@ export const exportEnhancedPeopleCSV = (
     const team = teams.find(t => t.id === person.teamId);
     const division = team?.divisionId ? divisions.find(d => d.id === team.divisionId) : undefined;
     const role = roles.find(r => r.id === person.roleId);
-    const personSkillsList = personSkills.filter(ps => ps.personId === person.id);
-    
-    const skillNames = personSkillsList.map(ps => {
-      const skill = skills.find(s => s.id === ps.skillId);
-      return skill?.name || 'Unknown';
-    }).join(';');
-    
-    const proficiencyLevels = personSkillsList.map(ps => ps.proficiencyLevel).join(';');
-    const experiences = personSkillsList.map(ps => ps.yearsOfExperience || '').join(';');
-    const certifications = personSkillsList.map(ps => ps.certifications?.join(',') || '').join(';');
     
     return [
       person.name,
@@ -303,10 +254,6 @@ export const exportEnhancedPeopleCSV = (
       person.startDate,
       person.endDate || '',
       person.isActive.toString(),
-      skillNames,
-      proficiencyLevels,
-      experiences,
-      certifications,
       division?.name || '',
       division?.id || '',
       team?.capacity?.toString() || '',
@@ -317,7 +264,7 @@ export const exportEnhancedPeopleCSV = (
   });
   
   const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
     .join('\n');
     
   return csvContent;
@@ -347,7 +294,7 @@ export const exportTeamsWithDivisionsCSV = (
   });
   
   const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
     .join('\n');
     
   return csvContent;
@@ -370,7 +317,7 @@ export const exportRolesCSV = (roles: Role[]): string => {
   ]);
   
   const csvContent = [headers, ...rows]
-    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
     .join('\n');
     
   return csvContent;
