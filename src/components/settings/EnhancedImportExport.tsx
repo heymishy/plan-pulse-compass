@@ -104,34 +104,6 @@ const EnhancedImportExport = () => {
     event.target.value = '';
   };
 
-  const handleSkillsImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const result = parseSkillsCSV(text);
-      
-      setSkills(prev => {
-        const existingIds = new Set(prev.map(s => s.id));
-        const newSkills = result.filter(s => !existingIds.has(s.id));
-        return [...prev, ...newSkills];
-      });
-      
-      setImportStatus({
-        type: 'success',
-        message: `Successfully imported ${result.length} skills.`
-      });
-    } catch (error) {
-      setImportStatus({
-        type: 'error',
-        message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
-    }
-    
-    event.target.value = '';
-  };
-
   const handleExportEnhancedPeople = () => {
     const csvContent = exportEnhancedPeopleCSV(people, teams, divisions, roles, skills, personSkills);
     downloadCSV(csvContent, 'enhanced-people-export.csv');
@@ -140,11 +112,6 @@ const EnhancedImportExport = () => {
   const handleExportTeamsWithDivisions = () => {
     const csvContent = exportTeamsWithDivisionsCSV(teams, divisions);
     downloadCSV(csvContent, 'teams-divisions-export.csv');
-  };
-
-  const handleExportSkills = () => {
-    const csvContent = exportSkillsCSV(skills);
-    downloadCSV(csvContent, 'skills-export.csv');
   };
 
   const downloadSampleCSV = (filename: string, content: string) => {
@@ -159,12 +126,6 @@ Jane Doe,jane.doe@company.com,Consultant,Advisory Team,team-2,contractor,,150,12
 team-1,Frontend Team,div-eng,Engineering,40,500000,Software development and engineering
 team-2,Backend Team,div-eng,Engineering,40,500000,Software development and engineering
 team-3,Design Team,div-design,Design,35,200000,User experience and visual design`;
-
-  const sampleSkills = `skill_name,category,description
-React,framework,JavaScript library for building user interfaces
-Python,programming-language,High-level programming language
-AWS,platform,Amazon Web Services cloud platform
-UX Design,domain-knowledge,User experience design methodology`;
 
   return (
     <Card>
@@ -245,31 +206,6 @@ UX Design,domain-knowledge,User experience design methodology`;
                   onChange={handleTeamsImport}
                 />
               </div>
-
-              {/* Skills Import */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label htmlFor="skillsCSV">Skills CSV</Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => downloadSampleCSV('skills-sample.csv', sampleSkills)}
-                    className="flex items-center"
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download Sample
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500 mb-2">
-                  Skills with categories and descriptions
-                </p>
-                <Input
-                  id="skillsCSV"
-                  type="file"
-                  accept=".csv"
-                  onChange={handleSkillsImport}
-                />
-              </div>
             </div>
           </TabsContent>
           
@@ -291,20 +227,6 @@ UX Design,domain-knowledge,User experience design methodology`;
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export Teams & Divisions
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="flex items-center justify-center"
-                onClick={handleExportSkills}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export Skills
-              </Button>
-              
-              <Button variant="outline" className="flex items-center justify-center">
-                <Download className="h-4 w-4 mr-2" />
-                Export Skills Matrix
               </Button>
             </div>
           </TabsContent>
