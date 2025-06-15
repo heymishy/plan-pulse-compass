@@ -17,12 +17,6 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
   const [storedValue, setStoredValue] = useState<T>(initialValue);
   const [isLoading, setIsLoading] = useState(true);
 
-  const getDerivedKey = useCallback(async () => {
-    // Use storage key as part of salt for uniqueness per item
-    const salt = new TextEncoder().encode(key);
-    return deriveKey(encryptionKey, salt);
-  }, [key, encryptionKey]);
-
   useEffect(() => {
     if (!isLocalStorageAvailable()) {
       console.warn('localStorage is not available, using initial value');
@@ -35,13 +29,13 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
     const loadValue = async () => {
       setIsLoading(true);
       try {
+        const derivedKey = await deriveKey(encryptionKey, new TextEncoder().encode(key));
         const item = window.localStorage.getItem(key);
         if (item) {
           const parsedItem = JSON.parse(item);
           
           if (parsedItem && typeof parsedItem.iv === 'string' && typeof parsedItem.encrypted === 'string') {
             // Data is already encrypted, decrypt it
-            const derivedKey = await getDerivedKey();
             const decrypted = await decryptData(parsedItem, derivedKey);
             if (isMounted) {
               setStoredValue(JSON.parse(decrypted));
@@ -53,8 +47,6 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
             if (isMounted) {
               setStoredValue(parsedItem);
             }
-            // Asynchronously encrypt and update localStorage
-            const derivedKey = await getDerivedKey();
             const encrypted = await encryptData(JSON.stringify(parsedItem), derivedKey);
             window.localStorage.setItem(key, JSON.stringify(encrypted));
             console.log(`Successfully migrated and encrypted data for key "${key}"`);
@@ -79,7 +71,7 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
     return () => {
       isMounted = false;
     };
-  }, [key, getDerivedKey]);
+  }, [key, encryptionKey]);
 
   const setValue = useCallback(async (value: T | ((val: T) => T)) => {
     try {
@@ -87,7 +79,7 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
       setStoredValue(valueToStore);
 
       if (isLocalStorageAvailable()) {
-        const derivedKey = await getDerivedKey();
+        const derivedKey = await deriveKey(encryptionKey, new TextEncoder().encode(key));
         const encrypted = await encryptData(JSON.stringify(valueToStore), derivedKey);
         window.localStorage.setItem(key, JSON.stringify(encrypted));
         console.log(`Successfully encrypted and saved data for key "${key}"`);
@@ -98,7 +90,7 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
     {
       console.error(`Error saving encrypted data to localStorage key "${key}":`, error);
     }
-  }, [storedValue, getDerivedKey, key]);
+  }, [storedValue, key, encryptionKey]);
 
   return [storedValue, setValue, isLoading] as const;
 }
