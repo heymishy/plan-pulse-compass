@@ -3,7 +3,9 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import { Role } from '@/types';
+import { calculatePersonCost } from '@/utils/financialCalculations';
 
 interface PersonEmploymentFormProps {
   employmentType: 'permanent' | 'contractor';
@@ -43,13 +45,67 @@ const PersonEmploymentForm: React.FC<PersonEmploymentFormProps> = ({
       if (contractRateType === 'hourly') {
         return selectedRole.defaultHourlyRate ? 
           `Default: $${selectedRole.defaultHourlyRate}/hour` : 
-          `Default: $${selectedRole.defaultRate}/hour`;
+          `Fallback: $${selectedRole.defaultRate}/hour`;
       } else {
         return selectedRole.defaultDailyRate ? 
           `Default: $${selectedRole.defaultDailyRate}/day` : 
           "Enter daily rate";
       }
     }
+  };
+
+  const getRateSourceInfo = () => {
+    if (!selectedRole) return null;
+
+    // Create a mock person to test the rate calculation
+    const mockPerson = {
+      id: 'mock',
+      name: 'Mock Person',
+      email: 'mock@example.com',
+      roleId: selectedRole.id,
+      teamId: 'mock-team',
+      isActive: true,
+      employmentType,
+      startDate: new Date().toISOString().split('T')[0],
+      annualSalary: employmentType === 'permanent' ? annualSalary : undefined,
+      contractDetails: employmentType === 'contractor' ? {
+        hourlyRate: contractRateType === 'hourly' ? hourlyRate : undefined,
+        dailyRate: contractRateType === 'daily' ? dailyRate : undefined,
+      } : undefined,
+    };
+
+    const costCalc = calculatePersonCost(mockPerson, selectedRole);
+    
+    let rateText = '';
+    let badgeVariant: 'default' | 'secondary' | 'destructive' = 'default';
+    
+    switch (costCalc.rateSource) {
+      case 'personal':
+        rateText = `Using personal rate: $${costCalc.effectiveRate}${costCalc.rateType === 'annual' ? '/year' : costCalc.rateType === 'daily' ? '/day' : '/hour'}`;
+        badgeVariant = 'default';
+        break;
+      case 'role-default':
+        rateText = `Using role default: $${costCalc.effectiveRate}${costCalc.rateType === 'annual' ? '/year' : costCalc.rateType === 'daily' ? '/day' : '/hour'}`;
+        badgeVariant = 'secondary';
+        break;
+      case 'legacy-fallback':
+        rateText = `Using legacy fallback: $${costCalc.effectiveRate}/hour`;
+        badgeVariant = 'destructive';
+        break;
+    }
+
+    return (
+      <div className="mt-2">
+        <Badge variant={badgeVariant} className="text-xs">
+          {rateText}
+        </Badge>
+        {costCalc.rateSource === 'legacy-fallback' && (
+          <p className="text-xs text-yellow-600 mt-1">
+            Consider setting role-specific rates in Financial Settings
+          </p>
+        )}
+      </div>
+    );
   };
 
   const handleContractRateTypeChange = (newType: 'hourly' | 'daily') => {
@@ -99,6 +155,7 @@ const PersonEmploymentForm: React.FC<PersonEmploymentFormProps> = ({
           <p className="text-xs text-gray-500 mt-1">
             Leave empty to use role default salary
           </p>
+          {getRateSourceInfo()}
         </div>
       ) : (
         <div className="space-y-4">
@@ -157,6 +214,7 @@ const PersonEmploymentForm: React.FC<PersonEmploymentFormProps> = ({
           <p className="text-xs text-gray-500">
             Leave empty to use role default rate
           </p>
+          {getRateSourceInfo()}
         </div>
       )}
     </div>

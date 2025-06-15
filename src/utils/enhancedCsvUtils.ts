@@ -1,4 +1,3 @@
-
 import { Person, Role, Team, Project, Skill, PersonSkill, SkillCategory, Division } from '@/types';
 
 export interface EnhancedPersonCSVRow {
@@ -90,17 +89,21 @@ export const parseEnhancedPeopleCSV = (text: string): {
     const divisionId = rowData.division_id || (rowData.division_name ? `division-${rowData.division_name.toLowerCase().replace(/\s+/g, '-')}` : undefined);
     const roleId = `role-${rowData.role?.toLowerCase().replace(/\s+/g, '-')}`;
     
-    // Create role if not exists
+    // Create role if not exists with enhanced rate support
     if (rowData.role && !rolesMap.has(roleId)) {
-      const defaultRate = parseFloat(rowData.hourly_rate || rowData.daily_rate || '100');
+      const hourlyRate = parseFloat(rowData.role_default_hourly_rate || rowData.hourly_rate || '0');
+      const dailyRate = parseFloat(rowData.role_default_daily_rate || rowData.daily_rate || '0');
+      const annualSalary = parseFloat(rowData.role_default_annual_salary || rowData.annual_salary || '0');
+      const legacyRate = parseFloat(rowData.role_default_rate || hourlyRate || '100');
+
       rolesMap.set(roleId, {
         id: roleId,
         name: rowData.role,
-        rateType: rowData.hourly_rate ? 'hourly' : rowData.daily_rate ? 'daily' : 'hourly',
-        defaultRate: defaultRate,
-        defaultHourlyRate: rowData.hourly_rate ? defaultRate : undefined,
-        defaultDailyRate: rowData.daily_rate ? defaultRate : undefined,
-        defaultAnnualSalary: rowData.annual_salary ? parseFloat(rowData.annual_salary) : undefined,
+        rateType: hourlyRate > 0 ? 'hourly' : dailyRate > 0 ? 'daily' : 'hourly',
+        defaultRate: legacyRate,
+        defaultHourlyRate: hourlyRate > 0 ? hourlyRate : undefined,
+        defaultDailyRate: dailyRate > 0 ? dailyRate : undefined,
+        defaultAnnualSalary: annualSalary > 0 ? annualSalary : undefined,
       });
     }
     
@@ -124,7 +127,7 @@ export const parseEnhancedPeopleCSV = (text: string): {
       });
     }
     
-    // Parse employment details
+    // Parse employment details with enhanced rate handling
     const employmentType = (rowData.employment_type?.toLowerCase() === 'contractor' ? 'contractor' : 'permanent') as 'permanent' | 'contractor';
     const isActive = rowData.is_active?.toLowerCase() !== 'false' && rowData.is_active?.toLowerCase() !== '0';
     
@@ -141,14 +144,22 @@ export const parseEnhancedPeopleCSV = (text: string): {
       endDate: rowData.end_date || undefined,
     };
     
-    // Add financial details based on employment type
-    if (employmentType === 'permanent' && rowData.annual_salary) {
-      person.annualSalary = parseFloat(rowData.annual_salary);
+    // Add financial details based on employment type with priority to personal rates
+    if (employmentType === 'permanent') {
+      const personalSalary = parseFloat(rowData.annual_salary || '0');
+      if (personalSalary > 0) {
+        person.annualSalary = personalSalary;
+      }
     } else if (employmentType === 'contractor') {
-      person.contractDetails = {
-        hourlyRate: rowData.hourly_rate ? parseFloat(rowData.hourly_rate) : undefined,
-        dailyRate: rowData.daily_rate ? parseFloat(rowData.daily_rate) : undefined,
-      };
+      const personalHourly = parseFloat(rowData.hourly_rate || '0');
+      const personalDaily = parseFloat(rowData.daily_rate || '0');
+      
+      if (personalHourly > 0 || personalDaily > 0) {
+        person.contractDetails = {
+          hourlyRate: personalHourly > 0 ? personalHourly : undefined,
+          dailyRate: personalDaily > 0 ? personalDaily : undefined,
+        };
+      }
     }
     
     people.push(person);
@@ -259,7 +270,8 @@ export const exportEnhancedPeopleCSV = (
     'name', 'email', 'role', 'team_name', 'team_id', 'employment_type',
     'annual_salary', 'hourly_rate', 'daily_rate', 'start_date', 'end_date',
     'is_active', 'skills', 'skill_proficiencies', 'years_experience',
-    'certifications', 'division_name', 'division_id', 'team_capacity'
+    'certifications', 'division_name', 'division_id', 'team_capacity',
+    'role_default_annual_salary', 'role_default_hourly_rate', 'role_default_daily_rate'
   ];
   
   const rows = people.map(person => {
@@ -296,7 +308,10 @@ export const exportEnhancedPeopleCSV = (
       certifications,
       division?.name || '',
       division?.id || '',
-      team?.capacity?.toString() || ''
+      team?.capacity?.toString() || '',
+      role?.defaultAnnualSalary?.toString() || '',
+      role?.defaultHourlyRate?.toString() || '',
+      role?.defaultDailyRate?.toString() || ''
     ];
   });
   
@@ -335,6 +350,53 @@ export const exportTeamsWithDivisionsCSV = (
     .join('\n');
     
   return csvContent;
+};
+
+export const exportRolesCSV = (roles: Role[]): string => {
+  const headers = [
+    'role_id', 'role_name', 'description', 'default_annual_salary',
+    'default_hourly_rate', 'default_daily_rate', 'legacy_default_rate'
+  ];
+  
+  const rows = roles.map(role => [
+    role.id,
+    role.name,
+    role.description || '',
+    role.defaultAnnualSalary?.toString() || '',
+    role.defaultHourlyRate?.toString() || '',
+    role.defaultDailyRate?.toString() || '',
+    role.defaultRate?.toString() || ''
+  ]);
+  
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+    
+  return csvContent;
+};
+
+export const parseRolesCSV = (text: string): Role[] => {
+  const rows = parseCSV(text);
+  const headers = rows[0].map(h => h.toLowerCase().replace(/\s+/g, '_'));
+  const dataRows = rows.slice(1);
+  
+  return dataRows.map((row, index) => {
+    const rowData: Record<string, string> = {};
+    headers.forEach((header, i) => {
+      rowData[header] = row[i] || '';
+    });
+    
+    return {
+      id: rowData.role_id || `role-${index + 1}`,
+      name: rowData.role_name || rowData.name || '',
+      description: rowData.description || '',
+      rateType: 'hourly' as const,
+      defaultRate: parseFloat(rowData.legacy_default_rate || rowData.default_rate || '0'),
+      defaultAnnualSalary: parseFloat(rowData.default_annual_salary || '0') || undefined,
+      defaultHourlyRate: parseFloat(rowData.default_hourly_rate || '0') || undefined,
+      defaultDailyRate: parseFloat(rowData.default_daily_rate || '0') || undefined,
+    };
+  }).filter(role => role.name.trim() !== '');
 };
 
 export const downloadCSV = (content: string, filename: string) => {

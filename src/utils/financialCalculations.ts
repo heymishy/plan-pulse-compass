@@ -12,27 +12,70 @@ export interface PersonCostCalculation {
   costPerWeek: number;
   costPerMonth: number;
   costPerYear: number;
+  rateSource: 'personal' | 'role-default' | 'legacy-fallback';
+  effectiveRate: number;
+  rateType: 'hourly' | 'daily' | 'annual';
 }
 
 export const calculatePersonCost = (person: Person, role: Role): PersonCostCalculation => {
   let costPerHour = 0;
+  let rateSource: 'personal' | 'role-default' | 'legacy-fallback' = 'legacy-fallback';
+  let effectiveRate = 0;
+  let rateType: 'hourly' | 'daily' | 'annual' = 'hourly';
 
   if (person.employmentType === 'permanent') {
-    // Use individual salary if set, otherwise use role default
-    const annualSalary = person.annualSalary || role.defaultAnnualSalary || 0;
-    costPerHour = annualSalary / (WORKING_DAYS_PER_YEAR * 8); // Assuming 8 hours per day
-  } else if (person.employmentType === 'contractor') {
-    if (person.contractDetails?.hourlyRate) {
-      costPerHour = person.contractDetails.hourlyRate;
-    } else if (person.contractDetails?.dailyRate) {
-      costPerHour = person.contractDetails.dailyRate / 8;
-    } else if (role.defaultHourlyRate) {
-      costPerHour = role.defaultHourlyRate;
-    } else if (role.defaultDailyRate) {
-      costPerHour = role.defaultDailyRate / 8;
-    } else {
-      // Fallback to legacy rate
+    // Priority 1: Individual salary
+    if (person.annualSalary && person.annualSalary > 0) {
+      costPerHour = person.annualSalary / (WORKING_DAYS_PER_YEAR * 8);
+      rateSource = 'personal';
+      effectiveRate = person.annualSalary;
+      rateType = 'annual';
+    }
+    // Priority 2: Role default annual salary
+    else if (role.defaultAnnualSalary && role.defaultAnnualSalary > 0) {
+      costPerHour = role.defaultAnnualSalary / (WORKING_DAYS_PER_YEAR * 8);
+      rateSource = 'role-default';
+      effectiveRate = role.defaultAnnualSalary;
+      rateType = 'annual';
+    }
+    // Priority 3: Legacy fallback
+    else if (role.defaultRate && role.defaultRate > 0) {
       costPerHour = role.defaultRate;
+      rateSource = 'legacy-fallback';
+      effectiveRate = role.defaultRate;
+      rateType = 'hourly';
+    }
+  } else if (person.employmentType === 'contractor') {
+    // Priority 1: Individual contract rates
+    if (person.contractDetails?.hourlyRate && person.contractDetails.hourlyRate > 0) {
+      costPerHour = person.contractDetails.hourlyRate;
+      rateSource = 'personal';
+      effectiveRate = person.contractDetails.hourlyRate;
+      rateType = 'hourly';
+    } else if (person.contractDetails?.dailyRate && person.contractDetails.dailyRate > 0) {
+      costPerHour = person.contractDetails.dailyRate / 8;
+      rateSource = 'personal';
+      effectiveRate = person.contractDetails.dailyRate;
+      rateType = 'daily';
+    }
+    // Priority 2: Role default contractor rates
+    else if (role.defaultHourlyRate && role.defaultHourlyRate > 0) {
+      costPerHour = role.defaultHourlyRate;
+      rateSource = 'role-default';
+      effectiveRate = role.defaultHourlyRate;
+      rateType = 'hourly';
+    } else if (role.defaultDailyRate && role.defaultDailyRate > 0) {
+      costPerHour = role.defaultDailyRate / 8;
+      rateSource = 'role-default';
+      effectiveRate = role.defaultDailyRate;
+      rateType = 'daily';
+    }
+    // Priority 3: Legacy fallback
+    else if (role.defaultRate && role.defaultRate > 0) {
+      costPerHour = role.defaultRate;
+      rateSource = 'legacy-fallback';
+      effectiveRate = role.defaultRate;
+      rateType = 'hourly';
     }
   }
 
@@ -43,6 +86,9 @@ export const calculatePersonCost = (person: Person, role: Role): PersonCostCalcu
     costPerWeek: costPerHour * 8 * WORKING_DAYS_PER_WEEK,
     costPerMonth: costPerHour * 8 * WORKING_DAYS_PER_MONTH,
     costPerYear: costPerHour * 8 * WORKING_DAYS_PER_YEAR,
+    rateSource,
+    effectiveRate,
+    rateType,
   };
 };
 
@@ -113,7 +159,10 @@ export const calculateProjectCost = (
           personId: person.id,
           personName: person.name,
           totalCost: 0,
-          allocations: []
+          allocations: [],
+          rateSource: personCost.rateSource,
+          effectiveRate: personCost.effectiveRate,
+          rateType: personCost.rateType
         };
         breakdown.push(breakdownEntry);
       }
@@ -129,4 +178,33 @@ export const calculateProjectCost = (
   });
 
   return { totalCost, breakdown };
+};
+
+export const validateRateConfiguration = (person: Person, role: Role): {
+  isValid: boolean;
+  warnings: string[];
+  suggestions: string[];
+} => {
+  const warnings: string[] = [];
+  const suggestions: string[] = [];
+  let isValid = true;
+
+  if (person.employmentType === 'permanent') {
+    if (!person.annualSalary && !role.defaultAnnualSalary && !role.defaultRate) {
+      warnings.push('No salary information available');
+      suggestions.push('Set either personal annual salary or role default salary');
+      isValid = false;
+    }
+  } else if (person.employmentType === 'contractor') {
+    const hasPersonalRate = person.contractDetails?.hourlyRate || person.contractDetails?.dailyRate;
+    const hasRoleDefault = role.defaultHourlyRate || role.defaultDailyRate;
+    
+    if (!hasPersonalRate && !hasRoleDefault && !role.defaultRate) {
+      warnings.push('No contractor rate information available');
+      suggestions.push('Set either personal hourly/daily rate or role default rates');
+      isValid = false;
+    }
+  }
+
+  return { isValid, warnings, suggestions };
 };

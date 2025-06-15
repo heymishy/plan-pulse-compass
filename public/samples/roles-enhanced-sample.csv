@@ -1,0 +1,12 @@
+
+role_id,role_name,description,default_annual_salary,default_hourly_rate,default_daily_rate,legacy_default_rate
+role-senior-developer,Senior Developer,Senior software developer with 5+ years experience,180000,120,960,120
+role-developer,Developer,Mid-level software developer,120000,85,680,85
+role-junior-developer,Junior Developer,Entry-level developer with 0-2 years experience,80000,65,520,65
+role-product-manager,Product Manager,Product strategy and roadmap management,150000,110,880,110
+role-designer,UX/UI Designer,User experience and interface design,110000,90,720,90
+role-qa-engineer,QA Engineer,Quality assurance and testing,100000,75,600,75
+role-devops-engineer,DevOps Engineer,Infrastructure and deployment automation,140000,105,840,105
+role-tech-lead,Technical Lead,Technical leadership and architecture,200000,140,1120,140
+role-data-scientist,Data Scientist,Data analysis and machine learning,160000,115,920,115
+role-security-engineer,Security Engineer,Cybersecurity and risk management,170000,125,1000,125
