@@ -38,6 +38,7 @@ interface GridAllocation {
   percentage: number;
   epicId?: string;
   runWorkCategoryId?: string;
+  projectId?: string;
 }
 
 const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
@@ -77,7 +78,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
   const getGridKey = (teamId: string, iterationNumber: number, workId: string) => 
     `${teamId}-${iterationNumber}-${workId}`;
 
-  const handlePercentageChange = (teamId: string, iterationNumber: number, workId: string, value: string, workData: {epicId?: string, runWorkCategoryId?: string}) => {
+  const handlePercentageChange = (teamId: string, iterationNumber: number, workId: string, value: string, workData: {epicId?: string, runWorkCategoryId?: string, projectId?: string}) => {
     const key = getGridKey(teamId, iterationNumber, workId);
     const percentage = parseFloat(value) || 0;
     
@@ -93,28 +94,30 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
           iterationNumber, 
           percentage,
           epicId: workData.epicId,
-          runWorkCategoryId: workData.runWorkCategoryId
+          runWorkCategoryId: workData.runWorkCategoryId,
+          projectId: workData.projectId
         }
       }));
     }
   };
 
-  const getExistingAllocation = (teamId: string, iterationNumber: number, epicId?: string, runWorkCategoryId?: string) => {
+  const getExistingAllocation = (teamId: string, iterationNumber: number, epicId?: string, runWorkCategoryId?: string, projectId?: string) => {
     return allocations.find(a => 
       a.teamId === teamId && 
       a.cycleId === cycleId && 
       a.iterationNumber === iterationNumber &&
       ((epicId && a.epicId === epicId) ||
-       (runWorkCategoryId && a.runWorkCategoryId === runWorkCategoryId))
+       (runWorkCategoryId && a.runWorkCategoryId === runWorkCategoryId) ||
+       (projectId && a.epicId && epics.find(e => e.id === a.epicId && e.projectId === projectId)))
     );
   };
 
-  const getCurrentValue = (teamId: string, iterationNumber: number, workId: string, epicId?: string, runWorkCategoryId?: string) => {
+  const getCurrentValue = (teamId: string, iterationNumber: number, workId: string, epicId?: string, runWorkCategoryId?: string, projectId?: string) => {
     const key = getGridKey(teamId, iterationNumber, workId);
     const gridValue = gridAllocations[key];
     if (gridValue) return gridValue.percentage.toString();
     
-    const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId);
+    const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId, projectId);
     return existing ? existing.percentage.toString() : '';
   };
 
@@ -149,8 +152,14 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
     const newAllocations: Allocation[] = [];
     const updatedAllocations: Allocation[] = [];
 
-    Object.values(gridAllocations).forEach(({ teamId, iterationNumber, percentage, epicId, runWorkCategoryId }) => {
-      const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId);
+    Object.values(gridAllocations).forEach(({ teamId, iterationNumber, percentage, epicId, runWorkCategoryId, projectId }) => {
+      // For project allocations, we don't create direct project allocations in the current data model
+      // Projects are tracked through their epics, so we skip project-only allocations for now
+      if (projectId && !epicId && !runWorkCategoryId) {
+        return;
+      }
+
+      const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId, projectId);
       
       const allocationData: Allocation = {
         id: existing?.id || crypto.randomUUID(),
@@ -424,7 +433,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                             step="1"
                             className="w-20 text-center"
                             placeholder="%"
-                            value={getCurrentValue(selectedTeamId, iterationNumber, workId, undefined, undefined)}
+                            value={getCurrentValue(selectedTeamId, iterationNumber, workId, undefined, undefined, project.id)}
                             onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, workId, e.target.value, { projectId: project.id })}
                           />
                         </TableCell>
