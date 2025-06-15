@@ -95,6 +95,62 @@ export interface Allocation {
   notes?: string;
 }
 
+// NEW: Tracking system types
+export interface ActualAllocation {
+  id: string;
+  plannedAllocationId?: string; // Links to original Allocation
+  teamId: string;
+  cycleId: string;
+  iterationNumber: number;
+  actualPercentage: number;
+  actualEpicId?: string;
+  actualRunWorkCategoryId?: string;
+  varianceReason?: string;
+  enteredDate: string;
+  enteredBy?: string;
+}
+
+export interface IterationReview {
+  id: string;
+  cycleId: string;
+  iterationNumber: number;
+  reviewDate: string;
+  status: 'not-started' | 'in-progress' | 'completed';
+  completedEpics: string[];
+  completedMilestones: string[];
+  notes?: string;
+  completedBy?: string;
+}
+
+export interface VarianceAnalysis {
+  allocationId: string;
+  teamId: string;
+  iterationNumber: number;
+  plannedPercentage: number;
+  actualPercentage: number;
+  variance: number; // actual - planned
+  varianceType: 'over' | 'under' | 'on-track';
+  impactLevel: 'low' | 'medium' | 'high';
+}
+
+export type VarianceReasonType = 
+  | 'production-support'
+  | 'scope-change' 
+  | 'resource-unavailable'
+  | 'technical-blocker'
+  | 'priority-shift'
+  | 'other';
+
+export interface IterationSnapshot {
+  id: string;
+  cycleId: string;
+  iterationNumber: number;
+  snapshotDate: string;
+  plannedAllocations: Allocation[];
+  plannedMilestones: string[];
+  plannedEpics: string[];
+}
+
 export interface Cycle {
   id: string;
   type: 'annual' | 'quarterly' | 'monthly' | 'iteration';

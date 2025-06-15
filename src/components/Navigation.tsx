@@ -12,7 +12,8 @@ import {
   FolderOpen,
   Target,
   Share2,
-  UserCheck
+  UserCheck,
+  TrendingUp
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -25,6 +26,7 @@ const Navigation = () => {
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: '/planning', icon: Calendar, label: 'Planning' },
     { path: '/allocations', icon: CalendarCheck, label: 'Allocations' },
+    { path: '/tracking', icon: TrendingUp, label: 'Tracking' },
     { path: '/milestones', icon: Target, label: 'Milestones' },
     { path: '/canvas', icon: Share2, label: 'Canvas' },
     { path: '/reports', icon: BarChart3, label: 'Reports' },

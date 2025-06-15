@@ -1,7 +1,10 @@
 
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useEncryptedLocalStorage, useLocalStorage } from '@/hooks/useLocalStorage';
-import { Person, Role, Team, Project, Allocation, Cycle, AppConfig, Division, Epic, RunWorkCategory } from '@/types';
+import { 
+  Person, Role, Team, Project, Allocation, Cycle, AppConfig, Division, Epic, RunWorkCategory,
+  ActualAllocation, IterationReview, IterationSnapshot
+} from '@/types';
 
 interface AppContextType {
   // Data
@@ -23,6 +26,14 @@ interface AppContextType {
   setCycles: (cycles: Cycle[] | ((prev: Cycle[]) => Cycle[])) => void;
   runWorkCategories: RunWorkCategory[];
   setRunWorkCategories: (categories: RunWorkCategory[] | ((prev: RunWorkCategory[]) => RunWorkCategory[])) => void;
+  
+  // Tracking data
+  actualAllocations: ActualAllocation[];
+  setActualAllocations: (allocations: ActualAllocation[] | ((prev: ActualAllocation[]) => ActualAllocation[])) => void;
+  iterationReviews: IterationReview[];
+  setIterationReviews: (reviews: IterationReview[] | ((prev: IterationReview[]) => IterationReview[])) => void;
+  iterationSnapshots: IterationSnapshot[];
+  setIterationSnapshots: (snapshots: IterationSnapshot[] | ((prev: IterationSnapshot[]) => IterationSnapshot[])) => void;
   
   // Config
   config: AppConfig | null;
@@ -61,6 +72,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [config, setConfig] = useLocalStorage<AppConfig | null>('planning-config', null);
   const [isSetupComplete, setIsSetupComplete] = useLocalStorage<boolean>('planning-setup-complete', false);
 
+  // Tracking data
+  const [actualAllocations, setActualAllocations] = useLocalStorage<ActualAllocation[]>('planning-actual-allocations', []);
+  const [iterationReviews, setIterationReviews] = useLocalStorage<IterationReview[]>('planning-iteration-reviews', []);
+  const [iterationSnapshots, setIterationSnapshots] = useLocalStorage<IterationSnapshot[]>('planning-iteration-snapshots', []);
+
   // Debug logging for context state changes
   useEffect(() => {
     console.log('AppProvider: Context state updated:', {
@@ -73,10 +89,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       allocationsCount: allocations.length,
       cyclesCount: cycles.length,
       runWorkCategoriesCount: runWorkCategories.length,
+      actualAllocationsCount: actualAllocations.length,
+      iterationReviewsCount: iterationReviews.length,
+      iterationSnapshotsCount: iterationSnapshots.length,
       hasConfig: !!config,
       isSetupComplete,
     });
-  }, [people, projects, roles, teams, divisions, epics, allocations, cycles, runWorkCategories, config, isSetupComplete]);
+  }, [people, projects, roles, teams, divisions, epics, allocations, cycles, runWorkCategories, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete]);
 
   const value: AppContextType = {
     people, setPeople,
@@ -88,6 +107,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     allocations, setAllocations,
     cycles, setCycles,
     runWorkCategories, setRunWorkCategories,
+    actualAllocations, setActualAllocations,
+    iterationReviews, setIterationReviews,
+    iterationSnapshots, setIterationSnapshots,
     config, setConfig,
     isSetupComplete, setIsSetupComplete,
   };

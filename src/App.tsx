@@ -14,6 +14,7 @@ import Planning from "@/pages/Planning";
 import Setup from "@/pages/Setup";
 import Settings from "@/pages/Settings";
 import Allocations from "@/pages/Allocations";
+import Tracking from "@/pages/Tracking";
 import Milestones from "@/pages/Milestones";
 import Reports from "@/pages/Reports";
 import Canvas from "@/pages/Canvas";
@@ -39,6 +40,7 @@ const App = () => (
               <Route path="/setup" element={<Setup />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/allocations" element={<Allocations />} />
+              <Route path="/tracking" element={<Tracking />} />
               <Route path="/milestones" element={<Milestones />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/canvas" element={<Canvas />} />
