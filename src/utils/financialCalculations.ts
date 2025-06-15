@@ -121,6 +121,28 @@ export const calculateTeamMonthlyCost = (
   return monthlyCost;
 };
 
+export const calculateTeamQuarterlyCost = (
+  teamMembers: Person[],
+  roles: Role[]
+): number => {
+  return calculateTeamMonthlyCost(teamMembers, roles) * 3;
+};
+
+export const calculateTeamAnnualCost = (
+  teamMembers: Person[],
+  roles: Role[]
+): number => {
+  let annualCost = 0;
+  teamMembers.forEach(person => {
+    const role = roles.find(r => r.id === person.roleId);
+    if (role) {
+      const personCost = calculatePersonCost(person, role);
+      annualCost += personCost.costPerYear;
+    }
+  });
+  return annualCost;
+};
+
 export const calculateAllocationCost = (
   allocation: Allocation,
   cycle: Cycle,

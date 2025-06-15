@@ -3,6 +3,7 @@ import React from 'react';
 import { useApp } from '@/context/AppContext';
 import FinancialsHeader from '@/components/financials/FinancialsHeader';
 import ProjectFinancialsTable from '@/components/financials/ProjectFinancialsTable';
+import TeamFinancialsTable from '@/components/financials/TeamFinancialsTable';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Financials = () => {
@@ -18,12 +19,20 @@ const Financials = () => {
                     <div className="space-y-4">
                         <Skeleton className="h-12 w-1/4" />
                         <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-48 w-full" />
                     </div>
                 ) : (
-                    <ProjectFinancialsTable
-                        projects={projects}
-                        appData={{ epics, allocations, cycles, people, roles, teams, config }}
-                    />
+                    <>
+                        <ProjectFinancialsTable
+                            projects={projects}
+                            appData={{ epics, allocations, cycles, people, roles, teams, config }}
+                        />
+                        <TeamFinancialsTable
+                            teams={teams}
+                            people={people}
+                            roles={roles}
+                        />
+                    </>
                 )}
             </div>
         </div>
