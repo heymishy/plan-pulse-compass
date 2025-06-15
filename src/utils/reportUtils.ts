@@ -1,6 +1,5 @@
-
 import { 
-  Project, Epic, Milestone, Allocation, Cycle, Person, Role, Team, AppConfig, ProjectReportData, ProjectHealthStatus 
+  Project, Epic, Milestone, Allocation, Cycle, Person, Role, Team, AppConfig, ProjectReportData, ProjectHealthStatus, ProjectRisk 
 } from '@/types';
 import { calculateProjectCost } from './financialCalculations';
 import { subMonths, formatISO } from 'date-fns';
@@ -75,6 +74,9 @@ export const generateProjectReportData = (
     teamAllocations: Array.from(teamAllocationMap.entries()).map(([teamId, data]) => ({ teamId, ...data })),
   };
 
+  // Risks
+  const projectRisks = project.risks || [];
+
   // Summary (default values)
   const summary = {
     overallStatus: 'on-track' as ProjectHealthStatus,
@@ -97,6 +99,7 @@ export const generateProjectReportData = (
     summary,
     financials,
     progress,
-    teams: teamPerformance
+    teams: teamPerformance,
+    risks: projectRisks,
   };
 };

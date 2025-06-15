@@ -14,12 +14,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useApp } from '@/context/AppContext';
-import { Project, ProjectReportData, ProjectHealthStatus } from '@/types';
+import { Project, ProjectReportData, ProjectHealthStatus, ProjectRisk } from '@/types';
 import { generateProjectReportData } from '@/utils/reportUtils';
 import { formatCurrency } from '@/utils/currency';
-import { format } from 'date-fns';
-import { DollarSign, BarChart, TrendingUp, Target, Users, FileText, Download } from 'lucide-react';
+import { format, formatISO } from 'date-fns';
+import { DollarSign, BarChart, TrendingUp, Target, Users, FileText, Download, Save, ShieldAlert, AlertTriangle } from 'lucide-react';
 import ReportSection from '../reports/ReportSection';
+import { toast } from 'sonner';
 
 interface ProjectReportDialogProps {
   isOpen: boolean;
@@ -38,17 +39,42 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
       const data = generateProjectReportData(project, appData);
       setReportData(data);
       if (data) {
-        setCommentary(data.summary.commentary);
-        setStatus(data.summary.overallStatus);
+        // Try to load from the latest report if it exists, otherwise use defaults
+        const latestReport = project.reports?.[project.reports.length - 1];
+        setCommentary(latestReport?.summary.commentary || data.summary.commentary);
+        setStatus(latestReport?.summary.overallStatus || data.summary.overallStatus);
       }
     }
   }, [project, appData]);
+  
+  const handleSaveReport = () => {
+    if (!project || !reportData || !appData.updateProject) return;
+
+    const reportToSave: ProjectReportData = {
+      ...reportData,
+      generatedDate: formatISO(new Date()),
+      summary: {
+        ...reportData.summary,
+        overallStatus: status,
+        commentary: commentary,
+      },
+    };
+
+    const updatedProject = {
+      ...project,
+      reports: [...(project.reports || []), reportToSave],
+    };
+
+    appData.updateProject(project.id, updatedProject);
+    toast.success('Report saved successfully!');
+    onClose();
+  };
 
   if (!isOpen || !project || !reportData) {
     return null;
   }
 
-  const { financials, progress, teams } = reportData;
+  const { financials, progress, teams, risks } = reportData;
 
   const statusOptions: { value: ProjectHealthStatus, label: string }[] = [
     { value: 'on-track', label: 'On Track' },
@@ -58,12 +84,18 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
 
   const handleExport = () => {
     // Placeholder for export functionality
-    alert('Export functionality coming soon!');
+    toast.info('Export functionality coming soon!');
   };
+
+  const getRiskColor = (level: 'low' | 'medium' | 'high') => {
+    if (level === 'high') return 'destructive';
+    if (level === 'medium') return 'secondary';
+    return 'default';
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <FileText className="mr-2" />
@@ -76,11 +108,12 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
         
         <div className="flex-grow overflow-y-auto pr-2">
           <Tabs defaultValue="summary" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="summary">Executive Summary</TabsTrigger>
               <TabsTrigger value="financials">Financials</TabsTrigger>
               <TabsTrigger value="progress">Progress</TabsTrigger>
               <TabsTrigger value="teams">Teams</TabsTrigger>
+              <TabsTrigger value="risks">Risks</TabsTrigger>
             </TabsList>
 
             <TabsContent value="summary" className="mt-4 space-y-4">
@@ -154,11 +187,43 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
                  {teams.teamAllocations.map(team => (
                     <div key={team.teamId} className="flex justify-between items-center py-1">
                         <span>{team.teamName}</span>
-                        <Badge variant="secondary">{team.totalAllocation}%</Badge>
+                        <Badge variant="secondary">{team.totalAllocation.toFixed(0)}%</Badge>
                     </div>
                  ))}
               </ReportSection>
             </TabsContent>
+
+            <TabsContent value="risks" className="mt-4 space-y-4">
+              <ReportSection title="Project Risks" icon={<ShieldAlert />}>
+                {(!risks || risks.length === 0) ? (
+                  <p className="text-gray-500">No risks have been logged for this project.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {risks.map((risk: ProjectRisk) => (
+                      <div key={risk.id} className="p-3 border rounded-lg">
+                        <p className="font-semibold">{risk.description}</p>
+                        <div className="flex items-center space-x-4 mt-2 text-sm">
+                           <Badge variant={getRiskColor(risk.impact)}>Impact: {risk.impact}</Badge>
+                           <Badge variant={getRiskColor(risk.probability)}>Probability: {risk.probability}</Badge>
+                           <Badge variant={risk.status === 'open' ? 'destructive' : 'default'}>Status: {risk.status}</Badge>
+                        </div>
+                        {risk.mitigation && <p className="text-sm text-gray-600 mt-2"><b>Mitigation:</b> {risk.mitigation}</p>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                 <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 text-blue-800">
+                  <div className="flex">
+                    <div className="py-1"><AlertTriangle className="h-5 w-5 text-blue-400 mr-3" /></div>
+                    <div>
+                      <p className="font-bold">Coming Soon</p>
+                      <p className="text-sm">Functionality to add and manage risks directly from the project dashboard is on its way!</p>
+                    </div>
+                  </div>
+                </div>
+              </ReportSection>
+            </TabsContent>
+
           </Tabs>
         </div>
         
@@ -167,7 +232,11 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={onClose}>Close</Button>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSaveReport}>
+            <Save className="h-4 w-4 mr-2" />
+            Save Report
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -175,4 +244,3 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
 };
 
 export default ProjectReportDialog;
-

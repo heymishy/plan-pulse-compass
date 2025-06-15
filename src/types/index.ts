@@ -53,6 +53,8 @@ export interface Project {
   endDate?: string;
   budget?: number;
   milestones: Milestone[];
+  risks?: ProjectRisk[];
+  reports?: ProjectReportData[];
 }
 
 export interface Milestone {
@@ -255,6 +257,18 @@ export interface TeamSkillSummary {
   };
 }
 
+// NEW: Project Risk Type
+export interface ProjectRisk {
+  id: string;
+  description: string;
+  impact: 'low' | 'medium' | 'high';
+  probability: 'low' | 'medium' | 'high';
+  status: 'open' | 'closed' | 'mitigated';
+  mitigation?: string;
+  ownerId?: string; // Person responsible
+  createdDate: string;
+}
+
 // NEW: Project Report Types
 export type ProjectHealthStatus = 'on-track' | 'at-risk' | 'off-track';
 
@@ -306,4 +320,5 @@ export interface ProjectReportData {
   financials: ProjectReportFinancials;
   progress: ProjectReportProgress;
   teams: ProjectReportTeamPerformance;
+  risks: ProjectRisk[];
 }
