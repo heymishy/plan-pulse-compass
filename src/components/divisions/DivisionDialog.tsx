@@ -37,6 +37,7 @@ const DivisionDialog: React.FC<DivisionDialogProps> = ({
     onSave({
       ...formData,
       id: division?.id,
+      managerId: formData.managerId === 'none' ? '' : formData.managerId,
     });
     onOpenChange(false);
   };
@@ -75,7 +76,7 @@ const DivisionDialog: React.FC<DivisionDialogProps> = ({
                 <SelectValue placeholder="Select a manager" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No manager assigned</SelectItem>
+                <SelectItem value="none">No manager assigned</SelectItem>
                 {managers.map(person => (
                   <SelectItem key={person.id} value={person.id}>
                     {person.name}
@@ -115,3 +116,4 @@ const DivisionDialog: React.FC<DivisionDialogProps> = ({
 };
 
 export default DivisionDialog;
+
