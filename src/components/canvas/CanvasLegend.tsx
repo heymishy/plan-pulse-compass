@@ -31,8 +31,16 @@ export const CanvasLegend = () => {
             <span>People</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 border-2 border-gray-500 rounded"></div>
+            <div className="w-4 h-4 bg-gray-200 border-2 border-gray-500 rounded"></div>
             <span>Run Work</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-gray-200 border-2 border-gray-500 rounded"></div>
+            <span>Milestones</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-indigo-200 border-2 border-indigo-500 rounded"></div>
+            <span>Skills</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-8 h-0.5 bg-green-500"></div>

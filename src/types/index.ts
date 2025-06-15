@@ -94,6 +94,17 @@ export interface Allocation {
   notes?: string;
 }
 
+// NEW: Canvas View Types
+export type CanvasViewType =
+  | 'all'
+  | 'teams-projects'
+  | 'projects-epics'
+  | 'team-allocations'
+  | 'people-teams'
+  | 'projects-milestones'
+  | 'people-skills'
+  | 'team-skills-summary';
+
 // NEW: Tracking system types
 export interface ActualAllocation {
   id: string;

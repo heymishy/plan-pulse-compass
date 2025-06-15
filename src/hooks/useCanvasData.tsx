@@ -1,14 +1,12 @@
-
 import { useMemo } from 'react';
 import { Edge, Node } from '@xyflow/react';
 import { useApp } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
-import { Users, FolderOpen, Target, Zap, PersonStanding } from 'lucide-react';
-
-type ViewType = 'all' | 'teams-projects' | 'projects-epics' | 'team-allocations' | 'people-teams';
+import { Users, FolderOpen, Target, Zap, PersonStanding, Flag, Star } from 'lucide-react';
+import { CanvasViewType, PersonSkill } from '@/types';
 
 interface UseCanvasDataProps {
-  viewType: ViewType;
+  viewType: CanvasViewType;
   selectedDivision: string;
   selectedTeam: string;
   selectedProject: string;
@@ -20,7 +18,7 @@ export const useCanvasData = ({
   selectedTeam,
   selectedProject,
 }: UseCanvasDataProps) => {
-  const { people, roles, teams, projects, epics, allocations, divisions, runWorkCategories } = useApp();
+  const { people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills } = useApp();
 
   const { nodes, edges, stats } = useMemo(() => {
     let divisionsToShow = [...divisions];
@@ -137,6 +135,211 @@ export const useCanvasData = ({
           }
         });
       });
+    } else if (viewType === 'projects-milestones') {
+      projectsToShow.forEach((project, projectIndex) => {
+        // Project node
+        nodes.push({
+          id: `project-${project.id}`,
+          type: 'default',
+          position: { x: 0, y: projectIndex * 220 },
+          data: {
+            label: (
+              <div className="text-center">
+                <FolderOpen className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-medium text-sm">{project.name}</div>
+              </div>
+            )
+          },
+          style: {
+            background: '#fef3c7',
+            border: '2px solid #f59e0b',
+            borderRadius: '8px',
+            width: 140,
+            height: 70
+          },
+        });
+
+        // Milestone nodes
+        project.milestones.forEach((milestone, milestoneIndex) => {
+          nodes.push({
+            id: `milestone-${milestone.id}`,
+            type: 'default',
+            position: { x: 200 + milestoneIndex * 160, y: projectIndex * 220 },
+            data: {
+              label: (
+                <div className="text-center">
+                  <Flag className="h-4 w-4 mx-auto mb-1" />
+                  <div className="font-medium text-xs">{milestone.name}</div>
+                  <div className="text-xs text-gray-500">{milestone.dueDate}</div>
+                  <Badge variant={milestone.status === 'completed' ? 'default' : 'secondary'} className="text-xs">{milestone.status}</Badge>
+                </div>
+              )
+            },
+            style: {
+              background: '#e5e7eb',
+              border: '2px solid #6b7280',
+              borderRadius: '8px',
+              width: 140,
+              height: 85,
+            },
+          });
+
+          // Edge from project to milestone
+          edges.push({
+            id: `project-milestone-${project.id}-${milestone.id}`,
+            source: `project-${project.id}`,
+            target: `milestone-${milestone.id}`,
+            type: 'smoothstep',
+            style: { stroke: '#f59e0b' },
+          });
+        });
+      });
+    } else if (viewType === 'people-skills') {
+      const personNodeIds = new Set(peopleToShow.map(p => p.id));
+      const relevantPersonSkills = personSkills.filter(ps => personNodeIds.has(ps.personId));
+      const skillIds = new Set(relevantPersonSkills.map(ps => ps.skillId));
+      const skillsToShow = skills.filter(s => skillIds.has(s.id));
+
+      // People nodes
+      peopleToShow.forEach((person, index) => {
+        nodes.push({
+          id: `person-${person.id}`,
+          type: 'default',
+          position: { x: 50, y: 50 + index * 100 },
+          data: {
+            label: (
+              <div className="text-center">
+                <PersonStanding className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-medium text-xs">{person.name}</div>
+              </div>
+            )
+          },
+          style: {
+            background: '#e0f2fe',
+            border: '2px solid #0ea5e9',
+            borderRadius: '8px',
+            width: 120,
+            height: 60,
+          },
+        });
+      });
+
+      // Skill nodes
+      skillsToShow.forEach((skill, index) => {
+        nodes.push({
+          id: `skill-${skill.id}`,
+          type: 'default',
+          position: { x: 400, y: 50 + index * 90 },
+          data: {
+            label: (
+              <div className="text-center">
+                <Star className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-medium text-xs">{skill.name}</div>
+                <Badge variant="outline" className="text-xs mt-1">{skill.category}</Badge>
+              </div>
+            )
+          },
+          style: {
+            background: '#eef2ff',
+            border: '2px solid #6366f1',
+            borderRadius: '8px',
+            width: 120,
+            height: 70
+          }
+        });
+      });
+
+      // Edges
+      relevantPersonSkills.forEach(ps => {
+        edges.push({
+          id: `person-skill-${ps.personId}-${ps.skillId}`,
+          source: `person-${ps.personId}`,
+          target: `skill-${ps.skillId}`,
+          type: 'smoothstep',
+          label: ps.proficiencyLevel,
+          style: { stroke: '#6366f1', strokeDasharray: '3,3' },
+        });
+      });
+    } else if (viewType === 'team-skills-summary') {
+        const teamSkillSummaries = new Map<string, Map<string, { count: number, proficiencies: PersonSkill['proficiencyLevel'][] }>>();
+        
+        teamsToShow.forEach(team => {
+            const peopleInTeam = people.filter(p => p.teamId === team.id);
+            const teamSkills = new Map<string, { count: number, proficiencies: PersonSkill['proficiencyLevel'][] }>();
+            
+            peopleInTeam.forEach(person => {
+                const personSkillsForPerson = personSkills.filter(ps => ps.personId === person.id);
+                personSkillsForPerson.forEach(ps => {
+                    if (!teamSkills.has(ps.skillId)) {
+                        teamSkills.set(ps.skillId, { count: 0, proficiencies: [] });
+                    }
+                    const skillSummary = teamSkills.get(ps.skillId)!;
+                    skillSummary.count++;
+                    skillSummary.proficiencies.push(ps.proficiencyLevel);
+                });
+            });
+            teamSkillSummaries.set(team.id, teamSkills);
+        });
+        
+        const allSkillIds = new Set<string>();
+        teamSkillSummaries.forEach(skillMap => {
+            skillMap.forEach((_, skillId) => allSkillIds.add(skillId));
+        });
+        const skillsToShow = skills.filter(s => allSkillIds.has(s.id));
+
+        // Team nodes
+        teamsToShow.forEach((team, index) => {
+            nodes.push({
+                id: `team-${team.id}`,
+                type: 'default',
+                position: { x: 50, y: 50 + index * 100 },
+                data: { label: (<div className="font-medium">{team.name}</div>) },
+                style: {
+                    background: '#dcfce7', 
+                    border: '2px solid #16a34a',
+                    borderRadius: '8px',
+                    width: 150,
+                    height: 50,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                },
+            });
+        });
+
+        // Skill nodes
+        skillsToShow.forEach((skill, index) => {
+            nodes.push({
+                id: `skill-${skill.id}`,
+                type: 'default',
+                position: { x: 400, y: 50 + index * 80 },
+                data: { label: (<div className="font-medium">{skill.name}</div>) },
+                style: {
+                    background: '#eef2ff',
+                    border: '2px solid #6366f1',
+                    borderRadius: '8px',
+                    width: 120,
+                    height: 50,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                },
+            });
+        });
+
+        // Edges
+        teamSkillSummaries.forEach((skillMap, teamId) => {
+            skillMap.forEach((summary, skillId) => {
+                edges.push({
+                    id: `team-skill-${teamId}-${skillId}`,
+                    source: `team-${teamId}`,
+                    target: `skill-${skillId}`,
+                    type: 'smoothstep',
+                    label: `${summary.count} ${summary.count > 1 ? 'people' : 'person'}`,
+                    style: { stroke: '#16a34a', strokeDasharray: '5,5' },
+                });
+            });
+        });
     } else if (viewType === 'all' || viewType === 'teams-projects') {
       // Add division nodes
       divisionsToShow.forEach((division, index) => {
@@ -363,7 +566,7 @@ export const useCanvasData = ({
     };
 
     return { nodes, edges, stats: finalStats };
-  }, [people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, viewType, selectedDivision, selectedTeam, selectedProject]);
+  }, [people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, viewType, selectedDivision, selectedTeam, selectedProject]);
 
   return { nodes, edges, stats };
 };

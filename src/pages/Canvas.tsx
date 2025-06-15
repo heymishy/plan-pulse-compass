@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   ReactFlow,
@@ -13,6 +12,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent } from '@/components/ui/card';
+import { CanvasViewType } from '@/types';
 
 import { useCanvasData } from '../hooks/useCanvasData';
 import { CanvasHeader } from '@/components/canvas/CanvasHeader';
@@ -20,11 +20,9 @@ import { CanvasControls } from '@/components/canvas/CanvasControls';
 import { CanvasStats } from '@/components/canvas/CanvasStats';
 import { CanvasLegend } from '@/components/canvas/CanvasLegend';
 
-type ViewType = 'all' | 'teams-projects' | 'projects-epics' | 'team-allocations' | 'people-teams';
-
 const Canvas = () => {
   const { teams, projects, divisions } = useApp();
-  const [viewType, setViewType] = useState<ViewType>('all');
+  const [viewType, setViewType] = useState<CanvasViewType>('all');
   const [showMiniMap, setShowMiniMap] = useState(true);
   const [selectedDivision, setSelectedDivision] = useState<string>('all');
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
