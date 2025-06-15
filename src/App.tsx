@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import People from "@/pages/People";
 import Projects from "@/pages/Projects";
 import Planning from "@/pages/Planning";
 import Setup from "@/pages/Setup";
+import Settings from "@/pages/Settings";
 import Allocations from "@/pages/Allocations";
 import Milestones from "@/pages/Milestones";
 import Reports from "@/pages/Reports";
@@ -35,6 +37,7 @@ const App = () => (
               <Route path="/projects" element={<Projects />} />
               <Route path="/planning" element={<Planning />} />
               <Route path="/setup" element={<Setup />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/allocations" element={<Allocations />} />
               <Route path="/milestones" element={<Milestones />} />
               <Route path="/reports" element={<Reports />} />

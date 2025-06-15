@@ -3,20 +3,23 @@ import React, { useState } from 'react';
 import { useSetupForm } from '@/hooks/useSetupForm';
 import SetupWizardSteps from '@/components/setup/SetupWizardSteps';
 import ConfigurationStep from '@/components/setup/ConfigurationStep';
-import FinancialStep from '@/components/setup/FinancialStep';
-import ImportDataStep from '@/components/setup/ImportDataStep';
 import CompleteStep from '@/components/setup/CompleteStep';
 
 const Setup = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const { formData, setFormData, handleCSVUpload, completeSetup } = useSetupForm();
+  const { formData, setFormData, completeSetup } = useSetupForm();
+
+  const steps = [
+    { id: 0, title: 'Configuration', component: 'config' },
+    { id: 1, title: 'Complete', component: 'complete' },
+  ];
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Setup Wizard</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Initial Setup</h1>
         <p className="text-gray-600">
-          Configure your team planning environment
+          Welcome! Let's configure the basics to get you started. You can adjust more settings later.
         </p>
       </div>
 
@@ -31,21 +34,6 @@ const Setup = () => {
       )}
 
       {currentStep === 1 && (
-        <FinancialStep
-          onBack={() => setCurrentStep(0)}
-          onNext={() => setCurrentStep(2)}
-        />
-      )}
-
-      {currentStep === 2 && (
-        <ImportDataStep
-          onCSVUpload={handleCSVUpload}
-          onBack={() => setCurrentStep(1)}
-          onNext={() => setCurrentStep(3)}
-        />
-      )}
-
-      {currentStep === 3 && (
         <CompleteStep onComplete={completeSetup} />
       )}
     </div>

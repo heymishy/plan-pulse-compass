@@ -28,7 +28,7 @@ const Navigation = () => {
     { path: '/milestones', icon: Target, label: 'Milestones' },
     { path: '/canvas', icon: Share2, label: 'Canvas' },
     { path: '/reports', icon: BarChart3, label: 'Reports' },
-    { path: '/setup', icon: Settings, label: 'Setup' },
+    { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
