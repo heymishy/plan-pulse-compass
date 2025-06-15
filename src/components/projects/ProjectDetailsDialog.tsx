@@ -26,15 +26,15 @@ interface ProjectDetailsDialogProps {
 }
 
 const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onClose, project }) => {
-  const { epics, setEpics, allocations, cycles, people, roles } = useApp();
+  const { epics, setEpics, allocations, cycles, people, roles, teams } = useApp();
   const { toast } = useToast();
   const [isEpicDialogOpen, setIsEpicDialogOpen] = useState(false);
   const [selectedEpic, setSelectedEpic] = useState<Epic | null>(null);
 
   const projectFinancials = useMemo(() => {
-    if (!project) return { totalCost: 0, breakdown: [] };
-    return calculateProjectCost(project, epics, allocations, cycles, people, roles);
-  }, [project, epics, allocations, cycles, people, roles]);
+    if (!project) return { totalCost: 0, breakdown: [], teamBreakdown: [], monthlyBurnRate: 0, totalDurationInDays: 0 };
+    return calculateProjectCost(project, epics, allocations, cycles, people, roles, teams);
+  }, [project, epics, allocations, cycles, people, roles, teams]);
 
   if (!project) return null;
 
@@ -148,6 +148,9 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                       {variance >= 0 ? 'Surplus' : 'Deficit'}: ${Math.abs(variance).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
                   )}
+                  <div className="text-sm mt-2 pt-2 border-t">
+                    Burn Rate: ${projectFinancials.monthlyBurnRate.toLocaleString(undefined, { maximumFractionDigits: 0 })} / month
+                  </div>
                 </CardContent>
               </Card>
 
@@ -206,10 +209,40 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
 
             <Separator />
             
+            {/* Team Cost Contribution */}
+            {projectFinancials.teamBreakdown.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Team Cost Contribution</h3>
+                <Card>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Team</TableHead>
+                          <TableHead className="text-right">Total Contributed Cost</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {projectFinancials.teamBreakdown
+                          .map(item => (
+                            <TableRow key={item.teamName}>
+                              <TableCell className="font-medium">{item.teamName}</TableCell>
+                              <TableCell className="text-right font-mono">
+                                ${item.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            
             {/* Cost Breakdown Section */}
             {projectFinancials.breakdown.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-3">Cost Breakdown</h3>
+                <h3 className="text-lg font-semibold mb-3">Cost Breakdown by Person</h3>
                 <Card>
                   <CardContent className="p-0">
                     <Table>

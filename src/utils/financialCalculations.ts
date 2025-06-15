@@ -1,4 +1,4 @@
-import { Person, Role, Allocation, Epic, Project, Cycle } from '@/types';
+import { Person, Role, Allocation, Epic, Project, Cycle, Team } from '@/types';
 
 export const WORKING_DAYS_PER_WEEK = 5;
 export const WORKING_DAYS_PER_MONTH = 22;
@@ -151,8 +151,9 @@ export const calculateProjectCost = (
   allocations: Allocation[],
   cycles: Cycle[],
   people: Person[],
-  roles: Role[]
-): { totalCost: number; breakdown: any[] } => {
+  roles: Role[],
+  teams: Team[]
+): { totalCost: number; breakdown: any[]; teamBreakdown: any[]; monthlyBurnRate: number; totalDurationInDays: number; } => {
   const projectEpics = epics.filter(epic => epic.projectId === project.id);
   const projectAllocations = allocations.filter(allocation => 
     allocation.epicId && projectEpics.some(epic => epic.id === allocation.epicId)
@@ -160,10 +161,19 @@ export const calculateProjectCost = (
 
   let totalCost = 0;
   const breakdown: any[] = [];
+  const teamBreakdown: { [teamId: string]: { teamName: string; totalCost: number } } = {};
+
+  let minStartDate: Date | null = null;
+  let maxEndDate: Date | null = null;
 
   projectAllocations.forEach(allocation => {
     const cycle = cycles.find(c => c.id === allocation.cycleId);
     if (!cycle) return;
+
+    const cycleStartDate = new Date(cycle.startDate);
+    const cycleEndDate = new Date(cycle.endDate);
+    if (!minStartDate || cycleStartDate < minStartDate) minStartDate = cycleStartDate;
+    if (!maxEndDate || cycleEndDate > maxEndDate) maxEndDate = cycleEndDate;
 
     const teamMembers = people.filter(person => 
       person.teamId === allocation.teamId && person.isActive
@@ -203,10 +213,31 @@ export const calculateProjectCost = (
         percentage: allocation.percentage,
         cost: allocationCost
       });
+
+      // Update team breakdown
+      const team = teams.find(t => t.id === allocation.teamId);
+      if (team) {
+        if (!teamBreakdown[team.id]) {
+          teamBreakdown[team.id] = { teamName: team.name, totalCost: 0 };
+        }
+        teamBreakdown[team.id].totalCost += allocationCost;
+      }
     });
   });
 
-  return { totalCost, breakdown };
+  const totalDurationInDays = minStartDate && maxEndDate
+    ? Math.ceil((maxEndDate.getTime() - minStartDate.getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  
+  const monthlyBurnRate = totalDurationInDays > 0 ? (totalCost / totalDurationInDays) * WORKING_DAYS_PER_MONTH : 0;
+
+  return { 
+    totalCost, 
+    breakdown, 
+    teamBreakdown: Object.values(teamBreakdown).sort((a, b) => b.totalCost - a.totalCost),
+    monthlyBurnRate,
+    totalDurationInDays
+  };
 };
 
 export const validateRateConfiguration = (person: Person, role: Role): {
