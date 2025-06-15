@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -60,67 +59,69 @@ const AllocationTimeline: React.FC<AllocationTimelineProps> = ({
         <CardTitle>Allocation Timeline</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {/* Timeline Header */}
-          <div className="grid grid-cols-12 gap-2 text-sm font-medium">
-            <div className="col-span-2">Team</div>
-            {iterations.map((iteration) => (
-              <div key={iteration.id} className="col-span-2 text-center">
-                <div>{iteration.name}</div>
-                <div className="text-xs text-gray-500">
-                  {new Date(iteration.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
-                  {new Date(iteration.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        <div className="overflow-x-auto">
+          <div className="space-y-6 min-w-[1024px]">
+            {/* Timeline Header */}
+            <div className="grid grid-cols-12 gap-2 text-sm font-medium">
+              <div className="col-span-2">Team</div>
+              {iterations.map((iteration) => (
+                <div key={iteration.id} className="col-span-2 text-center">
+                  <div>{iteration.name}</div>
+                  <div className="text-xs text-gray-500">
+                    {new Date(iteration.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
+                    {new Date(iteration.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Timeline Content */}
+            {teams.map(team => (
+              <div key={team.id} className="grid grid-cols-12 gap-2 py-4 border-b">
+                <div className="col-span-2">
+                  <div className="font-medium">{team.name}</div>
+                  <div className="text-sm text-gray-500">{team.capacity}h/week</div>
+                </div>
+                
+                {iterations.map((iteration) => {
+                  const iterationNumber = getIterationNumber(iteration);
+                  if (iterationNumber === 0) return <div key={iteration.id} className="col-span-2"></div>;
+
+                  const teamAllocations = getTeamIterationAllocations(team.id, iterationNumber);
+                  const capacity = calculateTeamCapacity(team, iterationNumber, allocations, iterations);
+                  
+                  return (
+                    <div key={iteration.id} className="col-span-2">
+                      <div className="space-y-1">
+                        {/* Capacity indicator */}
+                        <div className="flex items-center space-x-1 mb-2">
+                          <div className={`w-3 h-3 rounded-full ${
+                            capacity.allocatedPercentage === 100 ? 'bg-green-500' :
+                            capacity.allocatedPercentage > 100 ? 'bg-red-500' :
+                            capacity.allocatedPercentage > 0 ? 'bg-yellow-500' : 'bg-gray-300'
+                          }`}></div>
+                          <span className="text-xs">{capacity.allocatedPercentage}%</span>
+                        </div>
+                        
+                        {/* Allocation blocks */}
+                        {teamAllocations.map(allocation => (
+                          <div
+                            key={allocation.id}
+                            className={`p-2 rounded text-xs border ${getWorkItemColor(allocation)}`}
+                          >
+                            <div className="font-medium">{allocation.percentage}%</div>
+                            <div className="truncate" title={getWorkItemName(allocation)}>
+                              {getWorkItemName(allocation)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
-
-          {/* Timeline Content */}
-          {teams.map(team => (
-            <div key={team.id} className="grid grid-cols-12 gap-2 py-4 border-b">
-              <div className="col-span-2">
-                <div className="font-medium">{team.name}</div>
-                <div className="text-sm text-gray-500">{team.capacity}h/week</div>
-              </div>
-              
-              {iterations.map((iteration) => {
-                const iterationNumber = getIterationNumber(iteration);
-                if (iterationNumber === 0) return <div key={iteration.id} className="col-span-2"></div>;
-
-                const teamAllocations = getTeamIterationAllocations(team.id, iterationNumber);
-                const capacity = calculateTeamCapacity(team, iterationNumber, allocations, iterations);
-                
-                return (
-                  <div key={iteration.id} className="col-span-2">
-                    <div className="space-y-1">
-                      {/* Capacity indicator */}
-                      <div className="flex items-center space-x-1 mb-2">
-                        <div className={`w-3 h-3 rounded-full ${
-                          capacity.allocatedPercentage === 100 ? 'bg-green-500' :
-                          capacity.allocatedPercentage > 100 ? 'bg-red-500' :
-                          capacity.allocatedPercentage > 0 ? 'bg-yellow-500' : 'bg-gray-300'
-                        }`}></div>
-                        <span className="text-xs">{capacity.allocatedPercentage}%</span>
-                      </div>
-                      
-                      {/* Allocation blocks */}
-                      {teamAllocations.map(allocation => (
-                        <div
-                          key={allocation.id}
-                          className={`p-2 rounded text-xs border ${getWorkItemColor(allocation)}`}
-                        >
-                          <div className="font-medium">{allocation.percentage}%</div>
-                          <div className="truncate" title={getWorkItemName(allocation)}>
-                            {getWorkItemName(allocation)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ))}
         </div>
 
         {/* Legend */}

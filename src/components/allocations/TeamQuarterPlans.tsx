@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -70,99 +69,103 @@ const TeamQuarterPlans: React.FC<TeamQuarterPlansProps> = ({
         <CardTitle>Team Quarter Plans</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="grid grid-cols-12 gap-2 text-sm font-medium border-b pb-2">
-            <div className="col-span-3">Team</div>
-            {iterations.map((iteration) => (
-              <div key={iteration.id} className="col-span-2 text-center">
-                <div>{iteration.name}</div>
-                <div className="text-xs text-gray-500">
-                  {new Date(iteration.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
-                  {new Date(iteration.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </div>
+        <div className="overflow-x-auto">
+          <div className="min-w-[1200px]">
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="grid grid-cols-12 gap-2 text-sm font-medium border-b pb-2">
+                <div className="col-span-3">Team</div>
+                {iterations.map((iteration) => (
+                  <div key={iteration.id} className="col-span-2 text-center">
+                    <div>{iteration.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(iteration.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
+                      {new Date(iteration.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                  </div>
+                ))}
+                <div className="col-span-1 text-center">Avg Load</div>
               </div>
-            ))}
-            <div className="col-span-1 text-center">Avg Load</div>
-          </div>
 
-          {/* Team Rows */}
-          {teams.map(team => {
-            const avgLoad = iterations.reduce((sum, iteration) => {
-              const iterationNumber = getIterationNumber(iteration);
-              return sum + getTeamTotalAllocation(team.id, iterationNumber)
-            }, 0) / (iterations.length || 1);
-
-            return (
-              <div key={team.id} className="grid grid-cols-12 gap-2 py-4 border-b border-gray-100">
-                <div className="col-span-3">
-                  <div className="font-medium">{team.name}</div>
-                  <div className="text-sm text-gray-500">{team.capacity}h/week</div>
-                </div>
-                
-                {iterations.map((iteration) => {
+              {/* Team Rows */}
+              {teams.map(team => {
+                const avgLoad = iterations.reduce((sum, iteration) => {
                   const iterationNumber = getIterationNumber(iteration);
-                  if (iterationNumber === 0) return <div key={iteration.id} className="col-span-2" />;
-                  
-                  const teamAllocations = getTeamIterationAllocations(team.id, iterationNumber);
-                  const totalAllocation = getTeamTotalAllocation(team.id, iterationNumber);
-                  
-                  return (
-                    <div key={iteration.id} className="col-span-2">
-                      <div className="space-y-1">
-                        {/* Total allocation indicator */}
-                        <div className="flex items-center justify-between mb-2">
-                          <div className={`px-2 py-1 rounded text-xs font-medium ${
-                            totalAllocation === 100 ? 'bg-green-100 text-green-800' :
-                            totalAllocation > 100 ? 'bg-red-100 text-red-800' :
-                            totalAllocation > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'
-                          }`}>
-                            {totalAllocation}%
-                          </div>
-                        </div>
-                        
-                        {/* Work items */}
-                        {teamAllocations.map(allocation => {
-                          const workItem = getWorkItemDetails(allocation);
-                          return (
-                            <div
-                              key={allocation.id}
-                              className={`p-2 rounded border text-xs ${workItem.color}`}
-                            >
-                              <div className="font-medium">{workItem.name}</div>
-                              <div className="flex items-center justify-between mt-1">
-                                <span className="text-xs opacity-75">{workItem.projectName}</span>
-                                <Badge variant="secondary" className="text-xs px-1 py-0">
-                                  {allocation.percentage}%
-                                </Badge>
+                  return sum + getTeamTotalAllocation(team.id, iterationNumber)
+                }, 0) / (iterations.length || 1);
+
+                return (
+                  <div key={team.id} className="grid grid-cols-12 gap-2 py-4 border-b border-gray-100">
+                    <div className="col-span-3">
+                      <div className="font-medium">{team.name}</div>
+                      <div className="text-sm text-gray-500">{team.capacity}h/week</div>
+                    </div>
+                    
+                    {iterations.map((iteration) => {
+                      const iterationNumber = getIterationNumber(iteration);
+                      if (iterationNumber === 0) return <div key={iteration.id} className="col-span-2" />;
+                      
+                      const teamAllocations = getTeamIterationAllocations(team.id, iterationNumber);
+                      const totalAllocation = getTeamTotalAllocation(team.id, iterationNumber);
+                      
+                      return (
+                        <div key={iteration.id} className="col-span-2">
+                          <div className="space-y-1">
+                            {/* Total allocation indicator */}
+                            <div className="flex items-center justify-between mb-2">
+                              <div className={`px-2 py-1 rounded text-xs font-medium ${
+                                totalAllocation === 100 ? 'bg-green-100 text-green-800' :
+                                totalAllocation > 100 ? 'bg-red-100 text-red-800' :
+                                totalAllocation > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {totalAllocation}%
                               </div>
                             </div>
-                          );
-                        })}
-                        
-                        {teamAllocations.length === 0 && (
-                          <div className="p-2 rounded border border-dashed border-gray-200 text-xs text-gray-400 text-center">
-                            No allocation
+                            
+                            {/* Work items */}
+                            {teamAllocations.map(allocation => {
+                              const workItem = getWorkItemDetails(allocation);
+                              return (
+                                <div
+                                  key={allocation.id}
+                                  className={`p-2 rounded border text-xs ${workItem.color}`}
+                                >
+                                  <div className="font-medium">{workItem.name}</div>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span className="text-xs opacity-75">{workItem.projectName}</span>
+                                    <Badge variant="secondary" className="text-xs px-1 py-0">
+                                      {allocation.percentage}%
+                                    </Badge>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            
+                            {teamAllocations.length === 0 && (
+                              <div className="p-2 rounded border border-dashed border-gray-200 text-xs text-gray-400 text-center">
+                                No allocation
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Average Load */}
+                    <div className="col-span-1 text-center">
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        Math.round(avgLoad) === 100 ? 'bg-green-100 text-green-800' :
+                        Math.round(avgLoad) > 100 ? 'bg-red-100 text-red-800' :
+                        Math.round(avgLoad) > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {Math.round(avgLoad)}%
                       </div>
                     </div>
-                  );
-                })}
-                
-                {/* Average Load */}
-                <div className="col-span-1 text-center">
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${
-                    Math.round(avgLoad) === 100 ? 'bg-green-100 text-green-800' :
-                    Math.round(avgLoad) > 100 ? 'bg-red-100 text-red-800' :
-                    Math.round(avgLoad) > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {Math.round(avgLoad)}%
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Legend */}
