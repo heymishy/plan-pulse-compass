@@ -1,4 +1,3 @@
-
 import { Person, Role, Allocation, Epic, Project, Cycle } from '@/types';
 
 export const WORKING_DAYS_PER_WEEK = 5;
@@ -90,6 +89,21 @@ export const calculatePersonCost = (person: Person, role: Role): PersonCostCalcu
     effectiveRate,
     rateType,
   };
+};
+
+export const calculateTeamWeeklyCost = (
+  teamMembers: Person[],
+  roles: Role[]
+): number => {
+  let weeklyCost = 0;
+  teamMembers.forEach(person => {
+    const role = roles.find(r => r.id === person.roleId);
+    if (role) {
+      const personCost = calculatePersonCost(person, role);
+      weeklyCost += personCost.costPerWeek;
+    }
+  });
+  return weeklyCost;
 };
 
 export const calculateAllocationCost = (

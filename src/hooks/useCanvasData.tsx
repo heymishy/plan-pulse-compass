@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import { Edge, Node } from '@xyflow/react';
 import { useApp } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
-import { Users, FolderOpen, Target, Zap, PersonStanding, Flag, Star } from 'lucide-react';
+import { Users, FolderOpen, Target, Zap, PersonStanding, Flag, Star, DollarSign, Building } from 'lucide-react';
 import { CanvasViewType, PersonSkill } from '@/types';
+import { calculateProjectCost, calculateTeamWeeklyCost } from '@/utils/financialCalculations';
 
 interface UseCanvasDataProps {
   viewType: CanvasViewType;
@@ -18,7 +19,7 @@ export const useCanvasData = ({
   selectedTeam,
   selectedProject,
 }: UseCanvasDataProps) => {
-  const { people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills } = useApp();
+  const { people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, cycles } = useApp();
 
   const { nodes, edges, stats } = useMemo(() => {
     let divisionsToShow = [...divisions];
@@ -340,6 +341,148 @@ export const useCanvasData = ({
                 });
             });
         });
+    } else if (viewType === 'financial-overview') {
+      const projectCosts = projectsToShow.reduce((acc, project) => {
+        acc[project.id] = calculateProjectCost(project, epics, allocations, cycles, people, roles);
+        return acc;
+      }, {} as Record<string, { totalCost: number; breakdown: any[] }>);
+
+      const teamCosts = teamsToShow.reduce((acc, team) => {
+        const teamMembers = people.filter(p => p.teamId === team.id);
+        acc[team.id] = calculateTeamWeeklyCost(teamMembers, roles);
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const divisionCosts = divisionsToShow.reduce((acc, division) => {
+          const divisionTeams = teamsToShow.filter(t => t.divisionId === division.id);
+          const totalCost = divisionTeams.reduce((sum, team) => sum + (teamCosts[team.id] || 0), 0);
+          acc[division.id] = totalCost;
+          return acc;
+      }, {} as Record<string, number>);
+
+      // Add division nodes
+      divisionsToShow.forEach((division, index) => {
+        nodes.push({
+          id: `division-${division.id}`,
+          type: 'default',
+          position: { x: index * 350, y: 0 },
+          data: { 
+            label: (
+              <div className="text-center">
+                <Building className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-semibold text-blue-600">{division.name}</div>
+                <div className="text-xs text-gray-500 flex items-center justify-center mt-1">
+                  <DollarSign className="h-3 w-3 mr-1" /> 
+                  ~${(divisionCosts[division.id] || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}/week
+                </div>
+              </div>
+            )
+          },
+          style: { 
+            background: '#dbeafe', 
+            border: '2px solid #3b82f6',
+            borderRadius: '8px',
+            width: 180,
+            height: 80
+          },
+        });
+      });
+
+      // Add team nodes
+      teamsToShow.forEach((team, index) => {
+        const divisionIndex = divisionsToShow.findIndex(d => d.id === team.divisionId);
+        nodes.push({
+          id: `team-${team.id}`,
+          type: 'default',
+          position: { 
+            x: divisionIndex >= 0 ? divisionIndex * 350 + (index % 2) * 160 : index * 200, 
+            y: 150 
+          },
+          data: { 
+            label: (
+              <div className="text-center">
+                <Users className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-medium">{team.name}</div>
+                <div className="text-xs text-gray-500 flex items-center justify-center mt-1">
+                  <DollarSign className="h-3 w-3 mr-1" /> 
+                  ${(teamCosts[team.id] || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}/week
+                </div>
+              </div>
+            )
+          },
+          style: { 
+            background: '#dcfce7', 
+            border: '2px solid #16a34a',
+            borderRadius: '8px',
+            width: 150,
+            height: 80
+          },
+        });
+
+        if (team.divisionId) {
+          edges.push({
+            id: `division-team-${team.divisionId}-${team.id}`,
+            source: `division-${team.divisionId}`,
+            target: `team-${team.id}`,
+            type: 'smoothstep',
+            style: { stroke: '#3b82f6' },
+          });
+        }
+      });
+
+      // Add project nodes
+      projectsToShow.forEach((project, index) => {
+        nodes.push({
+          id: `project-${project.id}`,
+          type: 'default',
+          position: { x: index * 220, y: 350 },
+          data: { 
+            label: (
+              <div className="text-center p-2">
+                <FolderOpen className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-medium text-sm">{project.name}</div>
+                <Badge variant="outline" className="text-xs mt-1 w-full justify-center">
+                  Budget: ${(project.budget || 0).toLocaleString()}
+                </Badge>
+                <Badge variant="secondary" className="text-xs mt-1 w-full justify-center">
+                  Est. Cost: ${(projectCosts[project.id]?.totalCost || 0).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                </Badge>
+              </div>
+            )
+          },
+          style: { 
+            background: '#fef3c7', 
+            border: '2px solid #f59e0b',
+            borderRadius: '8px',
+            width: 180,
+            height: 110
+          },
+        });
+      });
+      
+      const projectEpicsByTeam = epics.reduce((acc, epic) => {
+          if (epic.assignedTeamId && finalTeamIds.has(epic.assignedTeamId)) {
+              if (!acc[epic.assignedTeamId]) {
+                  acc[epic.assignedTeamId] = new Set();
+              }
+              acc[epic.assignedTeamId].add(epic.projectId);
+          }
+          return acc;
+      }, {} as Record<string, Set<string>>);
+
+      Object.entries(projectEpicsByTeam).forEach(([teamId, projectIds]) => {
+          projectIds.forEach(projectId => {
+              if (projectsToShow.some(p => p.id === projectId)) {
+                edges.push({
+                    id: `team-project-${teamId}-${projectId}`,
+                    source: `team-${teamId}`,
+                    target: `project-${projectId}`,
+                    type: 'smoothstep',
+                    style: { stroke: '#16a34a', strokeDasharray: '3,3' },
+                });
+              }
+          });
+      });
     } else if (viewType === 'all' || viewType === 'teams-projects') {
       // Add division nodes
       divisionsToShow.forEach((division, index) => {
@@ -558,6 +701,7 @@ export const useCanvasData = ({
     }
 
     const finalStats = {
+      divisions: divisionsToShow.length,
       teams: teamsToShow.length,
       projects: projectsToShow.length,
       epics: epicsToShow.length,
@@ -566,7 +710,7 @@ export const useCanvasData = ({
     };
 
     return { nodes, edges, stats: finalStats };
-  }, [people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, viewType, selectedDivision, selectedTeam, selectedProject]);
+  }, [people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, cycles, viewType, selectedDivision, selectedTeam, selectedProject]);
 
   return { nodes, edges, stats };
 };

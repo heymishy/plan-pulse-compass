@@ -40,6 +40,7 @@ export const CanvasControls = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Relationships</SelectItem>
+            <SelectItem value="financial-overview">Financial Overview</SelectItem>
             <SelectItem value="teams-projects">Teams & Projects</SelectItem>
             <SelectItem value="projects-epics">Projects & Epics</SelectItem>
             <SelectItem value="team-allocations">Team Allocations</SelectItem>

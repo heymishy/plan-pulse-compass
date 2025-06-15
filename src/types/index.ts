@@ -103,7 +103,8 @@ export type CanvasViewType =
   | 'people-teams'
   | 'projects-milestones'
   | 'people-skills'
-  | 'team-skills-summary';
+  | 'team-skills-summary'
+  | 'financial-overview';
 
 // NEW: Tracking system types
 export interface ActualAllocation {

@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DollarSign } from 'lucide-react';
 
 export const CanvasLegend = () => {
   return (
@@ -48,11 +48,15 @@ export const CanvasLegend = () => {
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-8 h-0.5 border-t-2 border-dashed border-green-500"></div>
-            <span>Epic Assignment</span>
+            <span>Epic/Project Link</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-8 h-0.5 bg-purple-500"></div>
             <span>Allocation</span>
+          </div>
+           <div className="flex items-center space-x-2 col-span-2 sm:col-span-1">
+            <DollarSign className="w-4 h-4 text-gray-600" />
+            <span className="text-gray-600">Financial Indicators</span>
           </div>
         </div>
       </CardContent>
