@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Team, Allocation, Project, Epic, RunWorkCategory, Cycle, ActualAllocation, IterationReview } from '@/types';
+import { Team, Allocation, Project, Epic, RunWorkCategory, Cycle, ActualAllocation, IterationReview, VarianceReasonType } from '@/types';
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import ProgressStepper from './ProgressStepper';
 import TeamReviewCard, { ActualEntry } from './TeamReviewCard';
