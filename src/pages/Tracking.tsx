@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +6,7 @@ import {
   CheckCircle2, 
   Calendar,
 } from 'lucide-react';
-import IterationReviewGrid from '@/components/tracking/IterationReviewGrid';
+import IterationReviewFlow from '@/components/tracking/IterationReviewFlow';
 import VarianceAnalysis from '@/components/tracking/VarianceAnalysis';
 import TrackingDashboard from '@/components/tracking/TrackingDashboard';
 import TrackingSidebar from '@/components/tracking/TrackingSidebar';
@@ -146,7 +145,6 @@ const Tracking = () => {
           </div>
         </div>
 
-        {/* Main Tracking Interface */}
         {selectedCycleId && iterations.length > 0 ? (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
@@ -189,7 +187,7 @@ const Tracking = () => {
                   </CardContent>
                 </Card>
               )}
-              <IterationReviewGrid
+              <IterationReviewFlow
                 cycleId={selectedCycleId}
                 iterationNumber={selectedIterationNumber}
                 teams={filteredTeams}
