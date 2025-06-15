@@ -62,6 +62,7 @@ export interface Milestone {
   dueDate: string;
   status: 'not-started' | 'in-progress' | 'completed' | 'at-risk';
   description?: string;
+  actualCompletionDate?: string;
 }
 
 export interface Epic {

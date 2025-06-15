@@ -45,7 +45,9 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
     actualAllocations, 
     setActualAllocations, 
     iterationReviews, 
-    setIterationReviews 
+    setIterationReviews,
+    setEpics,
+    setProjects,
   } = useApp();
   const { toast } = useToast();
 
@@ -175,6 +177,18 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
     setIsSubmitting(true);
     
     try {
+      const currentIteration = iterations[iterationNumber - 1];
+      if (!currentIteration) {
+        toast({
+          title: "Error",
+          description: "Could not find data for the current iteration.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      const iterationEndDate = currentIteration.endDate;
+
       // Validate data
       for (const teamId of Object.keys(actualEntries)) {
         const totalActual = calculateTeamTotalActual(teamId);
@@ -213,6 +227,29 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
         ...prev.filter(a => !(a.cycleId === cycleId && a.iterationNumber === iterationNumber)),
         ...newActualAllocations
       ]);
+
+      // Update Epics with completion date
+      setEpics(prevEpics => 
+        prevEpics.map(epic => {
+          if (completedEpics.includes(epic.id) && !epic.actualEndDate) {
+            return { ...epic, status: 'completed', actualEndDate: iterationEndDate };
+          }
+          return epic;
+        })
+      );
+
+      // Update Milestones with completion date
+      setProjects(prevProjects =>
+        prevProjects.map(project => ({
+          ...project,
+          milestones: project.milestones.map(milestone => {
+            if (completedMilestones.includes(milestone.id) && !milestone.actualCompletionDate) {
+              return { ...milestone, status: 'completed', actualCompletionDate: iterationEndDate };
+            }
+            return milestone;
+          }),
+        }))
+      );
 
       // Create or update iteration review
       const reviewData: IterationReview = {
@@ -430,23 +467,39 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
             <div>
               <h3 className="font-medium mb-3">Epics Completed This Iteration</h3>
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {epics.map(epic => (
-                  <div key={epic.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={completedEpics.includes(epic.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setCompletedEpics(prev => [...prev, epic.id]);
-                        } else {
-                          setCompletedEpics(prev => prev.filter(id => id !== epic.id));
-                        }
-                      }}
-                    />
-                    <label className="text-sm">
-                      {getEpicName(epic.id)}
-                    </label>
-                  </div>
-                ))}
+                {epics.map(epic => {
+                  const isAlreadyCompleted = !!epic.actualEndDate;
+                  const completionDate = isAlreadyCompleted ? new Date(epic.actualEndDate!).toLocaleDateString() : null;
+
+                  return (
+                    <div key={epic.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`epic-${epic.id}`}
+                        checked={completedEpics.includes(epic.id) || isAlreadyCompleted}
+                        disabled={isAlreadyCompleted}
+                        onCheckedChange={(checked) => {
+                          if (isAlreadyCompleted) return;
+                          if (checked) {
+                            setCompletedEpics(prev => [...prev, epic.id]);
+                          } else {
+                            setCompletedEpics(prev => prev.filter(id => id !== epic.id));
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`epic-${epic.id}`}
+                        className={`text-sm ${isAlreadyCompleted ? 'line-through text-gray-500 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        {getEpicName(epic.id)}
+                        {completionDate && (
+                          <span className="text-xs text-gray-400 ml-2">
+                            (Completed on {completionDate})
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -454,23 +507,40 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
             <div>
               <h3 className="font-medium mb-3">Milestones Completed This Iteration</h3>
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {projects.flatMap(p => p.milestones).map(milestone => (
-                  <div key={milestone.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={completedMilestones.includes(milestone.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setCompletedMilestones(prev => [...prev, milestone.id]);
-                        } else {
-                          setCompletedMilestones(prev => prev.filter(id => id !== milestone.id));
-                        }
-                      }}
-                    />
-                    <label className="text-sm">
-                      {projects.find(p => p.milestones.some(m => m.id === milestone.id))?.name} - {milestone.name}
-                    </label>
-                  </div>
-                ))}
+                {projects.flatMap(p => p.milestones).map(milestone => {
+                  const isAlreadyCompleted = !!milestone.actualCompletionDate;
+                  const completionDate = isAlreadyCompleted ? new Date(milestone.actualCompletionDate!).toLocaleDateString() : null;
+                  const project = projects.find(p => p.id === milestone.projectId);
+
+                  return (
+                    <div key={milestone.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`milestone-${milestone.id}`}
+                        checked={completedMilestones.includes(milestone.id) || isAlreadyCompleted}
+                        disabled={isAlreadyCompleted}
+                        onCheckedChange={(checked) => {
+                          if (isAlreadyCompleted) return;
+                          if (checked) {
+                            setCompletedMilestones(prev => [...prev, milestone.id]);
+                          } else {
+                            setCompletedMilestones(prev => prev.filter(id => id !== milestone.id));
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`milestone-${milestone.id}`}
+                        className={`text-sm ${isAlreadyCompleted ? 'line-through text-gray-500 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        {project?.name || 'Unknown Project'} - {milestone.name}
+                        {completionDate && (
+                          <span className="text-xs text-gray-400 ml-2">
+                            (Completed on {completionDate})
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
