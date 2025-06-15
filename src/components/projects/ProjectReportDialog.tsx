@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,8 +17,9 @@ import { Project, ProjectReportData, ProjectHealthStatus, ProjectRisk } from '@/
 import { generateProjectReportData } from '@/utils/reportUtils';
 import { formatCurrency } from '@/utils/currency';
 import { format, formatISO } from 'date-fns';
-import { DollarSign, BarChart, TrendingUp, Target, Users, FileText, Download, Save, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { DollarSign, BarChart, TrendingUp, Target, Users, FileText, Download, Save, ShieldAlert, AlertTriangle, CalendarHistory } from 'lucide-react';
 import ReportSection from '../reports/ReportSection';
+import MilestoneTimeline from '../reports/MilestoneTimeline';
 import { toast } from 'sonner';
 
 interface ProjectReportDialogProps {
@@ -29,26 +29,45 @@ interface ProjectReportDialogProps {
 }
 
 const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClose, project }) => {
-  const appData = useApp();
+  const { updateProject, ...appData } = useApp();
   const [reportData, setReportData] = useState<ProjectReportData | null>(null);
   const [commentary, setCommentary] = useState('');
   const [status, setStatus] = useState<ProjectHealthStatus>('on-track');
+  const [selectedReportId, setSelectedReportId] = useState<string>('latest');
+
+  const historicalReports = useMemo(() => {
+    return project?.reports?.sort((a, b) => new Date(b.generatedDate).getTime() - new Date(a.generatedDate).getTime()) || [];
+  }, [project?.reports]);
+
+  useEffect(() => {
+    if (project && isOpen) {
+      setSelectedReportId('latest');
+    }
+  }, [project, isOpen]);
 
   useEffect(() => {
     if (project) {
-      const data = generateProjectReportData(project, appData);
-      setReportData(data);
-      if (data) {
-        // Try to load from the latest report if it exists, otherwise use defaults
-        const latestReport = project.reports?.[project.reports.length - 1];
-        setCommentary(latestReport?.summary.commentary || data.summary.commentary);
-        setStatus(latestReport?.summary.overallStatus || data.summary.overallStatus);
+      if (selectedReportId === 'latest') {
+        const data = generateProjectReportData(project, appData);
+        setReportData(data);
+        if (data) {
+          const latestSavedReport = historicalReports[0];
+          setCommentary(latestSavedReport?.summary.commentary || data.summary.commentary || '');
+          setStatus(latestSavedReport?.summary.overallStatus || data.summary.overallStatus || 'on-track');
+        }
+      } else {
+        const historicalReport = historicalReports.find(r => r.generatedDate === selectedReportId);
+        if (historicalReport) {
+          setReportData(historicalReport);
+          setCommentary(historicalReport.summary.commentary);
+          setStatus(historicalReport.summary.overallStatus);
+        }
       }
     }
-  }, [project, appData]);
+  }, [project, appData, selectedReportId, isOpen, historicalReports]);
   
   const handleSaveReport = () => {
-    if (!project || !reportData || !appData.updateProject) return;
+    if (!project || !reportData || !updateProject) return;
 
     const reportToSave: ProjectReportData = {
       ...reportData,
@@ -65,16 +84,19 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
       reports: [...(project.reports || []), reportToSave],
     };
 
-    appData.updateProject(project.id, updatedProject);
+    updateProject(project.id, updatedProject);
     toast.success('Report saved successfully!');
     onClose();
   };
+
+  const isViewingHistorical = selectedReportId !== 'latest';
 
   if (!isOpen || !project || !reportData) {
     return null;
   }
 
   const { financials, progress, teams, risks } = reportData;
+  const allMilestones = [...progress.completedMilestones, ...progress.inProgressMilestones, ...progress.upcomingMilestones];
 
   const statusOptions: { value: ProjectHealthStatus, label: string }[] = [
     { value: 'on-track', label: 'On Track' },
@@ -105,6 +127,29 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
             Report for period: {format(new Date(reportData.reportPeriod.startDate), 'PPP')} - {format(new Date(reportData.reportPeriod.endDate), 'PPP')}
           </div>
         </DialogHeader>
+
+        <div className="px-6 py-4 border-b">
+          <div className="flex items-center space-x-2 mb-2">
+            <CalendarHistory className="h-5 w-5 text-gray-600"/>
+            <Label htmlFor="report-history">Report History</Label>
+          </div>
+          <Select value={selectedReportId} onValueChange={setSelectedReportId}>
+            <SelectTrigger id="report-history" className="w-[280px]">
+              <SelectValue placeholder="Select a report to view" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="latest">
+                <span className="font-bold">Latest Report (Live Data)</span>
+              </SelectItem>
+              {historicalReports.map((report) => (
+                <SelectItem key={report.generatedDate} value={report.generatedDate}>
+                  {format(new Date(report.generatedDate), 'PPP p')}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {isViewingHistorical && <p className="text-sm text-blue-600 bg-blue-50 p-2 rounded-md mt-2">You are viewing a historical report. Editing is disabled.</p>}
+        </div>
         
         <div className="flex-grow overflow-y-auto pr-2">
           <Tabs defaultValue="summary" className="w-full">
@@ -121,7 +166,7 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="status">Overall Project Status</Label>
-                    <Select value={status} onValueChange={(v) => setStatus(v as ProjectHealthStatus)}>
+                    <Select value={status} onValueChange={(v) => setStatus(v as ProjectHealthStatus)} disabled={isViewingHistorical}>
                       <SelectTrigger id="status" className="w-[180px]">
                         <SelectValue placeholder="Set status" />
                       </SelectTrigger>
@@ -136,10 +181,11 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
                     <Label htmlFor="commentary">Manager's Commentary</Label>
                     <Textarea
                       id="commentary"
-                      placeholder="Add your summary, key achievements, and risks..."
+                      placeholder={isViewingHistorical ? "No commentary was saved for this report." : "Add your summary, key achievements, and risks..."}
                       value={commentary}
                       onChange={(e) => setCommentary(e.target.value)}
                       rows={8}
+                      readOnly={isViewingHistorical}
                     />
                   </div>
                 </div>
@@ -173,11 +219,8 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
                     <h4 className="font-semibold mb-2">In Progress ({progress.inProgressEpics.length})</h4>
                     <ul className="list-disc list-inside text-sm text-gray-600">{progress.inProgressEpics.map(e => <li key={e.id}>{e.name}</li>)}</ul>
                 </ReportSection>
-                <ReportSection title="Milestones" icon={<Target />}>
-                    <h4 className="font-semibold mb-2">Completed ({progress.completedMilestones.length})</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-600 mb-4">{progress.completedMilestones.map(m => <li key={m.id}>{m.name}</li>)}</ul>
-                    <h4 className="font-semibold mb-2">In Progress ({progress.inProgressMilestones.length})</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-600">{progress.inProgressMilestones.map(m => <li key={m.id}>{m.name}</li>)}</ul>
+                <ReportSection title="Milestone Timeline" icon={<Target />}>
+                  <MilestoneTimeline milestones={allMilestones} />
                 </ReportSection>
               </div>
             </TabsContent>
@@ -233,7 +276,7 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
             Export
           </Button>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSaveReport}>
+          <Button onClick={handleSaveReport} disabled={isViewingHistorical}>
             <Save className="h-4 w-4 mr-2" />
             Save Report
           </Button>
