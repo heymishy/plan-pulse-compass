@@ -14,7 +14,7 @@ import '@xyflow/react/dist/style.css';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent } from '@/components/ui/card';
 
-import { useCanvasData } from '@/hooks/useCanvasData';
+import { useCanvasData } from '../hooks/useCanvasData';
 import { CanvasHeader } from '@/components/canvas/CanvasHeader';
 import { CanvasControls } from '@/components/canvas/CanvasControls';
 import { CanvasStats } from '@/components/canvas/CanvasStats';
