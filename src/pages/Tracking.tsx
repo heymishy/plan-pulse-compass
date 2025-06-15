@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,6 +34,8 @@ const Tracking = () => {
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [selectedIterationNumber, setSelectedIterationNumber] = useState<number>(1);
   const [activeTab, setActiveTab] = useState('review');
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('all');
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
 
   // Get current quarter cycles
   const quarterCycles = cycles.filter(c => c.type === 'quarterly' && c.status !== 'completed');
@@ -52,6 +53,48 @@ const Tracking = () => {
     c.parentCycleId === selectedCycleId
   ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
+  // Data filtering logic
+  const divisions = useMemo(() => {
+    if (!teams) return [];
+    const allDivisions = teams
+        .map(team => ({ id: team.divisionId, name: team.divisionName }))
+        .filter(d => d.id && d.name);
+    if (!allDivisions.length) return [];
+    const uniqueDivisions = [...new Map(allDivisions.map(d => [d.id, d])).values()];
+    return uniqueDivisions.sort((a, b) => a.name.localeCompare(b.name));
+  }, [teams]);
+
+  const handleDivisionChange = (divisionId: string) => {
+      setSelectedDivisionId(divisionId);
+      setSelectedTeamId('all');
+  };
+
+  const availableTeams = useMemo(() => {
+      if (selectedDivisionId === 'all') return teams;
+      return teams.filter(team => team.divisionId === selectedDivisionId);
+  }, [teams, selectedDivisionId]);
+
+  const filteredTeams = useMemo(() => {
+      let teamsToFilter = teams;
+      if (selectedDivisionId !== 'all') {
+          teamsToFilter = teamsToFilter.filter(t => t.divisionId === selectedDivisionId);
+      }
+      if (selectedTeamId !== 'all') {
+          teamsToFilter = teamsToFilter.filter(t => t.id === selectedTeamId);
+      }
+      return teamsToFilter;
+  }, [teams, selectedDivisionId, selectedTeamId]);
+
+  const filteredTeamIds = useMemo(() => new Set(filteredTeams.map(t => t.id)), [filteredTeams]);
+
+  const filteredAllocations = useMemo(() => {
+      return allocations.filter(a => filteredTeamIds.has(a.teamId));
+  }, [allocations, filteredTeamIds]);
+
+  const filteredActualAllocations = useMemo(() => {
+      return actualAllocations.filter(a => filteredTeamIds.has(a.teamId));
+  }, [actualAllocations, filteredTeamIds]);
+
   // Get review status for current iteration
   const currentIterationReview = iterationReviews.find(r => 
     r.cycleId === selectedCycleId && r.iterationNumber === selectedIterationNumber
@@ -59,8 +102,8 @@ const Tracking = () => {
 
   // Calculate tracking stats
   const trackingStats = useMemo(() => {
-    const quarterAllocations = allocations.filter(a => a.cycleId === selectedCycleId);
-    const quarterActuals = actualAllocations.filter(a => a.cycleId === selectedCycleId);
+    const quarterAllocations = filteredAllocations.filter(a => a.cycleId === selectedCycleId);
+    const quarterActuals = filteredActualAllocations.filter(a => a.cycleId === selectedCycleId);
     const quarterReviews = iterationReviews.filter(r => r.cycleId === selectedCycleId);
     
     const completedReviews = quarterReviews.filter(r => r.status === 'completed').length;
@@ -68,7 +111,7 @@ const Tracking = () => {
     const reviewProgress = totalIterations > 0 ? (completedReviews / totalIterations) * 100 : 0;
     
     const teamsWithActuals = new Set(quarterActuals.map(a => a.teamId)).size;
-    const totalTeams = teams.length;
+    const totalTeams = filteredTeams.length;
     
     return {
       reviewProgress: Math.round(reviewProgress),
@@ -78,7 +121,22 @@ const Tracking = () => {
       totalTeams,
       totalVariances: quarterActuals.length,
     };
-  }, [allocations, actualAllocations, iterationReviews, selectedCycleId, iterations, teams]);
+  }, [filteredAllocations, filteredActualAllocations, iterationReviews, selectedCycleId, iterations, filteredTeams]);
+
+  const completedEpicsDetails = useMemo(() => {
+    if (!currentIterationReview?.completedEpics?.length) return [];
+    
+    return currentIterationReview.completedEpics.map(epicId => {
+        const epic = epics.find(e => e.id === epicId);
+        if (!epic) return null;
+        const project = projects.find(p => p.id === epic.projectId);
+        return {
+            id: epic.id,
+            name: epic.name,
+            projectName: project?.name || 'Unknown Project'
+        };
+    }).filter(Boolean as any);
+  }, [currentIterationReview, epics, projects]);
 
   if (!config) {
     return (
@@ -102,7 +160,7 @@ const Tracking = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium">Quarter:</label>
           <Select value={selectedCycleId} onValueChange={setSelectedCycleId}>
@@ -131,6 +189,40 @@ const Tracking = () => {
               {iterations.map((_, index) => (
                 <SelectItem key={index + 1} value={(index + 1).toString()}>
                   Iteration {index + 1}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {divisions.length > 0 && (
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium">Division:</label>
+            <Select value={selectedDivisionId} onValueChange={handleDivisionChange}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select division" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Divisions</SelectItem>
+                {divisions.map(division => (
+                  <SelectItem key={division.id} value={division.id}>
+                    {division.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium">Team:</label>
+          <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select team" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Teams</SelectItem>
+              {availableTeams.map(team => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -218,6 +310,28 @@ const Tracking = () => {
         </Card>
       </div>
 
+      {/* Completed Epics */}
+      {completedEpicsDetails.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
+              Completed Epics in Selected Iteration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {completedEpicsDetails.map(epic => (
+                <li key={epic.id} className="text-sm p-2 border rounded-md bg-gray-50/50">
+                  <span className="font-semibold">{epic.name}</span>
+                  <span className="text-gray-500 ml-2">({epic.projectName})</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Main Tracking Interface */}
       {selectedCycleId && iterations.length > 0 && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -231,8 +345,8 @@ const Tracking = () => {
             <IterationReviewGrid
               cycleId={selectedCycleId}
               iterationNumber={selectedIterationNumber}
-              teams={teams}
-              allocations={allocations}
+              teams={filteredTeams}
+              allocations={filteredAllocations}
               projects={projects}
               epics={epics}
               runWorkCategories={runWorkCategories}
@@ -243,9 +357,9 @@ const Tracking = () => {
           <TabsContent value="analysis" className="mt-6">
             <VarianceAnalysis
               cycleId={selectedCycleId}
-              teams={teams}
-              allocations={allocations}
-              actualAllocations={actualAllocations}
+              teams={filteredTeams}
+              allocations={filteredAllocations}
+              actualAllocations={filteredActualAllocations}
               projects={projects}
               epics={epics}
               runWorkCategories={runWorkCategories}
@@ -255,9 +369,9 @@ const Tracking = () => {
           <TabsContent value="dashboard" className="mt-6">
             <TrackingDashboard
               cycleId={selectedCycleId}
-              teams={teams}
-              allocations={allocations}
-              actualAllocations={actualAllocations}
+              teams={filteredTeams}
+              allocations={filteredAllocations}
+              actualAllocations={filteredActualAllocations}
               iterationReviews={iterationReviews}
               projects={projects}
               epics={epics}
