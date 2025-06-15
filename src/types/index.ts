@@ -29,8 +29,9 @@ export interface Role {
 
 export interface Team {
   id: string;
-  name: string;
+  name:string;
   divisionId?: string;
+  divisionName?: string;
   managerId?: string;
   capacity: number; // weekly capacity in hours
 }
