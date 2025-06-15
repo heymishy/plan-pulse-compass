@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { deriveKey, encryptData, decryptData } from '@/utils/crypto';
 
@@ -38,13 +37,20 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
       try {
         const item = window.localStorage.getItem(key);
         if (item) {
-          const derivedKey = await getDerivedKey();
           const parsedItem = JSON.parse(item);
-          const decrypted = await decryptData(parsedItem, derivedKey);
-          if (isMounted) {
-            setStoredValue(JSON.parse(decrypted));
+          
+          // Check if the data is in the new encrypted format
+          if (parsedItem && typeof parsedItem.iv === 'string' && typeof parsedItem.encrypted === 'string') {
+            const derivedKey = await getDerivedKey();
+            const decrypted = await decryptData(parsedItem, derivedKey);
+            if (isMounted) {
+              setStoredValue(JSON.parse(decrypted));
+            }
+            console.log(`Successfully loaded and decrypted data for key "${key}"`);
+          } else {
+            // Data is not in the expected format, treat as corrupted
+            throw new Error('Data is not in the expected encrypted format.');
           }
-          console.log(`Successfully loaded and decrypted data for key "${key}"`);
         } else if (isMounted) {
           setStoredValue(initialValue);
         }
