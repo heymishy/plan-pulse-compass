@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -10,7 +11,7 @@ import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import ProgressStepper from './ProgressStepper';
 import TeamReviewCard, { ActualEntry } from './TeamReviewCard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 interface IterationReviewFlowProps {
   cycleId: string;
@@ -148,7 +149,75 @@ const IterationReviewFlow: React.FC<IterationReviewFlowProps> = ({
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    // ... same handleSubmit logic from IterationReviewGrid
+    const today = new Date().toISOString();
+
+    // 1. Process actual allocations
+    const newActualAllocations: ActualAllocation[] = Object.entries(actualEntries).flatMap(([teamId, entries]) => 
+      entries
+        .filter(entry => entry.actualPercentage > 0)
+        .map(entry => ({
+          id: crypto.randomUUID(),
+          plannedAllocationId: entry.plannedAllocationId,
+          teamId,
+          cycleId,
+          iterationNumber,
+          actualPercentage: entry.actualPercentage,
+          actualEpicId: entry.actualEpicId,
+          actualRunWorkCategoryId: entry.actualRunWorkCategoryId,
+          varianceReason: entry.varianceReason,
+          enteredDate: today,
+        }))
+    );
+    
+    setActualAllocations(prev => [
+      ...prev.filter(a => !(a.cycleId === cycleId && a.iterationNumber === iterationNumber)),
+      ...newActualAllocations
+    ]);
+
+    // 2. Process iteration review
+    const existingReview = iterationReviews.find(r => r.cycleId === cycleId && r.iterationNumber === iterationNumber);
+    
+    const newReview: IterationReview = {
+      id: existingReview?.id || crypto.randomUUID(),
+      cycleId,
+      iterationNumber,
+      reviewDate: today,
+      status: 'completed',
+      completedEpics,
+      completedMilestones,
+      notes: reviewNotes,
+    };
+
+    setIterationReviews(prev => [
+      ...prev.filter(r => r.id !== newReview.id),
+      newReview,
+    ]);
+
+    // 3. Update completed epics
+    setEpics(prevEpics => prevEpics.map(epic => 
+      completedEpics.includes(epic.id) 
+        ? { ...epic, status: 'completed', actualEndDate: today } 
+        : epic
+    ));
+
+    // 4. Update completed milestones
+    setProjects(prevProjects => prevProjects.map(project => ({
+      ...project,
+      milestones: project.milestones.map(milestone => 
+        completedMilestones.includes(milestone.id)
+          ? { ...milestone, status: 'completed', actualCompletionDate: today }
+          : milestone
+      )
+    })));
+
+    // 5. Finalize
+    toast({
+      title: "Iteration Review Saved",
+      description: "The review has been successfully submitted.",
+      variant: "default",
+    });
+
+    setCompletedSteps(prev => new Set(prev).add('summary'));
     setIsSubmitting(false);
   };
   
@@ -207,12 +276,72 @@ const IterationReviewFlow: React.FC<IterationReviewFlowProps> = ({
         {currentStepId === 'summary' && (
             <Card className="animate-fade-in">
                 <CardHeader><CardTitle>Summary & Save</CardTitle></CardHeader>
-                <CardContent>
+                <CardContent className="space-y-6">
                     <Alert>
                         <CheckCircle2 className="h-4 w-4" />
                         <AlertTitle>Ready to Save</AlertTitle>
                         <AlertDescription>You've completed all steps. Review the summary and click save to complete the iteration review.</AlertDescription>
                     </Alert>
+                    
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Team Allocation Summary</h3>
+                        {teams.map(team => {
+                            const entries = actualEntries[team.id] || [];
+                            const totalActual = entries.reduce((sum, entry) => sum + (entry.actualPercentage || 0), 0);
+                            return (
+                                <Card key={team.id} className="bg-gray-50/50">
+                                    <CardHeader className="p-4 flex flex-row items-center justify-between">
+                                        <CardTitle className="text-base">{team.name}</CardTitle>
+                                        <Badge variant={totalActual === 100 ? "default" : "secondary"}>Total: {totalActual}%</Badge>
+                                    </CardHeader>
+                                    <CardContent className="p-4 pt-0 text-sm">
+                                        <ul className="space-y-1">
+                                            {entries.filter(e => e.actualPercentage > 0).map(entry => (
+                                                <li key={entry.id} className="flex justify-between">
+                                                    <span>{entry.actualEpicId ? getEpicName(entry.actualEpicId) : entry.actualRunWorkCategoryId ? getRunWorkCategoryName(entry.actualRunWorkCategoryId) : 'Unassigned'}</span>
+                                                    <span>{entry.actualPercentage}%</span>
+                                                </li>
+                                            ))}
+                                            {entries.filter(e => e.actualPercentage > 0).length === 0 && <li className="text-gray-500">No work allocated.</li>}
+                                        </ul>
+                                    </CardContent>
+                                </Card>
+                            )
+                        })}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 className="text-lg font-medium">Completed Epics</h3>
+                            {completedEpics.length > 0 ? (
+                                <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
+                                    {completedEpics.map(epicId => <li key={epicId}>{getEpicName(epicId)}</li>)}
+                                </ul>
+                            ) : <p className="text-sm text-gray-500 mt-2">No epics marked as completed.</p>}
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-medium">Completed Milestones</h3>
+                            {completedMilestones.length > 0 ? (
+                                <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
+                                    {completedMilestones.map(milestoneId => {
+                                        const milestone = projects.flatMap(p => p.milestones).find(m => m.id === milestoneId);
+                                        const project = projects.find(p => p.id === milestone?.projectId);
+                                        return <li key={milestoneId}>{project?.name || 'Unknown Project'} - {milestone?.name || 'Unknown Milestone'}</li>
+                                    })}
+                                </ul>
+                            ) : <p className="text-sm text-gray-500 mt-2">No milestones marked as completed.</p>}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 className="text-lg font-medium">Review Notes</h3>
+                        {reviewNotes ? (
+                            <p className="mt-2 text-sm p-3 bg-gray-50 rounded border whitespace-pre-wrap">{reviewNotes}</p>
+                        ) : (
+                            <p className="text-sm text-gray-500 mt-2">No notes provided.</p>
+                        )}
+                    </div>
+
                 </CardContent>
             </Card>
         )}
