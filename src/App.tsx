@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import Teams from "@/pages/Teams";
 import People from "@/pages/People";
 import Projects from "@/pages/Projects";
+import Financials from "@/pages/Financials";
 import Planning from "@/pages/Planning";
 import Setup from "@/pages/Setup";
 import Settings from "@/pages/Settings";
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/teams" element={<Teams />} />
               <Route path="/people" element={<People />} />
               <Route path="/projects" element={<Projects />} />
+              <Route path="/financials" element={<Financials />} />
               <Route path="/planning" element={<Planning />} />
               <Route path="/setup" element={<Setup />} />
               <Route path="/settings" element={<Settings />} />

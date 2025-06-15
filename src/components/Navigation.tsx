@@ -13,7 +13,8 @@ import {
   Target,
   Share2,
   UserCheck,
-  TrendingUp
+  TrendingUp,
+  DollarSign
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -24,6 +25,7 @@ const Navigation = () => {
     { path: '/teams', icon: Users, label: 'Teams' },
     { path: '/people', icon: UserCheck, label: 'People' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
+    { path: '/financials', icon: DollarSign, label: 'Financials' },
     { path: '/planning', icon: Calendar, label: 'Planning' },
     { path: '/allocations', icon: CalendarCheck, label: 'Allocations' },
     { path: '/tracking', icon: TrendingUp, label: 'Tracking' },
