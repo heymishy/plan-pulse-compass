@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,7 +90,7 @@ const IterationReviewFlow: React.FC<IterationReviewFlowProps> = ({
             actualPercentage: (item as ActualAllocation).actualPercentage || (item as Allocation).percentage,
             actualEpicId: (item as ActualAllocation).actualEpicId || (item as Allocation).epicId,
             actualRunWorkCategoryId: (item as ActualAllocation).actualRunWorkCategoryId || (item as Allocation).runWorkCategoryId,
-            varianceReason: (item as ActualAllocation).varianceReason,
+            varianceReason: (item as ActualAllocation).varianceReason as (ActualAllocation['varianceReason'] & VarianceReasonType) | undefined,
           });
         });
       } else {
