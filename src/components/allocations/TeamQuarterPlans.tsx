@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -70,10 +71,10 @@ const TeamQuarterPlans: React.FC<TeamQuarterPlansProps> = ({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="min-w-[1200px]">
+          <div className="min-w-[1600px]">
             <div className="space-y-6">
               {/* Header */}
-              <div className="grid grid-cols-12 gap-2 text-sm font-medium border-b pb-2">
+              <div className="grid grid-cols-[repeat(16,minmax(0,1fr))] gap-2 text-sm font-medium border-b pb-2">
                 <div className="col-span-3">Team</div>
                 {iterations.map((iteration) => (
                   <div key={iteration.id} className="col-span-2 text-center">
@@ -95,7 +96,7 @@ const TeamQuarterPlans: React.FC<TeamQuarterPlansProps> = ({
                 }, 0) / (iterations.length || 1);
 
                 return (
-                  <div key={team.id} className="grid grid-cols-12 gap-2 py-4 border-b border-gray-100">
+                  <div key={team.id} className="grid grid-cols-[repeat(16,minmax(0,1fr))] gap-2 py-4 border-b border-gray-100">
                     <div className="col-span-3">
                       <div className="font-medium">{team.name}</div>
                       <div className="text-sm text-gray-500">{team.capacity}h/week</div>
@@ -130,9 +131,11 @@ const TeamQuarterPlans: React.FC<TeamQuarterPlansProps> = ({
                                   key={allocation.id}
                                   className={`p-2 rounded border text-xs ${workItem.color}`}
                                 >
-                                  <div className="font-medium">{workItem.name}</div>
+                                  <div className="font-medium truncate" title={workItem.name}>{workItem.name}</div>
                                   <div className="flex items-center justify-between mt-1">
-                                    <span className="text-xs opacity-75">{workItem.projectName}</span>
+                                    <span className="text-xs opacity-75 truncate" title={workItem.projectName}>
+                                      {workItem.projectName}
+                                    </span>
                                     <Badge variant="secondary" className="text-xs px-1 py-0">
                                       {allocation.percentage}%
                                     </Badge>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -60,9 +61,9 @@ const AllocationTimeline: React.FC<AllocationTimelineProps> = ({
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <div className="space-y-6 min-w-[1024px]">
+          <div className="space-y-6 min-w-[1400px]">
             {/* Timeline Header */}
-            <div className="grid grid-cols-12 gap-2 text-sm font-medium">
+            <div className="grid grid-cols-[repeat(14,minmax(0,1fr))] gap-2 text-sm font-medium">
               <div className="col-span-2">Team</div>
               {iterations.map((iteration) => (
                 <div key={iteration.id} className="col-span-2 text-center">
@@ -77,7 +78,7 @@ const AllocationTimeline: React.FC<AllocationTimelineProps> = ({
 
             {/* Timeline Content */}
             {teams.map(team => (
-              <div key={team.id} className="grid grid-cols-12 gap-2 py-4 border-b">
+              <div key={team.id} className="grid grid-cols-[repeat(14,minmax(0,1fr))] gap-2 py-4 border-b">
                 <div className="col-span-2">
                   <div className="font-medium">{team.name}</div>
                   <div className="text-sm text-gray-500">{team.capacity}h/week</div>
