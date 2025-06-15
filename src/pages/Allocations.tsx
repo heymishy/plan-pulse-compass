@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import TeamQuarterPlans from '@/components/allocations/TeamQuarterPlans';
 import AllocationImportDialog from '@/components/allocations/AllocationImportDialog';
 import { useToast } from '@/hooks/use-toast';
 import AnnualAllocationReport from '@/components/allocations/AnnualAllocationReport';
+import AnnualFinancialReport from '@/components/allocations/AnnualFinancialReport';
 
 const NoDataForQuarter = ({ selectedCycleId }: { selectedCycleId: string }) => (
     <Card>
@@ -30,7 +30,7 @@ const NoDataForQuarter = ({ selectedCycleId }: { selectedCycleId: string }) => (
 );
 
 const Allocations = () => {
-  const { teams, cycles, allocations, config, projects, epics, runWorkCategories } = useApp();
+  const { teams, cycles, allocations, config, projects, epics, runWorkCategories, people, roles } = useApp();
   const { toast } = useToast();
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
@@ -61,6 +61,23 @@ const Allocations = () => {
       description: "Team allocations have been imported successfully.",
     });
   };
+
+  const annualReportProjects = React.useMemo(() => {
+    if (selectedTeamId === 'all' || !selectedTeamId) {
+      return projects;
+    }
+    const teamAllocationProjectIds = new Set<string>();
+    const teamAllocations = allocations.filter(a => a.teamId === selectedTeamId);
+    teamAllocations.forEach(alloc => {
+      if (alloc.epicId) {
+        const epic = epics.find(e => e.id === alloc.epicId);
+        if (epic) {
+          teamAllocationProjectIds.add(epic.projectId);
+        }
+      }
+    });
+    return projects.filter(p => teamAllocationProjectIds.has(p.id));
+  }, [selectedTeamId, allocations, epics, projects]);
 
   if (!config) {
     return (
@@ -204,13 +221,14 @@ const Allocations = () => {
         </TabsContent>
         
         <TabsContent value="annual-view">
-          <AnnualAllocationReport
+          <AnnualFinancialReport
             allocations={allocations}
             cycles={cycles}
-            teams={filteredTeams}
-            projects={projects}
+            teams={teams}
+            projects={annualReportProjects}
             epics={epics}
-            runWorkCategories={runWorkCategories}
+            people={people}
+            roles={roles}
             config={config}
           />
         </TabsContent>

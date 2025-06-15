@@ -1,4 +1,4 @@
-import { Person, Role, Allocation, Epic, Project, Cycle, Team } from '@/types';
+import { Person, Role, Allocation, Epic, Project, Cycle, Team, AppConfig } from '@/types';
 
 export const WORKING_DAYS_PER_WEEK = 5;
 export const WORKING_DAYS_PER_MONTH = 22;
@@ -238,6 +238,60 @@ export const calculateProjectCost = (
     monthlyBurnRate,
     totalDurationInDays
   };
+};
+
+export const calculateProjectCostForYear = (
+  project: Project,
+  epics: Epic[],
+  allocations: Allocation[],
+  cycles: Cycle[],
+  people: Person[],
+  roles: Role[],
+  teams: Team[],
+  config: AppConfig
+): { totalAnnualCost: number; quarterlyCosts: { [quarterName: string]: number } } => {
+  const { quarters } = config;
+  const quarterlyCosts: { [quarterName: string]: number } = {};
+  let totalAnnualCost = 0;
+
+  const projectEpics = epics.filter(e => e.projectId === project.id);
+  const projectEpicIds = new Set(projectEpics.map(e => e.id));
+
+  quarters.forEach(quarter => {
+    let quarterCost = 0;
+    const iterationsInQuarter = cycles.filter(
+      c => c.type === 'iteration' && c.parentCycleId === quarter.id
+    );
+
+    const projectAllocationsForQuarter = allocations.filter(
+      a => a.cycleId === quarter.id && a.epicId && projectEpicIds.has(a.epicId)
+    );
+
+    projectAllocationsForQuarter.forEach(alloc => {
+      // Find the corresponding iteration cycle to get its duration
+      const getIterationNumberFromName = (cycleName: string) => {
+        const match = cycleName.match(/\d+$/);
+        return match ? parseInt(match[0], 10) : null;
+      };
+      
+      const iterationCycle = iterationsInQuarter.find(
+        iter => getIterationNumberFromName(iter.name) === alloc.iterationNumber
+      );
+
+      if (iterationCycle) {
+        const teamMembers = people.filter(p => p.teamId === alloc.teamId && p.isActive);
+        // calculateAllocationCost requires all team members, not just active ones for historical cost.
+        const allTeamMembers = people.filter(p => p.teamId === alloc.teamId);
+        const costOfAllocation = calculateAllocationCost(alloc, iterationCycle, allTeamMembers, roles);
+        quarterCost += costOfAllocation;
+      }
+    });
+
+    quarterlyCosts[quarter.name] = quarterCost;
+    totalAnnualCost += quarterCost;
+  });
+
+  return { totalAnnualCost, quarterlyCosts };
 };
 
 export const validateRateConfiguration = (person: Person, role: Role): {
