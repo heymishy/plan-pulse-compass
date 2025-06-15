@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -18,12 +17,12 @@ import QuickActionsCard from '@/components/dashboard/QuickActionsCard';
 import IterationMetricsCard from '@/components/dashboard/IterationMetricsCard';
 
 const Dashboard = () => {
-  const { people, teams, projects, allocations, isSetupComplete, cycles, actualAllocations, iterationReviews, epics } = useApp();
+  const { people, teams, projects, allocations, isSetupComplete, cycles, actualAllocations, iterationReviews, epics, isDataLoading } = useApp();
 
   const dashboardData = useMemo(() => {
-    if (!isSetupComplete) return null;
+    if (!isSetupComplete || isDataLoading) return null;
     return getDashboardData(cycles, allocations, actualAllocations, iterationReviews, projects, epics);
-  }, [isSetupComplete, cycles, allocations, actualAllocations, iterationReviews, projects, epics]);
+  }, [isSetupComplete, isDataLoading, cycles, allocations, actualAllocations, iterationReviews, projects, epics]);
 
   if (!isSetupComplete) {
     return (
@@ -42,7 +41,7 @@ const Dashboard = () => {
     );
   }
 
-  if (!dashboardData) {
+  if (!dashboardData || isDataLoading) {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <DashboardHeader />
