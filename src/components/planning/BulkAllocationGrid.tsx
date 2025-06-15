@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Team, Cycle, Project, Epic, RunWorkCategory, Allocation } from '@/types';
@@ -21,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Save } from 'lucide-react';
+import { Save, Users } from 'lucide-react';
 
 interface BulkAllocationGridProps {
   teams: Team[];
@@ -36,6 +37,8 @@ interface GridAllocation {
   teamId: string;
   iterationNumber: number;
   percentage: number;
+  epicId?: string;
+  runWorkCategoryId?: string;
 }
 
 const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
@@ -48,21 +51,28 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
 }) => {
   const { allocations, setAllocations } = useApp();
   const { toast } = useToast();
-  const [workType, setWorkType] = useState<'epic' | 'run-work'>('epic');
+  const [workType, setWorkType] = useState<'epic' | 'run-work' | 'team'>('epic');
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [selectedEpicId, setSelectedEpicId] = useState('');
   const [selectedRunWorkCategoryId, setSelectedRunWorkCategoryId] = useState('');
+  const [selectedTeamId, setSelectedTeamId] = useState('');
   const [gridAllocations, setGridAllocations] = useState<Record<string, GridAllocation>>({});
 
   const selectableProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
   const availableEpics = selectedProjectId 
     ? epics.filter(epic => epic.projectId === selectedProjectId)
     : [];
+  
+  // For team-based view, get epics assigned to the selected team
+  const teamEpics = selectedTeamId 
+    ? epics.filter(epic => epic.assignedTeamId === selectedTeamId)
+    : [];
 
-  const getGridKey = (teamId: string, iterationNumber: number) => `${teamId}-${iterationNumber}`;
+  const getGridKey = (teamId: string, iterationNumber: number, workId: string) => 
+    `${teamId}-${iterationNumber}-${workId}`;
 
-  const handlePercentageChange = (teamId: string, iterationNumber: number, value: string) => {
-    const key = getGridKey(teamId, iterationNumber);
+  const handlePercentageChange = (teamId: string, iterationNumber: number, workId: string, value: string, workData: {epicId?: string, runWorkCategoryId?: string}) => {
+    const key = getGridKey(teamId, iterationNumber, workId);
     const percentage = parseFloat(value) || 0;
     
     if (percentage === 0) {
@@ -72,27 +82,33 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
     } else if (percentage > 0 && percentage <= 100) {
       setGridAllocations(prev => ({
         ...prev,
-        [key]: { teamId, iterationNumber, percentage }
+        [key]: { 
+          teamId, 
+          iterationNumber, 
+          percentage,
+          epicId: workData.epicId,
+          runWorkCategoryId: workData.runWorkCategoryId
+        }
       }));
     }
   };
 
-  const getExistingAllocation = (teamId: string, iterationNumber: number) => {
+  const getExistingAllocation = (teamId: string, iterationNumber: number, epicId?: string, runWorkCategoryId?: string) => {
     return allocations.find(a => 
       a.teamId === teamId && 
       a.cycleId === cycleId && 
       a.iterationNumber === iterationNumber &&
-      ((workType === 'epic' && a.epicId === selectedEpicId) ||
-       (workType === 'run-work' && a.runWorkCategoryId === selectedRunWorkCategoryId))
+      ((epicId && a.epicId === epicId) ||
+       (runWorkCategoryId && a.runWorkCategoryId === runWorkCategoryId))
     );
   };
 
-  const getCurrentValue = (teamId: string, iterationNumber: number) => {
-    const key = getGridKey(teamId, iterationNumber);
+  const getCurrentValue = (teamId: string, iterationNumber: number, workId: string, epicId?: string, runWorkCategoryId?: string) => {
+    const key = getGridKey(teamId, iterationNumber, workId);
     const gridValue = gridAllocations[key];
     if (gridValue) return gridValue.percentage.toString();
     
-    const existing = getExistingAllocation(teamId, iterationNumber);
+    const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId);
     return existing ? existing.percentage.toString() : '';
   };
 
@@ -115,19 +131,28 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
       return;
     }
 
+    if (workType === 'team' && !selectedTeamId) {
+      toast({
+        title: "Error",
+        description: "Please select a team first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newAllocations: Allocation[] = [];
     const updatedAllocations: Allocation[] = [];
 
-    Object.values(gridAllocations).forEach(({ teamId, iterationNumber, percentage }) => {
-      const existing = getExistingAllocation(teamId, iterationNumber);
+    Object.values(gridAllocations).forEach(({ teamId, iterationNumber, percentage, epicId, runWorkCategoryId }) => {
+      const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId);
       
       const allocationData: Allocation = {
         id: existing?.id || crypto.randomUUID(),
         teamId,
         cycleId,
         iterationNumber,
-        epicId: workType === 'epic' ? selectedEpicId : undefined,
-        runWorkCategoryId: workType === 'run-work' ? selectedRunWorkCategoryId : undefined,
+        epicId,
+        runWorkCategoryId,
         percentage,
         notes: undefined,
       };
@@ -162,22 +187,36 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
   };
 
   const canSave = Object.keys(gridAllocations).length > 0 && 
-    ((workType === 'epic' && selectedEpicId) || (workType === 'run-work' && selectedRunWorkCategoryId));
+    ((workType === 'epic' && selectedEpicId) || 
+     (workType === 'run-work' && selectedRunWorkCategoryId) ||
+     (workType === 'team' && selectedTeamId));
+
+  const resetSelections = () => {
+    setSelectedProjectId('');
+    setSelectedEpicId('');
+    setSelectedRunWorkCategoryId('');
+    setSelectedTeamId('');
+    setGridAllocations({});
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Bulk Allocation Grid</CardTitle>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="space-y-2">
             <Label>Work Type</Label>
-            <Select value={workType} onValueChange={(value: 'epic' | 'run-work') => setWorkType(value)}>
+            <Select value={workType} onValueChange={(value: 'epic' | 'run-work' | 'team') => {
+              setWorkType(value);
+              resetSelections();
+            }}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="epic">Project Epic</SelectItem>
                 <SelectItem value="run-work">Run Work Category</SelectItem>
+                <SelectItem value="team">Team Work</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -243,6 +282,27 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
             </div>
           )}
 
+          {workType === 'team' && (
+            <div className="space-y-2">
+              <Label>Team</Label>
+              <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teams.map(team => (
+                    <SelectItem key={team.id} value={team.id}>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-2" />
+                        {team.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="flex items-end">
             <Button onClick={handleSave} disabled={!canSave} className="w-full">
               <Save className="h-4 w-4 mr-2" />
@@ -252,6 +312,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
         </div>
       </CardHeader>
 
+      {/* Single Epic/Run Work Grid */}
       {((workType === 'epic' && selectedEpicId) || (workType === 'run-work' && selectedRunWorkCategoryId)) && (
         <CardContent>
           <div className="overflow-x-auto">
@@ -277,6 +338,11 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                     </TableCell>
                     {iterations.map((_, index) => {
                       const iterationNumber = index + 1;
+                      const workId = workType === 'epic' ? selectedEpicId : selectedRunWorkCategoryId;
+                      const workData = workType === 'epic' 
+                        ? { epicId: selectedEpicId }
+                        : { runWorkCategoryId: selectedRunWorkCategoryId };
+                      
                       return (
                         <TableCell key={index} className="text-center">
                           <Input
@@ -286,8 +352,8 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                             step="1"
                             className="w-20 text-center"
                             placeholder="%"
-                            value={getCurrentValue(team.id, iterationNumber)}
-                            onChange={(e) => handlePercentageChange(team.id, iterationNumber, e.target.value)}
+                            value={getCurrentValue(team.id, iterationNumber, workId, workData.epicId, workData.runWorkCategoryId)}
+                            onChange={(e) => handlePercentageChange(team.id, iterationNumber, workId, e.target.value, workData)}
                           />
                         </TableCell>
                       );
@@ -300,6 +366,104 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
           
           <div className="mt-4 text-sm text-gray-600">
             <p>• Enter percentage values (1-100) for team allocations across iterations</p>
+            <p>• Empty cells will remove existing allocations</p>
+            <p>• Changes are saved only when you click "Save Allocations"</p>
+          </div>
+        </CardContent>
+      )}
+
+      {/* Team-based Grid */}
+      {workType === 'team' && selectedTeamId && (
+        <CardContent>
+          <div className="mb-4">
+            <h3 className="text-lg font-medium mb-2">
+              Allocate work for {teams.find(t => t.id === selectedTeamId)?.name}
+            </h3>
+            <p className="text-sm text-gray-600">
+              Set allocation percentages for each epic and run work category across iterations
+            </p>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-64">Work Item</TableHead>
+                  {iterations.map((_, index) => (
+                    <TableHead key={index} className="text-center">
+                      Iteration {index + 1}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* Team Epics */}
+                {teamEpics.map(epic => {
+                  const project = projects.find(p => p.id === epic.projectId);
+                  return (
+                    <TableRow key={epic.id}>
+                      <TableCell className="font-medium">
+                        <div>
+                          <div className="text-blue-600">{epic.name}</div>
+                          <div className="text-xs text-gray-500">{project?.name} • {epic.estimatedEffort} points</div>
+                        </div>
+                      </TableCell>
+                      {iterations.map((_, index) => {
+                        const iterationNumber = index + 1;
+                        return (
+                          <TableCell key={index} className="text-center">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="1"
+                              className="w-20 text-center"
+                              placeholder="%"
+                              value={getCurrentValue(selectedTeamId, iterationNumber, epic.id, epic.id)}
+                              onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, epic.id, e.target.value, { epicId: epic.id })}
+                            />
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })}
+                
+                {/* Run Work Categories */}
+                {runWorkCategories.map(category => (
+                  <TableRow key={category.id}>
+                    <TableCell className="font-medium">
+                      <div>
+                        <div style={{ color: category.color }}>{category.name}</div>
+                        <div className="text-xs text-gray-500">Run Work</div>
+                      </div>
+                    </TableCell>
+                    {iterations.map((_, index) => {
+                      const iterationNumber = index + 1;
+                      return (
+                        <TableCell key={index} className="text-center">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            className="w-20 text-center"
+                            placeholder="%"
+                            value={getCurrentValue(selectedTeamId, iterationNumber, category.id, undefined, category.id)}
+                            onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, category.id, e.target.value, { runWorkCategoryId: category.id })}
+                          />
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          
+          <div className="mt-4 text-sm text-gray-600">
+            <p>• Enter percentage values (1-100) for each work item across iterations</p>
+            <p>• Blue items are project epics, colored items are run work categories</p>
             <p>• Empty cells will remove existing allocations</p>
             <p>• Changes are saved only when you click "Save Allocations"</p>
           </div>
