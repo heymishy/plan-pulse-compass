@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import {
   ReactFlow,
@@ -18,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, FolderOpen, Target, Zap, Eye, EyeOff } from 'lucide-react';
+import { Users, FolderOpen, Target, Zap, Eye, EyeOff, Building } from 'lucide-react';
 
 type ViewType = 'all' | 'teams-projects' | 'projects-epics' | 'team-allocations';
 
@@ -26,16 +25,56 @@ const Canvas = () => {
   const { teams, projects, epics, allocations, divisions, runWorkCategories } = useApp();
   const [viewType, setViewType] = useState<ViewType>('all');
   const [showMiniMap, setShowMiniMap] = useState(true);
+  const [selectedDivision, setSelectedDivision] = useState<string>('all');
+  const [selectedTeam, setSelectedTeam] = useState<string>('all');
+  const [selectedProject, setSelectedProject] = useState<string>('all');
 
   // Generate nodes and edges based on view type
-  const { initialNodes, initialEdges } = useMemo(() => {
+  const { initialNodes, initialEdges, stats } = useMemo(() => {
+    let divisionsToShow = [...divisions];
+    let teamsToShow = [...teams];
+    let projectsToShow = [...projects];
+
+    if (selectedDivision !== 'all') {
+        divisionsToShow = divisionsToShow.filter(d => d.id === selectedDivision);
+        teamsToShow = teamsToShow.filter(t => t.divisionId === selectedDivision);
+    }
+
+    if (selectedTeam !== 'all') {
+        teamsToShow = teamsToShow.filter(t => t.id === selectedTeam);
+        const team = teams.find(t => t.id === selectedTeam);
+        if (team?.divisionId) {
+            divisionsToShow = divisionsToShow.filter(d => d.id === team.divisionId);
+        } else if (selectedDivision === 'all') {
+            divisionsToShow = [];
+        }
+    }
+    
+    let epicsToShow;
+    if (selectedProject !== 'all') {
+        projectsToShow = projectsToShow.filter(p => p.id === selectedProject);
+        epicsToShow = epics.filter(e => e.projectId === selectedProject);
+        const teamsForProject = new Set(epicsToShow.map(e => e.assignedTeamId).filter(Boolean));
+        teamsToShow = teamsToShow.filter(t => teamsForProject.has(t.id));
+        
+        const divisionsForTeams = new Set(teamsToShow.map(t => t.divisionId).filter(Boolean));
+        divisionsToShow = divisionsToShow.filter(d => divisionsForTeams.has(d.id));
+    } else {
+        const teamsToRender = new Set(teamsToShow.map(t => t.id));
+        epicsToShow = epics.filter(e => e.assignedTeamId && teamsToRender.has(e.assignedTeamId));
+        const projectsForTeams = new Set(epicsToShow.map(e => e.projectId));
+        projectsToShow = projects.filter(p => projectsForTeams.has(p.id));
+    }
+    
+    const allocationsToShow = allocations.filter(a => new Set(teamsToShow.map(t => t.id)).has(a.teamId));
+
     const nodes: Node[] = [];
     const edges: Edge[] = [];
     let nodeId = 0;
 
     if (viewType === 'all' || viewType === 'teams-projects') {
       // Add division nodes
-      divisions.forEach((division, index) => {
+      divisionsToShow.forEach((division, index) => {
         nodes.push({
           id: `division-${division.id}`,
           type: 'default',
@@ -59,9 +98,9 @@ const Canvas = () => {
       });
 
       // Add team nodes
-      teams.forEach((team, index) => {
-        const division = divisions.find(d => d.id === team.divisionId);
-        const divisionIndex = divisions.findIndex(d => d.id === team.divisionId);
+      teamsToShow.forEach((team, index) => {
+        const division = divisionsToShow.find(d => d.id === team.divisionId);
+        const divisionIndex = divisionsToShow.findIndex(d => d.id === team.divisionId);
         
         nodes.push({
           id: `team-${team.id}`,
@@ -101,7 +140,7 @@ const Canvas = () => {
       });
 
       // Add project nodes
-      projects.forEach((project, index) => {
+      projectsToShow.forEach((project, index) => {
         nodes.push({
           id: `project-${project.id}`,
           type: 'default',
@@ -133,9 +172,9 @@ const Canvas = () => {
 
     if (viewType === 'all' || viewType === 'projects-epics') {
       // Add epic nodes
-      epics.forEach((epic, index) => {
-        const project = projects.find(p => p.id === epic.projectId);
-        const projectIndex = projects.findIndex(p => p.id === epic.projectId);
+      epicsToShow.forEach((epic, index) => {
+        const project = projectsToShow.find(p => p.id === epic.projectId);
+        const projectIndex = projectsToShow.findIndex(p => p.id === epic.projectId);
         
         nodes.push({
           id: `epic-${epic.id}`,
@@ -219,7 +258,7 @@ const Canvas = () => {
       });
 
       // Show allocation connections
-      allocations.forEach(allocation => {
+      allocationsToShow.forEach(allocation => {
         if (allocation.epicId) {
           const epicExists = nodes.some(n => n.id === `epic-${allocation.epicId}`);
           const teamExists = nodes.some(n => n.id === `team-${allocation.teamId}`);
@@ -252,8 +291,15 @@ const Canvas = () => {
       });
     }
 
-    return { initialNodes: nodes, initialEdges: edges };
-  }, [teams, projects, epics, allocations, divisions, runWorkCategories, viewType]);
+    const finalStats = {
+      teams: teamsToShow.length,
+      projects: projectsToShow.length,
+      epics: epicsToShow.length,
+      allocations: allocationsToShow.length,
+    };
+
+    return { initialNodes: nodes, initialEdges: edges, stats: finalStats };
+  }, [teams, projects, epics, allocations, divisions, runWorkCategories, viewType, selectedDivision, selectedTeam, selectedProject]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -300,7 +346,7 @@ const Canvas = () => {
       </div>
 
       {/* Controls */}
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium">View:</label>
           <Select value={viewType} onValueChange={(value: ViewType) => setViewType(value)}>
@@ -312,6 +358,42 @@ const Canvas = () => {
               <SelectItem value="teams-projects">Teams & Projects</SelectItem>
               <SelectItem value="projects-epics">Projects & Epics</SelectItem>
               <SelectItem value="team-allocations">Team Allocations</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium flex items-center"><Building className="h-4 w-4 mr-1" />Division:</label>
+          <Select value={selectedDivision} onValueChange={setSelectedDivision}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by division"/>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Divisions</SelectItem>
+              {divisions.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium flex items-center"><Users className="h-4 w-4 mr-1" />Team:</label>
+          <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by team"/>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Teams</SelectItem>
+              {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2">
+          <label className="text-sm font-medium flex items-center"><FolderOpen className="h-4 w-4 mr-1" />Project:</label>
+          <Select value={selectedProject} onValueChange={setSelectedProject}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by project"/>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
