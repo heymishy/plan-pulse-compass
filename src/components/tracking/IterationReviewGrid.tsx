@@ -201,9 +201,9 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
             cycleId,
             iterationNumber,
             actualPercentage: entry.actualPercentage,
-            actualEpicId: entry.actualEpicId,
-            actualRunWorkCategoryId: entry.actualRunWorkCategoryId,
-            varianceReason: entry.varianceReason,
+            actualEpicId: entry.actualEpicId === 'none' ? undefined : entry.actualEpicId,
+            actualRunWorkCategoryId: entry.actualRunWorkCategoryId === 'none' ? undefined : entry.actualRunWorkCategoryId,
+            varianceReason: entry.varianceReason === 'none' ? undefined : entry.varianceReason,
             enteredDate: new Date().toISOString(),
           });
         }
@@ -249,7 +249,8 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
     }
   };
 
-  const varianceReasons: { value: VarianceReasonType; label: string }[] = [
+  const varianceReasons: { value: VarianceReasonType | 'none'; label: string }[] = [
+    { value: 'none', label: 'No reason' },
     { value: 'production-support', label: 'Production Support' },
     { value: 'scope-change', label: 'Scope Change' },
     { value: 'resource-unavailable', label: 'Resource Unavailable' },
@@ -331,17 +332,19 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
                         </div>
                         <div className="col-span-3">
                           <Select 
-                            value={entry.actualEpicId || ''} 
+                            value={entry.actualEpicId || 'none'} 
                             onValueChange={(value) => {
-                              handleActualChange(team.id, entryIndex, 'actualEpicId', value || undefined);
-                              handleActualChange(team.id, entryIndex, 'actualRunWorkCategoryId', undefined);
+                              handleActualChange(team.id, entryIndex, 'actualEpicId', value === 'none' ? undefined : value);
+                              if (value !== 'none') {
+                                handleActualChange(team.id, entryIndex, 'actualRunWorkCategoryId', undefined);
+                              }
                             }}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select epic" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">No Epic</SelectItem>
+                              <SelectItem value="none">No Epic</SelectItem>
                               {epics.map(epic => (
                                 <SelectItem key={epic.id} value={epic.id}>
                                   {getEpicName(epic.id)}
@@ -352,17 +355,19 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
                         </div>
                         <div className="col-span-3">
                           <Select 
-                            value={entry.actualRunWorkCategoryId || ''} 
+                            value={entry.actualRunWorkCategoryId || 'none'} 
                             onValueChange={(value) => {
-                              handleActualChange(team.id, entryIndex, 'actualRunWorkCategoryId', value || undefined);
-                              handleActualChange(team.id, entryIndex, 'actualEpicId', undefined);
+                              handleActualChange(team.id, entryIndex, 'actualRunWorkCategoryId', value === 'none' ? undefined : value);
+                              if (value !== 'none') {
+                                handleActualChange(team.id, entryIndex, 'actualEpicId', undefined);
+                              }
                             }}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">No Category</SelectItem>
+                              <SelectItem value="none">No Category</SelectItem>
                               {runWorkCategories.map(category => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.name}
@@ -373,14 +378,13 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
                         </div>
                         <div className="col-span-3">
                           <Select 
-                            value={entry.varianceReason || ''} 
-                            onValueChange={(value) => handleActualChange(team.id, entryIndex, 'varianceReason', value as VarianceReasonType)}
+                            value={entry.varianceReason || 'none'} 
+                            onValueChange={(value) => handleActualChange(team.id, entryIndex, 'varianceReason', value === 'none' ? undefined : value as VarianceReasonType)}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Reason" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">No reason</SelectItem>
                               {varianceReasons.map(reason => (
                                 <SelectItem key={reason.value} value={reason.value}>
                                   {reason.label}
