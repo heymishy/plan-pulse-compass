@@ -157,6 +157,15 @@ export type VarianceReasonType =
   | 'priority-shift'
   | 'other';
 
+export interface IterationActualEntry {
+  id: string; // Unique ID for list rendering
+  plannedAllocationId?: string;
+  actualPercentage: number;
+  actualEpicId?: string;
+  actualRunWorkCategoryId?: string;
+  varianceReason?: VarianceReasonType;
+}
+
 export interface IterationSnapshot {
   id: string;
   cycleId: string;

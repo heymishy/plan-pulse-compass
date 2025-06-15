@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Team, Allocation, Project, Epic, RunWorkCategory, Cycle, ActualAllocation, IterationReview, VarianceReasonType } from '@/types';
+import { Team, Allocation, Project, Epic, RunWorkCategory, Cycle, ActualAllocation, IterationReview, IterationActualEntry, VarianceReasonType } from '@/types';
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import ProgressStepper from './ProgressStepper';
-import TeamReviewCard, { ActualEntry } from './TeamReviewCard';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2 } from 'lucide-react';
+import TeamReviewCard from './TeamReviewCard';
+import CompletionStep from './steps/CompletionStep';
+import NotesStep from './steps/NotesStep';
+import SummaryStep from './steps/SummaryStep';
 
 interface IterationReviewFlowProps {
   cycleId: string;
@@ -52,7 +49,7 @@ const IterationReviewFlow: React.FC<IterationReviewFlowProps> = ({
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [currentTeamIndex, setCurrentTeamIndex] = useState(0);
 
-  const [actualEntries, setActualEntries] = useState<Record<string, ActualEntry[]>>({});
+  const [actualEntries, setActualEntries] = useState<Record<string, IterationActualEntry[]>>({});
   const [completedEpics, setCompletedEpics] = useState<string[]>([]);
   const [completedMilestones, setCompletedMilestones] = useState<string[]>([]);
   const [reviewNotes, setReviewNotes] = useState('');
@@ -75,7 +72,7 @@ const IterationReviewFlow: React.FC<IterationReviewFlowProps> = ({
       }
     }
 
-    const entries: Record<string, ActualEntry[]> = {};
+    const entries: Record<string, IterationActualEntry[]> = {};
     teams.forEach(team => {
       const teamPlanned = plannedAllocations.filter(a => a.teamId === team.id);
       const teamActuals = existingActuals.filter(a => a.teamId === team.id);
@@ -91,7 +88,7 @@ const IterationReviewFlow: React.FC<IterationReviewFlowProps> = ({
             actualPercentage: (item as ActualAllocation).actualPercentage || (item as Allocation).percentage,
             actualEpicId: (item as ActualAllocation).actualEpicId || (item as Allocation).epicId,
             actualRunWorkCategoryId: (item as ActualAllocation).actualRunWorkCategoryId || (item as Allocation).runWorkCategoryId,
-            varianceReason: (item as ActualAllocation).varianceReason as (ActualAllocation['varianceReason'] & VarianceReasonType) | undefined,
+            varianceReason: (item as ActualAllocation).varianceReason as VarianceReasonType | undefined,
           });
         });
       } else {
@@ -101,7 +98,7 @@ const IterationReviewFlow: React.FC<IterationReviewFlowProps> = ({
     setActualEntries(entries);
   }, [cycleId, iterationNumber, teams, iterationReviews, actualAllocations, plannedAllocations]);
 
-  const handleActualEntriesChange = (teamId: string, newEntries: ActualEntry[]) => {
+  const handleActualEntriesChange = (teamId: string, newEntries: IterationActualEntry[]) => {
     setActualEntries(prev => ({ ...prev, [teamId]: newEntries }));
   };
 
@@ -244,106 +241,35 @@ const IterationReviewFlow: React.FC<IterationReviewFlowProps> = ({
         )}
 
         {currentStepId === 'completion' && (
-          <Card className="animate-fade-in">
-            <CardHeader><CardTitle>Epic & Milestone Completion</CardTitle></CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-medium mb-3">Epics Completed This Iteration</h3>
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                    {epics.map(epic => (
-                      <div key={epic.id} className="flex items-center space-x-2"><Checkbox id={`epic-${epic.id}`} checked={completedEpics.includes(epic.id)} onCheckedChange={(checked) => setCompletedEpics(p => checked ? [...p, epic.id] : p.filter(id => id !== epic.id))} /><label htmlFor={`epic-${epic.id}`} className="text-sm">{getEpicName(epic.id)}</label></div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-3">Milestones Completed This Iteration</h3>
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
-                    {projects.flatMap(p => p.milestones).map(milestone => (
-                      <div key={milestone.id} className="flex items-center space-x-2"><Checkbox id={`milestone-${milestone.id}`} checked={completedMilestones.includes(milestone.id)} onCheckedChange={(checked) => setCompletedMilestones(p => checked ? [...p, milestone.id] : p.filter(id => id !== milestone.id))} /><label htmlFor={`milestone-${milestone.id}`} className="text-sm">{projects.find(p=>p.id === milestone.projectId)?.name} - {milestone.name}</label></div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <CompletionStep
+            completedEpics={completedEpics}
+            setCompletedEpics={setCompletedEpics}
+            completedMilestones={completedMilestones}
+            setCompletedMilestones={setCompletedMilestones}
+            epics={epics}
+            projects={projects}
+            getEpicName={getEpicName}
+          />
         )}
 
         {currentStepId === 'notes' && (
-          <Card className="animate-fade-in"><CardHeader><CardTitle>Review Notes</CardTitle></CardHeader><CardContent><Textarea placeholder="Add any notes..." value={reviewNotes} onChange={(e) => setReviewNotes(e.target.value)} rows={8} /></CardContent></Card>
+          <NotesStep
+            reviewNotes={reviewNotes}
+            setReviewNotes={setReviewNotes}
+          />
         )}
 
         {currentStepId === 'summary' && (
-            <Card className="animate-fade-in">
-                <CardHeader><CardTitle>Summary & Save</CardTitle></CardHeader>
-                <CardContent className="space-y-6">
-                    <Alert>
-                        <CheckCircle2 className="h-4 w-4" />
-                        <AlertTitle>Ready to Save</AlertTitle>
-                        <AlertDescription>You've completed all steps. Review the summary and click save to complete the iteration review.</AlertDescription>
-                    </Alert>
-                    
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium">Team Allocation Summary</h3>
-                        {teams.map(team => {
-                            const entries = actualEntries[team.id] || [];
-                            const totalActual = entries.reduce((sum, entry) => sum + (entry.actualPercentage || 0), 0);
-                            return (
-                                <Card key={team.id} className="bg-gray-50/50">
-                                    <CardHeader className="p-4 flex flex-row items-center justify-between">
-                                        <CardTitle className="text-base">{team.name}</CardTitle>
-                                        <Badge variant={totalActual === 100 ? "default" : "secondary"}>Total: {totalActual}%</Badge>
-                                    </CardHeader>
-                                    <CardContent className="p-4 pt-0 text-sm">
-                                        <ul className="space-y-1">
-                                            {entries.filter(e => e.actualPercentage > 0).map(entry => (
-                                                <li key={entry.id} className="flex justify-between">
-                                                    <span>{entry.actualEpicId ? getEpicName(entry.actualEpicId) : entry.actualRunWorkCategoryId ? getRunWorkCategoryName(entry.actualRunWorkCategoryId) : 'Unassigned'}</span>
-                                                    <span>{entry.actualPercentage}%</span>
-                                                </li>
-                                            ))}
-                                            {entries.filter(e => e.actualPercentage > 0).length === 0 && <li className="text-gray-500">No work allocated.</li>}
-                                        </ul>
-                                    </CardContent>
-                                </Card>
-                            )
-                        })}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 className="text-lg font-medium">Completed Epics</h3>
-                            {completedEpics.length > 0 ? (
-                                <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
-                                    {completedEpics.map(epicId => <li key={epicId}>{getEpicName(epicId)}</li>)}
-                                </ul>
-                            ) : <p className="text-sm text-gray-500 mt-2">No epics marked as completed.</p>}
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-medium">Completed Milestones</h3>
-                            {completedMilestones.length > 0 ? (
-                                <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
-                                    {completedMilestones.map(milestoneId => {
-                                        const milestone = projects.flatMap(p => p.milestones).find(m => m.id === milestoneId);
-                                        const project = projects.find(p => p.id === milestone?.projectId);
-                                        return <li key={milestoneId}>{project?.name || 'Unknown Project'} - {milestone?.name || 'Unknown Milestone'}</li>
-                                    })}
-                                </ul>
-                            ) : <p className="text-sm text-gray-500 mt-2">No milestones marked as completed.</p>}
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 className="text-lg font-medium">Review Notes</h3>
-                        {reviewNotes ? (
-                            <p className="mt-2 text-sm p-3 bg-gray-50 rounded border whitespace-pre-wrap">{reviewNotes}</p>
-                        ) : (
-                            <p className="text-sm text-gray-500 mt-2">No notes provided.</p>
-                        )}
-                    </div>
-
-                </CardContent>
-            </Card>
+            <SummaryStep
+                teams={teams}
+                actualEntries={actualEntries}
+                completedEpics={completedEpics}
+                completedMilestones={completedMilestones}
+                reviewNotes={reviewNotes}
+                getEpicName={getEpicName}
+                getRunWorkCategoryName={getRunWorkCategoryName}
+                projects={projects}
+            />
         )}
       </div>
 

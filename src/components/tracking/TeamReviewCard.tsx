@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Team, Allocation, Project, Epic, RunWorkCategory, VarianceReasonType } from '@/types';
+import { Team, Allocation, Project, Epic, RunWorkCategory, VarianceReasonType, IterationActualEntry } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,20 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Trash2 } from 'lucide-react';
 
-export interface ActualEntry {
-  id: string; // Unique ID for list rendering
-  plannedAllocationId?: string;
-  actualPercentage: number;
-  actualEpicId?: string;
-  actualRunWorkCategoryId?: string;
-  varianceReason?: VarianceReasonType;
-}
-
 interface TeamReviewCardProps {
   team: Team;
   plannedAllocations: Allocation[];
-  actualEntries: ActualEntry[];
-  onActualEntriesChange: (entries: ActualEntry[]) => void;
+  actualEntries: IterationActualEntry[];
+  onActualEntriesChange: (entries: IterationActualEntry[]) => void;
   epics: Epic[];
   projects: Project[];
   runWorkCategories: RunWorkCategory[];
@@ -48,7 +38,7 @@ const TeamReviewCard: React.FC<TeamReviewCardProps> = ({
   runWorkCategories,
   getEpicName,
 }) => {
-  const handleActualChange = (entryIndex: number, field: keyof ActualEntry, value: any) => {
+  const handleActualChange = (entryIndex: number, field: keyof IterationActualEntry, value: any) => {
     const updatedEntries = actualEntries.map((entry, index) => 
       index === entryIndex ? { ...entry, [field]: value } : entry
     );
