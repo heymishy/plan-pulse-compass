@@ -12,7 +12,6 @@ import AllocationStats from '@/components/allocations/AllocationStats';
 import TeamQuarterPlans from '@/components/allocations/TeamQuarterPlans';
 import AllocationImportDialog from '@/components/allocations/AllocationImportDialog';
 import { useToast } from '@/hooks/use-toast';
-import AnnualAllocationReport from '@/components/allocations/AnnualAllocationReport';
 import AnnualFinancialReport from '@/components/allocations/AnnualFinancialReport';
 
 const NoDataForQuarter = ({ selectedCycleId }: { selectedCycleId: string }) => (
