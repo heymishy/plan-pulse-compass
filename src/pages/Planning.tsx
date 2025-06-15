@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ const Planning = () => {
   const { teams, cycles, setCycles, allocations, config, projects, epics, runWorkCategories } = useApp();
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
-  const [viewMode, setViewMode<'matrix' | 'bulk'>('matrix');
+  const [viewMode, setViewMode] = useState<'matrix' | 'bulk'>('matrix');
   const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
   const [isCycleDialogOpen, setIsCycleDialogOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
