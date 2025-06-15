@@ -28,15 +28,20 @@ const AllocationTable: React.FC<AllocationTableProps> = ({
   getCurrentValue,
   onPercentageChange,
 }) => {
+  const getIterationNumber = (iteration: Cycle) => {
+    const match = iteration.name.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-48">Team</TableHead>
-            {iterations.map((_, index) => (
-              <TableHead key={index} className="text-center">
-                Iteration {index + 1}
+            {iterations.map((iteration) => (
+              <TableHead key={iteration.id} className="text-center">
+                {iteration.name}
               </TableHead>
             ))}
           </TableRow>
@@ -50,10 +55,11 @@ const AllocationTable: React.FC<AllocationTableProps> = ({
                   <div className="text-xs text-gray-500">{team.capacity}h/week</div>
                 </div>
               </TableCell>
-              {iterations.map((_, index) => {
-                const iterationNumber = index + 1;
+              {iterations.map((iteration) => {
+                const iterationNumber = getIterationNumber(iteration);
+                if (iterationNumber === 0) return <TableCell key={iteration.id}></TableCell>;
                 return (
-                  <TableCell key={index} className="text-center">
+                  <TableCell key={iteration.id} className="text-center">
                     <Input
                       type="number"
                       min="0"

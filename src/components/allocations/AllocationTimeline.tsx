@@ -22,6 +22,11 @@ const AllocationTimeline: React.FC<AllocationTimelineProps> = ({
   epics,
   runWorkCategories,
 }) => {
+  const getIterationNumber = (iteration: Cycle) => {
+    const match = iteration.name.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+
   const getTeamIterationAllocations = (teamId: string, iterationNumber: number) => {
     return allocations.filter(a => a.teamId === teamId && a.iterationNumber === iterationNumber);
   };
@@ -59,9 +64,9 @@ const AllocationTimeline: React.FC<AllocationTimelineProps> = ({
           {/* Timeline Header */}
           <div className="grid grid-cols-12 gap-2 text-sm font-medium">
             <div className="col-span-2">Team</div>
-            {iterations.map((iteration, index) => (
+            {iterations.map((iteration) => (
               <div key={iteration.id} className="col-span-2 text-center">
-                <div>Iteration {index + 1}</div>
+                <div>{iteration.name}</div>
                 <div className="text-xs text-gray-500">
                   {new Date(iteration.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
                   {new Date(iteration.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -78,9 +83,12 @@ const AllocationTimeline: React.FC<AllocationTimelineProps> = ({
                 <div className="text-sm text-gray-500">{team.capacity}h/week</div>
               </div>
               
-              {iterations.map((iteration, index) => {
-                const teamAllocations = getTeamIterationAllocations(team.id, index + 1);
-                const capacity = calculateTeamCapacity(team, index + 1, allocations, iterations);
+              {iterations.map((iteration) => {
+                const iterationNumber = getIterationNumber(iteration);
+                if (iterationNumber === 0) return <div key={iteration.id} className="col-span-2"></div>;
+
+                const teamAllocations = getTeamIterationAllocations(team.id, iterationNumber);
+                const capacity = calculateTeamCapacity(team, iterationNumber, allocations, iterations);
                 
                 return (
                   <div key={iteration.id} className="col-span-2">

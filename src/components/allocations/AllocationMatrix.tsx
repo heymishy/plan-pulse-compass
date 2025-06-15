@@ -49,6 +49,11 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
   const [selectedAllocations, setSelectedAllocations] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const getIterationNumber = (iteration: Cycle) => {
+    const match = iteration.name.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+
   const getAllocationName = (allocation: Allocation) => {
     if (allocation.epicId) {
       const epic = epics.find(e => e.id === allocation.epicId);
@@ -162,9 +167,8 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
                       </div>
                     </TableCell>
                     {iterations.map(iteration => {
-                      // For now, show the allocation percentage for the iteration that matches
-                      // the allocation's iterationNumber. This is a simplified approach.
-                      const isCurrentIteration = iteration.name.includes(allocation.iterationNumber.toString());
+                      const iterationNumber = getIterationNumber(iteration);
+                      const isCurrentIteration = iterationNumber === allocation.iterationNumber;
                       return (
                         <TableCell key={iteration.id} className="text-center">
                           {isCurrentIteration ? (

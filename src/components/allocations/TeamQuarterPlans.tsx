@@ -21,6 +21,11 @@ const TeamQuarterPlans: React.FC<TeamQuarterPlansProps> = ({
   epics,
   runWorkCategories,
 }) => {
+  const getIterationNumber = (iteration: Cycle) => {
+    const match = iteration.name.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+
   const getTeamIterationAllocations = (teamId: string, iterationNumber: number) => {
     return allocations.filter(a => a.teamId === teamId && a.iterationNumber === iterationNumber);
   };
@@ -69,9 +74,9 @@ const TeamQuarterPlans: React.FC<TeamQuarterPlansProps> = ({
           {/* Header */}
           <div className="grid grid-cols-12 gap-2 text-sm font-medium border-b pb-2">
             <div className="col-span-3">Team</div>
-            {iterations.map((iteration, index) => (
+            {iterations.map((iteration) => (
               <div key={iteration.id} className="col-span-2 text-center">
-                <div>Sprint {index + 1}</div>
+                <div>{iteration.name}</div>
                 <div className="text-xs text-gray-500">
                   {new Date(iteration.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - 
                   {new Date(iteration.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -83,9 +88,10 @@ const TeamQuarterPlans: React.FC<TeamQuarterPlansProps> = ({
 
           {/* Team Rows */}
           {teams.map(team => {
-            const avgLoad = iterations.reduce((sum, _, index) => 
-              sum + getTeamTotalAllocation(team.id, index + 1), 0
-            ) / iterations.length;
+            const avgLoad = iterations.reduce((sum, iteration) => {
+              const iterationNumber = getIterationNumber(iteration);
+              return sum + getTeamTotalAllocation(team.id, iterationNumber)
+            }, 0) / (iterations.length || 1);
 
             return (
               <div key={team.id} className="grid grid-cols-12 gap-2 py-4 border-b border-gray-100">
@@ -94,9 +100,12 @@ const TeamQuarterPlans: React.FC<TeamQuarterPlansProps> = ({
                   <div className="text-sm text-gray-500">{team.capacity}h/week</div>
                 </div>
                 
-                {iterations.map((iteration, index) => {
-                  const teamAllocations = getTeamIterationAllocations(team.id, index + 1);
-                  const totalAllocation = getTeamTotalAllocation(team.id, index + 1);
+                {iterations.map((iteration) => {
+                  const iterationNumber = getIterationNumber(iteration);
+                  if (iterationNumber === 0) return <div key={iteration.id} className="col-span-2" />;
+                  
+                  const teamAllocations = getTeamIterationAllocations(team.id, iterationNumber);
+                  const totalAllocation = getTeamTotalAllocation(team.id, iterationNumber);
                   
                   return (
                     <div key={iteration.id} className="col-span-2">
