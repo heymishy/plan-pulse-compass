@@ -1,3 +1,4 @@
+
 import { useMemo } from 'react';
 import { Edge, Node } from '@xyflow/react';
 import { useApp } from '@/context/AppContext';
@@ -31,6 +32,13 @@ export const useCanvasData = ({
   const { people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, cycles } = useApp();
 
   const { nodes, edges, stats } = useMemo(() => {
+    const now = new Date();
+    const activeCycle = cycles.find(c => new Date(c.startDate) <= now && new Date(c.endDate) >= now);
+
+    const currentAllocations = activeCycle
+      ? allocations.filter(a => a.cycleId === activeCycle.id)
+      : [];
+
     const {
       divisionsToShow,
       teamsToShow,
@@ -48,7 +56,7 @@ export const useCanvasData = ({
       projects,
       epics,
       people,
-      allocations,
+      allocations: currentAllocations,
     });
 
     let currentNodes: Node[] = [];

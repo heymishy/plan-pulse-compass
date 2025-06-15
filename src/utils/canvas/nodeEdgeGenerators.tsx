@@ -425,16 +425,25 @@ export const generateProjectsEpicsView = ({ projectsToShow, epicsToShow, teamsTo
           edges.push({ id: `project-epic-${epic.projectId}-${epic.id}`, source: `project-${epic.projectId}`, target: `epic-${epic.id}`, type: 'smoothstep', style: { stroke: '#f59e0b' } });
         }
         
-        const epicAllocations = allocations.filter(a => a.epicId === epic.id);
-        epicAllocations.forEach(alloc => {
-            if (teamsToShow.some(t => t.id === alloc.teamId)) {
-                edges.push({
-                    id: `team-epic-${alloc.teamId}-${epic.id}`,
-                    source: `team-${alloc.teamId}`,
+        const epicAllocationsByTeam = allocations
+            .filter(a => a.epicId === epic.id && teamsToShow.some(t => t.id === a.teamId))
+            .reduce((acc, alloc) => {
+                if (!acc.has(alloc.teamId)) {
+                    acc.set(alloc.teamId, 0);
+                }
+                acc.set(alloc.teamId, acc.get(alloc.teamId)! + alloc.percentage);
+                return acc;
+            }, new Map<string, number>());
+            
+        epicAllocationsByTeam.forEach((percentage, teamId) => {
+            if (percentage > 0) {
+                 edges.push({
+                    id: `team-epic-alloc-${teamId}-${epic.id}`,
+                    source: `team-${teamId}`,
                     target: `epic-${epic.id}`,
                     type: 'smoothstep',
-                    label: `${alloc.percentage}%`,
-                    style: { stroke: '#16a34a', strokeDasharray: '5,5' },
+                    label: `${percentage}%`,
+                    style: { stroke: '#16a34a', strokeDasharray: '5,5', strokeWidth: Math.max(1, percentage/25) },
                     animated: true
                 });
             }
@@ -509,12 +518,34 @@ export const generateTeamAllocationsView = (props: {
         });
     });
 
+    const epicAllocations = new Map<string, number>(); // key: `teamId-epicId`
+    const categoryAllocations = new Map<string, number>(); // key: `teamId-categoryId`
+
     allocationsToShow.forEach(allocation => {
         if (allocation.epicId) {
-            edges.push({ id: `allocation-epic-${allocation.id}`, source: `team-${allocation.teamId}`, target: `epic-${allocation.epicId}`, type: 'smoothstep', label: `${allocation.percentage}%`, style: { stroke: '#8b5cf6', strokeDasharray: '5,5' }, animated: true });
+            const key = `${allocation.teamId}-${allocation.epicId}`;
+            const current = epicAllocations.get(key) || 0;
+            epicAllocations.set(key, current + allocation.percentage);
         } else if (allocation.runWorkCategoryId) {
-            edges.push({ id: `allocation-category-${allocation.id}`, source: `team-${allocation.teamId}`, target: `category-${allocation.runWorkCategoryId}`, type: 'smoothstep', label: `${allocation.percentage}%`, style: { stroke: '#6b7280', strokeDasharray: '5,5' }, animated: true });
+            const key = `${allocation.teamId}-${allocation.runWorkCategoryId}`;
+            const current = categoryAllocations.get(key) || 0;
+            categoryAllocations.set(key, current + allocation.percentage);
         }
     });
+
+    epicAllocations.forEach((percentage, key) => {
+        const [teamId, epicId] = key.split('-');
+        if (percentage > 0) {
+            edges.push({ id: `allocation-epic-${teamId}-${epicId}`, source: `team-${teamId}`, target: `epic-${epicId}`, type: 'smoothstep', label: `${percentage}%`, style: { stroke: '#8b5cf6', strokeDasharray: '5,5' }, animated: true });
+        }
+    });
+
+    categoryAllocations.forEach((percentage, key) => {
+        const [teamId, categoryId] = key.split('-');
+        if (percentage > 0) {
+            edges.push({ id: `allocation-category-${teamId}-${categoryId}`, source: `team-${teamId}`, target: `category-${categoryId}`, type: 'smoothstep', label: `${percentage}%`, style: { stroke: '#6b7280', strokeDasharray: '5,5' }, animated: true });
+        }
+    });
+
     return { nodes, edges };
 }
