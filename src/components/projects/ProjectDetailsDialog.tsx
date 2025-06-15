@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project, Epic } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar, Target, DollarSign, Plus, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import EpicDialog from '@/components/projects/EpicDialog';
 import { useToast } from '@/hooks/use-toast';
+import { calculateProjectCost } from '@/utils/financialCalculations';
 
 interface ProjectDetailsDialogProps {
   isOpen: boolean;
@@ -24,12 +26,19 @@ interface ProjectDetailsDialogProps {
 }
 
 const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onClose, project }) => {
-  const { epics, setEpics } = useApp();
+  const { epics, setEpics, allocations, cycles, people, roles } = useApp();
   const { toast } = useToast();
   const [isEpicDialogOpen, setIsEpicDialogOpen] = useState(false);
   const [selectedEpic, setSelectedEpic] = useState<Epic | null>(null);
 
+  const projectFinancials = useMemo(() => {
+    if (!project) return { totalCost: 0, breakdown: [] };
+    return calculateProjectCost(project, epics, allocations, cycles, people, roles);
+  }, [project, epics, allocations, cycles, people, roles]);
+
   if (!project) return null;
+
+  const variance = (project.budget || 0) - projectFinancials.totalCost;
 
   const projectEpics = epics.filter(epic => epic.projectId === project.id);
 
@@ -120,21 +129,27 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                 </CardContent>
               </Card>
 
-              {project.budget && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center">
-                      <DollarSign className="h-4 w-4 mr-1" />
-                      Budget
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-lg font-bold">
-                      ${project.budget.toLocaleString()}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Financials
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm">
+                    Budget: {project.budget ? `$${project.budget.toLocaleString()}` : 'N/A'}
+                  </div>
+                  <div className="text-sm">
+                    Est. Cost: ${projectFinancials.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </div>
+                  {project.budget && (
+                    <div className={`text-sm font-semibold ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {variance >= 0 ? 'Surplus' : 'Deficit'}: ${Math.abs(variance).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  )}
+                </CardContent>
+              </Card>
 
               <Card>
                 <CardHeader className="pb-2">
@@ -186,6 +201,56 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                     </Card>
                   ))}
                 </div>
+              </div>
+            )}
+
+            <Separator />
+            
+            {/* Cost Breakdown Section */}
+            {projectFinancials.breakdown.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Cost Breakdown</h3>
+                <Card>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Person</TableHead>
+                          <TableHead>Rate Information</TableHead>
+                          <TableHead className="text-right">Total Cost</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {projectFinancials.breakdown
+                          .sort((a, b) => b.totalCost - a.totalCost)
+                          .map(item => (
+                            <TableRow key={item.personId}>
+                              <TableCell className="font-medium">{item.personName}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span className="font-medium">
+                                    ${item.effectiveRate.toLocaleString(undefined, { maximumFractionDigits: 2 })} / {item.rateType}
+                                  </span>
+                                  <span className="text-xs text-gray-500 capitalize">
+                                    Source: {item.rateSource.replace('-', ' ')}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right font-mono">
+                                ${item.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        <TableRow className="font-bold bg-gray-50 dark:bg-gray-800">
+                          <TableCell colSpan={2}>Total Estimated Cost</TableCell>
+                          <TableCell className="text-right font-mono">
+                            ${projectFinancials.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
