@@ -270,6 +270,9 @@ export const calculateProjectCostForYear = (
     projectAllocationsForQuarter.forEach(alloc => {
       // Find the corresponding iteration cycle to get its duration
       const getIterationNumberFromName = (cycleName: string) => {
+        if (typeof cycleName !== 'string') {
+          return null;
+        }
         const match = cycleName.match(/\d+$/);
         return match ? parseInt(match[0], 10) : null;
       };
