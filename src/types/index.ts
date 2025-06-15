@@ -254,3 +254,56 @@ export interface TeamSkillSummary {
     expert: number;
   };
 }
+
+// NEW: Project Report Types
+export type ProjectHealthStatus = 'on-track' | 'at-risk' | 'off-track';
+
+export interface ProjectReportExecutiveSummary {
+  overallStatus: ProjectHealthStatus;
+  commentary: string;
+  keyMetrics: {
+    budget: { value: number; trend: 'up' | 'down' | 'stable' };
+    timeline: { value: string; trend: 'ahead' | 'behind' | 'stable' };
+    scope: { completed: number; total: number; trend: 'up' | 'down' | 'stable' };
+  };
+}
+
+export interface ProjectReportFinancials {
+  totalCost: number;
+  budget: number;
+  variance: number;
+  burnRate: number; // monthly
+  costBreakdown: any[]; // from calculateProjectCost
+  teamBreakdown: any[]; // from calculateProjectCost
+}
+
+export interface ProjectReportProgress {
+  completedEpics: Epic[];
+  inProgressEpics: Epic[];
+  upcomingEpics: Epic[];
+  completedMilestones: Milestone[];
+  inProgressMilestones: Milestone[];
+  upcomingMilestones: Milestone[];
+}
+
+export interface ProjectReportTeamPerformance {
+  teamAllocations: {
+    teamId: string;
+    teamName: string;
+    totalAllocation: number; // percentage
+  }[];
+}
+
+export interface ProjectReportData {
+  projectId: string;
+  projectName: string;
+  generatedDate: string;
+  reportPeriod: {
+    startDate: string;
+    endDate: string;
+  };
+  summary: ProjectReportExecutiveSummary;
+  financials: ProjectReportFinancials;
+  progress: ProjectReportProgress;
+  teams: ProjectReportTeamPerformance;
+}
