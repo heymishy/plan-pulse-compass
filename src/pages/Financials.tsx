@@ -7,9 +7,9 @@ import TeamFinancialsTable from '@/components/financials/TeamFinancialsTable';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Financials = () => {
-    const { projects, epics, allocations, cycles, people, roles, teams, config, isSetupComplete } = useApp();
+    const { projects, epics, allocations, cycles, people, roles, teams, config, isSetupComplete, isDataLoading } = useApp();
 
-    const isLoading = !isSetupComplete || !config;
+    const isLoading = !isSetupComplete || !config || isDataLoading;
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 space-y-8">

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useEncryptedLocalStorage, useLocalStorage } from '@/hooks/useLocalStorage';
 import { 
@@ -46,9 +45,10 @@ interface AppContextType {
   config: AppConfig | null;
   setConfig: (config: AppConfig | null | ((prev: AppConfig | null) => AppConfig | null)) => void;
   
-  // Setup state
+  // Setup and loading state
   isSetupComplete: boolean;
   setIsSetupComplete: (complete: boolean) => void;
+  isDataLoading: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -65,8 +65,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   console.log('AppProvider: Initializing context...');
 
   // Encrypted sensitive data
-  const [people, setPeople] = useEncryptedLocalStorage<Person[]>('planning-people', []);
-  const [projects, setProjects] = useEncryptedLocalStorage<Project[]>('planning-projects', []);
+  const [people, setPeople, isPeopleLoading] = useEncryptedLocalStorage<Person[]>('planning-people', []);
+  const [projects, setProjects, isProjectsLoading] = useEncryptedLocalStorage<Project[]>('planning-projects', []);
   
   // Non-sensitive configuration data
   const [roles, setRoles] = useLocalStorage<Role[]>('planning-roles', []);
@@ -94,27 +94,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
+  const isDataLoading = isPeopleLoading || isProjectsLoading;
+
   // Debug logging for context state changes
   useEffect(() => {
-    console.log('AppProvider: Context state updated:', {
-      peopleCount: people.length,
-      projectsCount: projects.length,
-      rolesCount: roles.length,
-      teamsCount: teams.length,
-      divisionsCount: divisions.length,
-      epicsCount: epics.length,
-      allocationsCount: allocations.length,
-      cyclesCount: cycles.length,
-      runWorkCategoriesCount: runWorkCategories.length,
-      skillsCount: skills.length,
-      personSkillsCount: personSkills.length,
-      actualAllocationsCount: actualAllocations.length,
-      iterationReviewsCount: iterationReviews.length,
-      iterationSnapshotsCount: iterationSnapshots.length,
-      hasConfig: !!config,
-      isSetupComplete,
-    });
-  }, [people, projects, roles, teams, divisions, epics, allocations, cycles, runWorkCategories, skills, personSkills, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete]);
+    if (!isDataLoading) {
+      console.log('AppProvider: Context state updated:', {
+        peopleCount: people.length,
+        projectsCount: projects.length,
+        rolesCount: roles.length,
+        teamsCount: teams.length,
+        divisionsCount: divisions.length,
+        epicsCount: epics.length,
+        allocationsCount: allocations.length,
+        cyclesCount: cycles.length,
+        runWorkCategoriesCount: runWorkCategories.length,
+        skillsCount: skills.length,
+        personSkillsCount: personSkills.length,
+        actualAllocationsCount: actualAllocations.length,
+        iterationReviewsCount: iterationReviews.length,
+        iterationSnapshotsCount: iterationSnapshots.length,
+        hasConfig: !!config,
+        isSetupComplete,
+      });
+    }
+  }, [people, projects, roles, teams, divisions, epics, allocations, cycles, runWorkCategories, skills, personSkills, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete, isDataLoading]);
 
   const value: AppContextType = {
     people, setPeople,
@@ -134,6 +138,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     iterationSnapshots, setIterationSnapshots,
     config, setConfig,
     isSetupComplete, setIsSetupComplete,
+    isDataLoading,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

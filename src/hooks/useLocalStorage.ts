@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { deriveKey, encryptData, decryptData } from '@/utils/crypto';
 
@@ -64,8 +63,7 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
           setStoredValue(initialValue);
         }
       } catch (error) {
-        console.error(`Error reading, decrypting, or migrating data from localStorage key "${key}". Data may be corrupted. Clearing data.`, error);
-        window.localStorage.removeItem(key); // Remove corrupted/invalid data
+        console.error(`Error reading, decrypting, or migrating data from localStorage key "${key}". Data may be corrupted. Using initial value for this session, but not deleting stored data.`, error);
         if (isMounted) {
           setStoredValue(initialValue);
         }
