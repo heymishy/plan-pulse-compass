@@ -17,7 +17,7 @@ import { Project, ProjectReportData, ProjectHealthStatus, ProjectRisk } from '@/
 import { generateProjectReportData } from '@/utils/reportUtils';
 import { formatCurrency } from '@/utils/currency';
 import { format, formatISO } from 'date-fns';
-import { DollarSign, BarChart, TrendingUp, Target, Users, FileText, Download, Save, ShieldAlert, AlertTriangle, CalendarHistory } from 'lucide-react';
+import { DollarSign, BarChart, TrendingUp, Target, Users, FileText, Download, Save, ShieldAlert, AlertTriangle, History } from 'lucide-react';
 import ReportSection from '../reports/ReportSection';
 import MilestoneTimeline from '../reports/MilestoneTimeline';
 import { toast } from 'sonner';
@@ -130,7 +130,7 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
 
         <div className="px-6 py-4 border-b">
           <div className="flex items-center space-x-2 mb-2">
-            <CalendarHistory className="h-5 w-5 text-gray-600"/>
+            <History className="h-5 w-5 text-gray-600"/>
             <Label htmlFor="report-history">Report History</Label>
           </div>
           <Select value={selectedReportId} onValueChange={setSelectedReportId}>
