@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Users } from 'lucide-react';
+import { Save, Users, Plus, X } from 'lucide-react';
 
 interface BulkAllocationGridProps {
   teams: Team[];
@@ -58,23 +58,28 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
   const [selectedRunWorkCategoryId, setSelectedRunWorkCategoryId] = useState('');
   const [selectedTeamId, setSelectedTeamId] = useState('');
   const [gridAllocations, setGridAllocations] = useState<Record<string, GridAllocation>>({});
+  
+  // For team mode: track which epics the team has added to their allocation grid
+  const [teamSelectedEpics, setTeamSelectedEpics] = useState<string[]>([]);
+  const [epicToAdd, setEpicToAdd] = useState('');
+  const [projectForEpic, setProjectForEpic] = useState('');
 
   console.log('BulkAllocationGrid: workType:', workType);
   console.log('BulkAllocationGrid: selectedTeamId:', selectedTeamId);
-  console.log('BulkAllocationGrid: teams:', teams);
-  console.log('BulkAllocationGrid: epics:', epics);
+  console.log('BulkAllocationGrid: teamSelectedEpics:', teamSelectedEpics);
 
   const selectableProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
   const availableEpics = selectedProjectId 
     ? epics.filter(epic => epic.projectId === selectedProjectId)
     : [];
   
-  // For team-based view, get epics assigned to the selected team
-  const teamEpics = selectedTeamId 
-    ? epics.filter(epic => epic.assignedTeamId === selectedTeamId)
+  // For adding epics in team mode
+  const availableEpicsToAdd = projectForEpic 
+    ? epics.filter(epic => epic.projectId === projectForEpic && !teamSelectedEpics.includes(epic.id))
     : [];
 
-  console.log('BulkAllocationGrid: teamEpics for selectedTeamId:', selectedTeamId, teamEpics);
+  // For team-based view, get epics that the team has explicitly selected
+  const teamEpics = teamSelectedEpics.map(epicId => epics.find(e => e.id === epicId)).filter(Boolean) as Epic[];
 
   const getGridKey = (teamId: string, iterationNumber: number, workId: string) => 
     `${teamId}-${iterationNumber}-${workId}`;
@@ -119,6 +124,26 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
     
     const existing = getExistingAllocation(teamId, iterationNumber, epicId, runWorkCategoryId);
     return existing ? existing.percentage.toString() : '';
+  };
+
+  const handleAddEpicToTeam = () => {
+    if (epicToAdd && !teamSelectedEpics.includes(epicToAdd)) {
+      setTeamSelectedEpics(prev => [...prev, epicToAdd]);
+      setEpicToAdd('');
+      setProjectForEpic('');
+    }
+  };
+
+  const handleRemoveEpicFromTeam = (epicId: string) => {
+    setTeamSelectedEpics(prev => prev.filter(id => id !== epicId));
+    // Also remove any allocations for this epic
+    const newGridAllocations = { ...gridAllocations };
+    Object.keys(newGridAllocations).forEach(key => {
+      if (newGridAllocations[key].epicId === epicId) {
+        delete newGridAllocations[key];
+      }
+    });
+    setGridAllocations(newGridAllocations);
   };
 
   const handleSave = () => {
@@ -205,6 +230,9 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
     setSelectedEpicId('');
     setSelectedRunWorkCategoryId('');
     setSelectedTeamId('');
+    setTeamSelectedEpics([]);
+    setEpicToAdd('');
+    setProjectForEpic('');
     setGridAllocations({});
   };
 
@@ -388,12 +416,60 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
             <h3 className="text-lg font-medium mb-2">
               Allocate work for {teams.find(t => t.id === selectedTeamId)?.name}
             </h3>
-            <p className="text-sm text-gray-600 mb-2">
-              Set allocation percentages for epics and run work categories across iterations
+            <p className="text-sm text-gray-600 mb-4">
+              Add epics and run work categories to allocate across iterations
             </p>
-            <p className="text-sm text-blue-600">
-              Found {teamEpics.length} epics assigned to this team and {runWorkCategories.length} run work categories
-            </p>
+            
+            {/* Add Epic Section */}
+            <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+              <h4 className="font-medium mb-3">Add Epic to Allocation Grid</h4>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                <div>
+                  <Label className="text-sm">Project</Label>
+                  <Select value={projectForEpic} onValueChange={setProjectForEpic}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectableProjects.map(project => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-sm">Epic</Label>
+                  <Select 
+                    value={epicToAdd} 
+                    onValueChange={setEpicToAdd}
+                    disabled={!projectForEpic}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={projectForEpic ? "Select epic" : "Select project first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableEpicsToAdd.map(epic => (
+                        <SelectItem key={epic.id} value={epic.id}>
+                          {epic.name} ({epic.estimatedEffort} pts)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Button 
+                    onClick={handleAddEpicToTeam}
+                    disabled={!epicToAdd}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Epic
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -406,10 +482,11 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                       Iteration {index + 1}
                     </TableHead>
                   ))}
+                  <TableHead className="w-16">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Team Epics */}
+                {/* Team Selected Epics */}
                 {teamEpics.map(epic => {
                   const project = projects.find(p => p.id === epic.projectId);
                   return (
@@ -438,6 +515,16 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                           </TableCell>
                         );
                       })}
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveEpicFromTeam(epic.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -469,6 +556,9 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                         </TableCell>
                       );
                     })}
+                    <TableCell>
+                      {/* Run work categories can't be removed */}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -478,14 +568,16 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
           {/* Show empty state if no work items */}
           {teamEpics.length === 0 && runWorkCategories.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              <p>No epics assigned to this team and no run work categories available.</p>
+              <p>No epics added and no run work categories available.</p>
+              <p className="text-sm mt-1">Use the "Add Epic" section above to add epics to this team's allocation grid.</p>
             </div>
           )}
           
           <div className="mt-4 text-sm text-gray-600">
+            <p>• Use "Add Epic" above to add any epic from any project to this team's allocation grid</p>
             <p>• Enter percentage values (1-100) for each work item across iterations</p>
             <p>• Blue items are epics, colored items are run work categories</p>
-            <p>• Empty cells will remove existing allocations</p>
+            <p>• Click the X button to remove epics from the allocation grid</p>
             <p>• Changes are saved only when you click "Save Allocations"</p>
           </div>
         </CardContent>
