@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,20 +25,67 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
 }) => {
   const { roles, teams } = useApp();
   const [formData, setFormData] = useState({
-    name: person?.name || '',
-    email: person?.email || '',
-    roleId: person?.roleId || '',
-    teamId: person?.teamId || '',
-    isActive: person?.isActive ?? true,
-    employmentType: person?.employmentType || 'permanent' as 'permanent' | 'contractor',
-    annualSalary: person?.annualSalary || undefined,
+    name: '',
+    email: '',
+    roleId: '',
+    teamId: '',
+    isActive: true,
+    employmentType: 'permanent' as 'permanent' | 'contractor',
+    annualSalary: undefined as number | undefined,
     contractDetails: {
-      hourlyRate: person?.contractDetails?.hourlyRate || undefined,
-      dailyRate: person?.contractDetails?.dailyRate || undefined,
+      hourlyRate: undefined as number | undefined,
+      dailyRate: undefined as number | undefined,
     },
-    startDate: person?.startDate || new Date().toISOString().split('T')[0],
-    endDate: person?.endDate || '',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: '',
   });
+  const [contractRateType, setContractRateType] = useState<'hourly' | 'daily'>('hourly');
+
+  // Initialize form data when dialog opens or person changes
+  useEffect(() => {
+    if (person) {
+      setFormData({
+        name: person.name || '',
+        email: person.email || '',
+        roleId: person.roleId || '',
+        teamId: person.teamId || '',
+        isActive: person.isActive ?? true,
+        employmentType: person.employmentType || 'permanent',
+        annualSalary: person.annualSalary || undefined,
+        contractDetails: {
+          hourlyRate: person.contractDetails?.hourlyRate || undefined,
+          dailyRate: person.contractDetails?.dailyRate || undefined,
+        },
+        startDate: person.startDate || new Date().toISOString().split('T')[0],
+        endDate: person.endDate || '',
+      });
+      
+      // Set contract rate type based on existing data
+      if (person.contractDetails?.hourlyRate) {
+        setContractRateType('hourly');
+      } else if (person.contractDetails?.dailyRate) {
+        setContractRateType('daily');
+      }
+    } else {
+      // Reset form for new person
+      setFormData({
+        name: '',
+        email: '',
+        roleId: '',
+        teamId: '',
+        isActive: true,
+        employmentType: 'permanent',
+        annualSalary: undefined,
+        contractDetails: {
+          hourlyRate: undefined,
+          dailyRate: undefined,
+        },
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: '',
+      });
+      setContractRateType('hourly');
+    }
+  }, [person, open]);
 
   const selectedRole = roles.find(r => r.id === formData.roleId);
 
@@ -65,14 +112,28 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
         `Default: $${selectedRole.defaultAnnualSalary.toLocaleString()}/year` : 
         "Enter annual salary";
     } else {
-      if (selectedRole.defaultHourlyRate) {
-        return `Default: $${selectedRole.defaultHourlyRate}/hour`;
-      } else if (selectedRole.defaultDailyRate) {
-        return `Default: $${selectedRole.defaultDailyRate}/day`;
+      if (contractRateType === 'hourly') {
+        return selectedRole.defaultHourlyRate ? 
+          `Default: $${selectedRole.defaultHourlyRate}/hour` : 
+          `Default: $${selectedRole.defaultRate}/hour`;
       } else {
-        return `Default: $${selectedRole.defaultRate}/hour`;
+        return selectedRole.defaultDailyRate ? 
+          `Default: $${selectedRole.defaultDailyRate}/day` : 
+          "Enter daily rate";
       }
     }
+  };
+
+  const handleContractRateTypeChange = (newType: 'hourly' | 'daily') => {
+    setContractRateType(newType);
+    // Clear the other rate field when switching types
+    setFormData(prev => ({
+      ...prev,
+      contractDetails: {
+        hourlyRate: newType === 'hourly' ? prev.contractDetails.hourlyRate : undefined,
+        dailyRate: newType === 'daily' ? prev.contractDetails.dailyRate : undefined,
+      }
+    }));
   };
 
   return (
@@ -206,49 +267,71 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
           ) : (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="hourlyRate">Hourly Rate (optional)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-gray-500">$</span>
-                  <Input
-                    id="hourlyRate"
-                    type="number"
-                    step="0.01"
-                    placeholder={getPlaceholderText()}
-                    value={formData.contractDetails.hourlyRate || ''}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      contractDetails: {
-                        ...prev.contractDetails,
-                        hourlyRate: Number(e.target.value) || undefined
-                      }
-                    }))}
-                    className="pl-7"
-                  />
-                </div>
+                <Label>Rate Type</Label>
+                <RadioGroup
+                  value={contractRateType}
+                  onValueChange={handleContractRateTypeChange}
+                  className="flex space-x-6 mt-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="hourly" id="hourly" />
+                    <Label htmlFor="hourly">Hourly Rate</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="daily" id="daily" />
+                    <Label htmlFor="daily">Daily Rate</Label>
+                  </div>
+                </RadioGroup>
               </div>
-              <div>
-                <Label htmlFor="dailyRate">Daily Rate (optional)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 text-gray-500">$</span>
-                  <Input
-                    id="dailyRate"
-                    type="number"
-                    step="0.01"
-                    placeholder="Enter daily rate"
-                    value={formData.contractDetails.dailyRate || ''}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      contractDetails: {
-                        ...prev.contractDetails,
-                        dailyRate: Number(e.target.value) || undefined
-                      }
-                    }))}
-                    className="pl-7"
-                  />
+
+              {contractRateType === 'hourly' ? (
+                <div>
+                  <Label htmlFor="hourlyRate">Hourly Rate (optional)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <Input
+                      id="hourlyRate"
+                      type="number"
+                      step="0.01"
+                      placeholder={getPlaceholderText()}
+                      value={formData.contractDetails.hourlyRate || ''}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        contractDetails: {
+                          ...prev.contractDetails,
+                          hourlyRate: Number(e.target.value) || undefined
+                        }
+                      }))}
+                      className="pl-7"
+                    />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <Label htmlFor="dailyRate">Daily Rate (optional)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <Input
+                      id="dailyRate"
+                      type="number"
+                      step="0.01"
+                      placeholder={getPlaceholderText()}
+                      value={formData.contractDetails.dailyRate || ''}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        contractDetails: {
+                          ...prev.contractDetails,
+                          dailyRate: Number(e.target.value) || undefined
+                        }
+                      }))}
+                      className="pl-7"
+                    />
+                  </div>
+                </div>
+              )}
+              
               <p className="text-xs text-gray-500">
-                Leave empty to use role default rates. If both are specified, hourly rate takes precedence.
+                Leave empty to use role default rate
               </p>
             </div>
           )}
