@@ -3,17 +3,8 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Team, Cycle, Project, Epic, RunWorkCategory, Allocation } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Select,
   SelectContent,
@@ -22,7 +13,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Users, Plus, X } from 'lucide-react';
+import { Save } from 'lucide-react';
+import WorkTypeSelector from './WorkTypeSelector';
+import EpicSelector from './EpicSelector';
+import TeamSelector from './TeamSelector';
+import EpicAddForm from './EpicAddForm';
+import AllocationTable from './AllocationTable';
+import TeamAllocationTable from './TeamAllocationTable';
 
 interface BulkAllocationGridProps {
   teams: Team[];
@@ -67,16 +64,6 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
   console.log('BulkAllocationGrid: workType:', workType);
   console.log('BulkAllocationGrid: selectedTeamId:', selectedTeamId);
   console.log('BulkAllocationGrid: teamSelectedEpics:', teamSelectedEpics);
-
-  const selectableProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
-  const availableEpics = selectedProjectId 
-    ? epics.filter(epic => epic.projectId === selectedProjectId)
-    : [];
-  
-  // For adding epics in team mode
-  const availableEpicsToAdd = projectForEpic 
-    ? epics.filter(epic => epic.projectId === projectForEpic && !teamSelectedEpics.includes(epic.id))
-    : [];
 
   // For team-based view, get epics that the team has explicitly selected
   const teamEpics = teamSelectedEpics.map(epicId => epics.find(e => e.id === epicId)).filter(Boolean) as Epic[];
@@ -236,69 +223,35 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
     setGridAllocations({});
   };
 
+  const handleWorkTypeChange = (value: 'epic' | 'run-work' | 'team') => {
+    setWorkType(value);
+    resetSelections();
+  };
+
+  const handleProjectChange = (value: string) => {
+    setSelectedProjectId(value);
+    setSelectedEpicId('');
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Bulk Allocation Grid</CardTitle>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="space-y-2">
-            <Label>Work Type</Label>
-            <Select value={workType} onValueChange={(value: 'epic' | 'run-work' | 'team') => {
-              setWorkType(value);
-              resetSelections();
-            }}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="epic">Project Epic</SelectItem>
-                <SelectItem value="run-work">Run Work Category</SelectItem>
-                <SelectItem value="team">Team Work</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <WorkTypeSelector
+            workType={workType}
+            onWorkTypeChange={handleWorkTypeChange}
+          />
 
           {workType === 'epic' && (
-            <>
-              <div className="space-y-2">
-                <Label>Project</Label>
-                <Select value={selectedProjectId} onValueChange={(value) => {
-                  setSelectedProjectId(value);
-                  setSelectedEpicId('');
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectableProjects.map(project => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Epic</Label>
-                <Select 
-                  value={selectedEpicId} 
-                  onValueChange={setSelectedEpicId}
-                  disabled={!selectedProjectId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={selectedProjectId ? "Select epic" : "Select project first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableEpics.map(epic => (
-                      <SelectItem key={epic.id} value={epic.id}>
-                        {epic.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </>
+            <EpicSelector
+              selectedProjectId={selectedProjectId}
+              selectedEpicId={selectedEpicId}
+              projects={projects}
+              epics={epics}
+              onProjectChange={handleProjectChange}
+              onEpicChange={setSelectedEpicId}
+            />
           )}
 
           {workType === 'run-work' && (
@@ -320,24 +273,11 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
           )}
 
           {workType === 'team' && (
-            <div className="space-y-2">
-              <Label>Team</Label>
-              <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.map(team => (
-                    <SelectItem key={team.id} value={team.id}>
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-2" />
-                        {team.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <TeamSelector
+              selectedTeamId={selectedTeamId}
+              teams={teams}
+              onTeamChange={setSelectedTeamId}
+            />
           )}
 
           <div className="flex items-end">
@@ -352,54 +292,17 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
       {/* Single Epic/Run Work Grid */}
       {((workType === 'epic' && selectedEpicId) || (workType === 'run-work' && selectedRunWorkCategoryId)) && (
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-48">Team</TableHead>
-                  {iterations.map((_, index) => (
-                    <TableHead key={index} className="text-center">
-                      Iteration {index + 1}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {teams.map(team => (
-                  <TableRow key={team.id}>
-                    <TableCell className="font-medium">
-                      <div>
-                        <div>{team.name}</div>
-                        <div className="text-xs text-gray-500">{team.capacity}h/week</div>
-                      </div>
-                    </TableCell>
-                    {iterations.map((_, index) => {
-                      const iterationNumber = index + 1;
-                      const workId = workType === 'epic' ? selectedEpicId : selectedRunWorkCategoryId;
-                      const workData = workType === 'epic' 
-                        ? { epicId: selectedEpicId }
-                        : { runWorkCategoryId: selectedRunWorkCategoryId };
-                      
-                      return (
-                        <TableCell key={index} className="text-center">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="1"
-                            className="w-20 text-center"
-                            placeholder="%"
-                            value={getCurrentValue(team.id, iterationNumber, workId, workData.epicId, workData.runWorkCategoryId)}
-                            onChange={(e) => handlePercentageChange(team.id, iterationNumber, workId, e.target.value, workData)}
-                          />
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <AllocationTable
+            teams={teams}
+            iterations={iterations}
+            workId={workType === 'epic' ? selectedEpicId : selectedRunWorkCategoryId}
+            workData={workType === 'epic' 
+              ? { epicId: selectedEpicId }
+              : { runWorkCategoryId: selectedRunWorkCategoryId }
+            }
+            getCurrentValue={getCurrentValue}
+            onPercentageChange={handlePercentageChange}
+          />
           
           <div className="mt-4 text-sm text-gray-600">
             <p>• Enter percentage values (1-100) for team allocations across iterations</p>
@@ -420,150 +323,28 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
               Add epics and run work categories to allocate across iterations
             </p>
             
-            {/* Add Epic Section */}
-            <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-              <h4 className="font-medium mb-3">Add Epic to Allocation Grid</h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-                <div>
-                  <Label className="text-sm">Project</Label>
-                  <Select value={projectForEpic} onValueChange={setProjectForEpic}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select project" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectableProjects.map(project => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm">Epic</Label>
-                  <Select 
-                    value={epicToAdd} 
-                    onValueChange={setEpicToAdd}
-                    disabled={!projectForEpic}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={projectForEpic ? "Select epic" : "Select project first"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableEpicsToAdd.map(epic => (
-                        <SelectItem key={epic.id} value={epic.id}>
-                          {epic.name} ({epic.estimatedEffort} pts)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Button 
-                    onClick={handleAddEpicToTeam}
-                    disabled={!epicToAdd}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Epic
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <EpicAddForm
+              projectForEpic={projectForEpic}
+              epicToAdd={epicToAdd}
+              projects={projects}
+              epics={epics}
+              teamSelectedEpics={teamSelectedEpics}
+              onProjectForEpicChange={setProjectForEpic}
+              onEpicToAddChange={setEpicToAdd}
+              onAddEpic={handleAddEpicToTeam}
+            />
           </div>
           
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-64">Work Item</TableHead>
-                  {iterations.map((_, index) => (
-                    <TableHead key={index} className="text-center">
-                      Iteration {index + 1}
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-16">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {/* Team Selected Epics */}
-                {teamEpics.map(epic => {
-                  const project = projects.find(p => p.id === epic.projectId);
-                  return (
-                    <TableRow key={`epic-${epic.id}`}>
-                      <TableCell className="font-medium">
-                        <div>
-                          <div className="text-blue-600 font-medium">{epic.name}</div>
-                          <div className="text-xs text-gray-500">{project?.name} • Epic • {epic.estimatedEffort} points</div>
-                        </div>
-                      </TableCell>
-                      {iterations.map((_, index) => {
-                        const iterationNumber = index + 1;
-                        const workId = `epic-${epic.id}`;
-                        return (
-                          <TableCell key={index} className="text-center">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="1"
-                              className="w-20 text-center"
-                              placeholder="%"
-                              value={getCurrentValue(selectedTeamId, iterationNumber, workId, epic.id, undefined)}
-                              onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, workId, e.target.value, { epicId: epic.id })}
-                            />
-                          </TableCell>
-                        );
-                      })}
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveEpicFromTeam(epic.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                
-                {/* Run Work Categories */}
-                {runWorkCategories.map(category => (
-                  <TableRow key={`category-${category.id}`}>
-                    <TableCell className="font-medium">
-                      <div>
-                        <div className="font-medium" style={{ color: category.color }}>{category.name}</div>
-                        <div className="text-xs text-gray-500">Run Work Category</div>
-                      </div>
-                    </TableCell>
-                    {iterations.map((_, index) => {
-                      const iterationNumber = index + 1;
-                      const workId = `category-${category.id}`;
-                      return (
-                        <TableCell key={index} className="text-center">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="1"
-                            className="w-20 text-center"
-                            placeholder="%"
-                            value={getCurrentValue(selectedTeamId, iterationNumber, workId, undefined, category.id)}
-                            onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, workId, e.target.value, { runWorkCategoryId: category.id })}
-                          />
-                        </TableCell>
-                      );
-                    })}
-                    <TableCell>
-                      {/* Run work categories can't be removed */}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <TeamAllocationTable
+            iterations={iterations}
+            teamEpics={teamEpics}
+            runWorkCategories={runWorkCategories}
+            projects={projects}
+            selectedTeamId={selectedTeamId}
+            getCurrentValue={getCurrentValue}
+            onPercentageChange={handlePercentageChange}
+            onRemoveEpic={handleRemoveEpicFromTeam}
+          />
           
           {/* Show empty state if no work items */}
           {teamEpics.length === 0 && runWorkCategories.length === 0 && (
