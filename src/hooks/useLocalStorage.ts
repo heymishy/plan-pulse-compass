@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { deriveKey, encryptData, decryptData } from '@/utils/crypto';
 
@@ -65,7 +66,7 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
     return () => {
       isMounted = false;
     };
-  }, [key, getDerivedKey, initialValue]);
+  }, [key, getDerivedKey]); // Removed `initialValue` from dependencies to prevent infinite loop
 
   const setValue = useCallback(async (value: T | ((val: T) => T)) => {
     try {
