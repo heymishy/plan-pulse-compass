@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +33,8 @@ const IMPORT_TYPES = {
   },
   // Future import types can be added here
 };
+
+const SKIP_MAPPING = '__SKIP_MAPPING__';
 
 const AdvancedDataImport = () => {
   const { setProjects, setEpics } = useApp();
@@ -75,8 +76,15 @@ const AdvancedDataImport = () => {
     if (!fileContent || !importType) return;
 
     try {
+      const mapping = { ...data };
+      Object.keys(mapping).forEach(key => {
+        if (mapping[key] === SKIP_MAPPING) {
+          delete mapping[key];
+        }
+      });
+      
       const config = IMPORT_TYPES[importType];
-      const result = config.parser(fileContent, data);
+      const result = config.parser(fileContent, mapping);
 
       if ('projects' in result && 'epics' in result) {
          setProjects(prev => [...prev, ...result.projects]);
@@ -163,7 +171,7 @@ const AdvancedDataImport = () => {
                               <SelectValue placeholder="Select source column..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">-- Skip this field --</SelectItem>
+                              <SelectItem value={SKIP_MAPPING}>-- Skip this field --</SelectItem>
                               {headers.map(header => (
                                 <SelectItem key={header} value={header}>{header}</SelectItem>
                               ))}
