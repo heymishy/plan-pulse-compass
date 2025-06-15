@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Allocation, Team, Cycle, Project, Epic, RunWorkCategory } from '@/types';
@@ -32,6 +31,11 @@ interface AllocationDialogProps {
   projects: Project[];
   epics: Epic[];
   runWorkCategories: RunWorkCategory[];
+  prefilledData?: {
+    teamId?: string;
+    iterationNumber?: number;
+    suggestedEpicId?: string;
+  } | null;
 }
 
 const AllocationDialog: React.FC<AllocationDialogProps> = ({
@@ -44,6 +48,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
   projects,
   epics,
   runWorkCategories,
+  prefilledData,
 }) => {
   const { allocations, setAllocations } = useApp();
   const { toast } = useToast();
@@ -61,6 +66,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
   // Debug logging
   console.log('AllocationDialog: epics array:', epics);
   console.log('AllocationDialog: formData.projectId:', formData.projectId);
+  console.log('AllocationDialog: prefilledData:', prefilledData);
 
   useEffect(() => {
     if (allocation) {
@@ -75,6 +81,19 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
         percentage: allocation.percentage.toString(),
         notes: allocation.notes || '',
       });
+    } else if (prefilledData) {
+      // Handle prefilled data from matrix click
+      const suggestedEpic = prefilledData.suggestedEpicId ? epics.find(e => e.id === prefilledData.suggestedEpicId) : null;
+      setFormData({
+        teamId: prefilledData.teamId || '',
+        iterationNumber: prefilledData.iterationNumber?.toString() || '',
+        workType: suggestedEpic ? 'epic' : 'epic',
+        projectId: suggestedEpic?.projectId || '',
+        epicId: prefilledData.suggestedEpicId || '',
+        runWorkCategoryId: '',
+        percentage: '',
+        notes: '',
+      });
     } else {
       setFormData({
         teamId: '',
@@ -87,7 +106,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
         notes: '',
       });
     }
-  }, [allocation, isOpen, epics]);
+  }, [allocation, isOpen, epics, prefilledData]);
 
   const handleInputChange = (field: string, value: string) => {
     console.log(`AllocationDialog: ${field} changed to:`, value);
@@ -223,6 +242,11 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
         <DialogHeader>
           <DialogTitle>
             {allocation ? 'Edit Allocation' : 'Create New Allocation'}
+            {prefilledData && (
+              <div className="text-sm text-blue-600 font-normal mt-1">
+                Pre-filled from matrix selection
+              </div>
+            )}
           </DialogTitle>
         </DialogHeader>
 

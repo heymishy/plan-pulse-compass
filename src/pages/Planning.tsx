@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -16,10 +15,11 @@ const Planning = () => {
   const { teams, cycles, setCycles, allocations, config, projects, epics, runWorkCategories } = useApp();
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'matrix' | 'bulk'>('matrix');
+  const [viewMode, setViewMode<'matrix' | 'bulk'>('matrix');
   const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
   const [isCycleDialogOpen, setIsCycleDialogOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
+  const [prefilledData, setPrefilledData] = useState<{teamId?: string, iterationNumber?: number, suggestedEpicId?: string} | null>(null);
 
   // Get current quarter cycles
   const quarterCycles = cycles.filter(c => c.type === 'quarterly' && c.status !== 'completed');
@@ -42,12 +42,46 @@ const Planning = () => {
 
   const handleCreateAllocation = () => {
     setSelectedAllocation(null);
+    setPrefilledData(null);
+    setIsAllocationDialogOpen(true);
+  };
+
+  const handleCreateAllocationFromMatrix = (teamId: string, iterationNumber: number) => {
+    setSelectedAllocation(null);
+    
+    // Find suggested epic from previous iteration
+    let suggestedEpicId = '';
+    if (iterationNumber > 1) {
+      const previousIterationAllocations = allocations.filter(a => 
+        a.teamId === teamId && 
+        a.cycleId === selectedCycleId && 
+        a.iterationNumber === iterationNumber - 1 &&
+        a.epicId
+      );
+      
+      if (previousIterationAllocations.length > 0) {
+        // Use the first epic from the previous iteration
+        suggestedEpicId = previousIterationAllocations[0].epicId || '';
+      }
+    }
+    
+    setPrefilledData({
+      teamId,
+      iterationNumber,
+      suggestedEpicId
+    });
     setIsAllocationDialogOpen(true);
   };
 
   const handleEditAllocation = (allocation: Allocation) => {
     setSelectedAllocation(allocation);
+    setPrefilledData(null);
     setIsAllocationDialogOpen(true);
+  };
+
+  const handleCloseAllocationDialog = () => {
+    setIsAllocationDialogOpen(false);
+    setPrefilledData(null);
   };
 
   const getQuarterStats = () => {
@@ -208,6 +242,7 @@ const Planning = () => {
               iterations={iterations}
               allocations={allocations.filter(a => a.cycleId === selectedCycleId)}
               onEditAllocation={handleEditAllocation}
+              onCreateAllocation={handleCreateAllocationFromMatrix}
               projects={projects}
               epics={epics}
               runWorkCategories={runWorkCategories}
@@ -247,7 +282,7 @@ const Planning = () => {
       {/* Dialogs */}
       <AllocationDialog
         isOpen={isAllocationDialogOpen}
-        onClose={() => setIsAllocationDialogOpen(false)}
+        onClose={handleCloseAllocationDialog}
         allocation={selectedAllocation}
         cycleId={selectedCycleId}
         teams={teams}
@@ -255,6 +290,7 @@ const Planning = () => {
         projects={projects}
         epics={epics}
         runWorkCategories={runWorkCategories}
+        prefilledData={prefilledData}
       />
       
       <CycleDialog

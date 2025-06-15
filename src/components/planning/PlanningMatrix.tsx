@@ -12,6 +12,7 @@ interface PlanningMatrixProps {
   iterations: Cycle[];
   allocations: Allocation[];
   onEditAllocation: (allocation: Allocation) => void;
+  onCreateAllocation: (teamId: string, iterationNumber: number) => void;
   projects: Project[];
   epics: Epic[];
   runWorkCategories: RunWorkCategory[];
@@ -22,6 +23,7 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
   iterations,
   allocations,
   onEditAllocation,
+  onCreateAllocation,
   projects,
   epics,
   runWorkCategories,
@@ -58,6 +60,10 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
 
   const getTeamEpics = (teamId: string) => {
     return epics.filter(epic => epic.assignedTeamId === teamId);
+  };
+
+  const handleEmptyCellClick = (teamId: string, iterationNumber: number) => {
+    onCreateAllocation(teamId, iterationNumber);
   };
 
   return (
@@ -114,7 +120,7 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
                                 {getAllocationStatus(capacityCheck.allocatedPercentage)}
                               </div>
                               
-                              {iterationAllocations.length > 0 && (
+                              {iterationAllocations.length > 0 ? (
                                 <div className="space-y-1">
                                   {iterationAllocations.map(allocation => {
                                     const epic = allocation.epicId ? epics.find(e => e.id === allocation.epicId) : null;
@@ -145,6 +151,13 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
                                     );
                                   })}
                                 </div>
+                              ) : (
+                                <div 
+                                  className="min-h-12 border-2 border-dashed border-gray-200 rounded cursor-pointer hover:border-blue-300 hover:bg-blue-50 flex items-center justify-center transition-colors"
+                                  onClick={() => handleEmptyCellClick(team.id, index + 1)}
+                                >
+                                  <Plus className="h-4 w-4 text-gray-400 hover:text-blue-500" />
+                                </div>
                               )}
                             </div>
                           </td>
@@ -169,6 +182,10 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
             <div className="flex items-center space-x-1">
               <AlertTriangle className="h-4 w-4 text-red-500" />
               <span>Over allocated</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Plus className="h-4 w-4 text-gray-400" />
+              <span>Click empty cells to add allocation</span>
             </div>
           </div>
         </CardContent>
