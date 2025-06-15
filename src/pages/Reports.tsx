@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { DollarSign, TrendingUp, Users, Calendar, AlertTriangle, Target } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
+import { calculateTeamMonthlyCost } from '@/utils/financialCalculations';
 
 const Reports = () => {
   const { projects, teams, people, roles, allocations, cycles, config } = useApp();
@@ -24,11 +24,7 @@ const Reports = () => {
       const teamMembers = people.filter(p => p.teamId === team.id && p.isActive);
       const teamAllocations = allocations.filter(a => a.teamId === team.id);
       
-      const monthlyCost = teamMembers.reduce((sum, person) => {
-        const role = roles.find(r => r.id === person.roleId);
-        const monthlyRate = (role?.defaultRate || 0) * 160; // Assuming 160 hours per month
-        return sum + monthlyRate;
-      }, 0);
+      const monthlyCost = calculateTeamMonthlyCost(teamMembers, roles);
       
       const utilizationRate = teamAllocations.reduce((sum, a) => sum + a.percentage, 0) / 100;
       
@@ -42,7 +38,7 @@ const Reports = () => {
     });
 
     const totalMonthlyCost = teamCosts.reduce((sum, t) => sum + t.monthlyCost, 0);
-    const averageUtilization = teamCosts.reduce((sum, t) => sum + t.utilization, 0) / teamCosts.length;
+    const averageUtilization = teamCosts.length > 0 ? teamCosts.reduce((sum, t) => sum + t.utilization, 0) / teamCosts.length : 0;
 
     return {
       totalBudget,

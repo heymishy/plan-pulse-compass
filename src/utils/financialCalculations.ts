@@ -106,6 +106,21 @@ export const calculateTeamWeeklyCost = (
   return weeklyCost;
 };
 
+export const calculateTeamMonthlyCost = (
+  teamMembers: Person[],
+  roles: Role[]
+): number => {
+  let monthlyCost = 0;
+  teamMembers.forEach(person => {
+    const role = roles.find(r => r.id === person.roleId);
+    if (role) {
+      const personCost = calculatePersonCost(person, role);
+      monthlyCost += personCost.costPerMonth;
+    }
+  });
+  return monthlyCost;
+};
+
 export const calculateAllocationCost = (
   allocation: Allocation,
   cycle: Cycle,
