@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,6 @@ import { Upload, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { parseEnhancedPeopleCSV, parseTeamsWithDivisionsCSV, exportEnhancedPeopleCSV, exportTeamsWithDivisionsCSV, downloadCSV } from '@/utils/enhancedCsvUtils';
-import { parseSkillsCSV, exportSkillsCSV } from '@/utils/csvUtils';
 
 const EnhancedImportExport = () => {
   const { 
