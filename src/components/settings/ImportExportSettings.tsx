@@ -9,14 +9,18 @@ import { Upload, Download } from 'lucide-react';
 import { useSetupForm } from '@/hooks/useSetupForm';
 import { downloadSampleCSV } from '@/utils/csvUtils';
 import EnhancedImportExport from './EnhancedImportExport';
+import EnhancedProjectsImportExport from './EnhancedProjectsImportExport';
 
 const ImportExportSettings = () => {
   const { handleCSVUpload } = useSetupForm();
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Import/Export */}
+      {/* Enhanced People Import/Export */}
       <EnhancedImportExport />
+      
+      {/* Enhanced Projects Import/Export */}
+      <EnhancedProjectsImportExport />
       
       {/* Legacy Import/Export - kept for backward compatibility */}
       <Card>
@@ -70,7 +74,7 @@ const ImportExportSettings = () => {
                 <TabsContent value="projects" className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <Label htmlFor="projectsCSV">Projects CSV</Label>
+                      <Label htmlFor="projectsCSV">Projects CSV (Basic)</Label>
                       <Button
                         variant="outline"
                         size="sm"
@@ -133,7 +137,7 @@ const ImportExportSettings = () => {
                 </Button>
                 <Button variant="outline" className="flex items-center justify-center">
                   <Download className="h-4 w-4 mr-2" />
-                  Export Projects
+                  Export Projects (Basic)
                 </Button>
                 <Button variant="outline" className="flex items-center justify-center">
                   <Download className="h-4 w-4 mr-2" />

@@ -1,0 +1,12 @@
+
+project_name,project_description,project_status,project_start_date,project_end_date,project_budget,epic_name,epic_description,epic_effort,epic_team,epic_target_date,milestone_name,milestone_due_date
+E-commerce Platform,Build new e-commerce platform,active,2024-01-01,2024-12-31,500000,User Management,User registration and authentication,21,team-1,2024-03-01,MVP Launch,2024-06-30
+E-commerce Platform,,,,,Product Catalog,Product listing and search functionality,34,team-2,2024-04-15,Beta Release,2024-09-30
+E-commerce Platform,,,,,Shopping Cart,Cart and checkout functionality,25,team-1,2024-05-30,Production Release,2024-12-31
+E-commerce Platform,,,,,Order Processing,Order management and fulfillment,42,team-3,2024-07-15,,
+Mobile App Redesign,Complete mobile application overhaul,active,2024-01-15,2024-06-30,150000,Authentication,User login and registration,13,team-1,2024-02-15,Design Complete,2024-03-01
+Mobile App Redesign,,,,,Payment System,Payment processing integration,21,team-2,2024-03-30,Development Complete,2024-05-15
+Mobile App Redesign,,,,,Push Notifications,Real-time notification system,8,team-3,2024-04-15,Testing Complete,2024-06-15
+Data Analytics,Business intelligence dashboard,planning,2024-03-01,2024-08-31,120000,Data Pipeline,ETL data processing pipeline,34,team-4,2024-05-01,Data Model Ready,2024-04-15
+Data Analytics,,,,,Reporting Engine,Interactive reporting and charts,25,team-2,2024-06-30,Dashboard Beta,2024-06-30
+Data Analytics,,,,,User Interface,Dashboard UI and user experience,18,team-3,2024-07-15,Production Ready,2024-08-31

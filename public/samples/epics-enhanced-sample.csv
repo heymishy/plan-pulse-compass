@@ -1,0 +1,10 @@
+
+epic_name,project_name,project_id,description,estimated_effort,status,assigned_team_id,start_date,target_end_date,actual_end_date
+User Authentication,Mobile App Redesign,project-1,Implement secure user login and registration,21,completed,team-1,2024-01-15,2024-02-15,2024-02-10
+Payment Integration,Mobile App Redesign,project-1,Add payment processing capabilities,34,in-progress,team-2,2024-02-01,2024-03-15,
+Push Notifications,Mobile App Redesign,project-1,Implement push notification system,13,not-started,team-3,2024-03-01,2024-04-01,
+API Gateway Setup,API Integration Project,project-2,Set up API gateway for third-party integrations,13,not-started,team-3,2024-02-15,2024-03-01,
+OAuth Implementation,API Integration Project,project-2,Implement OAuth authentication for APIs,8,not-started,team-1,2024-03-01,2024-03-15,
+Product Catalog,E-commerce Platform,project-3,Build product listing and search functionality,55,in-progress,team-2,2024-01-15,2024-04-30,
+Shopping Cart,E-commerce Platform,project-3,Implement shopping cart and checkout,34,not-started,team-1,2024-03-01,2024-05-15,
+Order Management,E-commerce Platform,project-3,Order processing and fulfillment system,42,not-started,team-4,2024-04-01,2024-07-01,
