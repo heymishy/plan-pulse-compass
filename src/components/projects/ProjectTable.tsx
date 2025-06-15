@@ -23,8 +23,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Edit, Eye, Trash2 } from 'lucide-react';
+import { Edit, Eye, Trash2, Layers, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { calculateProjectCost } from '@/utils/financialCalculations';
 
 interface ProjectTableProps {
   projects: Project[];
@@ -33,7 +34,7 @@ interface ProjectTableProps {
 }
 
 const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, onViewProject }) => {
-  const { setProjects, setEpics } = useApp();
+  const { setProjects, setEpics, epics, allocations, cycles, people, roles, teams } = useApp();
   const { toast } = useToast();
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -117,13 +118,19 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, on
               </TableHead>
               <TableHead>Project Name</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Epics</TableHead>
+              <TableHead>Est. Cost</TableHead>
               <TableHead>Start Date</TableHead>
               <TableHead>End Date</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {projects.map((project) => (
+            {projects.map((project) => {
+              const projectEpics = epics.filter(e => e.projectId === project.id);
+              const { totalCost } = calculateProjectCost(project, epics, allocations, cycles, people, roles, teams);
+
+              return (
               <TableRow key={project.id}>
                 <TableCell>
                   <Checkbox
@@ -134,10 +141,28 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, on
                 </TableCell>
                 <TableCell className="font-medium">{project.name}</TableCell>
                 <TableCell>{getStatusBadge(project.status)}</TableCell>
-                <TableCell>{new Date(project.startDate).toLocaleDateString()}</TableCell>
-                <TableCell>{new Date(project.endDate).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
+                    <Layers className="h-4 w-4 text-gray-500" />
+                    <span>{projectEpics.length}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="h-4 w-4 text-gray-500" />
+                    <span>
+                      {totalCost.toLocaleString(undefined, {
+                        style: 'currency',
+                        currency: 'USD',
+                        maximumFractionDigits: 0,
+                      })}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell>{new Date(project.startDate).toLocaleDateString()}</TableCell>
+                <TableCell>{project.endDate ? new Date(project.endDate).toLocaleDateString() : 'N/A'}</TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-end space-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -155,7 +180,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, on
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )})}
           </TableBody>
         </Table>
       </div>

@@ -16,8 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Edit, Eye, Calendar, Trash2 } from 'lucide-react';
+import { Edit, Eye, Calendar, Trash2, Layers, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { calculateProjectCost } from '@/utils/financialCalculations';
+import { Separator } from '@/components/ui/separator';
 
 interface ProjectCardsProps {
   projects: Project[];
@@ -26,7 +28,7 @@ interface ProjectCardsProps {
 }
 
 const ProjectCards: React.FC<ProjectCardsProps> = ({ projects, onEditProject, onViewProject }) => {
-  const { setProjects, setEpics } = useApp();
+  const { setProjects, setEpics, epics, allocations, cycles, people, roles, teams } = useApp();
   const { toast } = useToast();
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -88,63 +90,94 @@ const ProjectCards: React.FC<ProjectCardsProps> = ({ projects, onEditProject, on
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map((project) => (
-          <Card key={project.id} className="hover:shadow-md transition-shadow relative">
-            <div className="absolute top-3 left-3">
+        {projects.map((project) => {
+          const projectEpics = epics.filter(e => e.projectId === project.id);
+          const { totalCost } = calculateProjectCost(project, epics, allocations, cycles, people, roles, teams);
+          
+          return (
+          <Card key={project.id} className="flex flex-col hover:shadow-md transition-shadow relative">
+            <div className="absolute top-4 left-4">
               <Checkbox
                 checked={selectedProjects.has(project.id)}
                 onCheckedChange={(checked) => handleSelectProject(project.id, checked as boolean)}
                 aria-label={`Select ${project.name}`}
               />
             </div>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-12">
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 pl-14">
               <div className="space-y-1">
-                <CardTitle className="text-lg font-semibold">{project.name}</CardTitle>
+                <CardTitle className="text-base font-semibold">{project.name}</CardTitle>
                 {getStatusBadge(project.status)}
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={() => onViewProject(project.id)}
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
+                  className="h-8 w-8"
                   onClick={() => onEditProject(project.id)}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 flex-grow pl-14">
               {project.description && (
                 <p className="text-sm text-gray-600 line-clamp-2">
                   {project.description}
                 </p>
               )}
 
+              <Separator />
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 flex items-center">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    Start:
+                    <Layers className="h-4 w-4 mr-2" />
+                    Epics
+                  </span>
+                  <span className="font-medium">{projectEpics.length}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 flex items-center">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    Est. Cost
+                  </span>
+                  <span className="font-semibold">
+                    {totalCost.toLocaleString(undefined, {
+                      style: 'currency',
+                      currency: 'USD',
+                      maximumFractionDigits: 0,
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 flex items-center">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Start Date
                   </span>
                   <span>{new Date(project.startDate).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600 flex items-center">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    End:
+                    <Calendar className="h-4 w-4 mr-2" />
+                    End Date
                   </span>
-                  <span>{new Date(project.endDate).toLocaleDateString()}</span>
+                  <span>{project.endDate ? new Date(project.endDate).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
-        ))}
+        )})}
       </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
