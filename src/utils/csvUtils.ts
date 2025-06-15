@@ -1,4 +1,3 @@
-
 import { Person, Role, Team, Project } from '@/types';
 
 export const downloadSampleCSV = (filename: string) => {
@@ -54,6 +53,8 @@ export const parsePeopleCSV = (text: string): { people: Person[], teams: Team[] 
       roleId: `role-${role.toLowerCase().replace(/\s+/g, '-')}`,
       teamId: teamId.replace(/"/g, ''),
       isActive: true,
+      employmentType: 'permanent', // Default value
+      startDate: new Date().toISOString().split('T')[0], // Default to today
     });
     
     // Create team if not exists
@@ -98,12 +99,15 @@ export const parseRolesCSV = (text: string): Role[] => {
   return dataRows.map((row, index) => {
     if (row.length < 2) return null;
     
-    const [roleName, defaultRate] = row;
+    const [roleName, defaultRateStr] = row;
+    const defaultRate = parseFloat(defaultRateStr.replace(/"/g, ''));
     
     return {
       id: `role-${roleName.toLowerCase().replace(/\s+/g, '-')}`,
       name: roleName.replace(/"/g, ''),
-      defaultRate: parseFloat(defaultRate.replace(/"/g, '')),
+      rateType: 'hourly', // Assume hourly for CSV import
+      defaultRate: defaultRate, // Legacy field
+      defaultHourlyRate: defaultRate,
     };
   }).filter(Boolean) as Role[];
 };

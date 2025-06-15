@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,16 +15,17 @@ interface FinancialStepProps {
 const FinancialStep: React.FC<FinancialStepProps> = ({ onBack, onNext }) => {
   const { roles, setRoles } = useApp();
   const [localRoles, setLocalRoles] = useState<Role[]>(roles.length > 0 ? roles : [
-    { id: 'role-1', name: 'Software Engineer', defaultRate: 85, description: 'Full-stack developer' },
-    { id: 'role-2', name: 'Senior Engineer', defaultRate: 120, description: 'Senior developer with leadership responsibilities' },
-    { id: 'role-3', name: 'Product Manager', defaultRate: 110, description: 'Product strategy and planning' },
-    { id: 'role-4', name: 'Designer', defaultRate: 90, description: 'UX/UI design' },
+    { id: 'role-1', name: 'Software Engineer', rateType: 'hourly', defaultRate: 85, defaultHourlyRate: 85, description: 'Full-stack developer' },
+    { id: 'role-2', name: 'Senior Engineer', rateType: 'hourly', defaultRate: 120, defaultHourlyRate: 120, description: 'Senior developer with leadership responsibilities' },
+    { id: 'role-3', name: 'Product Manager', rateType: 'hourly', defaultRate: 110, defaultHourlyRate: 110, description: 'Product strategy and planning' },
+    { id: 'role-4', name: 'Designer', rateType: 'hourly', defaultRate: 90, defaultHourlyRate: 90, description: 'UX/UI design' },
   ]);
 
   const addRole = () => {
     const newRole: Role = {
       id: `role-${Date.now()}`,
       name: '',
+      rateType: 'hourly',
       defaultRate: 0,
       description: '',
     };
@@ -79,8 +79,8 @@ const FinancialStep: React.FC<FinancialStepProps> = ({ onBack, onNext }) => {
                     <Input
                       type="number"
                       placeholder="0"
-                      value={role.defaultRate || ''}
-                      onChange={(e) => updateRole(role.id, 'defaultRate', Number(e.target.value))}
+                      value={role.defaultHourlyRate || role.defaultRate || ''}
+                      onChange={(e) => updateRole(role.id, 'defaultHourlyRate', Number(e.target.value))}
                       className="pl-7"
                     />
                   </div>
