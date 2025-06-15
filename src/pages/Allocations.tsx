@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarCheck, BarChart3, Grid, Calendar, Users, Target } from 'lucide-react';
+import { CalendarCheck, BarChart3, Grid, Calendar, Users, Target, BookOpenCheck } from 'lucide-react';
 import AllocationTimeline from '@/components/allocations/AllocationTimeline';
 import AllocationMatrix from '@/components/allocations/AllocationMatrix';
 import CapacityChart from '@/components/allocations/CapacityChart';
@@ -13,6 +13,21 @@ import AllocationStats from '@/components/allocations/AllocationStats';
 import TeamQuarterPlans from '@/components/allocations/TeamQuarterPlans';
 import AllocationImportDialog from '@/components/allocations/AllocationImportDialog';
 import { useToast } from '@/hooks/use-toast';
+import AnnualAllocationReport from '@/components/allocations/AnnualAllocationReport';
+
+const NoDataForQuarter = ({ selectedCycleId }: { selectedCycleId: string }) => (
+    <Card>
+      <CardContent className="text-center py-12">
+        <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Allocation Data</h3>
+        <p className="text-gray-600">
+          {!selectedCycleId 
+            ? "Select a quarter to view allocations" 
+            : "No iterations found for this quarter."}
+        </p>
+      </CardContent>
+    </Card>
+);
 
 const Allocations = () => {
   const { teams, cycles, allocations, config, projects, epics, runWorkCategories } = useApp();
@@ -115,28 +130,32 @@ const Allocations = () => {
       />
 
       {/* Visual Views */}
-      {selectedCycleId && iterations.length > 0 ? (
-        <Tabs defaultValue="quarter-plans" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="quarter-plans" className="flex items-center space-x-2">
-              <Target className="h-4 w-4" />
-              <span>Quarter Plans</span>
-            </TabsTrigger>
-            <TabsTrigger value="timeline" className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4" />
-              <span>Timeline View</span>
-            </TabsTrigger>
-            <TabsTrigger value="matrix" className="flex items-center space-x-2">
-              <Grid className="h-4 w-4" />
-              <span>Matrix View</span>
-            </TabsTrigger>
-            <TabsTrigger value="capacity" className="flex items-center space-x-2">
-              <BarChart3 className="h-4 w-4" />
-              <span>Capacity Chart</span>
-            </TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="quarter-plans" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="quarter-plans" className="flex items-center space-x-2">
+            <Target className="h-4 w-4" />
+            <span>Quarter Plans</span>
+          </TabsTrigger>
+          <TabsTrigger value="timeline" className="flex items-center space-x-2">
+            <Calendar className="h-4 w-4" />
+            <span>Timeline View</span>
+          </TabsTrigger>
+          <TabsTrigger value="matrix" className="flex items-center space-x-2">
+            <Grid className="h-4 w-4" />
+            <span>Matrix View</span>
+          </TabsTrigger>
+          <TabsTrigger value="capacity" className="flex items-center space-x-2">
+            <BarChart3 className="h-4 w-4" />
+            <span>Capacity Chart</span>
+          </TabsTrigger>
+          <TabsTrigger value="annual-view" className="flex items-center space-x-2">
+            <BookOpenCheck className="h-4 w-4" />
+            <span>Annual View</span>
+          </TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="quarter-plans">
+        <TabsContent value="quarter-plans">
+          {selectedCycleId && iterations.length > 0 ? (
             <TeamQuarterPlans
               teams={filteredTeams}
               iterations={iterations}
@@ -145,9 +164,11 @@ const Allocations = () => {
               epics={epics}
               runWorkCategories={runWorkCategories}
             />
-          </TabsContent>
+          ) : <NoDataForQuarter selectedCycleId={selectedCycleId} />}
+        </TabsContent>
 
-          <TabsContent value="timeline">
+        <TabsContent value="timeline">
+          {selectedCycleId && iterations.length > 0 ? (
             <AllocationTimeline
               teams={filteredTeams}
               iterations={iterations}
@@ -156,9 +177,11 @@ const Allocations = () => {
               epics={epics}
               runWorkCategories={runWorkCategories}
             />
-          </TabsContent>
+          ) : <NoDataForQuarter selectedCycleId={selectedCycleId} />}
+        </TabsContent>
 
-          <TabsContent value="matrix">
+        <TabsContent value="matrix">
+          {selectedCycleId && iterations.length > 0 ? (
             <AllocationMatrix
               teams={filteredTeams}
               iterations={iterations}
@@ -167,29 +190,31 @@ const Allocations = () => {
               epics={epics}
               runWorkCategories={runWorkCategories}
             />
-          </TabsContent>
+          ) : <NoDataForQuarter selectedCycleId={selectedCycleId} />}
+        </TabsContent>
 
-          <TabsContent value="capacity">
+        <TabsContent value="capacity">
+          {selectedCycleId && iterations.length > 0 ? (
             <CapacityChart
               teams={filteredTeams}
               iterations={iterations}
               allocations={filteredAllocations}
             />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <Card>
-          <CardContent className="text-center py-12">
-            <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Allocation Data</h3>
-            <p className="text-gray-600">
-              {!selectedCycleId 
-                ? "Select a quarter to view allocations" 
-                : "No iterations found for this quarter."}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+          ) : <NoDataForQuarter selectedCycleId={selectedCycleId} />}
+        </TabsContent>
+        
+        <TabsContent value="annual-view">
+          <AnnualAllocationReport
+            allocations={allocations}
+            cycles={cycles}
+            teams={filteredTeams}
+            projects={projects}
+            epics={epics}
+            runWorkCategories={runWorkCategories}
+            config={config}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
