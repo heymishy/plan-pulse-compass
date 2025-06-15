@@ -1,4 +1,5 @@
 
+```tsx
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,9 @@ import CycleDialog from '@/components/planning/CycleDialog';
 import { Allocation, Cycle } from '@/types';
 
 const Planning = () => {
-  const { teams, cycles, setCycles, allocations, config, projects, epics, runWorkCategories } = useApp();
+  const { teams, cycles, setCycles, allocations, config, projects, epics, runWorkCategories, divisions } = useApp();
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>('all');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
-  const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [viewMode, setViewMode] = useState<'matrix' | 'bulk'>('matrix');
   const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
   const [isCycleDialogOpen, setIsCycleDialogOpen] = useState(false);
@@ -38,8 +39,28 @@ const Planning = () => {
     c.parentCycleId === selectedCycleId
   ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
 
-  // Filter teams
-  const filteredTeams = selectedTeamId === 'all' ? teams : teams.filter(t => t.id === selectedTeamId);
+  // Filter teams based on division
+  const teamsInDivision = React.useMemo(() => {
+    if (selectedDivisionId === 'all') {
+      return teams;
+    }
+    return teams.filter(t => t.divisionId === selectedDivisionId);
+  }, [selectedDivisionId, teams]);
+
+  // When division changes, if selected team is not in the new division, reset it
+  React.useEffect(() => {
+    if (selectedTeamId !== 'all' && !teamsInDivision.find(t => t.id === selectedTeamId)) {
+      setSelectedTeamId('all');
+    }
+  }, [selectedDivisionId, teamsInDivision, selectedTeamId]);
+  
+  // Filter teams for display
+  const filteredTeams = React.useMemo(() => {
+    if (selectedTeamId === 'all') {
+      return teamsInDivision;
+    }
+    return teamsInDivision.filter(t => t.id === selectedTeamId);
+  }, [selectedTeamId, teamsInDivision]);
 
   const handleCreateAllocation = () => {
     setSelectedAllocation(null);
@@ -150,6 +171,22 @@ const Planning = () => {
             </Select>
           </div>
           <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium">Division:</label>
+            <Select value={selectedDivisionId} onValueChange={setSelectedDivisionId}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select division" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Divisions</SelectItem>
+                {divisions.map(division => (
+                  <SelectItem key={division.id} value={division.id}>
+                    {division.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
             <label className="text-sm font-medium">Team:</label>
             <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
               <SelectTrigger className="w-48">
@@ -157,7 +194,7 @@ const Planning = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Teams</SelectItem>
-                {teams.map(team => (
+                {teamsInDivision.map(team => (
                   <SelectItem key={team.id} value={team.id}>
                     {team.name}
                   </SelectItem>
@@ -304,3 +341,5 @@ const Planning = () => {
 };
 
 export default Planning;
+```
+
