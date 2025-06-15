@@ -1,33 +1,5 @@
-
-import { useState, useEffect } from 'react';
-
-// Encryption utilities (simple XOR for demo - in production use proper encryption)
-const encrypt = (text: string, key: string): string => {
-  try {
-    let result = '';
-    for (let i = 0; i < text.length; i++) {
-      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-    }
-    return btoa(result);
-  } catch (error) {
-    console.error('Encryption error:', error);
-    throw error;
-  }
-};
-
-const decrypt = (encryptedText: string, key: string): string => {
-  try {
-    const text = atob(encryptedText);
-    let result = '';
-    for (let i = 0; i < text.length; i++) {
-      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-    }
-    return result;
-  } catch (error) {
-    console.error('Decryption error:', error);
-    throw error;
-  }
-};
+import { useState, useEffect, useCallback } from 'react';
+import { deriveKey, encryptData, decryptData } from '@/utils/crypto';
 
 // Check if localStorage is available
 const isLocalStorageAvailable = (): boolean => {
@@ -42,63 +14,79 @@ const isLocalStorageAvailable = (): boolean => {
 };
 
 export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryptionKey: string = 'default-key') {
-  const [storedValue, setStoredValue] = useState<T>(() => {
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const getDerivedKey = useCallback(async () => {
+    // Use storage key as part of salt for uniqueness per item
+    const salt = new TextEncoder().encode(key);
+    return deriveKey(encryptionKey, salt);
+  }, [key, encryptionKey]);
+
+  useEffect(() => {
     if (!isLocalStorageAvailable()) {
       console.warn('localStorage is not available, using initial value');
-      return initialValue;
+      setIsLoading(false);
+      return;
     }
 
-    try {
-      const item = window.localStorage.getItem(key);
-      if (item) {
-        const decrypted = decrypt(item, encryptionKey);
-        const parsed = JSON.parse(decrypted);
-        console.log(`Successfully loaded encrypted data for key "${key}"`);
-        return parsed;
+    let isMounted = true;
+
+    const loadValue = async () => {
+      setIsLoading(true);
+      try {
+        const item = window.localStorage.getItem(key);
+        if (item) {
+          const derivedKey = await getDerivedKey();
+          const parsedItem = JSON.parse(item);
+          const decrypted = await decryptData(parsedItem, derivedKey);
+          if (isMounted) {
+            setStoredValue(JSON.parse(decrypted));
+          }
+          console.log(`Successfully loaded and decrypted data for key "${key}"`);
+        } else if (isMounted) {
+          setStoredValue(initialValue);
+        }
+      } catch (error) {
+        console.error(`Error reading or decrypting data from localStorage key "${key}". Using initial value.`, error);
+        window.localStorage.removeItem(key); // Remove corrupted/invalid data
+        if (isMounted) {
+          setStoredValue(initialValue);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      console.log(`No stored data found for key "${key}", using initial value`);
-      return initialValue;
-    } catch (error) {
-      console.error(`Error reading encrypted data from localStorage key "${key}":`, error);
-      return initialValue;
-    }
-  });
+    };
 
-  const setValue = (value: T | ((val: T) => T)) => {
+    loadValue();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [key, getDerivedKey, initialValue]);
+
+  const setValue = useCallback(async (value: T | ((val: T) => T)) => {
     try {
       const valueToStore = value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
 
       if (isLocalStorageAvailable()) {
-        const encrypted = encrypt(JSON.stringify(valueToStore), encryptionKey);
-        window.localStorage.setItem(key, encrypted);
-        console.log(`Successfully saved encrypted data for key "${key}"`);
+        const derivedKey = await getDerivedKey();
+        const encrypted = await encryptData(JSON.stringify(valueToStore), derivedKey);
+        window.localStorage.setItem(key, JSON.stringify(encrypted));
+        console.log(`Successfully encrypted and saved data for key "${key}"`);
       } else {
         console.warn('localStorage is not available, data will not persist');
       }
-    } catch (error) {
+    } catch (error)
+    {
       console.error(`Error saving encrypted data to localStorage key "${key}":`, error);
     }
-  };
+  }, [storedValue, getDerivedKey, key]);
 
-  // Sync with localStorage on mount and when key changes
-  useEffect(() => {
-    if (!isLocalStorageAvailable()) return;
-
-    try {
-      const item = window.localStorage.getItem(key);
-      if (item) {
-        const decrypted = decrypt(item, encryptionKey);
-        const parsed = JSON.parse(decrypted);
-        setStoredValue(parsed);
-        console.log(`Synced encrypted data for key "${key}" on mount`);
-      }
-    } catch (error) {
-      console.error(`Error syncing encrypted data from localStorage key "${key}":`, error);
-    }
-  }, [key, encryptionKey]);
-
-  return [storedValue, setValue] as const;
+  return [storedValue, setValue, isLoading] as const;
 }
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
