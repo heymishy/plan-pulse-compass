@@ -59,22 +59,22 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
   const [selectedTeamId, setSelectedTeamId] = useState('');
   const [gridAllocations, setGridAllocations] = useState<Record<string, GridAllocation>>({});
 
+  console.log('BulkAllocationGrid: workType:', workType);
+  console.log('BulkAllocationGrid: selectedTeamId:', selectedTeamId);
+  console.log('BulkAllocationGrid: teams:', teams);
+  console.log('BulkAllocationGrid: epics:', epics);
+
   const selectableProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
   const availableEpics = selectedProjectId 
     ? epics.filter(epic => epic.projectId === selectedProjectId)
     : [];
   
-  // For team-based view, get projects and epics assigned to the selected team
-  const teamProjects = selectedTeamId 
-    ? selectableProjects.filter(project => {
-        // A project is considered "team-accessible" if it has epics assigned to this team
-        return epics.some(epic => epic.projectId === project.id && epic.assignedTeamId === selectedTeamId);
-      })
-    : [];
-    
+  // For team-based view, get epics assigned to the selected team
   const teamEpics = selectedTeamId 
     ? epics.filter(epic => epic.assignedTeamId === selectedTeamId)
     : [];
+
+  console.log('BulkAllocationGrid: teamEpics for selectedTeamId:', selectedTeamId, teamEpics);
 
   const getGridKey = (teamId: string, iterationNumber: number, workId: string) => 
     `${teamId}-${iterationNumber}-${workId}`;
@@ -388,8 +388,11 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
             <h3 className="text-lg font-medium mb-2">
               Allocate work for {teams.find(t => t.id === selectedTeamId)?.name}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-2">
               Set allocation percentages for epics and run work categories across iterations
+            </p>
+            <p className="text-sm text-blue-600">
+              Found {teamEpics.length} epics assigned to this team and {runWorkCategories.length} run work categories
             </p>
           </div>
           
@@ -413,7 +416,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                     <TableRow key={`epic-${epic.id}`}>
                       <TableCell className="font-medium">
                         <div>
-                          <div className="text-blue-600">{epic.name}</div>
+                          <div className="text-blue-600 font-medium">{epic.name}</div>
                           <div className="text-xs text-gray-500">{project?.name} • Epic • {epic.estimatedEffort} points</div>
                         </div>
                       </TableCell>
@@ -444,8 +447,8 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                   <TableRow key={`category-${category.id}`}>
                     <TableCell className="font-medium">
                       <div>
-                        <div style={{ color: category.color }}>{category.name}</div>
-                        <div className="text-xs text-gray-500">Run Work</div>
+                        <div className="font-medium" style={{ color: category.color }}>{category.name}</div>
+                        <div className="text-xs text-gray-500">Run Work Category</div>
                       </div>
                     </TableCell>
                     {iterations.map((_, index) => {
@@ -471,6 +474,13 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
               </TableBody>
             </Table>
           </div>
+          
+          {/* Show empty state if no work items */}
+          {teamEpics.length === 0 && runWorkCategories.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <p>No epics assigned to this team and no run work categories available.</p>
+            </div>
+          )}
           
           <div className="mt-4 text-sm text-gray-600">
             <p>• Enter percentage values (1-100) for each work item across iterations</p>
