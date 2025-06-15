@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Edge, Node } from '@xyflow/react';
 import { Badge } from '@/components/ui/badge';
@@ -248,16 +247,17 @@ export const generateTeamSkillsSummaryView = ({ teamsToShow, people, personSkill
 
 export const generateFinancialOverviewView = (props: {
   divisionsToShow: Division[], teamsToShow: Team[], projectsToShow: Project[], epics: Epic[],
-  allocations: Allocation[], cycles: Cycle[], people: Person[], roles: Role[], teamIdsToShow: Set<string>
+  allocations: Allocation[], cycles: Cycle[], people: Person[], roles: Role[], teamIdsToShow: Set<string>,
+  teams: Team[]
 }): { nodes: Node[], edges: Edge[] } => {
-    const { divisionsToShow, teamsToShow, projectsToShow, epics, allocations, cycles, people, roles, teamIdsToShow } = props;
+    const { divisionsToShow, teamsToShow, projectsToShow, epics, allocations, cycles, people, roles, teamIdsToShow, teams } = props;
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
     const projectCosts = projectsToShow.reduce((acc, project) => {
-        acc[project.id] = calculateProjectCost(project, epics, allocations, cycles, people, roles);
+        acc[project.id] = calculateProjectCost(project, epics, allocations, cycles, people, roles, teams);
         return acc;
-    }, {} as Record<string, { totalCost: number; breakdown: any[] }>);
+    }, {} as Record<string, ReturnType<typeof calculateProjectCost>>);
 
     const teamCosts = teamsToShow.reduce((acc, team) => {
         const teamMembers = people.filter(p => p.teamId === team.id);
@@ -476,4 +476,3 @@ export const generateTeamAllocationsView = (props: {
     });
     return { nodes, edges };
 }
-

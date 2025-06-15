@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { Edge, Node } from '@xyflow/react';
 import { useApp } from '@/context/AppContext';
@@ -91,6 +90,7 @@ export const useCanvasData = ({
           people,
           roles,
           teamIdsToShow,
+          teams,
         });
         currentNodes = res.nodes;
         currentEdges = res.edges;
