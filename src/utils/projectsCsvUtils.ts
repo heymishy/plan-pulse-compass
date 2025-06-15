@@ -290,6 +290,97 @@ export const parseCombinedProjectEpicCSV = (text: string): {
   };
 };
 
+export const parseCombinedProjectEpicCSVWithMapping = (
+  text: string,
+  mapping: Record<string, string>
+): {
+  projects: Project[];
+  epics: Epic[];
+  milestones: Milestone[];
+} => {
+  const rows = parseCSV(text);
+  const headers = rows[0];
+  const dataRows = rows.slice(1);
+
+  const projectsMap = new Map<string, Project>();
+  const epics: Epic[] = [];
+  const milestones: Milestone[] = [];
+
+  dataRows.forEach((row, index) => {
+    const sourceData: Record<string, string> = {};
+    headers.forEach((header, i) => {
+      sourceData[header] = row[i] || '';
+    });
+    
+    const rowData: Record<string, string> = {};
+    for (const targetField in mapping) {
+      const sourceHeader = mapping[targetField];
+      if (sourceHeader && sourceData[sourceHeader]) {
+        rowData[targetField] = sourceData[sourceHeader];
+      }
+    }
+
+    const projectName = rowData.project_name;
+    if (!projectName) return;
+
+    const projectId = `project-${projectName.toLowerCase().replace(/\s+/g, '-')}`;
+
+    if (!projectsMap.has(projectId)) {
+      const projectStatus = (rowData.project_status?.toLowerCase() === 'active' ? 'active' :
+                            rowData.project_status?.toLowerCase() === 'completed' ? 'completed' :
+                            rowData.project_status?.toLowerCase() === 'cancelled' ? 'cancelled' : 'planning') as Project['status'];
+      
+      const project: Project = {
+        id: projectId,
+        name: projectName,
+        description: rowData.project_description || undefined,
+        status: projectStatus,
+        startDate: rowData.project_start_date || new Date().toISOString().split('T')[0],
+        endDate: rowData.project_end_date || undefined,
+        budget: rowData.project_budget ? parseFloat(rowData.project_budget) : undefined,
+        milestones: [],
+      };
+      
+      projectsMap.set(projectId, project);
+    }
+    
+    if (rowData.epic_name) {
+      const epic: Epic = {
+        id: `epic-${index + 1}`,
+        projectId: projectId,
+        name: rowData.epic_name,
+        description: rowData.epic_description || undefined,
+        estimatedEffort: rowData.epic_effort ? parseFloat(rowData.epic_effort) : undefined,
+        status: 'not-started',
+        targetEndDate: rowData.epic_target_date || undefined,
+        assignedTeamId: rowData.epic_team || undefined,
+      };
+      epics.push(epic);
+    }
+
+    if (rowData.milestone_name && rowData.milestone_due_date) {
+      const milestone: Milestone = {
+        id: crypto.randomUUID(),
+        projectId: projectId,
+        name: rowData.milestone_name,
+        dueDate: rowData.milestone_due_date,
+        status: 'not-started',
+      };
+      milestones.push(milestone);
+      const project = projectsMap.get(projectId);
+      if (project) {
+        project.milestones.push(milestone);
+      }
+    }
+  });
+
+  return {
+    projects: Array.from(projectsMap.values()),
+    epics,
+    milestones,
+  };
+};
+
 export const exportProjectsCSV = (projects: Project[]): string => {
   const headers = [
     'project_name', 'description', 'status', 'start_date', 'end_date', 'budget',
