@@ -134,6 +134,7 @@ export interface VarianceAnalysis {
 }
 
 export type VarianceReasonType = 
+  | 'none'
   | 'production-support'
   | 'scope-change' 
   | 'resource-unavailable'

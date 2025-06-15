@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -249,7 +248,7 @@ const IterationReviewGrid: React.FC<IterationReviewGridProps> = ({
     }
   };
 
-  const varianceReasons: { value: VarianceReasonType | 'none'; label: string }[] = [
+  const varianceReasons: { value: VarianceReasonType; label: string }[] = [
     { value: 'none', label: 'No reason' },
     { value: 'production-support', label: 'Production Support' },
     { value: 'scope-change', label: 'Scope Change' },
