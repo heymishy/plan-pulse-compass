@@ -11,7 +11,8 @@ import {
   Users,
   FolderOpen,
   Target,
-  Share2
+  Share2,
+  UserCheck
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -20,6 +21,7 @@ const Navigation = () => {
   const navItems = [
     { path: '/', icon: Home, label: 'Dashboard' },
     { path: '/teams', icon: Users, label: 'Teams' },
+    { path: '/people', icon: UserCheck, label: 'People' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: '/planning', icon: Calendar, label: 'Planning' },
     { path: '/allocations', icon: CalendarCheck, label: 'Allocations' },
