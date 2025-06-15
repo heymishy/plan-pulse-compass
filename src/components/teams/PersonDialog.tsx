@@ -4,12 +4,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApp } from '@/context/AppContext';
-import { Person } from '@/types';
+import { Person, PersonSkill } from '@/types';
 import PersonBasicInfoForm from './forms/PersonBasicInfoForm';
 import PersonRoleTeamForm from './forms/PersonRoleTeamForm';
 import PersonDatesForm from './forms/PersonDatesForm';
 import PersonEmploymentForm from './forms/PersonEmploymentForm';
+import PersonSkillsForm from '@/components/skills/PersonSkillsForm';
 
 interface PersonDialogProps {
   open: boolean;
@@ -24,7 +26,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
   person,
   onSave
 }) => {
-  const { roles, teams } = useApp();
+  const { roles, teams, personSkills, setPersonSkills } = useApp();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,6 +43,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
     endDate: '',
   });
   const [contractRateType, setContractRateType] = useState<'hourly' | 'daily'>('hourly');
+  const [currentPersonSkills, setCurrentPersonSkills] = useState<PersonSkill[]>([]);
 
   // Initialize form data when dialog opens or person changes
   useEffect(() => {
@@ -67,6 +70,10 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
       } else if (person.contractDetails?.dailyRate) {
         setContractRateType('daily');
       }
+
+      // Load person skills
+      const existingSkills = personSkills.filter(ps => ps.personId === person.id);
+      setCurrentPersonSkills(existingSkills);
     } else {
       // Reset form for new person
       setFormData({
@@ -85,8 +92,9 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
         endDate: '',
       });
       setContractRateType('hourly');
+      setCurrentPersonSkills([]);
     }
-  }, [person, open]);
+  }, [person, open, personSkills]);
 
   const selectedRole = roles.find(r => r.id === formData.roleId);
 
@@ -101,70 +109,110 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
       id: person?.id,
     };
 
+    // Save person
     onSave(personData);
+
+    // Save person skills
+    const personId = person?.id || crypto.randomUUID();
+    
+    // Remove old skills for this person
+    const otherPersonSkills = personSkills.filter(ps => ps.personId !== personId);
+    
+    // Add updated skills with correct personId
+    const updatedSkills = currentPersonSkills.map(ps => ({
+      ...ps,
+      personId: personId
+    }));
+    
+    setPersonSkills([...otherPersonSkills, ...updatedSkills]);
+    
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{person ? 'Edit Person' : 'Add Person'}</DialogTitle>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
-          <PersonBasicInfoForm
-            name={formData.name}
-            email={formData.email}
-            onNameChange={(name) => setFormData(prev => ({ ...prev, name }))}
-            onEmailChange={(email) => setFormData(prev => ({ ...prev, email }))}
-          />
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="employment">Employment</TabsTrigger>
+              <TabsTrigger value="skills">Skills</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
 
-          <PersonRoleTeamForm
-            roleId={formData.roleId}
-            teamId={formData.teamId}
-            roles={roles}
-            teams={teams}
-            onRoleChange={(roleId) => setFormData(prev => ({ ...prev, roleId }))}
-            onTeamChange={(teamId) => setFormData(prev => ({ ...prev, teamId }))}
-          />
+            <TabsContent value="basic" className="space-y-4">
+              <PersonBasicInfoForm
+                name={formData.name}
+                email={formData.email}
+                onNameChange={(name) => setFormData(prev => ({ ...prev, name }))}
+                onEmailChange={(email) => setFormData(prev => ({ ...prev, email }))}
+              />
 
-          <PersonDatesForm
-            startDate={formData.startDate}
-            endDate={formData.endDate}
-            onStartDateChange={(startDate) => setFormData(prev => ({ ...prev, startDate }))}
-            onEndDateChange={(endDate) => setFormData(prev => ({ ...prev, endDate }))}
-          />
+              <PersonRoleTeamForm
+                roleId={formData.roleId}
+                teamId={formData.teamId}
+                roles={roles}
+                teams={teams}
+                onRoleChange={(roleId) => setFormData(prev => ({ ...prev, roleId }))}
+                onTeamChange={(teamId) => setFormData(prev => ({ ...prev, teamId }))}
+              />
 
-          <PersonEmploymentForm
-            employmentType={formData.employmentType}
-            annualSalary={formData.annualSalary}
-            hourlyRate={formData.contractDetails.hourlyRate}
-            dailyRate={formData.contractDetails.dailyRate}
-            contractRateType={contractRateType}
-            selectedRole={selectedRole}
-            onEmploymentTypeChange={(employmentType) => setFormData(prev => ({ ...prev, employmentType }))}
-            onAnnualSalaryChange={(annualSalary) => setFormData(prev => ({ ...prev, annualSalary }))}
-            onHourlyRateChange={(hourlyRate) => setFormData(prev => ({ 
-              ...prev, 
-              contractDetails: { ...prev.contractDetails, hourlyRate }
-            }))}
-            onDailyRateChange={(dailyRate) => setFormData(prev => ({ 
-              ...prev, 
-              contractDetails: { ...prev.contractDetails, dailyRate }
-            }))}
-            onContractRateTypeChange={setContractRateType}
-          />
+              <PersonDatesForm
+                startDate={formData.startDate}
+                endDate={formData.endDate}
+                onStartDateChange={(startDate) => setFormData(prev => ({ ...prev, startDate }))}
+                onEndDateChange={(endDate) => setFormData(prev => ({ ...prev, endDate }))}
+              />
+            </TabsContent>
+
+            <TabsContent value="employment" className="space-y-4">
+              <PersonEmploymentForm
+                employmentType={formData.employmentType}
+                annualSalary={formData.annualSalary}
+                hourlyRate={formData.contractDetails.hourlyRate}
+                dailyRate={formData.contractDetails.dailyRate}
+                contractRateType={contractRateType}
+                selectedRole={selectedRole}
+                onEmploymentTypeChange={(employmentType) => setFormData(prev => ({ ...prev, employmentType }))}
+                onAnnualSalaryChange={(annualSalary) => setFormData(prev => ({ ...prev, annualSalary }))}
+                onHourlyRateChange={(hourlyRate) => setFormData(prev => ({ 
+                  ...prev, 
+                  contractDetails: { ...prev.contractDetails, hourlyRate }
+                }))}
+                onDailyRateChange={(dailyRate) => setFormData(prev => ({ 
+                  ...prev, 
+                  contractDetails: { ...prev.contractDetails, dailyRate }
+                }))}
+                onContractRateTypeChange={setContractRateType}
+              />
+            </TabsContent>
+
+            <TabsContent value="skills" className="space-y-4">
+              <PersonSkillsForm
+                personId={person?.id || 'new'}
+                personSkills={currentPersonSkills}
+                onPersonSkillsChange={setCurrentPersonSkills}
+              />
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                />
+                <Label htmlFor="isActive">Active</Label>
+              </div>
+            </TabsContent>
+          </Tabs>
           
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isActive"
-              checked={formData.isActive}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
-            />
-            <Label htmlFor="isActive">Active</Label>
-          </div>
-          
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-2 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

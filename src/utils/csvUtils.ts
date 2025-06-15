@@ -1,4 +1,5 @@
-import { Person, Role, Team, Project } from '@/types';
+
+import { Person, Role, Team, Project, Skill, PersonSkill, SkillCategory } from '@/types';
 
 export const downloadSampleCSV = (filename: string) => {
   const link = document.createElement('a');
@@ -110,4 +111,159 @@ export const parseRolesCSV = (text: string): Role[] => {
       defaultHourlyRate: defaultRate,
     };
   }).filter(Boolean) as Role[];
+};
+
+export const parseSkillsCSV = (text: string): Skill[] => {
+  const rows = parseCSV(text);
+  const dataRows = rows.slice(1);
+  
+  return dataRows.map((row, index) => {
+    if (row.length < 2) return null;
+    
+    const [skillName, categoryStr, description] = row;
+    const category = (categoryStr?.replace(/"/g, '') as SkillCategory) || 'other';
+    
+    return {
+      id: `skill-${skillName.toLowerCase().replace(/\s+/g, '-')}-${index}`,
+      name: skillName.replace(/"/g, ''),
+      category: category,
+      description: description?.replace(/"/g, '') || undefined,
+      createdDate: new Date().toISOString(),
+    };
+  }).filter(Boolean) as Skill[];
+};
+
+export const parsePeopleWithSkillsCSV = (text: string): { 
+  people: Person[], 
+  teams: Team[], 
+  skills: Skill[], 
+  personSkills: PersonSkill[] 
+} => {
+  const rows = parseCSV(text);
+  const headers = rows[0];
+  const dataRows = rows.slice(1);
+  
+  const people: Person[] = [];
+  const teamsMap = new Map<string, Team>();
+  const skillsMap = new Map<string, Skill>();
+  const personSkills: PersonSkill[] = [];
+  
+  dataRows.forEach((row, index) => {
+    if (row.length < 5) return;
+    
+    const [name, email, role, teamName, teamId, skillsStr, proficiencyStr] = row;
+    
+    const personId = `person-${index + 1}`;
+    
+    // Create person
+    people.push({
+      id: personId,
+      name: name.replace(/"/g, ''),
+      email: email.replace(/"/g, ''),
+      roleId: `role-${role.toLowerCase().replace(/\s+/g, '-')}`,
+      teamId: teamId.replace(/"/g, ''),
+      isActive: true,
+      employmentType: 'permanent',
+      startDate: new Date().toISOString().split('T')[0],
+    });
+    
+    // Create team if not exists
+    if (!teamsMap.has(teamId)) {
+      teamsMap.set(teamId, {
+        id: teamId.replace(/"/g, ''),
+        name: teamName.replace(/"/g, ''),
+        capacity: 40,
+      });
+    }
+    
+    // Parse skills if provided
+    if (skillsStr) {
+      const skillNames = skillsStr.replace(/"/g, '').split(';').map(s => s.trim()).filter(Boolean);
+      const proficiencies = proficiencyStr?.replace(/"/g, '').split(';').map(s => s.trim()).filter(Boolean) || [];
+      
+      skillNames.forEach((skillName, skillIndex) => {
+        const skillId = `skill-${skillName.toLowerCase().replace(/\s+/g, '-')}`;
+        
+        // Create skill if not exists
+        if (!skillsMap.has(skillId)) {
+          skillsMap.set(skillId, {
+            id: skillId,
+            name: skillName,
+            category: 'other',
+            createdDate: new Date().toISOString(),
+          });
+        }
+        
+        // Create person skill
+        const proficiency = proficiencies[skillIndex] || 'intermediate';
+        personSkills.push({
+          id: crypto.randomUUID(),
+          personId: personId,
+          skillId: skillId,
+          proficiencyLevel: (proficiency as PersonSkill['proficiencyLevel']) || 'intermediate',
+        });
+      });
+    }
+  });
+  
+  return { 
+    people, 
+    teams: Array.from(teamsMap.values()),
+    skills: Array.from(skillsMap.values()),
+    personSkills
+  };
+};
+
+export const exportPeopleWithSkillsCSV = (
+  people: Person[], 
+  teams: Team[], 
+  skills: Skill[], 
+  personSkills: PersonSkill[]
+): string => {
+  const headers = ['Name', 'Email', 'Role', 'Team Name', 'Team ID', 'Skills', 'Proficiency Levels'];
+  
+  const rows = people.map(person => {
+    const team = teams.find(t => t.id === person.teamId);
+    const personSkillsList = personSkills.filter(ps => ps.personId === person.id);
+    
+    const skillNames = personSkillsList.map(ps => {
+      const skill = skills.find(s => s.id === ps.skillId);
+      return skill?.name || 'Unknown';
+    }).join(';');
+    
+    const proficiencyLevels = personSkillsList.map(ps => ps.proficiencyLevel).join(';');
+    
+    return [
+      person.name,
+      person.email,
+      person.roleId, // You might want to resolve this to role name
+      team?.name || 'Unknown',
+      person.teamId,
+      skillNames,
+      proficiencyLevels
+    ];
+  });
+  
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+    
+  return csvContent;
+};
+
+export const exportSkillsCSV = (skills: Skill[]): string => {
+  const headers = ['Name', 'Category', 'Description', 'Created Date'];
+  
+  const rows = skills.map(skill => [
+    skill.name,
+    skill.category,
+    skill.description || '',
+    new Date(skill.createdDate).toLocaleDateString()
+  ]);
+  
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+    
+  return csvContent;
 };

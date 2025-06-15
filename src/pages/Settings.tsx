@@ -6,6 +6,7 @@ import { Settings as SettingsIcon } from 'lucide-react';
 import GeneralSettings from '@/components/settings/GeneralSettings';
 import FinancialSettings from '@/components/settings/FinancialSettings';
 import TeamsSettings from '@/components/settings/TeamsSettings';
+import SkillsSettings from '@/components/settings/SkillsSettings';
 import ImportExportSettings from '@/components/settings/ImportExportSettings';
 import AdvancedSettings from '@/components/settings/AdvancedSettings';
 
@@ -25,10 +26,11 @@ const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="financial">Financial</TabsTrigger>
           <TabsTrigger value="teams">Teams & Roles</TabsTrigger>
+          <TabsTrigger value="skills">Skills</TabsTrigger>
           <TabsTrigger value="import">Import/Export</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
@@ -43,6 +45,10 @@ const Settings = () => {
 
         <TabsContent value="teams" className="mt-6">
           <TeamsSettings />
+        </TabsContent>
+
+        <TabsContent value="skills" className="mt-6">
+          <SkillsSettings />
         </TabsContent>
 
         <TabsContent value="import" className="mt-6">

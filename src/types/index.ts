@@ -1,4 +1,3 @@
-
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -197,4 +196,47 @@ export interface ProjectCost {
     duration: number; // in days
     totalPersonCost: number;
   }[];
+}
+
+// Skills Management Types
+export interface Skill {
+  id: string;
+  name: string;
+  category: SkillCategory;
+  description?: string;
+  createdDate: string;
+}
+
+export type SkillCategory = 
+  | 'programming-language'
+  | 'framework'
+  | 'platform'
+  | 'domain-knowledge'
+  | 'methodology'
+  | 'tool'
+  | 'other';
+
+export interface PersonSkill {
+  id: string;
+  personId: string;
+  skillId: string;
+  proficiencyLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  yearsOfExperience?: number;
+  lastUsed?: string;
+  certifications?: string[];
+  notes?: string;
+}
+
+export interface TeamSkillSummary {
+  skillId: string;
+  skillName: string;
+  category: SkillCategory;
+  peopleCount: number;
+  averageProficiency: number;
+  proficiencyDistribution: {
+    beginner: number;
+    intermediate: number;
+    advanced: number;
+    expert: number;
+  };
 }

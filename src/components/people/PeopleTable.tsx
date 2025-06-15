@@ -36,7 +36,7 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
   people,
   onEditPerson
 }) => {
-  const { setPeople, teams, roles, divisions } = useApp();
+  const { setPeople, teams, roles, divisions, skills, personSkills } = useApp();
   const { toast } = useToast();
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -90,6 +90,17 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
     return division?.name || 'Unknown Division';
   };
 
+  const getPersonSkills = (personId: string) => {
+    const personSkillsList = personSkills.filter(ps => ps.personId === personId);
+    return personSkillsList.map(ps => {
+      const skill = skills.find(s => s.id === ps.skillId);
+      return {
+        name: skill?.name || 'Unknown',
+        proficiency: ps.proficiencyLevel,
+      };
+    }).slice(0, 3); // Show max 3 skills
+  };
+
   const getPersonCostInfo = (person: Person) => {
     const role = roles.find(r => r.id === person.roleId);
     if (!role) return '-';
@@ -110,6 +121,16 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
         return `$${role.defaultDailyRate}/day`;
       }
       return `$${role.defaultRate}/hour`;
+    }
+  };
+
+  const getProficiencyColor = (level: string) => {
+    switch (level) {
+      case 'expert': return 'bg-green-100 text-green-800';
+      case 'advanced': return 'bg-blue-100 text-blue-800';
+      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
+      case 'beginner': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -149,6 +170,7 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
               <TableHead>Role</TableHead>
               <TableHead>Team</TableHead>
               <TableHead>Division</TableHead>
+              <TableHead>Top Skills</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Compensation</TableHead>
               <TableHead>Status</TableHead>
@@ -156,47 +178,73 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {people.map((person) => (
-              <TableRow key={person.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedPeople.has(person.id)}
-                    onCheckedChange={(checked) => handleSelectPerson(person.id, checked as boolean)}
-                    aria-label={`Select ${person.name}`}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{person.name}</TableCell>
-                <TableCell>{person.email}</TableCell>
-                <TableCell>{getRoleName(person.roleId)}</TableCell>
-                <TableCell>{getTeamName(person.teamId)}</TableCell>
-                <TableCell>{getDivisionName(person.teamId)}</TableCell>
-                <TableCell>
-                  <Badge variant={person.employmentType === 'permanent' ? 'default' : 'secondary'}>
-                    {person.employmentType}
-                  </Badge>
-                </TableCell>
-                <TableCell className="font-mono text-sm">
-                  {getPersonCostInfo(person)}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={person.isActive ? 'default' : 'secondary'}>
-                    {person.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEditPerson(person.id)}
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {people.map((person) => {
+              const personSkillsList = getPersonSkills(person.id);
+              
+              return (
+                <TableRow key={person.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedPeople.has(person.id)}
+                      onCheckedChange={(checked) => handleSelectPerson(person.id, checked as boolean)}
+                      aria-label={`Select ${person.name}`}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{person.name}</TableCell>
+                  <TableCell>{person.email}</TableCell>
+                  <TableCell>{getRoleName(person.roleId)}</TableCell>
+                  <TableCell>{getTeamName(person.teamId)}</TableCell>
+                  <TableCell>{getDivisionName(person.teamId)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                      {personSkillsList.length > 0 ? (
+                        personSkillsList.map((skill, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className={`text-xs ${getProficiencyColor(skill.proficiency)}`}
+                          >
+                            {skill.name}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-500">No skills</span>
+                      )}
+                      {personSkills.filter(ps => ps.personId === person.id).length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{personSkills.filter(ps => ps.personId === person.id).length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={person.employmentType === 'permanent' ? 'default' : 'secondary'}>
+                      {person.employmentType}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {getPersonCostInfo(person)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={person.isActive ? 'default' : 'secondary'}>
+                      {person.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEditPerson(person.id)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {people.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={11} className="text-center py-8 text-gray-500">
                   No people found
                 </TableCell>
               </TableRow>
