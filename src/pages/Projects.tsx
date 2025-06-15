@@ -4,12 +4,21 @@ import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Grid, Table, Eye } from 'lucide-react';
+import { Plus, Grid, Table, Eye, ListPlus } from 'lucide-react';
 import ProjectTable from '@/components/projects/ProjectTable';
 import ProjectCards from '@/components/projects/ProjectCards';
 import ProjectDialog from '@/components/projects/ProjectDialog';
 import ProjectDetailsDialog from '@/components/projects/ProjectDetailsDialog';
+import BulkEpicEntryDialog from '@/components/projects/BulkEpicEntryDialog';
 import { Project } from '@/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 const Projects = () => {
   const { projects } = useApp();
@@ -17,7 +26,9 @@ const Projects = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isBulkEpicDialogOpen, setIsBulkEpicDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [bulkEpicProjectId, setBulkEpicProjectId] = useState('');
 
   const handleCreateProject = () => {
     setSelectedProject(null);
@@ -40,6 +51,16 @@ const Projects = () => {
     }
   };
 
+  const handleBulkAddEpics = () => {
+    if (bulkEpicProjectId) {
+      const project = projects.find(p => p.id === bulkEpicProjectId);
+      if (project) {
+        setSelectedProject(project);
+        setIsBulkEpicDialogOpen(true);
+      }
+    }
+  };
+
   const getStatusCounts = () => {
     return {
       planning: projects.filter(p => p.status === 'planning').length,
@@ -50,6 +71,7 @@ const Projects = () => {
   };
 
   const statusCounts = getStatusCounts();
+  const activeProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
 
   return (
     <div className="p-6 space-y-6">
@@ -81,6 +103,42 @@ const Projects = () => {
           </Button>
         </div>
       </div>
+
+      {/* Bulk Epic Entry Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Bulk Add Epics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end space-x-4">
+            <div className="flex-1 max-w-xs">
+              <Label htmlFor="project-select">Select Project</Label>
+              <Select value={bulkEpicProjectId} onValueChange={setBulkEpicProjectId}>
+                <SelectTrigger id="project-select">
+                  <SelectValue placeholder="Choose a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeProjects.map(project => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name} ({project.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              onClick={handleBulkAddEpics}
+              disabled={!bulkEpicProjectId}
+            >
+              <ListPlus className="h-4 w-4 mr-2" />
+              Bulk Add Epics
+            </Button>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            Quickly add multiple epics to a project with story points and target dates
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Status Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -152,6 +210,12 @@ const Projects = () => {
         isOpen={isDetailsDialogOpen}
         onClose={() => setIsDetailsDialogOpen(false)}
         project={selectedProject}
+      />
+      <BulkEpicEntryDialog
+        isOpen={isBulkEpicDialogOpen}
+        onClose={() => setIsBulkEpicDialogOpen(false)}
+        projectId={selectedProject?.id || ''}
+        projectName={selectedProject?.name || ''}
       />
     </div>
   );
