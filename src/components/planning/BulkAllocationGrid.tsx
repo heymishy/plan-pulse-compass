@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Team, Cycle, Project, Epic, RunWorkCategory, Allocation } from '@/types';
@@ -63,7 +62,14 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
     ? epics.filter(epic => epic.projectId === selectedProjectId)
     : [];
   
-  // For team-based view, get epics assigned to the selected team
+  // For team-based view, get projects and epics assigned to the selected team
+  const teamProjects = selectedTeamId 
+    ? selectableProjects.filter(project => {
+        // A project is considered "team-accessible" if it has epics assigned to this team
+        return epics.some(epic => epic.projectId === project.id && epic.assignedTeamId === selectedTeamId);
+      })
+    : [];
+    
   const teamEpics = selectedTeamId 
     ? epics.filter(epic => epic.assignedTeamId === selectedTeamId)
     : [];
@@ -380,7 +386,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
               Allocate work for {teams.find(t => t.id === selectedTeamId)?.name}
             </h3>
             <p className="text-sm text-gray-600">
-              Set allocation percentages for each epic and run work category across iterations
+              Set allocation percentages for projects, epics, and run work categories across iterations
             </p>
           </div>
           
@@ -397,19 +403,50 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
+                {/* Team Projects */}
+                {teamProjects.map(project => (
+                  <TableRow key={`project-${project.id}`}>
+                    <TableCell className="font-medium">
+                      <div>
+                        <div className="text-purple-600 font-semibold">{project.name}</div>
+                        <div className="text-xs text-gray-500">Project • {project.status}</div>
+                      </div>
+                    </TableCell>
+                    {iterations.map((_, index) => {
+                      const iterationNumber = index + 1;
+                      const workId = `project-${project.id}`;
+                      return (
+                        <TableCell key={index} className="text-center">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            className="w-20 text-center"
+                            placeholder="%"
+                            value={getCurrentValue(selectedTeamId, iterationNumber, workId, undefined, undefined)}
+                            onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, workId, e.target.value, { projectId: project.id })}
+                          />
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ))}
+                
                 {/* Team Epics */}
                 {teamEpics.map(epic => {
                   const project = projects.find(p => p.id === epic.projectId);
                   return (
-                    <TableRow key={epic.id}>
+                    <TableRow key={`epic-${epic.id}`}>
                       <TableCell className="font-medium">
                         <div>
                           <div className="text-blue-600">{epic.name}</div>
-                          <div className="text-xs text-gray-500">{project?.name} • {epic.estimatedEffort} points</div>
+                          <div className="text-xs text-gray-500">{project?.name} • Epic • {epic.estimatedEffort} points</div>
                         </div>
                       </TableCell>
                       {iterations.map((_, index) => {
                         const iterationNumber = index + 1;
+                        const workId = `epic-${epic.id}`;
                         return (
                           <TableCell key={index} className="text-center">
                             <Input
@@ -419,8 +456,8 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                               step="1"
                               className="w-20 text-center"
                               placeholder="%"
-                              value={getCurrentValue(selectedTeamId, iterationNumber, epic.id, epic.id)}
-                              onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, epic.id, e.target.value, { epicId: epic.id })}
+                              value={getCurrentValue(selectedTeamId, iterationNumber, workId, epic.id, undefined)}
+                              onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, workId, e.target.value, { epicId: epic.id })}
                             />
                           </TableCell>
                         );
@@ -431,7 +468,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                 
                 {/* Run Work Categories */}
                 {runWorkCategories.map(category => (
-                  <TableRow key={category.id}>
+                  <TableRow key={`category-${category.id}`}>
                     <TableCell className="font-medium">
                       <div>
                         <div style={{ color: category.color }}>{category.name}</div>
@@ -440,6 +477,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                     </TableCell>
                     {iterations.map((_, index) => {
                       const iterationNumber = index + 1;
+                      const workId = `category-${category.id}`;
                       return (
                         <TableCell key={index} className="text-center">
                           <Input
@@ -449,8 +487,8 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
                             step="1"
                             className="w-20 text-center"
                             placeholder="%"
-                            value={getCurrentValue(selectedTeamId, iterationNumber, category.id, undefined, category.id)}
-                            onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, category.id, e.target.value, { runWorkCategoryId: category.id })}
+                            value={getCurrentValue(selectedTeamId, iterationNumber, workId, undefined, category.id)}
+                            onChange={(e) => handlePercentageChange(selectedTeamId, iterationNumber, workId, e.target.value, { runWorkCategoryId: category.id })}
                           />
                         </TableCell>
                       );
@@ -463,7 +501,7 @@ const BulkAllocationGrid: React.FC<BulkAllocationGridProps> = ({
           
           <div className="mt-4 text-sm text-gray-600">
             <p>• Enter percentage values (1-100) for each work item across iterations</p>
-            <p>• Blue items are project epics, colored items are run work categories</p>
+            <p>• Purple items are projects, blue items are epics, colored items are run work categories</p>
             <p>• Empty cells will remove existing allocations</p>
             <p>• Changes are saved only when you click "Save Allocations"</p>
           </div>
