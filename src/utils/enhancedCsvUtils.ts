@@ -1,3 +1,4 @@
+
 import { Person, Role, Team, Project, Skill, PersonSkill, SkillCategory, Division } from '@/types';
 
 export interface EnhancedPersonCSVRow {
@@ -94,7 +95,7 @@ export const parseEnhancedPeopleCSV = (text: string): {
       const hourlyRate = parseFloat(rowData.role_default_hourly_rate || rowData.hourly_rate || '0');
       const dailyRate = parseFloat(rowData.role_default_daily_rate || rowData.daily_rate || '0');
       const annualSalary = parseFloat(rowData.role_default_annual_salary || rowData.annual_salary || '0');
-      const legacyRate = parseFloat(rowData.role_default_rate || hourlyRate || '100');
+      const legacyRate = parseFloat(rowData.role_default_rate || (hourlyRate > 0 ? hourlyRate.toString() : '100'));
 
       rolesMap.set(roleId, {
         id: roleId,
