@@ -1,13 +1,22 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Users, FolderOpen, Calendar, AlertTriangle } from 'lucide-react';
+import { getDashboardData } from '@/utils/dashboardUtils';
 
 const Dashboard = () => {
-  const { people, teams, projects, allocations, isSetupComplete } = useApp();
+  const { people, teams, projects, allocations, isSetupComplete, cycles, actualAllocations, iterationReviews, epics } = useApp();
+
+  const dashboardData = useMemo(() => {
+    if (!isSetupComplete) return null;
+    return getDashboardData(cycles, allocations, actualAllocations, iterationReviews, projects, epics);
+  }, [isSetupComplete, cycles, allocations, actualAllocations, iterationReviews, projects, epics]);
+
+  // You can check the browser's console to see the calculated data.
+  console.log('Dashboard Data:', dashboardData);
 
   if (!isSetupComplete) {
     return (
