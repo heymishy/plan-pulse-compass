@@ -641,12 +641,135 @@ export const useCanvasData = ({
     }
 
     if (viewType === 'team-allocations') {
+      // Add division nodes
+      divisionsToShow.forEach((division, index) => {
+        nodes.push({
+          id: `division-${division.id}`,
+          type: 'default',
+          position: { x: index * 300, y: 0 },
+          data: {
+            label: (
+              <div className="text-center">
+                <Building className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-semibold text-blue-600">{division.name}</div>
+              </div>
+            )
+          },
+          style: {
+            background: '#dbeafe',
+            border: '2px solid #3b82f6',
+            borderRadius: '8px',
+            width: 150,
+            height: 60
+          },
+        });
+      });
+
+      // Add team nodes
+      teamsToShow.forEach((team, index) => {
+        const divisionIndex = divisionsToShow.findIndex(d => d.id === team.divisionId);
+        nodes.push({
+          id: `team-${team.id}`,
+          type: 'default',
+          position: {
+            x: divisionIndex >= 0 ? divisionIndex * 300 + (index % 3) * 100 : index * 200,
+            y: 120
+          },
+          data: {
+            label: (
+              <div className="text-center">
+                <Users className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-medium">{team.name}</div>
+              </div>
+            )
+          },
+          style: {
+            background: '#dcfce7',
+            border: '2px solid #16a34a',
+            borderRadius: '8px',
+            width: 120,
+            height: 60
+          },
+        });
+        if (team.divisionId) {
+          edges.push({
+            id: `division-team-${team.divisionId}-${team.id}`,
+            source: `division-${team.divisionId}`,
+            target: `team-${team.id}`,
+            type: 'smoothstep',
+            style: { stroke: '#3b82f6' },
+          });
+        }
+      });
+
+      // Add project nodes
+      projectsToShow.forEach((project, index) => {
+        nodes.push({
+          id: `project-${project.id}`,
+          type: 'default',
+          position: { x: index * 200, y: 300 },
+          data: {
+            label: (
+              <div className="text-center">
+                <FolderOpen className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-medium text-sm">{project.name}</div>
+              </div>
+            )
+          },
+          style: {
+            background: '#fef3c7',
+            border: '2px solid #f59e0b',
+            borderRadius: '8px',
+            width: 160,
+            height: 70
+          },
+        });
+      });
+
+      // Add epic nodes
+      epicsToShow.forEach((epic, index) => {
+        const projectIndex = projectsToShow.findIndex(p => p.id === epic.projectId);
+        nodes.push({
+          id: `epic-${epic.id}`,
+          type: 'default',
+          position: {
+            x: projectIndex >= 0 ? projectIndex * 200 + (index % 2) * 80 : index * 150,
+            y: 450
+          },
+          data: {
+            label: (
+              <div className="text-center">
+                <Target className="h-4 w-4 mx-auto mb-1" />
+                <div className="font-medium text-xs">{epic.name}</div>
+              </div>
+            )
+          },
+          style: {
+            background: '#fce7f3',
+            border: '2px solid #ec4899',
+            borderRadius: '8px',
+            width: 110,
+            height: 60
+          },
+        });
+        if (epic.projectId) {
+          edges.push({
+            id: `project-epic-${epic.projectId}-${epic.id}`,
+            source: `project-${epic.projectId}`,
+            target: `epic-${epic.id}`,
+            type: 'smoothstep',
+            style: { stroke: '#f59e0b' },
+          });
+        }
+      });
+      
       // Add run work category nodes
+      const projectNodesWidth = projectsToShow.length * 200;
       runWorkCategories.forEach((category, index) => {
         nodes.push({
           id: `category-${category.id}`,
           type: 'default',
-          position: { x: index * 200, y: 300 },
+          position: { x: projectNodesWidth + index * 150, y: 300 },
           data: { 
             label: (
               <div className="text-center">
@@ -669,33 +792,25 @@ export const useCanvasData = ({
       // Show allocation connections
       allocationsToShow.forEach(allocation => {
         if (allocation.epicId) {
-          const epicExists = nodes.some(n => n.id === `epic-${allocation.epicId}`);
-          const teamExists = nodes.some(n => n.id === `team-${allocation.teamId}`);
-          
-          if (epicExists && teamExists) {
             edges.push({
               id: `allocation-epic-${allocation.id}`,
               source: `team-${allocation.teamId}`,
               target: `epic-${allocation.epicId}`,
               type: 'smoothstep',
               label: `${allocation.percentage}%`,
-              style: { stroke: '#8b5cf6' },
+              style: { stroke: '#8b5cf6', strokeDasharray: '5,5' },
+              animated: true
             });
-          }
         } else if (allocation.runWorkCategoryId) {
-          const categoryExists = nodes.some(n => n.id === `category-${allocation.runWorkCategoryId}`);
-          const teamExists = nodes.some(n => n.id === `team-${allocation.teamId}`);
-          
-          if (categoryExists && teamExists) {
             edges.push({
               id: `allocation-category-${allocation.id}`,
               source: `team-${allocation.teamId}`,
               target: `category-${allocation.runWorkCategoryId}`,
               type: 'smoothstep',
               label: `${allocation.percentage}%`,
-              style: { stroke: '#6b7280' },
+              style: { stroke: '#6b7280', strokeDasharray: '5,5' },
+              animated: true
             });
-          }
         }
       });
     }
