@@ -1,12 +1,10 @@
-
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Team, Allocation, ActualAllocation, IterationReview, Project, Epic } from '@/types';
-import { TrendingUp, CheckCircle2, AlertTriangle, Target } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { Team, Allocation, ActualAllocation, IterationReview, Project, Epic, Cycle } from '@/types';
+import { TrendingUp, CheckCircle2, AlertTriangle, Target, Users } from 'lucide-react';
 
 interface TrackingDashboardProps {
   cycleId: string;
@@ -16,6 +14,7 @@ interface TrackingDashboardProps {
   iterationReviews: IterationReview[];
   projects: Project[];
   epics: Epic[];
+  iterations: Cycle[];
 }
 
 const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
@@ -26,6 +25,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
   iterationReviews,
   projects,
   epics,
+  iterations
 }) => {
   const dashboardData = useMemo(() => {
     const quarterAllocations = allocations.filter(a => a.cycleId === cycleId);
@@ -33,7 +33,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
     const quarterReviews = iterationReviews.filter(r => r.cycleId === cycleId);
     
     // Get all iteration numbers
-    const allIterations = Array.from(new Set([
+    const allIterationsNumbers = Array.from(new Set([
       ...quarterAllocations.map(a => a.iterationNumber),
       ...quarterActuals.map(a => a.iterationNumber)
     ])).sort();
@@ -48,7 +48,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
         iterations: 0,
       };
       
-      allIterations.forEach(iterationNumber => {
+      allIterationsNumbers.forEach(iterationNumber => {
         const planned = quarterAllocations
           .filter(a => a.teamId === team.id && a.iterationNumber === iterationNumber)
           .reduce((sum, a) => sum + a.percentage, 0);
@@ -72,7 +72,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
     }).filter(data => data.iterations > 0);
     
     // Iteration progress data
-    const iterationProgressData = allIterations.map(iterationNumber => {
+    const iterationProgressData = allIterationsNumbers.map(iterationNumber => {
       const review = quarterReviews.find(r => r.iterationNumber === iterationNumber);
       const planned = quarterAllocations
         .filter(a => a.iterationNumber === iterationNumber)
@@ -94,15 +94,15 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
     // Epic completion data
     const epicCompletionData = projects.map(project => {
       const projectEpics = epics.filter(e => e.projectId === project.id);
-      const completedEpics = quarterReviews
+      const completedEpicsInQuarter = quarterReviews
         .flatMap(r => r.completedEpics)
         .filter(epicId => projectEpics.some(e => e.id === epicId));
       
       return {
         project: project.name,
         total: projectEpics.length,
-        completed: new Set(completedEpics).size,
-        percentage: projectEpics.length > 0 ? (new Set(completedEpics).size / projectEpics.length) * 100 : 0,
+        completed: new Set(completedEpicsInQuarter).size,
+        percentage: projectEpics.length > 0 ? (new Set(completedEpicsInQuarter).size / projectEpics.length) * 100 : 0,
       };
     }).filter(data => data.total > 0);
     
@@ -123,7 +123,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
         };
       }
       return null;
-    }).filter(Boolean);
+    }).filter(Boolean as any);
     
     const varianceTypes = varianceDistribution.reduce((acc, item) => {
       if (item) {
@@ -138,23 +138,29 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
       color: type === 'On Track' ? '#10b981' : type === 'Over' ? '#ef4444' : '#f59e0b',
     }));
     
+    // Consolidated Summary Stats
+    const completedReviews = quarterReviews.filter(r => r.status === 'completed').length;
+    const totalIterations = iterations.length;
+    
     return {
       teamUtilizationData,
       iterationProgressData,
       epicCompletionData,
       varianceChartData,
       summaryStats: {
-        totalIterations: allIterations.length,
-        completedIterations: quarterReviews.filter(r => r.status === 'completed').length,
+        reviewProgress: totalIterations > 0 ? Math.round((completedReviews / totalIterations) * 100) : 0,
+        completedReviews,
+        totalIterations,
+        teamsWithActuals: new Set(quarterActuals.map(a => a.teamId)).size,
+        totalTeams: teams.length,
         totalEpics: epics.length,
         completedEpics: new Set(quarterReviews.flatMap(r => r.completedEpics)).size,
-        totalVariances: quarterActuals.length,
         avgVariance: varianceDistribution.length > 0 
           ? varianceDistribution.reduce((sum, item) => sum + Math.abs(item!.variance), 0) / varianceDistribution.length 
           : 0,
       }
     };
-  }, [cycleId, teams, allocations, actualAllocations, iterationReviews, projects, epics]);
+  }, [cycleId, teams, allocations, actualAllocations, iterationReviews, projects, epics, iterations]);
 
   return (
     <div className="space-y-6">
@@ -163,18 +169,30 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center">
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Iteration Progress
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Review Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData.summaryStats.reviewProgress}%</div>
+            <p className="text-sm text-gray-600">
+              {dashboardData.summaryStats.completedReviews}/{dashboardData.summaryStats.totalIterations} iterations
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center">
+              <Users className="h-4 w-4 mr-2" />
+              Team Coverage
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {dashboardData.summaryStats.completedIterations}/{dashboardData.summaryStats.totalIterations}
+              {dashboardData.summaryStats.teamsWithActuals}/{dashboardData.summaryStats.totalTeams}
             </div>
-            <Progress 
-              value={(dashboardData.summaryStats.completedIterations / dashboardData.summaryStats.totalIterations) * 100} 
-              className="mt-2" 
-            />
+            <p className="text-sm text-gray-600">Teams with actuals</p>
           </CardContent>
         </Card>
 
@@ -190,7 +208,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
               {dashboardData.summaryStats.completedEpics}/{dashboardData.summaryStats.totalEpics}
             </div>
             <Progress 
-              value={(dashboardData.summaryStats.completedEpics / dashboardData.summaryStats.totalEpics) * 100} 
+              value={dashboardData.summaryStats.totalEpics > 0 ? (dashboardData.summaryStats.completedEpics / dashboardData.summaryStats.totalEpics) * 100 : 0} 
               className="mt-2" 
             />
           </CardContent>
@@ -199,7 +217,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center">
-              <TrendingUp className="h-4 w-4 mr-2" />
+              <AlertTriangle className="h-4 w-4 mr-2" />
               Avg Variance
             </CardTitle>
           </CardHeader>
@@ -208,19 +226,6 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
               {dashboardData.summaryStats.avgVariance.toFixed(1)}%
             </div>
             <p className="text-sm text-gray-600">Average deviation</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Total Entries
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.summaryStats.totalVariances}</div>
-            <p className="text-sm text-gray-600">Allocation entries</p>
           </CardContent>
         </Card>
       </div>
@@ -232,7 +237,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
           <CardHeader>
             <CardTitle>Team Utilization: Planned vs Actual</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-80">
             <ChartContainer
               config={{
                 planned: { label: "Planned %", color: "#3b82f6" },
@@ -241,7 +246,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
             >
               <BarChart data={dashboardData.teamUtilizationData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="team" />
+                <XAxis dataKey="team" angle={-45} textAnchor="end" height={60} />
                 <YAxis />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="plannedAvg" fill="var(--color-planned)" name="Planned %" />
@@ -256,11 +261,12 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
           <CardHeader>
             <CardTitle>Variance Distribution</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-80 flex items-center justify-center">
             <ChartContainer
               config={{
-                value: { label: "Count", color: "#8884d8" },
+                value: { label: "Count" },
               }}
+              className="w-full"
             >
               <PieChart>
                 <Pie
@@ -271,8 +277,8 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
                   dataKey="value"
                   label={({ name, value }) => `${name}: ${value}`}
                 >
-                  {dashboardData.varianceChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {dashboardData.varianceChartData.map((entry) => (
+                    <Cell key={`cell-${entry.name}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <ChartTooltip content={<ChartTooltipContent />} />
@@ -287,7 +293,7 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
         <CardHeader>
           <CardTitle>Iteration Progress Trend</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="h-80">
           <ChartContainer
             config={{
               planned: { label: "Planned Total %", color: "#3b82f6" },
@@ -324,6 +330,9 @@ const TrackingDashboard: React.FC<TrackingDashboardProps> = ({
                 <Progress value={project.percentage} className="h-2" />
               </div>
             ))}
+            {dashboardData.epicCompletionData.length === 0 && (
+              <p className="text-sm text-gray-500 text-center py-4">No projects with epics to display.</p>
+            )}
           </div>
         </CardContent>
       </Card>
