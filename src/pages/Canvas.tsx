@@ -315,17 +315,6 @@ const Canvas = () => {
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
-  const getStats = () => {
-    return {
-      teams: teams.length,
-      projects: projects.length,
-      epics: epics.length,
-      allocations: allocations.length,
-    };
-  };
-
-  const stats = getStats();
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
