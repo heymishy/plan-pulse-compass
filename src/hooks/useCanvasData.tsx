@@ -85,7 +85,7 @@ export const useCanvasData = ({
           teamsToShow,
           projectsToShow,
           epics,
-          allocations,
+          allocations: allocationsToShow,
           cycles,
           people,
           roles,
@@ -97,13 +97,13 @@ export const useCanvasData = ({
         break;
       }
       case 'teams-projects': {
-        const res = generateTeamsProjectsView({ divisionsToShow, teamsToShow, projectsToShow });
+        const res = generateTeamsProjectsView({ divisionsToShow, teamsToShow, projectsToShow, epics: epicsToShow, allocations: allocationsToShow });
         currentNodes = res.nodes;
         currentEdges = res.edges;
         break;
       }
       case 'projects-epics': {
-        const res = generateProjectsEpicsView({ projectsToShow, epicsToShow, teamsToShow });
+        const res = generateProjectsEpicsView({ projectsToShow, epicsToShow, teamsToShow, allocations: allocationsToShow });
         currentNodes = res.nodes;
         currentEdges = res.edges;
         break;
@@ -122,8 +122,8 @@ export const useCanvasData = ({
         break;
       }
       case 'all': {
-        const tp = generateTeamsProjectsView({ divisionsToShow, teamsToShow, projectsToShow });
-        const pe = generateProjectsEpicsView({ projectsToShow, epicsToShow, teamsToShow, isAllView: true });
+        const tp = generateTeamsProjectsView({ divisionsToShow, teamsToShow, projectsToShow, epics: epicsToShow, allocations: allocationsToShow });
+        const pe = generateProjectsEpicsView({ projectsToShow, epicsToShow, teamsToShow, isAllView: true, allocations: allocationsToShow });
 
         currentNodes = [...tp.nodes, ...pe.nodes];
         currentEdges = [...tp.edges, ...pe.edges];

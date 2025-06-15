@@ -322,10 +322,40 @@ export const generateFinancialOverviewView = (props: {
             }
         });
     });
+
+    const teamProjectAllocations = new Map<string, Map<string, number>>(); // Map<teamId, Map<projectId, totalPercentage>>
+    
+    allocations.forEach(alloc => {
+        if(alloc.epicId) {
+            const epic = epics.find(e => e.id === alloc.epicId);
+            if(epic && epic.projectId && teamIdsToShow.has(alloc.teamId) && projectsToShow.some(p => p.id === epic.projectId)) {
+                if(!teamProjectAllocations.has(alloc.teamId)) {
+                    teamProjectAllocations.set(alloc.teamId, new Map());
+                }
+                const projectAllocs = teamProjectAllocations.get(alloc.teamId)!;
+                const currentPercentage = projectAllocs.get(epic.projectId) || 0;
+                projectAllocs.set(epic.projectId, currentPercentage + alloc.percentage);
+            }
+        }
+    });
+
+    teamProjectAllocations.forEach((projectAllocs, teamId) => {
+        projectAllocs.forEach((percentage, projectId) => {
+            edges.push({
+                id: `team-project-financial-${teamId}-${projectId}`,
+                source: `team-${teamId}`,
+                target: `project-${projectId}`,
+                type: 'smoothstep',
+                label: `${percentage}%`,
+                style: { stroke: '#16a34a', strokeDasharray: '3,3', strokeWidth: Math.max(1, percentage / 25) },
+                animated: true
+            });
+        });
+    });
     return { nodes, edges };
 }
 
-export const generateTeamsProjectsView = ({ divisionsToShow, teamsToShow, projectsToShow }: { divisionsToShow: Division[], teamsToShow: Team[], projectsToShow: Project[] }): { nodes: Node[], edges: Edge[] } => {
+export const generateTeamsProjectsView = ({ divisionsToShow, teamsToShow, projectsToShow, epics, allocations }: { divisionsToShow: Division[], teamsToShow: Team[], projectsToShow: Project[], epics: Epic[], allocations: Allocation[] }): { nodes: Node[], edges: Edge[] } => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
@@ -365,7 +395,7 @@ export const generateTeamsProjectsView = ({ divisionsToShow, teamsToShow, projec
     return { nodes, edges };
 }
 
-export const generateProjectsEpicsView = ({ projectsToShow, epicsToShow, teamsToShow, isAllView = false }: { projectsToShow: Project[], epicsToShow: Epic[], teamsToShow: Team[], isAllView?: boolean }): { nodes: Node[], edges: Edge[] } => {
+export const generateProjectsEpicsView = ({ projectsToShow, epicsToShow, teamsToShow, allocations, isAllView = false }: { projectsToShow: Project[], epicsToShow: Epic[], teamsToShow: Team[], allocations: Allocation[], isAllView?: boolean }): { nodes: Node[], edges: Edge[] } => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
 
@@ -394,9 +424,21 @@ export const generateProjectsEpicsView = ({ projectsToShow, epicsToShow, teamsTo
         if (epic.projectId) {
           edges.push({ id: `project-epic-${epic.projectId}-${epic.id}`, source: `project-${epic.projectId}`, target: `epic-${epic.id}`, type: 'smoothstep', style: { stroke: '#f59e0b' } });
         }
-        if (epic.assignedTeamId) {
-          edges.push({ id: `team-epic-${epic.assignedTeamId}-${epic.id}`, source: `team-${epic.assignedTeamId}`, target: `epic-${epic.id}`, type: 'smoothstep', style: { stroke: '#16a34a', strokeDasharray: '5,5' } });
-        }
+        
+        const epicAllocations = allocations.filter(a => a.epicId === epic.id);
+        epicAllocations.forEach(alloc => {
+            if (teamsToShow.some(t => t.id === alloc.teamId)) {
+                edges.push({
+                    id: `team-epic-${alloc.teamId}-${epic.id}`,
+                    source: `team-${alloc.teamId}`,
+                    target: `epic-${epic.id}`,
+                    type: 'smoothstep',
+                    label: `${alloc.percentage}%`,
+                    style: { stroke: '#16a34a', strokeDasharray: '5,5' },
+                    animated: true
+                });
+            }
+        });
     });
     return { nodes, edges };
 }
