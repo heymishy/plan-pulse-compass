@@ -183,7 +183,7 @@ const BulkRemovalSettings = () => {
                   <SelectValue placeholder="All quarters" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All quarters</SelectItem>
+                  <SelectItem value="all_quarters">All quarters</SelectItem>
                   {quarterCycles.map(cycle => (
                     <SelectItem key={cycle.id} value={cycle.id}>
                       {cycle.name}
@@ -200,7 +200,7 @@ const BulkRemovalSettings = () => {
                   <SelectValue placeholder="All teams" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All teams</SelectItem>
+                  <SelectItem value="all_teams">All teams</SelectItem>
                   {teams.map(team => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
@@ -217,7 +217,7 @@ const BulkRemovalSettings = () => {
                   <SelectValue placeholder="All iterations" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All iterations</SelectItem>
+                  <SelectItem value="all_iterations">All iterations</SelectItem>
                   {iterations.map((iteration, index) => (
                     <SelectItem key={iteration.id} value={(index + 1).toString()}>
                       Iteration {index + 1}
