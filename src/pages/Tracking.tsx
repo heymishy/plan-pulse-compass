@@ -1,15 +1,21 @@
+
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { 
   CheckCircle2, 
   Calendar,
+  Upload,
+  Download,
 } from 'lucide-react';
 import IterationReviewFlow from '@/components/tracking/IterationReviewFlow';
 import VarianceAnalysis from '@/components/tracking/VarianceAnalysis';
 import TrackingDashboard from '@/components/tracking/TrackingDashboard';
 import TrackingSidebar from '@/components/tracking/TrackingSidebar';
+import ActualAllocationImportDialog from '@/components/tracking/ActualAllocationImportDialog';
+import IterationReviewImportDialog from '@/components/tracking/IterationReviewImportDialog';
 
 const Tracking = () => {
   const { 
@@ -142,6 +148,20 @@ const Tracking = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Progress Tracking</h1>
             <p className="text-gray-600">Track actual progress against planned allocations</p>
+          </div>
+          <div className="flex space-x-2">
+            <ActualAllocationImportDialog>
+              <Button variant="outline" size="sm" className="flex items-center">
+                <Upload className="mr-2 h-4 w-4" />
+                Import Actual Allocations
+              </Button>
+            </ActualAllocationImportDialog>
+            <IterationReviewImportDialog>
+              <Button variant="outline" size="sm" className="flex items-center">
+                <Download className="mr-2 h-4 w-4" />
+                Import Reviews
+              </Button>
+            </IterationReviewImportDialog>
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UploadCloud, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { parseCSV, parseCombinedProjectEpicCSVWithMapping } from '@/utils/projectsCsvUtils';
+import { parseActualAllocationCSV, parseIterationReviewCSV } from '@/utils/trackingImportUtils';
 
 const IMPORT_TYPES = {
   'projects-epics': {
@@ -31,13 +33,55 @@ const IMPORT_TYPES = {
     ],
     parser: parseCombinedProjectEpicCSVWithMapping,
   },
-  // Future import types can be added here
+  'actual-allocations': {
+    label: 'Actual Allocations',
+    fields: [
+      { id: 'team_name', label: 'Team Name', required: true },
+      { id: 'quarter', label: 'Quarter', required: true },
+      { id: 'iteration_number', label: 'Iteration Number', required: true },
+      { id: 'epic_name', label: 'Epic/Work Name' },
+      { id: 'epic_type', label: 'Epic Type' },
+      { id: 'actual_percentage', label: 'Actual Percentage', required: true },
+      { id: 'variance_reason', label: 'Variance Reason' },
+      { id: 'notes', label: 'Notes' },
+    ],
+    parser: (csvContent: string, mapping: any, appData: any) => {
+      const { teams, cycles, epics, runWorkCategories } = appData;
+      return parseActualAllocationCSV(csvContent, teams, cycles, epics, runWorkCategories);
+    },
+  },
+  'iteration-reviews': {
+    label: 'Iteration Reviews',
+    fields: [
+      { id: 'quarter', label: 'Quarter', required: true },
+      { id: 'iteration_number', label: 'Iteration Number', required: true },
+      { id: 'review_date', label: 'Review Date' },
+      { id: 'status', label: 'Status' },
+      { id: 'completed_epics', label: 'Completed Epics' },
+      { id: 'completed_milestones', label: 'Completed Milestones' },
+      { id: 'notes', label: 'Notes' },
+    ],
+    parser: (csvContent: string, mapping: any, appData: any) => {
+      const { cycles, epics, projects } = appData;
+      return parseIterationReviewCSV(csvContent, cycles, epics, projects);
+    },
+  },
 };
 
 const SKIP_MAPPING = '__SKIP_MAPPING__';
 
 const AdvancedDataImport = () => {
-  const { setProjects, setEpics } = useApp();
+  const { 
+    setProjects, 
+    setEpics, 
+    setActualAllocations, 
+    setIterationReviews,
+    teams,
+    cycles,
+    epics,
+    runWorkCategories,
+    projects
+  } = useApp();
   const [step, setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
@@ -84,12 +128,35 @@ const AdvancedDataImport = () => {
       });
       
       const config = IMPORT_TYPES[importType];
-      const result = config.parser(fileContent, mapping);
-
-      if ('projects' in result && 'epics' in result) {
-         setProjects(prev => [...prev, ...result.projects]);
-         setEpics(prev => [...prev, ...result.epics]);
-         setStatus({ type: 'success', message: `Successfully imported ${result.projects.length} projects and ${result.epics.length} epics.` });
+      const appData = { teams, cycles, epics, runWorkCategories, projects };
+      
+      if (importType === 'projects-epics') {
+        const result = config.parser(fileContent, mapping);
+        if ('projects' in result && 'epics' in result) {
+          setProjects(prev => [...prev, ...result.projects]);
+          setEpics(prev => [...prev, ...result.epics]);
+          setStatus({ type: 'success', message: `Successfully imported ${result.projects.length} projects and ${result.epics.length} epics.` });
+        }
+      } else if (importType === 'actual-allocations') {
+        const result = config.parser(fileContent, mapping, appData);
+        if ('allocations' in result && 'errors' in result) {
+          if (result.errors.length > 0) {
+            setStatus({ type: 'error', message: `Import errors: ${result.errors.join(', ')}` });
+            return;
+          }
+          setActualAllocations(prev => [...prev, ...result.allocations]);
+          setStatus({ type: 'success', message: `Successfully imported ${result.allocations.length} actual allocations.` });
+        }
+      } else if (importType === 'iteration-reviews') {
+        const result = config.parser(fileContent, mapping, appData);
+        if ('reviews' in result && 'errors' in result) {
+          if (result.errors.length > 0) {
+            setStatus({ type: 'error', message: `Import errors: ${result.errors.join(', ')}` });
+            return;
+          }
+          setIterationReviews(prev => [...prev, ...result.reviews]);
+          setStatus({ type: 'success', message: `Successfully imported ${result.reviews.length} iteration reviews.` });
+        }
       }
      
       // Reset form
