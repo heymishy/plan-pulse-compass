@@ -31,7 +31,6 @@ const IMPORT_TYPES = {
       { id: 'milestone_name', label: 'Milestone Name' },
       { id: 'milestone_due_date', label: 'Milestone Due Date' },
     ],
-    parser: parseCombinedProjectEpicCSVWithMapping,
   },
   'actual-allocations': {
     label: 'Actual Allocations',
@@ -45,10 +44,6 @@ const IMPORT_TYPES = {
       { id: 'variance_reason', label: 'Variance Reason' },
       { id: 'notes', label: 'Notes' },
     ],
-    parser: (csvContent: string, mapping: any, appData: any) => {
-      const { teams, cycles, epics, runWorkCategories } = appData;
-      return parseActualAllocationCSV(csvContent, teams, cycles, epics, runWorkCategories);
-    },
   },
   'iteration-reviews': {
     label: 'Iteration Reviews',
@@ -61,10 +56,6 @@ const IMPORT_TYPES = {
       { id: 'completed_milestones', label: 'Completed Milestones' },
       { id: 'notes', label: 'Notes' },
     ],
-    parser: (csvContent: string, mapping: any, appData: any) => {
-      const { cycles, epics, projects } = appData;
-      return parseIterationReviewCSV(csvContent, cycles, epics, projects);
-    },
   },
 };
 
@@ -127,18 +118,17 @@ const AdvancedDataImport = () => {
         }
       });
       
-      const config = IMPORT_TYPES[importType];
       const appData = { teams, cycles, epics, runWorkCategories, projects };
       
       if (importType === 'projects-epics') {
-        const result = config.parser(fileContent, mapping);
+        const result = parseCombinedProjectEpicCSVWithMapping(fileContent, mapping);
         if ('projects' in result && 'epics' in result) {
           setProjects(prev => [...prev, ...result.projects]);
           setEpics(prev => [...prev, ...result.epics]);
           setStatus({ type: 'success', message: `Successfully imported ${result.projects.length} projects and ${result.epics.length} epics.` });
         }
       } else if (importType === 'actual-allocations') {
-        const result = config.parser(fileContent, mapping, appData);
+        const result = parseActualAllocationCSV(fileContent, teams, cycles, epics, runWorkCategories);
         if ('allocations' in result && 'errors' in result) {
           if (result.errors.length > 0) {
             setStatus({ type: 'error', message: `Import errors: ${result.errors.join(', ')}` });
@@ -148,7 +138,7 @@ const AdvancedDataImport = () => {
           setStatus({ type: 'success', message: `Successfully imported ${result.allocations.length} actual allocations.` });
         }
       } else if (importType === 'iteration-reviews') {
-        const result = config.parser(fileContent, mapping, appData);
+        const result = parseIterationReviewCSV(fileContent, cycles, epics, projects);
         if ('reviews' in result && 'errors' in result) {
           if (result.errors.length > 0) {
             setStatus({ type: 'error', message: `Import errors: ${result.errors.join(', ')}` });
