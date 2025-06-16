@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Team } from '@/types';
@@ -40,10 +39,10 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
     return division?.name || 'Unknown Division';
   };
 
-  const getManagerName = (managerId?: string) => {
-    if (!managerId) return 'No Manager';
-    const manager = people.find(p => p.id === managerId);
-    return manager?.name || 'Unknown Manager';
+  const getProductOwnerName = (productOwnerId?: string) => {
+    if (!productOwnerId) return 'No Product Owner';
+    const productOwner = people.find(p => p.id === productOwnerId);
+    return productOwner?.name || 'Unknown Product Owner';
   };
 
   const handleSelectTeam = (teamId: string, checked: boolean) => {
@@ -128,8 +127,8 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
                     <span>{getDivisionName(team.divisionId)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Manager:</span>
-                    <span>{getManagerName(team.managerId)}</span>
+                    <span className="text-gray-600">Product Owner:</span>
+                    <span>{getProductOwnerName(team.productOwnerId)}</span>
                   </div>
                 </div>
 

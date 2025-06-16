@@ -1,3 +1,4 @@
+
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -32,7 +33,7 @@ export interface Team {
   name:string;
   divisionId?: string;
   divisionName?: string;
-  managerId?: string;
+  productOwnerId?: string;
   capacity: number; // weekly capacity in hours
 }
 
@@ -40,7 +41,7 @@ export interface Division {
   id: string;
   name: string;
   description?: string;
-  managerId?: string;
+  productOwnerId?: string;
   budget?: number;
 }
 

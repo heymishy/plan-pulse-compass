@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Team } from '@/types';
@@ -47,10 +46,10 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
     return division?.name || 'Unknown Division';
   };
 
-  const getManagerName = (managerId?: string) => {
-    if (!managerId) return 'No Manager';
-    const manager = people.find(p => p.id === managerId);
-    return manager?.name || 'Unknown Manager';
+  const getProductOwnerName = (productOwnerId?: string) => {
+    if (!productOwnerId) return 'No Product Owner';
+    const productOwner = people.find(p => p.id === productOwnerId);
+    return productOwner?.name || 'Unknown Product Owner';
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -127,7 +126,7 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
               </TableHead>
               <TableHead>Team Name</TableHead>
               <TableHead>Division</TableHead>
-              <TableHead>Manager</TableHead>
+              <TableHead>Product Owner</TableHead>
               <TableHead>Members</TableHead>
               <TableHead>Capacity</TableHead>
               <TableHead>Utilization</TableHead>
@@ -151,7 +150,7 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                   </TableCell>
                   <TableCell className="font-medium">{team.name}</TableCell>
                   <TableCell>{getDivisionName(team.divisionId)}</TableCell>
-                  <TableCell>{getManagerName(team.managerId)}</TableCell>
+                  <TableCell>{getProductOwnerName(team.productOwnerId)}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">
                       {members.length} member{members.length !== 1 ? 's' : ''}

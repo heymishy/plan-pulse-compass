@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Division } from '@/types';
@@ -77,6 +76,12 @@ const DivisionTable: React.FC<DivisionTableProps> = ({
     return manager?.name || 'Unknown';
   };
 
+  const getProductOwnerName = (productOwnerId?: string) => {
+    if (!productOwnerId) return 'No Product Owner';
+    const productOwner = people.find(p => p.id === productOwnerId);
+    return productOwner?.name || 'Unknown';
+  };
+
   const getTeamCount = (divisionId: string) => {
     return teams.filter(team => team.divisionId === divisionId).length;
   };
@@ -114,7 +119,7 @@ const DivisionTable: React.FC<DivisionTableProps> = ({
               </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Manager</TableHead>
+              <TableHead>Product Owner</TableHead>
               <TableHead>Teams</TableHead>
               <TableHead>Budget</TableHead>
               <TableHead className="w-24">Actions</TableHead>
@@ -132,7 +137,7 @@ const DivisionTable: React.FC<DivisionTableProps> = ({
                 </TableCell>
                 <TableCell className="font-medium">{division.name}</TableCell>
                 <TableCell>{division.description || '-'}</TableCell>
-                <TableCell>{getManagerName(division.managerId)}</TableCell>
+                <TableCell>{getProductOwnerName(division.productOwnerId)}</TableCell>
                 <TableCell>{getTeamCount(division.id)} teams</TableCell>
                 <TableCell>
                   {division.budget ? `$${division.budget.toLocaleString()}` : '-'}
