@@ -4,6 +4,7 @@ import AdvancedDataImport from './AdvancedDataImport';
 import EnhancedImportExport from './EnhancedImportExport';
 import EnhancedProjectsImportExport from './EnhancedProjectsImportExport';
 import TrackingImportExport from './TrackingImportExport';
+import BulkRemovalSettings from './BulkRemovalSettings';
 
 const ImportExportSettings = () => {
   return (
@@ -12,6 +13,7 @@ const ImportExportSettings = () => {
       <EnhancedImportExport />
       <EnhancedProjectsImportExport />
       <TrackingImportExport />
+      <BulkRemovalSettings />
     </div>
   );
 };
