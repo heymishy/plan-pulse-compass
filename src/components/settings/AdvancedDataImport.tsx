@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UploadCloud, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { parseCSV, parseCombinedProjectEpicCSVWithMapping } from '@/utils/projectsCsvUtils';
-import { parseActualAllocationCSV, parseIterationReviewCSV } from '@/utils/trackingImportUtils';
+import { parseActualAllocationCSV, parseIterationReviewCSV, parseBulkTrackingCSV } from '@/utils/trackingImportUtils';
 
 const IMPORT_TYPES = {
   'projects-epics': {
@@ -50,6 +50,23 @@ const IMPORT_TYPES = {
     fields: [
       { id: 'quarter', label: 'Quarter', required: true },
       { id: 'iteration_number', label: 'Iteration Number', required: true },
+      { id: 'review_date', label: 'Review Date' },
+      { id: 'status', label: 'Status' },
+      { id: 'completed_epics', label: 'Completed Epics' },
+      { id: 'completed_milestones', label: 'Completed Milestones' },
+      { id: 'notes', label: 'Notes' },
+    ],
+  },
+  'bulk-tracking': {
+    label: 'Bulk Tracking Data (Combined)',
+    fields: [
+      { id: 'data_type', label: 'Data Type', required: true },
+      { id: 'team_name', label: 'Team Name' },
+      { id: 'quarter', label: 'Quarter', required: true },
+      { id: 'iteration_number', label: 'Iteration Number', required: true },
+      { id: 'epic_name', label: 'Epic/Work Name' },
+      { id: 'actual_percentage', label: 'Actual Percentage' },
+      { id: 'variance_reason', label: 'Variance Reason' },
       { id: 'review_date', label: 'Review Date' },
       { id: 'status', label: 'Status' },
       { id: 'completed_epics', label: 'Completed Epics' },
@@ -146,6 +163,20 @@ const AdvancedDataImport = () => {
           }
           setIterationReviews(prev => [...prev, ...result.reviews]);
           setStatus({ type: 'success', message: `Successfully imported ${result.reviews.length} iteration reviews.` });
+        }
+      } else if (importType === 'bulk-tracking') {
+        const result = parseBulkTrackingCSV(fileContent, teams, cycles, epics, runWorkCategories, projects);
+        if ('allocations' in result && 'reviews' in result && 'errors' in result) {
+          if (result.errors.length > 0) {
+            setStatus({ type: 'error', message: `Import errors: ${result.errors.join(', ')}` });
+            return;
+          }
+          setActualAllocations(prev => [...prev, ...result.allocations]);
+          setIterationReviews(prev => [...prev, ...result.reviews]);
+          setStatus({ 
+            type: 'success', 
+            message: `Successfully imported ${result.allocations.length} allocations and ${result.reviews.length} reviews.` 
+          });
         }
       }
      

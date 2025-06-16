@@ -22,6 +22,21 @@ export interface IterationReviewImport {
   notes?: string;
 }
 
+export interface BulkTrackingImport {
+  dataType: 'allocation' | 'review';
+  teamName?: string;
+  quarter: string;
+  iterationNumber: number;
+  epicName?: string;
+  actualPercentage?: number;
+  varianceReason?: string;
+  reviewDate?: string;
+  status?: string;
+  completedEpics?: string;
+  completedMilestones?: string;
+  notes?: string;
+}
+
 export const parseCSV = (csvContent: string): string[][] => {
   const lines = csvContent.trim().split('\n');
   return lines.map(line => {
@@ -237,6 +252,68 @@ export const parseIterationReviewCSV = (
   return { reviews, errors };
 };
 
+export const parseBulkTrackingCSV = (
+  csvContent: string,
+  teams: any[],
+  cycles: any[],
+  epics: any[],
+  runWorkCategories: any[],
+  projects: any[]
+): { allocations: ActualAllocation[], reviews: IterationReview[], errors: string[] } => {
+  const lines = parseCSV(csvContent);
+  const headers = lines[0];
+  const dataRows = lines.slice(1);
+  
+  const allocations: ActualAllocation[] = [];
+  const reviews: IterationReview[] = [];
+  const errors: string[] = [];
+
+  // Group rows by data type
+  const allocationRows: string[][] = [];
+  const reviewRows: string[][] = [];
+
+  dataRows.forEach((row, index) => {
+    const rowData: any = {};
+    headers.forEach((header, i) => {
+      rowData[header.toLowerCase().replace(/\s+/g, '_')] = row[i] || '';
+    });
+
+    if (rowData.data_type?.toLowerCase() === 'allocation') {
+      allocationRows.push(row);
+    } else if (rowData.data_type?.toLowerCase() === 'review') {
+      reviewRows.push(row);
+    } else {
+      errors.push(`Row ${index + 2}: Invalid data type "${rowData.data_type}". Must be "allocation" or "review"`);
+    }
+  });
+
+  // Process allocation rows
+  if (allocationRows.length > 0) {
+    const allocationCSV = [headers, ...allocationRows].map(row => 
+      row.map(cell => `"${cell}"`).join(',')
+    ).join('\n');
+    
+    const allocationResult = parseActualAllocationCSV(
+      allocationCSV, teams, cycles, epics, runWorkCategories
+    );
+    allocations.push(...allocationResult.allocations);
+    errors.push(...allocationResult.errors);
+  }
+
+  // Process review rows
+  if (reviewRows.length > 0) {
+    const reviewCSV = [headers, ...reviewRows].map(row => 
+      row.map(cell => `"${cell}"`).join(',')
+    ).join('\n');
+    
+    const reviewResult = parseIterationReviewCSV(reviewCSV, cycles, epics, projects);
+    reviews.push(...reviewResult.reviews);
+    errors.push(...reviewResult.errors);
+  }
+
+  return { allocations, reviews, errors };
+};
+
 export const downloadActualAllocationSampleCSV = () => {
   const sampleData = [
     ['Team Name', 'Quarter', 'Iteration Number', 'Epic Name', 'Epic Type', 'Actual Percentage', 'Variance Reason', 'Notes'],
@@ -276,6 +353,100 @@ export const downloadIterationReviewSampleCSV = () => {
   const a = document.createElement('a');
   a.href = url;
   a.download = 'iteration-reviews-sample.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
+
+export const downloadBulkTrackingSampleCSV = () => {
+  const sampleData = [
+    ['Data Type', 'Team Name', 'Quarter', 'Iteration Number', 'Epic Name', 'Actual Percentage', 'Variance Reason', 'Review Date', 'Status', 'Completed Epics', 'Completed Milestones', 'Notes'],
+    ['allocation', 'Frontend Team', 'Q1 2024', '1', 'User Authentication', '65', 'scope-change', '', '', '', '', 'Additional security requirements'],
+    ['allocation', 'Frontend Team', 'Q1 2024', '1', 'Production Support', '35', 'none', '', '', '', '', ''],
+    ['review', '', 'Q1 2024', '1', '', '', '', '2024-01-15', 'completed', 'User Authentication,Profile Management', 'Alpha Release', 'Sprint completed successfully'],
+    ['review', '', 'Q1 2024', '2', '', '', '', '2024-01-29', 'in-progress', 'Dashboard UI', '', 'In progress review'],
+  ];
+
+  const csvContent = sampleData.map(row => 
+    row.map(cell => `"${cell}"`).join(',')
+  ).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bulk-tracking-sample.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
+
+export const exportTrackingDataCSV = (
+  actualAllocations: ActualAllocation[],
+  iterationReviews: IterationReview[],
+  teams: any[],
+  cycles: any[],
+  epics: any[],
+  runWorkCategories: any[]
+) => {
+  const data = [
+    ['Type', 'Team', 'Quarter', 'Iteration', 'Work Item', 'Actual %', 'Variance Reason', 'Review Date', 'Status', 'Completed Epics', 'Notes', 'Entered Date']
+  ];
+
+  // Add allocation data
+  actualAllocations.forEach(allocation => {
+    const team = teams.find(t => t.id === allocation.teamId);
+    const cycle = cycles.find(c => c.id === allocation.cycleId);
+    const epic = epics.find(e => e.id === allocation.actualEpicId);
+    const runWork = runWorkCategories.find(r => r.id === allocation.actualRunWorkCategoryId);
+    
+    data.push([
+      'Allocation',
+      team?.name || '',
+      cycle?.name || '',
+      allocation.iterationNumber.toString(),
+      epic?.name || runWork?.name || '',
+      allocation.actualPercentage.toString(),
+      allocation.varianceReason || '',
+      '',
+      '',
+      '',
+      '',
+      allocation.enteredDate
+    ]);
+  });
+
+  // Add review data
+  iterationReviews.forEach(review => {
+    const cycle = cycles.find(c => c.id === review.cycleId);
+    const completedEpicNames = review.completedEpics.map(epicId => {
+      const epic = epics.find(e => e.id === epicId);
+      return epic?.name || epicId;
+    }).join(', ');
+    
+    data.push([
+      'Review',
+      '',
+      cycle?.name || '',
+      review.iterationNumber.toString(),
+      '',
+      '',
+      '',
+      review.reviewDate,
+      review.status,
+      completedEpicNames,
+      review.notes || '',
+      ''
+    ]);
+  });
+
+  const csvContent = data.map(row => 
+    row.map(cell => `"${cell}"`).join(',')
+  ).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `tracking-data-export-${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   window.URL.revokeObjectURL(url);
 };

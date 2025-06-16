@@ -9,7 +9,11 @@ import { AlertTriangle, Trash2, Download, Upload } from 'lucide-react';
 const AdvancedSettings = () => {
   const { 
     setPeople, setTeams, setProjects, setRoles, setAllocations, 
-    setCycles, setRunWorkCategories, setConfig, setIsSetupComplete 
+    setCycles, setRunWorkCategories, setConfig, setIsSetupComplete,
+    setActualAllocations, setIterationReviews,
+    // Get all data for backup
+    people, teams, projects, roles, allocations, cycles, runWorkCategories, 
+    config, actualAllocations, iterationReviews, epics
   } = useApp();
   const { toast } = useToast();
 
@@ -24,6 +28,8 @@ const AdvancedSettings = () => {
       setRunWorkCategories([]);
       setConfig(null);
       setIsSetupComplete(false);
+      setActualAllocations([]);
+      setIterationReviews([]);
       
       toast({
         title: "Data Reset",
@@ -34,19 +40,83 @@ const AdvancedSettings = () => {
   };
 
   const handleExportBackup = () => {
-    // This would export all data as a backup file
+    const backupData = {
+      people,
+      teams,
+      projects,
+      roles,
+      allocations,
+      cycles,
+      runWorkCategories,
+      config,
+      actualAllocations,
+      iterationReviews,
+      epics,
+      exportDate: new Date().toISOString(),
+      version: '1.0'
+    };
+
+    const dataStr = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `planning-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
     toast({
       title: "Backup Created",
-      description: "Your data backup has been downloaded.",
+      description: "Your complete data backup has been downloaded.",
     });
   };
 
   const handleImportBackup = () => {
-    // This would import a backup file
-    toast({
-      title: "Backup Restored",
-      description: "Your data has been restored from backup.",
-    });
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const backupData = JSON.parse(text);
+
+        // Validate backup structure
+        if (!backupData.version || !backupData.exportDate) {
+          throw new Error('Invalid backup file format');
+        }
+
+        // Restore all data
+        if (backupData.people) setPeople(backupData.people);
+        if (backupData.teams) setTeams(backupData.teams);
+        if (backupData.projects) setProjects(backupData.projects);
+        if (backupData.roles) setRoles(backupData.roles);
+        if (backupData.allocations) setAllocations(backupData.allocations);
+        if (backupData.cycles) setCycles(backupData.cycles);
+        if (backupData.runWorkCategories) setRunWorkCategories(backupData.runWorkCategories);
+        if (backupData.config) setConfig(backupData.config);
+        if (backupData.actualAllocations) setActualAllocations(backupData.actualAllocations);
+        if (backupData.iterationReviews) setIterationReviews(backupData.iterationReviews);
+        
+        if (backupData.config) setIsSetupComplete(true);
+
+        toast({
+          title: "Backup Restored",
+          description: `Your data has been restored from backup created on ${new Date(backupData.exportDate).toLocaleDateString()}.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Restore Failed",
+          description: "Failed to restore backup. Please check the file format.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    input.click();
   };
 
   return (
@@ -62,7 +132,7 @@ const AdvancedSettings = () => {
           <div className="flex space-x-4">
             <Button onClick={handleExportBackup} className="flex items-center">
               <Download className="h-4 w-4 mr-2" />
-              Export Backup
+              Export Complete Backup
             </Button>
             <Button variant="outline" onClick={handleImportBackup} className="flex items-center">
               <Upload className="h-4 w-4 mr-2" />
@@ -70,7 +140,7 @@ const AdvancedSettings = () => {
             </Button>
           </div>
           <p className="text-sm text-gray-600">
-            Create and restore complete backups of your planning data.
+            Create and restore complete backups of your planning data, including tracking information, actual allocations, and iteration reviews.
           </p>
         </CardContent>
       </Card>
@@ -86,7 +156,7 @@ const AdvancedSettings = () => {
           <div className="border border-red-200 rounded-lg p-4">
             <h3 className="font-medium text-red-800 mb-2">Reset All Data</h3>
             <p className="text-sm text-red-600 mb-4">
-              This will permanently delete all your planning data including people, teams, projects, and allocations. This action cannot be undone.
+              This will permanently delete all your planning data including people, teams, projects, allocations, and tracking data. This action cannot be undone.
             </p>
             <Button 
               variant="destructive" 
