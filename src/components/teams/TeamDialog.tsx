@@ -33,7 +33,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
   const [formData, setFormData] = useState({
     name: '',
     divisionId: '',
-    managerId: '',
+    productOwnerId: '',
     capacity: '40',
   });
 
@@ -46,7 +46,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
         setFormData({
           name: team.name,
           divisionId: team.divisionId || '',
-          managerId: team.managerId || '',
+          productOwnerId: team.productOwnerId || '',
           capacity: team.capacity.toString(),
         });
       }
@@ -54,7 +54,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
       setFormData({
         name: '',
         divisionId: '',
-        managerId: '',
+        productOwnerId: '',
         capacity: '40',
       });
     }
@@ -90,7 +90,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
               ...team,
               name: formData.name.trim(),
               divisionId: formData.divisionId === 'none' ? undefined : formData.divisionId,
-              managerId: formData.managerId === 'none' ? undefined : formData.managerId,
+              productOwnerId: formData.productOwnerId === 'none' ? undefined : formData.productOwnerId,
               capacity,
             }
           : team
@@ -106,7 +106,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
         id: crypto.randomUUID(),
         name: formData.name.trim(),
         divisionId: formData.divisionId === 'none' ? undefined : formData.divisionId,
-        managerId: formData.managerId === 'none' ? undefined : formData.managerId,
+        productOwnerId: formData.productOwnerId === 'none' ? undefined : formData.productOwnerId,
         capacity,
       };
       
@@ -121,7 +121,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
     onClose();
   };
 
-  const potentialManagers = people.filter(person => person.isActive);
+  const potentialProductOwners = people.filter(person => person.isActive);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -165,17 +165,17 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="manager">Manager</Label>
+            <Label htmlFor="productOwner">Product Owner</Label>
             <Select
-              value={formData.managerId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, managerId: value }))}
+              value={formData.productOwnerId}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, productOwnerId: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select manager" />
+                <SelectValue placeholder="Select product owner" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No Manager</SelectItem>
-                {potentialManagers.map(person => (
+                <SelectItem value="none">No Product Owner</SelectItem>
+                {potentialProductOwners.map(person => (
                   <SelectItem key={person.id} value={person.id}>
                     {person.name}
                   </SelectItem>

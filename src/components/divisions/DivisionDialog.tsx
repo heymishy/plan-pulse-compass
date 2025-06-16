@@ -26,18 +26,18 @@ const DivisionDialog: React.FC<DivisionDialogProps> = ({
   const [formData, setFormData] = useState({
     name: division?.name || '',
     description: division?.description || '',
-    managerId: division?.managerId || '',
+    productOwnerId: division?.productOwnerId || '',
     budget: division?.budget || undefined,
   });
 
-  const managers = people.filter(person => person.isActive);
+  const productOwners = people.filter(person => person.isActive);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
       ...formData,
       id: division?.id,
-      managerId: formData.managerId === 'none' ? '' : formData.managerId,
+      productOwnerId: formData.productOwnerId === 'none' ? '' : formData.productOwnerId,
     });
     onOpenChange(false);
   };
@@ -70,14 +70,14 @@ const DivisionDialog: React.FC<DivisionDialogProps> = ({
           </div>
 
           <div>
-            <Label>Manager</Label>
-            <Select value={formData.managerId} onValueChange={(value) => setFormData(prev => ({ ...prev, managerId: value }))}>
+            <Label>Product Owner</Label>
+            <Select value={formData.productOwnerId} onValueChange={(value) => setFormData(prev => ({ ...prev, productOwnerId: value }))}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a manager" />
+                <SelectValue placeholder="Select a product owner" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No manager assigned</SelectItem>
-                {managers.map(person => (
+                <SelectItem value="none">No product owner assigned</SelectItem>
+                {productOwners.map(person => (
                   <SelectItem key={person.id} value={person.id}>
                     {person.name}
                   </SelectItem>
@@ -116,4 +116,3 @@ const DivisionDialog: React.FC<DivisionDialogProps> = ({
 };
 
 export default DivisionDialog;
-
