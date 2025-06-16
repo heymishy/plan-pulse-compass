@@ -31,7 +31,7 @@ interface TeamTableProps {
 }
 
 const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
-  const { people, divisions, setTeams, setPeople } = useApp();
+  const { people, divisions, setTeams, setPeople, roles } = useApp();
   const { toast } = useToast();
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -46,10 +46,28 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
     return division?.name || 'Unknown Division';
   };
 
-  const getProductOwnerName = (productOwnerId?: string) => {
-    if (!productOwnerId) return 'No Product Owner';
-    const productOwner = people.find(p => p.id === productOwnerId);
-    return productOwner?.name || 'Unknown Product Owner';
+  const getProductOwnerName = (team: Team) => {
+    if (!team.productOwnerId) return 'No Product Owner';
+    
+    const selectedPerson = people.find(p => p.id === team.productOwnerId);
+    if (!selectedPerson) return 'Unknown Product Owner';
+    
+    // Find Product Owner role
+    const productOwnerRole = roles.find(role => 
+      role.name.toLowerCase().includes('product owner') || role.name.toLowerCase().includes('po')
+    );
+    
+    // Get team members
+    const teamMembers = getTeamMembers(team.id);
+    
+    // Find natural PO in team
+    const teamProductOwner = productOwnerRole ? 
+      teamMembers.find(person => person.roleId === productOwnerRole.id) : null;
+    
+    // Check if selected person is acting PO
+    const isActing = teamProductOwner?.id !== selectedPerson.id;
+    
+    return `${selectedPerson.name}${isActing ? ' (Acting)' : ''}`;
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -150,7 +168,7 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                   </TableCell>
                   <TableCell className="font-medium">{team.name}</TableCell>
                   <TableCell>{getDivisionName(team.divisionId)}</TableCell>
-                  <TableCell>{getProductOwnerName(team.productOwnerId)}</TableCell>
+                  <TableCell>{getProductOwnerName(team)}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">
                       {members.length} member{members.length !== 1 ? 's' : ''}

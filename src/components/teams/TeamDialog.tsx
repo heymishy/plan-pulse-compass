@@ -28,7 +28,7 @@ interface TeamDialogProps {
 }
 
 const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
-  const { teams, setTeams, divisions, people } = useApp();
+  const { teams, setTeams, divisions, people, roles } = useApp();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -121,7 +121,27 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
     onClose();
   };
 
-  const potentialProductOwners = people.filter(person => person.isActive);
+  // Get current team members
+  const currentTeamMembers = isEditing && teamId ? 
+    people.filter(person => person.teamId === teamId && person.isActive) : 
+    [];
+
+  // Find Product Owner role
+  const productOwnerRole = roles.find(role => 
+    role.name.toLowerCase().includes('product owner') || role.name.toLowerCase().includes('po')
+  );
+
+  // Find team member with Product Owner role
+  const teamProductOwner = productOwnerRole ? 
+    currentTeamMembers.find(person => person.roleId === productOwnerRole.id) : null;
+
+  // Get all active people for selection (in case no PO exists in team)
+  const allActivePeople = people.filter(person => person.isActive);
+
+  // Determine if the selected person is acting (not the natural PO from the team)
+  const selectedPerson = formData.productOwnerId ? 
+    people.find(p => p.id === formData.productOwnerId) : null;
+  const isActingProductOwner = selectedPerson && selectedPerson.id !== teamProductOwner?.id;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -165,7 +185,9 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="productOwner">Product Owner</Label>
+            <Label htmlFor="productOwner">
+              Product Owner {isActingProductOwner && <span className="text-orange-600">(Acting)</span>}
+            </Label>
             <Select
               value={formData.productOwnerId}
               onValueChange={(value) => setFormData(prev => ({ ...prev, productOwnerId: value }))}
@@ -175,11 +197,19 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No Product Owner</SelectItem>
-                {potentialProductOwners.map(person => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name}
+                {teamProductOwner && (
+                  <SelectItem key={teamProductOwner.id} value={teamProductOwner.id}>
+                    {teamProductOwner.name} (Team PO)
                   </SelectItem>
-                ))}
+                )}
+                {allActivePeople
+                  .filter(person => person.id !== teamProductOwner?.id)
+                  .map(person => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name}
+                      {currentTeamMembers.some(tm => tm.id === person.id) ? ' (Team Member)' : ' (External)'}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

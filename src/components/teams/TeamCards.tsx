@@ -24,7 +24,7 @@ interface TeamCardsProps {
 }
 
 const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
-  const { people, divisions, setTeams, setPeople } = useApp();
+  const { people, divisions, setTeams, setPeople, roles } = useApp();
   const { toast } = useToast();
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -39,10 +39,28 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
     return division?.name || 'Unknown Division';
   };
 
-  const getProductOwnerName = (productOwnerId?: string) => {
-    if (!productOwnerId) return 'No Product Owner';
-    const productOwner = people.find(p => p.id === productOwnerId);
-    return productOwner?.name || 'Unknown Product Owner';
+  const getProductOwnerName = (team: Team) => {
+    if (!team.productOwnerId) return 'No Product Owner';
+    
+    const selectedPerson = people.find(p => p.id === team.productOwnerId);
+    if (!selectedPerson) return 'Unknown Product Owner';
+    
+    // Find Product Owner role
+    const productOwnerRole = roles.find(role => 
+      role.name.toLowerCase().includes('product owner') || role.name.toLowerCase().includes('po')
+    );
+    
+    // Get team members
+    const teamMembers = getTeamMembers(team.id);
+    
+    // Find natural PO in team
+    const teamProductOwner = productOwnerRole ? 
+      teamMembers.find(person => person.roleId === productOwnerRole.id) : null;
+    
+    // Check if selected person is acting PO
+    const isActing = teamProductOwner?.id !== selectedPerson.id;
+    
+    return `${selectedPerson.name}${isActing ? ' (Acting)' : ''}`;
   };
 
   const handleSelectTeam = (teamId: string, checked: boolean) => {
@@ -128,7 +146,7 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Product Owner:</span>
-                    <span>{getProductOwnerName(team.productOwnerId)}</span>
+                    <span>{getProductOwnerName(team)}</span>
                   </div>
                 </div>
 
