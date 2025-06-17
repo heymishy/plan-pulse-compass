@@ -38,12 +38,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
     name: '',
     description: '',
     status: 'not-started' as Epic['status'],
-    assignedTeamId: '',
+    assignedTeamId: 'none',
     estimatedEffort: '',
     storyPoints: '',
     startDate: '',
     targetEndDate: '',
-    releaseId: '',
+    releaseId: 'none',
     mvpPriority: '',
     releasePriority: '',
     isDeployed: false,
@@ -58,12 +58,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
         name: epic.name,
         description: epic.description || '',
         status: epic.status,
-        assignedTeamId: epic.assignedTeamId || '',
+        assignedTeamId: epic.assignedTeamId || 'none',
         estimatedEffort: epic.estimatedEffort?.toString() || '',
         storyPoints: epic.storyPoints?.toString() || '',
         startDate: epic.startDate || '',
         targetEndDate: epic.targetEndDate || '',
-        releaseId: epic.releaseId || '',
+        releaseId: epic.releaseId || 'none',
         mvpPriority: epic.mvpPriority?.toString() || '',
         releasePriority: epic.releasePriority?.toString() || '',
         isDeployed: epic.isDeployed || false,
@@ -76,12 +76,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
         name: '',
         description: '',
         status: 'not-started',
-        assignedTeamId: '',
+        assignedTeamId: 'none',
         estimatedEffort: '',
         storyPoints: '',
         startDate: '',
         targetEndDate: '',
-        releaseId: '',
+        releaseId: 'none',
         mvpPriority: '',
         releasePriority: '',
         isDeployed: false,
@@ -110,12 +110,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
       description: formData.description.trim() || undefined,
       status: formData.status,
       projectId,
-      assignedTeamId: formData.assignedTeamId || undefined,
+      assignedTeamId: formData.assignedTeamId === 'none' ? undefined : formData.assignedTeamId,
       estimatedEffort: formData.estimatedEffort ? parseInt(formData.estimatedEffort) : undefined,
       storyPoints: formData.storyPoints ? parseInt(formData.storyPoints) : undefined,
       startDate: formData.startDate || undefined,
       targetEndDate: formData.targetEndDate || undefined,
-      releaseId: formData.releaseId || undefined,
+      releaseId: formData.releaseId === 'none' ? undefined : formData.releaseId,
       mvpPriority: formData.mvpPriority ? parseInt(formData.mvpPriority) : undefined,
       releasePriority: formData.releasePriority ? parseInt(formData.releasePriority) : undefined,
       isDeployed: formData.isDeployed,
@@ -193,7 +193,7 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                   <SelectValue placeholder="Select team" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No team assigned</SelectItem>
+                  <SelectItem value="none">No team assigned</SelectItem>
                   {teams.map(team => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
@@ -254,7 +254,7 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                   <SelectValue placeholder="Select release" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No release</SelectItem>
+                  <SelectItem value="none">No release</SelectItem>
                   {releases.map(release => (
                     <SelectItem key={release.id} value={release.id}>
                       {release.name} ({release.version})
