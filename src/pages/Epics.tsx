@@ -39,11 +39,11 @@ const Epics = () => {
   // Filters
   const [filters, setFilters] = useState({
     search: '',
-    projectId: '',
-    divisionId: '',
-    teamId: '',
-    status: '',
-    releaseId: '',
+    projectId: 'all',
+    divisionId: 'all',
+    teamId: 'all',
+    status: 'all',
+    releaseId: 'all',
     startDate: '',
     endDate: '',
   });
@@ -80,11 +80,11 @@ const Epics = () => {
         epic.name.toLowerCase().includes(filters.search.toLowerCase()) ||
         epic.description?.toLowerCase().includes(filters.search.toLowerCase());
       
-      const matchesProject = !filters.projectId || epic.projectId === filters.projectId;
-      const matchesDivision = !filters.divisionId || epic.divisionName === divisions.find(d => d.id === filters.divisionId)?.name;
-      const matchesTeam = !filters.teamId || epic.assignedTeamId === filters.teamId;
-      const matchesStatus = !filters.status || epic.status === filters.status;
-      const matchesRelease = !filters.releaseId || epic.releaseId === filters.releaseId;
+      const matchesProject = filters.projectId === 'all' || epic.projectId === filters.projectId;
+      const matchesDivision = filters.divisionId === 'all' || epic.divisionName === divisions.find(d => d.id === filters.divisionId)?.name;
+      const matchesTeam = filters.teamId === 'all' || epic.assignedTeamId === filters.teamId;
+      const matchesStatus = filters.status === 'all' || epic.status === filters.status;
+      const matchesRelease = filters.releaseId === 'all' || epic.releaseId === filters.releaseId;
       
       const matchesStartDate = !filters.startDate || !epic.startDate || epic.startDate >= filters.startDate;
       const matchesEndDate = !filters.endDate || !epic.targetEndDate || epic.targetEndDate <= filters.endDate;
@@ -232,7 +232,7 @@ const Epics = () => {
                   <SelectValue placeholder="All projects" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Projects</SelectItem>
+                  <SelectItem value="all">All Projects</SelectItem>
                   {projects.map(project => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
@@ -249,7 +249,7 @@ const Epics = () => {
                   <SelectValue placeholder="All divisions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Divisions</SelectItem>
+                  <SelectItem value="all">All Divisions</SelectItem>
                   {divisions.map(division => (
                     <SelectItem key={division.id} value={division.id}>
                       {division.name}
@@ -266,7 +266,7 @@ const Epics = () => {
                   <SelectValue placeholder="All teams" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Teams</SelectItem>
+                  <SelectItem value="all">All Teams</SelectItem>
                   {teams.map(team => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
@@ -285,7 +285,7 @@ const Epics = () => {
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="not-started">Not Started</SelectItem>
                   <SelectItem value="in-progress">In Progress</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
@@ -300,7 +300,7 @@ const Epics = () => {
                   <SelectValue placeholder="All releases" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Releases</SelectItem>
+                  <SelectItem value="all">All Releases</SelectItem>
                   {releases.map(release => (
                     <SelectItem key={release.id} value={release.id}>
                       {release.name} ({release.version})
