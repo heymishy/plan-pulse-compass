@@ -72,12 +72,10 @@ export interface Release {
   id: string;
   name: string;
   version: string;
-  targetDate: string;
-  actualDate?: string;
-  status: 'planned' | 'in-progress' | 'deployed' | 'cancelled';
-  isFeatureToggled?: boolean; // deployed but toggled off
-  toggleOnDate?: string; // when to toggle on
   description?: string;
+  status: 'planned' | 'in-progress' | 'released' | 'cancelled';
+  targetDate?: string;
+  actualDate?: string;
 }
 
 export interface Epic {
@@ -86,6 +84,7 @@ export interface Epic {
   name: string;
   description?: string;
   estimatedEffort?: number; // Made optional - story points or hours
+  storyPoints?: number; // Optional story points
   status: 'not-started' | 'in-progress' | 'completed';
   assignedTeamId?: string; // Team responsible for this epic
   startDate?: string;
@@ -95,6 +94,9 @@ export interface Epic {
   deploymentDate?: string; // When epic was deployed
   mvpPriority?: number; // For MVP line ranking
   releasePriority?: number; // For release line ranking
+  isDeployed?: boolean; // Whether epic is deployed
+  isToggleEnabled?: boolean; // Whether feature toggle is enabled
+  toggleEnabledDate?: string; // When toggle was enabled
 }
 
 export interface RunWorkCategory {
