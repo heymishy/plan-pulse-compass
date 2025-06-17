@@ -39,14 +39,31 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
 
   const isEditing = Boolean(teamId);
 
+  // Get current team members
+  const currentTeamMembers = isEditing && teamId ? 
+    people.filter(person => person.teamId === teamId && person.isActive) : 
+    [];
+
+  // Find Product Owner role
+  const productOwnerRole = roles.find(role => 
+    role.name.toLowerCase().includes('product owner') || role.name.toLowerCase().includes('po')
+  );
+
+  // Find team member with Product Owner role
+  const teamProductOwner = productOwnerRole ? 
+    currentTeamMembers.find(person => person.roleId === productOwnerRole.id) : null;
+
   useEffect(() => {
     if (isEditing && teamId) {
       const team = teams.find(t => t.id === teamId);
       if (team) {
+        // Auto-populate with team's natural Product Owner if one exists
+        const autoProductOwnerId = teamProductOwner ? teamProductOwner.id : (team.productOwnerId || '');
+        
         setFormData({
           name: team.name,
           divisionId: team.divisionId || '',
-          productOwnerId: team.productOwnerId || '',
+          productOwnerId: autoProductOwnerId,
           capacity: team.capacity.toString(),
         });
       }
@@ -58,7 +75,7 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
         capacity: '40',
       });
     }
-  }, [isEditing, teamId, teams]);
+  }, [isEditing, teamId, teams, teamProductOwner]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,23 +138,6 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
     onClose();
   };
 
-  // Get current team members
-  const currentTeamMembers = isEditing && teamId ? 
-    people.filter(person => person.teamId === teamId && person.isActive) : 
-    [];
-
-  // Find Product Owner role
-  const productOwnerRole = roles.find(role => 
-    role.name.toLowerCase().includes('product owner') || role.name.toLowerCase().includes('po')
-  );
-
-  // Find team member with Product Owner role
-  const teamProductOwner = productOwnerRole ? 
-    currentTeamMembers.find(person => person.roleId === productOwnerRole.id) : null;
-
-  // Get all active people for selection (in case no PO exists in team)
-  const allActivePeople = people.filter(person => person.isActive);
-
   // Determine if the selected person is acting (not the natural PO from the team)
   const selectedPerson = formData.productOwnerId ? 
     people.find(p => p.id === formData.productOwnerId) : null;
@@ -197,19 +197,12 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No Product Owner</SelectItem>
-                {teamProductOwner && (
-                  <SelectItem key={teamProductOwner.id} value={teamProductOwner.id}>
-                    {teamProductOwner.name} (Team PO)
+                {currentTeamMembers.map(person => (
+                  <SelectItem key={person.id} value={person.id}>
+                    {person.name}
+                    {person.id === teamProductOwner?.id ? ' (Team PO)' : ''}
                   </SelectItem>
-                )}
-                {allActivePeople
-                  .filter(person => person.id !== teamProductOwner?.id)
-                  .map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                      {currentTeamMembers.some(tm => tm.id === person.id) ? ' (Team Member)' : ' (External)'}
-                    </SelectItem>
-                  ))}
+                ))}
               </SelectContent>
             </Select>
           </div>
