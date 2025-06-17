@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useEncryptedLocalStorage, useLocalStorage } from '@/hooks/useLocalStorage';
 import { 
   Person, Role, Team, Project, Allocation, Cycle, AppConfig, Division, Epic, RunWorkCategory,
-  ActualAllocation, IterationReview, IterationSnapshot, Skill, PersonSkill
+  ActualAllocation, IterationReview, IterationSnapshot, Skill, PersonSkill, Release
 } from '@/types';
 
 interface AppContextType {
@@ -20,6 +21,8 @@ interface AppContextType {
   updateProject: (projectId: string, updatedProject: Project) => void;
   epics: Epic[];
   setEpics: (epics: Epic[] | ((prev: Epic[]) => Epic[])) => void;
+  releases: Release[];
+  setReleases: (releases: Release[] | ((prev: Release[]) => Release[])) => void;
   allocations: Allocation[];
   setAllocations: (allocations: Allocation[] | ((prev: Allocation[]) => Allocation[])) => void;
   cycles: Cycle[];
@@ -73,6 +76,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [teams, setTeams] = useLocalStorage<Team[]>('planning-teams', []);
   const [divisions, setDivisions] = useLocalStorage<Division[]>('planning-divisions', []);
   const [epics, setEpics] = useLocalStorage<Epic[]>('planning-epics', []);
+  const [releases, setReleases] = useLocalStorage<Release[]>('planning-releases', []);
   const [allocations, setAllocations] = useLocalStorage<Allocation[]>('planning-allocations', []);
   const [cycles, setCycles] = useLocalStorage<Cycle[]>('planning-cycles', []);
   const [runWorkCategories, setRunWorkCategories] = useLocalStorage<RunWorkCategory[]>('planning-run-categories', []);
@@ -106,6 +110,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         teamsCount: teams.length,
         divisionsCount: divisions.length,
         epicsCount: epics.length,
+        releasesCount: releases.length,
         allocationsCount: allocations.length,
         cyclesCount: cycles.length,
         runWorkCategoriesCount: runWorkCategories.length,
@@ -118,7 +123,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isSetupComplete,
       });
     }
-  }, [people, projects, roles, teams, divisions, epics, allocations, cycles, runWorkCategories, skills, personSkills, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete, isDataLoading]);
+  }, [people, projects, roles, teams, divisions, epics, releases, allocations, cycles, runWorkCategories, skills, personSkills, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete, isDataLoading]);
 
   const value: AppContextType = {
     people, setPeople,
@@ -128,6 +133,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     projects, setProjects,
     updateProject,
     epics, setEpics,
+    releases, setReleases,
     allocations, setAllocations,
     cycles, setCycles,
     runWorkCategories, setRunWorkCategories,

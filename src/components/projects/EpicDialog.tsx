@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Epic } from '@/types';
@@ -29,7 +30,7 @@ interface EpicDialogProps {
 }
 
 const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectId }) => {
-  const { epics, setEpics, teams, projects, setProjects } = useApp();
+  const { epics, setEpics, teams, projects, setProjects, releases } = useApp();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -39,6 +40,10 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
     assignedTeamId: '',
     startDate: '',
     targetEndDate: '',
+    releaseId: '',
+    deploymentDate: '',
+    mvpPriority: '',
+    releasePriority: '',
   });
 
   useEffect(() => {
@@ -46,11 +51,15 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
       setFormData({
         name: epic.name,
         description: epic.description || '',
-        estimatedEffort: epic.estimatedEffort.toString(),
+        estimatedEffort: epic.estimatedEffort?.toString() || '',
         status: epic.status,
         assignedTeamId: epic.assignedTeamId || '',
         startDate: epic.startDate || '',
         targetEndDate: epic.targetEndDate || '',
+        releaseId: epic.releaseId || '',
+        deploymentDate: epic.deploymentDate || '',
+        mvpPriority: epic.mvpPriority?.toString() || '',
+        releasePriority: epic.releasePriority?.toString() || '',
       });
     } else {
       setFormData({
@@ -61,6 +70,10 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
         assignedTeamId: '',
         startDate: '',
         targetEndDate: '',
+        releaseId: '',
+        deploymentDate: '',
+        mvpPriority: '',
+        releasePriority: '',
       });
     }
   }, [epic, isOpen]);
@@ -112,7 +125,8 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
       return;
     }
 
-    if (!formData.estimatedEffort || parseFloat(formData.estimatedEffort) <= 0) {
+    // Validate effort if provided
+    if (formData.estimatedEffort && parseFloat(formData.estimatedEffort) <= 0) {
       toast({
         title: "Error",
         description: "Estimated effort must be greater than 0",
@@ -126,12 +140,16 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
       projectId,
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
-      estimatedEffort: parseFloat(formData.estimatedEffort),
+      estimatedEffort: formData.estimatedEffort ? parseFloat(formData.estimatedEffort) : undefined,
       status: formData.status,
       assignedTeamId: formData.assignedTeamId === 'none' ? undefined : formData.assignedTeamId || undefined,
       startDate: formData.startDate || undefined,
       targetEndDate: formData.targetEndDate || undefined,
       actualEndDate: formData.status === 'completed' ? (epic?.actualEndDate || new Date().toISOString().split('T')[0]) : undefined,
+      releaseId: formData.releaseId === 'none' ? undefined : formData.releaseId || undefined,
+      deploymentDate: formData.deploymentDate || undefined,
+      mvpPriority: formData.mvpPriority ? parseInt(formData.mvpPriority) : undefined,
+      releasePriority: formData.releasePriority ? parseInt(formData.releasePriority) : undefined,
     };
 
     if (epic) {
@@ -157,10 +175,11 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
   };
 
   const assignedTeam = teams.find(t => t.id === formData.assignedTeamId);
+  const selectedRelease = releases.find(r => r.id === formData.releaseId);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {epic ? 'Edit Epic' : 'Create New Epic'}
@@ -168,39 +187,14 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Epic Name *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="Enter epic name"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Enter epic description"
-              rows={3}
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="estimatedEffort">Estimated Effort *</Label>
+              <Label htmlFor="name">Epic Name *</Label>
               <Input
-                id="estimatedEffort"
-                type="number"
-                value={formData.estimatedEffort}
-                onChange={(e) => handleInputChange('estimatedEffort', e.target.value)}
-                placeholder="Story points"
-                min="0"
-                step="0.5"
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter epic name"
                 required
               />
             </div>
@@ -221,28 +215,104 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="assignedTeam">Assigned Team</Label>
-            <Select value={formData.assignedTeamId} onValueChange={(value) => handleInputChange('assignedTeamId', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select team" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No team assigned</SelectItem>
-                {teams.map(team => (
-                  <SelectItem key={team.id} value={team.id}>
-                    {team.name} ({team.capacity}h/week)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {assignedTeam && (
-              <p className="text-sm text-gray-600">
-                Team capacity: {assignedTeam.capacity} hours per week
-              </p>
-            )}
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Enter epic description"
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="estimatedEffort">Estimated Effort (Optional)</Label>
+              <Input
+                id="estimatedEffort"
+                type="number"
+                value={formData.estimatedEffort}
+                onChange={(e) => handleInputChange('estimatedEffort', e.target.value)}
+                placeholder="Story points"
+                min="0"
+                step="0.5"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mvpPriority">MVP Priority</Label>
+              <Input
+                id="mvpPriority"
+                type="number"
+                value={formData.mvpPriority}
+                onChange={(e) => handleInputChange('mvpPriority', e.target.value)}
+                placeholder="1-1000"
+                min="1"
+                max="1000"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="releasePriority">Release Priority</Label>
+              <Input
+                id="releasePriority"
+                type="number"
+                value={formData.releasePriority}
+                onChange={(e) => handleInputChange('releasePriority', e.target.value)}
+                placeholder="1-1000"
+                min="1"
+                max="1000"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="assignedTeam">Assigned Team</Label>
+              <Select value={formData.assignedTeamId} onValueChange={(value) => handleInputChange('assignedTeamId', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select team" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No team assigned</SelectItem>
+                  {teams.map(team => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name} ({team.capacity}h/week)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {assignedTeam && (
+                <p className="text-sm text-gray-600">
+                  Team capacity: {assignedTeam.capacity} hours per week
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="release">Release</Label>
+              <Select value={formData.releaseId} onValueChange={(value) => handleInputChange('releaseId', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select release" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No release</SelectItem>
+                  {releases.map(release => (
+                    <SelectItem key={release.id} value={release.id}>
+                      {release.name} ({release.version})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedRelease && (
+                <p className="text-sm text-gray-600">
+                  Target: {selectedRelease.targetDate} | Status: {selectedRelease.status}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date</Label>
               <Input
@@ -260,6 +330,16 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 type="date"
                 value={formData.targetEndDate}
                 onChange={(e) => handleInputChange('targetEndDate', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="deploymentDate">Deployment Date</Label>
+              <Input
+                id="deploymentDate"
+                type="date"
+                value={formData.deploymentDate}
+                onChange={(e) => handleInputChange('deploymentDate', e.target.value)}
               />
             </div>
           </div>

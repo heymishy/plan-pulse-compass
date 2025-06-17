@@ -1,4 +1,3 @@
-
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -53,6 +52,7 @@ export interface Project {
   startDate: string;
   endDate?: string;
   budget?: number;
+  ranking?: number; // 1-1000 priority ranking
   milestones: Milestone[];
   risks?: ProjectRisk[];
   reports?: ProjectReportData[];
@@ -68,17 +68,33 @@ export interface Milestone {
   actualCompletionDate?: string;
 }
 
+export interface Release {
+  id: string;
+  name: string;
+  version: string;
+  targetDate: string;
+  actualDate?: string;
+  status: 'planned' | 'in-progress' | 'deployed' | 'cancelled';
+  isFeatureToggled?: boolean; // deployed but toggled off
+  toggleOnDate?: string; // when to toggle on
+  description?: string;
+}
+
 export interface Epic {
   id: string;
   projectId: string;
   name: string;
   description?: string;
-  estimatedEffort: number; // story points or hours
+  estimatedEffort?: number; // Made optional - story points or hours
   status: 'not-started' | 'in-progress' | 'completed';
   assignedTeamId?: string; // Team responsible for this epic
   startDate?: string;
   targetEndDate?: string;
   actualEndDate?: string;
+  releaseId?: string; // Associated release
+  deploymentDate?: string; // When epic was deployed
+  mvpPriority?: number; // For MVP line ranking
+  releasePriority?: number; // For release line ranking
 }
 
 export interface RunWorkCategory {
