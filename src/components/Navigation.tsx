@@ -14,7 +14,8 @@ import {
   Share2,
   UserCheck,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Layers
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -25,6 +26,7 @@ const Navigation = () => {
     { path: '/teams', icon: Users, label: 'Teams' },
     { path: '/people', icon: UserCheck, label: 'People' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
+    { path: '/epics', icon: Layers, label: 'Epics' },
     { path: '/financials', icon: DollarSign, label: 'Financials' },
     { path: '/planning', icon: Calendar, label: 'Planning' },
     { path: '/allocations', icon: CalendarCheck, label: 'Allocations' },

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Filter, FileText, ArrowUpDown, Target, Trophy } from 'lucide-react';
+import { Filter, FileText, ArrowUpDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -24,6 +23,8 @@ import {
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import EpicDialog from '@/components/projects/EpicDialog';
+import ReleaseDialog from '@/components/projects/ReleaseDialog';
+import EpicsHeader from '@/components/projects/EpicsHeader';
 import { Epic } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,8 +34,8 @@ const Epics = () => {
   
   const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
   const [isEpicDialogOpen, setIsEpicDialogOpen] = useState(false);
+  const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false);
   const [selectedEpic, setSelectedEpic] = useState<Epic | null>(null);
-  const [isBulkEditMode, setIsBulkEditMode] = useState(false);
   
   // Filters
   const [filters, setFilters] = useState({
@@ -132,6 +133,10 @@ const Epics = () => {
     setIsEpicDialogOpen(true);
   };
 
+  const handleCreateRelease = () => {
+    setIsReleaseDialogOpen(true);
+  };
+
   const handleEditEpic = (epic: Epic) => {
     setSelectedEpic(epic);
     setIsEpicDialogOpen(true);
@@ -176,34 +181,14 @@ const Epics = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Epics</h1>
-          <p className="text-gray-600">Manage epics across all projects</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant={showMvpLine ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowMvpLine(!showMvpLine)}
-          >
-            <Target className="h-4 w-4 mr-2" />
-            MVP Line
-          </Button>
-          <Button 
-            variant={showReleaseLine ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowReleaseLine(!showReleaseLine)}
-          >
-            <Trophy className="h-4 w-4 mr-2" />
-            Release Line
-          </Button>
-          <Button onClick={handleCreateEpic}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Epic
-          </Button>
-        </div>
-      </div>
+      <EpicsHeader
+        onCreateEpic={handleCreateEpic}
+        onCreateRelease={handleCreateRelease}
+        showMvpLine={showMvpLine}
+        showReleaseLine={showReleaseLine}
+        onToggleMvpLine={() => setShowMvpLine(!showMvpLine)}
+        onToggleReleaseLine={() => setShowReleaseLine(!showReleaseLine)}
+      />
 
       {/* Filters */}
       <Card>
@@ -495,12 +480,18 @@ const Epics = () => {
         </CardContent>
       </Card>
 
-      {/* Epic Dialog */}
+      {/* Dialogs */}
       <EpicDialog
         isOpen={isEpicDialogOpen}
         onClose={() => setIsEpicDialogOpen(false)}
         epic={selectedEpic}
         projectId={selectedEpic?.projectId || ''}
+      />
+
+      <ReleaseDialog
+        isOpen={isReleaseDialogOpen}
+        onClose={() => setIsReleaseDialogOpen(false)}
+        release={null}
       />
     </div>
   );
