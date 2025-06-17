@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Target, Trophy, Package } from 'lucide-react';
+import { Plus, Target, Trophy, Package, TrendingUp } from 'lucide-react';
 
 interface EpicsHeaderProps {
   onCreateEpic: () => void;
   onCreateRelease: () => void;
+  onOpenRanking: () => void;
   showMvpLine: boolean;
   showReleaseLine: boolean;
   onToggleMvpLine: () => void;
@@ -15,6 +16,7 @@ interface EpicsHeaderProps {
 const EpicsHeader: React.FC<EpicsHeaderProps> = ({ 
   onCreateEpic, 
   onCreateRelease,
+  onOpenRanking,
   showMvpLine,
   showReleaseLine,
   onToggleMvpLine,
@@ -42,6 +44,10 @@ const EpicsHeader: React.FC<EpicsHeaderProps> = ({
         >
           <Trophy className="h-4 w-4 mr-2" />
           Release Line
+        </Button>
+        <Button variant="outline" onClick={onOpenRanking}>
+          <TrendingUp className="h-4 w-4 mr-2" />
+          Rank Epics
         </Button>
         <Button variant="outline" onClick={onCreateRelease}>
           <Package className="h-4 w-4 mr-2" />

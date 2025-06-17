@@ -24,6 +24,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import EpicDialog from '@/components/projects/EpicDialog';
 import ReleaseDialog from '@/components/projects/ReleaseDialog';
+import EpicRankingDialog from '@/components/projects/EpicRankingDialog';
 import EpicsHeader from '@/components/projects/EpicsHeader';
 import { Epic } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,7 @@ const Epics = () => {
   const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
   const [isEpicDialogOpen, setIsEpicDialogOpen] = useState(false);
   const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false);
+  const [isRankingDialogOpen, setIsRankingDialogOpen] = useState(false);
   const [selectedEpic, setSelectedEpic] = useState<Epic | null>(null);
   
   // Filters
@@ -137,6 +139,10 @@ const Epics = () => {
     setIsReleaseDialogOpen(true);
   };
 
+  const handleOpenRanking = () => {
+    setIsRankingDialogOpen(true);
+  };
+
   const handleEditEpic = (epic: Epic) => {
     setSelectedEpic(epic);
     setIsEpicDialogOpen(true);
@@ -184,6 +190,7 @@ const Epics = () => {
       <EpicsHeader
         onCreateEpic={handleCreateEpic}
         onCreateRelease={handleCreateRelease}
+        onOpenRanking={handleOpenRanking}
         showMvpLine={showMvpLine}
         showReleaseLine={showReleaseLine}
         onToggleMvpLine={() => setShowMvpLine(!showMvpLine)}
@@ -492,6 +499,11 @@ const Epics = () => {
         isOpen={isReleaseDialogOpen}
         onClose={() => setIsReleaseDialogOpen(false)}
         release={null}
+      />
+
+      <EpicRankingDialog
+        isOpen={isRankingDialogOpen}
+        onClose={() => setIsRankingDialogOpen(false)}
       />
     </div>
   );
