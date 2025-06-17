@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { AlertTriangle } from 'lucide-react';
 import { getDashboardData } from '@/utils/dashboardUtils';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// New Dashboard Components
+// Dashboard Components
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import StatCards from '@/components/dashboard/StatCards';
 import CurrentStatusCard from '@/components/dashboard/CurrentStatusCard';
@@ -17,13 +18,44 @@ import QuickActionsCard from '@/components/dashboard/QuickActionsCard';
 import IterationMetricsCard from '@/components/dashboard/IterationMetricsCard';
 
 const Dashboard = () => {
-  const { people, teams, projects, allocations, isSetupComplete, cycles, actualAllocations, iterationReviews, epics, isDataLoading } = useApp();
+  const { 
+    people, 
+    teams, 
+    projects, 
+    allocations, 
+    isSetupComplete, 
+    cycles, 
+    actualAllocations, 
+    iterationReviews, 
+    epics, 
+    isDataLoading 
+  } = useApp();
 
   const dashboardData = useMemo(() => {
-    if (!isSetupComplete || isDataLoading) return null;
-    return getDashboardData(cycles, allocations, actualAllocations, iterationReviews, projects, epics);
+    console.log('Dashboard: Computing dashboard data', { 
+      isSetupComplete, 
+      isDataLoading, 
+      cyclesLength: cycles.length,
+      projectsLength: projects.length,
+      epicsLength: epics.length
+    });
+    
+    if (!isSetupComplete || isDataLoading) {
+      console.log('Dashboard: Skipping dashboard data computation - setup incomplete or data loading');
+      return null;
+    }
+    
+    try {
+      const data = getDashboardData(cycles, allocations, actualAllocations, iterationReviews, projects, epics);
+      console.log('Dashboard: Successfully computed dashboard data', data);
+      return data;
+    } catch (error) {
+      console.error('Dashboard: Error computing dashboard data', error);
+      return null;
+    }
   }, [isSetupComplete, isDataLoading, cycles, allocations, actualAllocations, iterationReviews, projects, epics]);
 
+  // Show setup required if not complete
   if (!isSetupComplete) {
     return (
       <div className="max-w-7xl mx-auto p-6">
@@ -41,28 +73,29 @@ const Dashboard = () => {
     );
   }
 
-  if (!dashboardData || isDataLoading) {
+  // Show loading state
+  if (isDataLoading || !dashboardData) {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <DashboardHeader />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Skeleton className="h-64" />
-                    <Skeleton className="h-52" />
-                </div>
-                <Skeleton className="h-52" />
+          <div className="lg:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Skeleton className="h-64" />
+              <Skeleton className="h-52" />
             </div>
-            <div className="space-y-6">
-                <Skeleton className="h-52" />
-                <Skeleton className="h-52" />
-            </div>
+            <Skeleton className="h-52" />
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-52" />
+            <Skeleton className="h-52" />
+          </div>
         </div>
       </div>
     );
@@ -84,14 +117,14 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main column */}
         <div className="lg:col-span-2 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <CurrentStatusCard 
-                    currentQuarter={currentQuarter} 
-                    currentIteration={currentIteration} 
-                />
-                <IterationMetricsCard iterationMetrics={iterationMetrics} />
-            </div>
-            <QuarterlyProgressCard quarterlyProgress={quarterlyProgress} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CurrentStatusCard 
+              currentQuarter={currentQuarter} 
+              currentIteration={currentIteration} 
+            />
+            <IterationMetricsCard iterationMetrics={iterationMetrics} />
+          </div>
+          <QuarterlyProgressCard quarterlyProgress={quarterlyProgress} />
         </div>
 
         {/* Sidebar column */}
