@@ -147,8 +147,8 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
                   <Badge variant="outline">{getSkillName(skill.skillId)}</Badge>
                   <Select 
                     value={skill.importance} 
-                    onValueChange={(value: 'critical' | 'important' | 'nice-to-have') => 
-                      handleUpdateImportance(skill.id, value)
+                    onValueChange={(value: string) => 
+                      handleUpdateImportance(skill.id, value as 'critical' | 'important' | 'nice-to-have')
                     }
                   >
                     <SelectTrigger className="w-32">
@@ -209,7 +209,12 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
             </div>
             <div>
               <Label>Importance</Label>
-              <Select value={selectedImportance} onValueChange={setSelectedImportance}>
+              <Select 
+                value={selectedImportance} 
+                onValueChange={(value: string) => 
+                  setSelectedImportance(value as 'critical' | 'important' | 'nice-to-have')
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
