@@ -15,7 +15,8 @@ import {
   UserCheck,
   TrendingUp,
   DollarSign,
-  Layers
+  Layers,
+  Star
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -27,6 +28,7 @@ const Navigation = () => {
     { path: '/people', icon: UserCheck, label: 'People' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: '/epics', icon: Layers, label: 'Epics' },
+    { path: '/skills', icon: Star, label: 'Skills' },
     { path: '/financials', icon: DollarSign, label: 'Financials' },
     { path: '/planning', icon: Calendar, label: 'Planning' },
     { path: '/allocations', icon: CalendarCheck, label: 'Allocations' },
