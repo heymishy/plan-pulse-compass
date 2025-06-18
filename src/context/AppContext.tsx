@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useEncryptedLocalStorage, useLocalStorage } from '@/hooks/useLocalStorage';
 import { 
@@ -11,6 +10,8 @@ interface AppContextType {
   // Data
   people: Person[];
   setPeople: (people: Person[] | ((prev: Person[]) => Person[])) => void;
+  addPerson: (personData: Omit<Person, 'id'>) => void;
+  updatePerson: (personId: string, personData: Partial<Person>) => void;
   roles: Role[];
   setRoles: (roles: Role[] | ((prev: Role[]) => Role[])) => void;
   teams: Team[];
@@ -106,6 +107,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [iterationReviews, setIterationReviews] = useLocalStorage<IterationReview[]>('planning-iteration-reviews', []);
   const [iterationSnapshots, setIterationSnapshots] = useLocalStorage<IterationSnapshot[]>('planning-iteration-snapshots', []);
 
+  const addPerson = (personData: Omit<Person, 'id'>) => {
+    const newPerson: Person = {
+      ...personData,
+      id: Date.now().toString(), // Simple ID generation
+    };
+    setPeople(prevPeople => [...prevPeople, newPerson]);
+  };
+
+  const updatePerson = (personId: string, personData: Partial<Person>) => {
+    setPeople(prevPeople => 
+      prevPeople.map(person => 
+        person.id === personId ? { ...person, ...personData } : person
+      )
+    );
+  };
+
   const updateProject = (projectId: string, updatedProject: Project) => {
     setProjects(prevProjects => 
       prevProjects.map(p => p.id === projectId ? updatedProject : p)
@@ -143,7 +160,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [people, projects, roles, teams, divisions, epics, releases, allocations, cycles, runWorkCategories, skills, personSkills, solutions, projectSkills, projectSolutions, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete, isDataLoading]);
 
   const value: AppContextType = {
-    people, setPeople,
+    people, setPeople, addPerson, updatePerson,
     roles, setRoles,
     teams, setTeams,
     divisions, setDivisions,
