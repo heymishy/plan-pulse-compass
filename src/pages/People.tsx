@@ -32,8 +32,8 @@ const People = () => {
 
   const getStatusCounts = () => {
     return {
-      active: people.filter(p => p.employmentStatus === 'active').length,
-      inactive: people.filter(p => p.employmentStatus === 'inactive').length,
+      active: people.filter(p => p.isActive).length,
+      inactive: people.filter(p => !p.isActive).length,
     };
   };
 
@@ -115,7 +115,7 @@ const People = () => {
                     </Button>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-600">{role?.title || 'No role'}</p>
+                    <p className="text-sm text-gray-600">{role?.name || 'No role'}</p>
                     <p className="text-sm text-gray-500">{team?.name || 'No team'}</p>
                   </div>
                 </CardHeader>
@@ -124,9 +124,9 @@ const People = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Status:</span>
                       <Badge 
-                        variant={person.employmentStatus === 'active' ? 'default' : 'secondary'}
+                        variant={person.isActive ? 'default' : 'secondary'}
                       >
-                        {person.employmentStatus}
+                        {person.isActive ? 'active' : 'inactive'}
                       </Badge>
                     </div>
                     <div>
@@ -146,12 +146,12 @@ const People = () => {
 
       {/* Dialogs */}
       <PersonDialog
-        isOpen={isCreateDialogOpen}
+        open={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
         person={null}
       />
       <PersonDialog
-        isOpen={isEditDialogOpen}
+        open={isEditDialogOpen}
         onClose={() => setIsEditDialogOpen(false)}
         person={selectedPerson}
       />

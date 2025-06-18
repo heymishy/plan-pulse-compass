@@ -21,7 +21,9 @@ const PersonSkillsDisplay: React.FC<PersonSkillsDisplayProps> = ({
     projectSolutions, 
     allocations, 
     projects, 
-    cycles 
+    cycles,
+    people,
+    teams
   } = useApp();
 
   const currentPersonSkills = personSkills.filter(ps => ps.personId === personId);
@@ -33,8 +35,13 @@ const PersonSkillsDisplay: React.FC<PersonSkillsDisplayProps> = ({
     
     if (!activeCycle) return [];
 
-    const personAllocations = allocations.filter(a => 
-      a.personId === personId && a.cycleId === activeCycle.id
+    // Find person's team
+    const person = people.find(p => p.id === personId);
+    if (!person) return [];
+
+    // Find team allocations for this person's team
+    const teamAllocations = allocations.filter(a => 
+      a.teamId === person.teamId && a.cycleId === activeCycle.id
     );
 
     const skillIds = new Set<string>();
@@ -43,7 +50,7 @@ const PersonSkillsDisplay: React.FC<PersonSkillsDisplayProps> = ({
       sourceProjectName?: string;
     }> = [];
 
-    personAllocations.forEach(allocation => {
+    teamAllocations.forEach(allocation => {
       const project = projects.find(p => 
         allocation.epicId && 
         p.milestones?.some(m => m.id === allocation.epicId)
@@ -62,9 +69,7 @@ const PersonSkillsDisplay: React.FC<PersonSkillsDisplayProps> = ({
                   id: `solution-${ps.solutionId}-${skillId}`,
                   personId,
                   skillId,
-                  level: 'intermediate',
-                  sourceType: 'solution',
-                  sourceSolutionId: ps.solutionId,
+                  proficiencyLevel: 'intermediate',
                   sourceSolutionName: solution.name,
                   sourceProjectName: project.name,
                 });
@@ -76,10 +81,10 @@ const PersonSkillsDisplay: React.FC<PersonSkillsDisplayProps> = ({
     });
 
     return result;
-  }, [personId, allocations, cycles, projects, projectSolutions, solutions]);
+  }, [personId, allocations, cycles, projects, projectSolutions, solutions, people]);
 
-  // Get direct skills
-  const directSkills = currentPersonSkills.filter(ps => !ps.sourceType || ps.sourceType === 'direct');
+  // Get direct skills (all personSkills are direct)
+  const directSkills = currentPersonSkills;
 
   const getSkillName = (skillId: string) => {
     return skills.find(s => s.id === skillId)?.name || 'Unknown Skill';
@@ -89,6 +94,7 @@ const PersonSkillsDisplay: React.FC<PersonSkillsDisplayProps> = ({
     switch (level) {
       case 'expert':
         return 'default';
+      case 'advanced':
       case 'intermediate':
         return 'secondary';
       case 'beginner':
@@ -137,8 +143,8 @@ const PersonSkillsDisplay: React.FC<PersonSkillsDisplayProps> = ({
                     via {skill.sourceSolutionName} ({skill.sourceProjectName})
                   </span>
                 </div>
-                <Badge variant={getLevelBadgeVariant(skill.level)}>
-                  {skill.level}
+                <Badge variant={getLevelBadgeVariant(skill.proficiencyLevel)}>
+                  {skill.proficiencyLevel}
                 </Badge>
               </div>
             ))}
@@ -156,8 +162,8 @@ const PersonSkillsDisplay: React.FC<PersonSkillsDisplayProps> = ({
             {directSkills.map((skill) => (
               <div key={skill.id} className="flex items-center justify-between text-sm">
                 <Badge variant="outline">{getSkillName(skill.skillId)}</Badge>
-                <Badge variant={getLevelBadgeVariant(skill.level)}>
-                  {skill.level}
+                <Badge variant={getLevelBadgeVariant(skill.proficiencyLevel)}>
+                  {skill.proficiencyLevel}
                 </Badge>
               </div>
             ))}
