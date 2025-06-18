@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Project, Milestone } from '@/types';
+import { Project, Milestone, ProjectSolution, ProjectSkill } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,6 +23,9 @@ import {
 import { Calendar, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ProjectSkillsSection from './ProjectSkillsSection';
+import ProjectSolutionsSection from './ProjectSolutionsSection';
 
 interface ProjectDialogProps {
   isOpen: boolean;
@@ -31,7 +34,14 @@ interface ProjectDialogProps {
 }
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project }) => {
-  const { projects, setProjects } = useApp();
+  const { 
+    projects, 
+    setProjects, 
+    projectSolutions, 
+    setProjectSolutions,
+    projectSkills,
+    setProjectSkills
+  } = useApp();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -42,6 +52,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
     budget: '',
   });
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [currentProjectSolutions, setCurrentProjectSolutions] = useState<ProjectSolution[]>([]);
+  const [currentProjectSkills, setCurrentProjectSkills] = useState<ProjectSkill[]>([]);
 
   useEffect(() => {
     if (project) {
@@ -54,6 +66,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
         budget: project.budget?.toString() || '',
       });
       setMilestones(project.milestones);
+      
+      // Load existing project solutions and skills
+      setCurrentProjectSolutions(projectSolutions.filter(ps => ps.projectId === project.id));
+      setCurrentProjectSkills(projectSkills.filter(ps => ps.projectId === project.id));
     } else {
       setFormData({
         name: '',
@@ -64,8 +80,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
         budget: '',
       });
       setMilestones([]);
+      setCurrentProjectSolutions([]);
+      setCurrentProjectSkills([]);
     }
-  }, [project, isOpen]);
+  }, [project, isOpen, projectSolutions, projectSkills]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -114,37 +132,49 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
       return;
     }
 
+    const projectId = project?.id || crypto.randomUUID();
+    
     const projectData: Project = {
-      id: project?.id || crypto.randomUUID(),
+      id: projectId,
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
       status: formData.status,
       startDate: formData.startDate,
       endDate: formData.endDate || undefined,
       budget: formData.budget ? parseFloat(formData.budget) : undefined,
-      milestones: milestones.map(m => ({ ...m, projectId: project?.id || crypto.randomUUID() })),
+      milestones: milestones.map(m => ({ ...m, projectId })),
     };
 
+    // Update projects
     if (project) {
       setProjects(prev => prev.map(p => p.id === project.id ? projectData : p));
-      toast({
-        title: "Success",
-        description: "Project updated successfully",
-      });
     } else {
       setProjects(prev => [...prev, projectData]);
-      toast({
-        title: "Success",
-        description: "Project created successfully",
-      });
     }
+
+    // Update project solutions
+    setProjectSolutions(prev => [
+      ...prev.filter(ps => ps.projectId !== projectId),
+      ...currentProjectSolutions.map(ps => ({ ...ps, projectId }))
+    ]);
+
+    // Update project skills
+    setProjectSkills(prev => [
+      ...prev.filter(ps => ps.projectId !== projectId),
+      ...currentProjectSkills.map(ps => ({ ...ps, projectId }))
+    ]);
+
+    toast({
+      title: "Success",
+      description: project ? "Project updated successfully" : "Project created successfully",
+    });
 
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {project ? 'Edit Project' : 'Create New Project'}
@@ -152,154 +182,180 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Project Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="Enter project name"
-                required
-              />
-            </div>
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="solutions">Solutions</TabsTrigger>
+              <TabsTrigger value="skills">Skills</TabsTrigger>
+              <TabsTrigger value="milestones">Milestones</TabsTrigger>
+            </TabsList>
 
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="planning">Planning</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Enter project description"
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date *</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => handleInputChange('startDate', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => handleInputChange('endDate', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="budget">Budget ($)</Label>
-              <Input
-                id="budget"
-                type="number"
-                value={formData.budget}
-                onChange={(e) => handleInputChange('budget', e.target.value)}
-                placeholder="0"
-                min="0"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Milestones</Label>
-              <Button type="button" onClick={addMilestone} size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Add Milestone
-              </Button>
-            </div>
-
-            {milestones.map((milestone, index) => (
-              <div key={index} className="p-3 border rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline">Milestone {index + 1}</Badge>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeMilestone(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label>Name</Label>
-                    <Input
-                      value={milestone.name}
-                      onChange={(e) => updateMilestone(index, 'name', e.target.value)}
-                      placeholder="Milestone name"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label>Due Date</Label>
-                    <Input
-                      type="date"
-                      value={milestone.dueDate}
-                      onChange={(e) => updateMilestone(index, 'dueDate', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label>Description</Label>
-                  <Textarea
-                    value={milestone.description || ''}
-                    onChange={(e) => updateMilestone(index, 'description', e.target.value)}
-                    placeholder="Milestone description"
-                    rows={2}
+            <TabsContent value="basic" className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Project Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="Enter project name"
+                    required
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <Label>Status</Label>
-                  <Select
-                    value={milestone.status}
-                    onValueChange={(value) => updateMilestone(index, 'status', value)}
-                  >
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="not-started">Not Started</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="planning">Planning</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="at-risk">At Risk</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-            ))}
-          </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Enter project description"
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Start Date *</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End Date</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="budget">Budget ($)</Label>
+                  <Input
+                    id="budget"
+                    type="number"
+                    value={formData.budget}
+                    onChange={(e) => handleInputChange('budget', e.target.value)}
+                    placeholder="0"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="solutions" className="space-y-4">
+              <ProjectSolutionsSection
+                projectSolutions={currentProjectSolutions}
+                onSolutionsChange={setCurrentProjectSolutions}
+              />
+            </TabsContent>
+
+            <TabsContent value="skills" className="space-y-4">
+              <ProjectSkillsSection
+                projectSolutions={currentProjectSolutions}
+                projectSkills={currentProjectSkills}
+                onSkillsChange={setCurrentProjectSkills}
+              />
+            </TabsContent>
+
+            <TabsContent value="milestones" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Milestones</Label>
+                <Button type="button" onClick={addMilestone} size="sm">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Milestone
+                </Button>
+              </div>
+
+              {milestones.map((milestone, index) => (
+                <div key={index} className="p-3 border rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline">Milestone {index + 1}</Badge>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeMilestone(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label>Name</Label>
+                      <Input
+                        value={milestone.name}
+                        onChange={(e) => updateMilestone(index, 'name', e.target.value)}
+                        placeholder="Milestone name"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label>Due Date</Label>
+                      <Input
+                        type="date"
+                        value={milestone.dueDate}
+                        onChange={(e) => updateMilestone(index, 'dueDate', e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={milestone.description || ''}
+                      onChange={(e) => updateMilestone(index, 'description', e.target.value)}
+                      placeholder="Milestone description"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label>Status</Label>
+                    <Select
+                      value={milestone.status}
+                      onValueChange={(value) => updateMilestone(index, 'status', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="not-started">Not Started</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="at-risk">At Risk</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ))}
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
