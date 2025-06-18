@@ -11,7 +11,7 @@ import PersonSkillsDisplay from '@/components/people/PersonSkillsDisplay';
 import { Person } from '@/types';
 
 const People = () => {
-  const { people, roles, teams } = useApp();
+  const { people, roles, teams, addPerson, updatePerson } = useApp();
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -27,6 +27,14 @@ const People = () => {
     if (person) {
       setSelectedPerson(person);
       setIsEditDialogOpen(true);
+    }
+  };
+
+  const handleSavePerson = (personData: Omit<Person, 'id'> & { id?: string }) => {
+    if (personData.id) {
+      updatePerson(personData.id, personData);
+    } else {
+      addPerson(personData);
     }
   };
 
@@ -147,13 +155,15 @@ const People = () => {
       {/* Dialogs */}
       <PersonDialog
         open={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
-        person={null}
+        onOpenChange={setIsCreateDialogOpen}
+        person={undefined}
+        onSave={handleSavePerson}
       />
       <PersonDialog
         open={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
+        onOpenChange={setIsEditDialogOpen}
         person={selectedPerson}
+        onSave={handleSavePerson}
       />
     </div>
   );
