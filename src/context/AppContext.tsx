@@ -3,7 +3,8 @@ import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useEncryptedLocalStorage, useLocalStorage } from '@/hooks/useLocalStorage';
 import { 
   Person, Role, Team, Project, Allocation, Cycle, AppConfig, Division, Epic, RunWorkCategory,
-  ActualAllocation, IterationReview, IterationSnapshot, Skill, PersonSkill, Release
+  ActualAllocation, IterationReview, IterationSnapshot, Skill, PersonSkill, Release,
+  Solution, ProjectSkill, ProjectSolution
 } from '@/types';
 
 interface AppContextType {
@@ -35,6 +36,14 @@ interface AppContextType {
   setSkills: (skills: Skill[] | ((prev: Skill[]) => Skill[])) => void;
   personSkills: PersonSkill[];
   setPersonSkills: (personSkills: PersonSkill[] | ((prev: PersonSkill[]) => PersonSkill[])) => void;
+  
+  // NEW: Solutions data
+  solutions: Solution[];
+  setSolutions: (solutions: Solution[] | ((prev: Solution[]) => Solution[])) => void;
+  projectSkills: ProjectSkill[];
+  setProjectSkills: (skills: ProjectSkill[] | ((prev: ProjectSkill[]) => ProjectSkill[])) => void;
+  projectSolutions: ProjectSolution[];
+  setProjectSolutions: (solutions: ProjectSolution[] | ((prev: ProjectSolution[]) => ProjectSolution[])) => void;
   
   // Tracking data
   actualAllocations: ActualAllocation[];
@@ -87,6 +96,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [skills, setSkills] = useLocalStorage<Skill[]>('planning-skills', []);
   const [personSkills, setPersonSkills] = useLocalStorage<PersonSkill[]>('planning-person-skills', []);
 
+  // NEW: Solutions data
+  const [solutions, setSolutions] = useLocalStorage<Solution[]>('planning-solutions', []);
+  const [projectSkills, setProjectSkills] = useLocalStorage<ProjectSkill[]>('planning-project-skills', []);
+  const [projectSolutions, setProjectSolutions] = useLocalStorage<ProjectSolution[]>('planning-project-solutions', []);
+
   // Tracking data
   const [actualAllocations, setActualAllocations] = useLocalStorage<ActualAllocation[]>('planning-actual-allocations', []);
   const [iterationReviews, setIterationReviews] = useLocalStorage<IterationReview[]>('planning-iteration-reviews', []);
@@ -116,6 +130,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         runWorkCategoriesCount: runWorkCategories.length,
         skillsCount: skills.length,
         personSkillsCount: personSkills.length,
+        solutionsCount: solutions.length,
+        projectSkillsCount: projectSkills.length,
+        projectSolutionsCount: projectSolutions.length,
         actualAllocationsCount: actualAllocations.length,
         iterationReviewsCount: iterationReviews.length,
         iterationSnapshotsCount: iterationSnapshots.length,
@@ -123,7 +140,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isSetupComplete,
       });
     }
-  }, [people, projects, roles, teams, divisions, epics, releases, allocations, cycles, runWorkCategories, skills, personSkills, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete, isDataLoading]);
+  }, [people, projects, roles, teams, divisions, epics, releases, allocations, cycles, runWorkCategories, skills, personSkills, solutions, projectSkills, projectSolutions, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete, isDataLoading]);
 
   const value: AppContextType = {
     people, setPeople,
@@ -139,6 +156,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     runWorkCategories, setRunWorkCategories,
     skills, setSkills,
     personSkills, setPersonSkills,
+    solutions, setSolutions,
+    projectSkills, setProjectSkills,
+    projectSolutions, setProjectSolutions,
     actualAllocations, setActualAllocations,
     iterationReviews, setIterationReviews,
     iterationSnapshots, setIterationSnapshots,

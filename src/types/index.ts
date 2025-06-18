@@ -1,3 +1,4 @@
+
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -117,6 +118,42 @@ export interface Allocation {
   notes?: string;
 }
 
+// NEW: Solutions for projects
+export interface Solution {
+  id: string;
+  name: string;
+  description?: string;
+  category: SolutionCategory;
+  skillIds: string[]; // Skills required/associated with this solution
+  createdDate: string;
+}
+
+export type SolutionCategory = 
+  | 'platform'
+  | 'framework-stack'
+  | 'methodology'
+  | 'architecture-pattern'
+  | 'other';
+
+// Link projects to skills (both direct and via solutions)
+export interface ProjectSkill {
+  id: string;
+  projectId: string;
+  skillId: string;
+  sourceType: 'direct' | 'solution'; // How skill was added to project
+  sourceSolutionId?: string; // If from solution, which solution
+  importance: 'critical' | 'important' | 'nice-to-have';
+}
+
+// Link projects to solutions
+export interface ProjectSolution {
+  id: string;
+  projectId: string;
+  solutionId: string;
+  isPrimary: boolean; // One primary solution per project
+  notes?: string;
+}
+
 // NEW: Canvas View Types
 export type CanvasViewType =
   | 'all'
@@ -127,7 +164,10 @@ export type CanvasViewType =
   | 'projects-milestones'
   | 'people-skills'
   | 'team-skills-summary'
-  | 'financial-overview';
+  | 'financial-overview'
+  | 'projects-solutions'
+  | 'solutions-skills'
+  | 'scenario-analysis';
 
 // NEW: Tracking system types
 export interface ActualAllocation {
