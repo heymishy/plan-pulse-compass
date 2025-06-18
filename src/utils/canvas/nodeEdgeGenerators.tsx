@@ -1,8 +1,8 @@
 import React from 'react';
 import { Edge, Node } from '@xyflow/react';
 import { Badge } from '@/components/ui/badge';
-import { Users, FolderOpen, Target, Zap, PersonStanding, Flag, Star, DollarSign, Building } from 'lucide-react';
-import { Person, Role, Team, Division, Project, Epic, RunWorkCategory, Allocation, Skill, PersonSkill, Cycle } from '@/types';
+import { Users, FolderOpen, Target, Zap, PersonStanding, Flag, Star, DollarSign, Building, Cog, Lightbulb } from 'lucide-react';
+import { Person, Role, Team, Division, Project, Epic, RunWorkCategory, Allocation, Skill, PersonSkill, Cycle, Solution, ProjectSolution } from '@/types';
 import { calculateProjectCost, calculateTeamWeeklyCost } from '@/utils/financialCalculations';
 
 export const generatePeopleTeamsView = ({ teamsToShow, peopleToShow, roles }: { teamsToShow: Team[], peopleToShow: Person[], roles: Role[] }): { nodes: Node[], edges: Edge[] } => {
@@ -549,3 +549,206 @@ export const generateTeamAllocationsView = (props: {
 
     return { nodes, edges };
 }
+
+export const generateProjectsSolutionsView = ({ projectsToShow, solutions, projectSolutions }: { 
+  projectsToShow: Project[], 
+  solutions: Solution[], 
+  projectSolutions: ProjectSolution[] 
+}): { nodes: Node[], edges: Edge[] } => {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+
+  // Add project nodes
+  projectsToShow.forEach((project, index) => {
+    nodes.push({
+      id: `project-${project.id}`,
+      type: 'default',
+      position: { x: 50, y: 50 + index * 120 },
+      data: {
+        label: (
+          <div className="text-center">
+            <FolderOpen className="h-4 w-4 mx-auto mb-1" />
+            <div className="font-medium text-sm">{project.name}</div>
+            <Badge variant={project.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+              {project.status}
+            </Badge>
+          </div>
+        )
+      },
+      style: {
+        background: '#fef3c7',
+        border: '2px solid #f59e0b',
+        borderRadius: '8px',
+        width: 160,
+        height: 90
+      },
+    });
+  });
+
+  // Get unique solutions used by the projects
+  const usedSolutionIds = new Set(
+    projectSolutions
+      .filter(ps => projectsToShow.some(p => p.id === ps.projectId))
+      .map(ps => ps.solutionId)
+  );
+  
+  const solutionsToShow = solutions.filter(s => usedSolutionIds.has(s.id));
+
+  // Add solution nodes
+  solutionsToShow.forEach((solution, index) => {
+    const categoryColors = {
+      'platform': '#dbeafe',
+      'framework-stack': '#f3e8ff',
+      'methodology': '#ecfdf5',
+      'architecture-pattern': '#fef2f2',
+      'other': '#f8fafc'
+    };
+
+    nodes.push({
+      id: `solution-${solution.id}`,
+      type: 'default',
+      position: { x: 350, y: 50 + index * 100 },
+      data: {
+        label: (
+          <div className="text-center">
+            <Cog className="h-4 w-4 mx-auto mb-1" />
+            <div className="font-medium text-sm">{solution.name}</div>
+            <Badge variant="outline" className="text-xs">
+              {solution.category.replace('-', ' ')}
+            </Badge>
+          </div>
+        )
+      },
+      style: {
+        background: categoryColors[solution.category] || categoryColors.other,
+        border: '2px solid #6366f1',
+        borderRadius: '8px',
+        width: 140,
+        height: 80
+      },
+    });
+  });
+
+  // Add edges between projects and solutions
+  projectSolutions.forEach(ps => {
+    if (projectsToShow.some(p => p.id === ps.projectId) && solutionsToShow.some(s => s.id === ps.solutionId)) {
+      edges.push({
+        id: `project-solution-${ps.projectId}-${ps.solutionId}`,
+        source: `project-${ps.projectId}`,
+        target: `solution-${ps.solutionId}`,
+        type: 'smoothstep',
+        label: ps.isPrimary ? 'Primary' : undefined,
+        style: { 
+          stroke: ps.isPrimary ? '#f59e0b' : '#6366f1',
+          strokeWidth: ps.isPrimary ? 3 : 2,
+          strokeDasharray: ps.isPrimary ? undefined : '5,5'
+        },
+      });
+    }
+  });
+
+  return { nodes, edges };
+};
+
+export const generateSolutionsSkillsView = ({ solutions, skills }: { 
+  solutions: Solution[], 
+  skills: Skill[] 
+}): { nodes: Node[], edges: Edge[] } => {
+  const nodes: Node[] = [];
+  const edges: Edge[] = [];
+
+  // Add solution nodes
+  solutions.forEach((solution, index) => {
+    const categoryColors = {
+      'platform': '#dbeafe',
+      'framework-stack': '#f3e8ff',
+      'methodology': '#ecfdf5',
+      'architecture-pattern': '#fef2f2',
+      'other': '#f8fafc'
+    };
+
+    nodes.push({
+      id: `solution-${solution.id}`,
+      type: 'default',
+      position: { x: 50, y: 50 + index * 100 },
+      data: {
+        label: (
+          <div className="text-center">
+            <Cog className="h-4 w-4 mx-auto mb-1" />
+            <div className="font-medium text-sm">{solution.name}</div>
+            <Badge variant="outline" className="text-xs">
+              {solution.category.replace('-', ' ')}
+            </Badge>
+          </div>
+        )
+      },
+      style: {
+        background: categoryColors[solution.category] || categoryColors.other,
+        border: '2px solid #6366f1',
+        borderRadius: '8px',
+        width: 140,
+        height: 80
+      },
+    });
+  });
+
+  // Get unique skills used by solutions
+  const usedSkillIds = new Set<string>();
+  solutions.forEach(solution => {
+    solution.skillIds.forEach(skillId => usedSkillIds.add(skillId));
+  });
+
+  const skillsToShow = skills.filter(s => usedSkillIds.has(s.id));
+
+  // Add skill nodes
+  skillsToShow.forEach((skill, index) => {
+    const categoryColors = {
+      'technical': '#eef2ff',
+      'design': '#fdf2f8',
+      'management': '#f0fdf4',
+      'business': '#fffbeb',
+      'other': '#f8fafc'
+    };
+
+    nodes.push({
+      id: `skill-${skill.id}`,
+      type: 'default',
+      position: { x: 350, y: 50 + index * 90 },
+      data: {
+        label: (
+          <div className="text-center">
+            <Star className="h-4 w-4 mx-auto mb-1" />
+            <div className="font-medium text-xs">{skill.name}</div>
+            <Badge variant="outline" className="text-xs">
+              {skill.category}
+            </Badge>
+          </div>
+        )
+      },
+      style: {
+        background: categoryColors[skill.category] || categoryColors.other,
+        border: '2px solid #ec4899',
+        borderRadius: '8px',
+        width: 120,
+        height: 70
+      },
+    });
+  });
+
+  // Add edges between solutions and skills
+  solutions.forEach(solution => {
+    solution.skillIds.forEach(skillId => {
+      if (skillsToShow.some(s => s.id === skillId)) {
+        edges.push({
+          id: `solution-skill-${solution.id}-${skillId}`,
+          source: `solution-${solution.id}`,
+          target: `skill-${skillId}`,
+          type: 'smoothstep',
+          style: { stroke: '#8b5cf6', strokeDasharray: '3,3' },
+        });
+      }
+    });
+  });
+
+  return { nodes, edges };
+};

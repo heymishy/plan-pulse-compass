@@ -13,6 +13,8 @@ import {
   generateTeamsProjectsView,
   generateProjectsEpicsView,
   generateTeamAllocationsView,
+  generateProjectsSolutionsView,
+  generateSolutionsSkillsView,
 } from '@/utils/canvas/nodeEdgeGenerators';
 
 
@@ -29,7 +31,22 @@ export const useCanvasData = ({
   selectedTeam,
   selectedProject,
 }: UseCanvasDataProps) => {
-  const { people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, cycles } = useApp();
+  const { 
+    people, 
+    roles, 
+    teams, 
+    projects, 
+    epics, 
+    allocations, 
+    divisions, 
+    runWorkCategories, 
+    skills, 
+    personSkills, 
+    cycles,
+    solutions,
+    projectSolutions,
+    projectSkills
+  } = useApp();
 
   const { nodes, edges, stats } = useMemo(() => {
     const now = new Date();
@@ -129,6 +146,18 @@ export const useCanvasData = ({
         currentEdges = res.edges;
         break;
       }
+      case 'projects-solutions': {
+        const res = generateProjectsSolutionsView({ projectsToShow, solutions, projectSolutions });
+        currentNodes = res.nodes;
+        currentEdges = res.edges;
+        break;
+      }
+      case 'solutions-skills': {
+        const res = generateSolutionsSkillsView({ solutions, skills });
+        currentNodes = res.nodes;
+        currentEdges = res.edges;
+        break;
+      }
       case 'all': {
         const tp = generateTeamsProjectsView({ divisionsToShow, teamsToShow, projectsToShow, epics: epicsToShow, allocations: allocationsToShow });
         const pe = generateProjectsEpicsView({ projectsToShow, epicsToShow, teamsToShow, isAllView: true, allocations: allocationsToShow });
@@ -149,7 +178,7 @@ export const useCanvasData = ({
     };
 
     return { nodes: currentNodes, edges: currentEdges, stats: finalStats };
-  }, [people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, cycles, viewType, selectedDivision, selectedTeam, selectedProject]);
+  }, [people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, cycles, solutions, projectSolutions, projectSkills, viewType, selectedDivision, selectedTeam, selectedProject]);
 
   return { nodes, edges, stats };
 };

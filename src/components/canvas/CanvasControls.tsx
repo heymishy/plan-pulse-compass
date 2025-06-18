@@ -48,6 +48,8 @@ export const CanvasControls = ({
             <SelectItem value="projects-milestones">Projects & Milestones</SelectItem>
             <SelectItem value="people-skills">People & Skills</SelectItem>
             <SelectItem value="team-skills-summary">Team Skills Summary</SelectItem>
+            <SelectItem value="projects-solutions">Projects & Solutions</SelectItem>
+            <SelectItem value="solutions-skills">Solutions & Skills</SelectItem>
           </SelectContent>
         </Select>
       </div>
