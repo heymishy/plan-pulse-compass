@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -214,13 +213,11 @@ const Projects = () => {
       />
 
       {/* Project Details Dialog */}
-      {selectedProject && (
-        <ProjectDetailsDialog
-          projectId={selectedProject}
-          open={isViewDialogOpen}
-          onOpenChange={setIsViewDialogOpen}
-        />
-      )}
+      <ProjectDetailsDialog
+        isOpen={isViewDialogOpen}
+        onClose={handleCloseViewDialog}
+        project={currentProject}
+      />
     </div>
   );
 };
