@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +18,7 @@ import {
 import { analyzeProjectTeamAvailability } from '@/utils/scenarioAnalysis';
 import SkillGapAnalysis from './SkillGapAnalysis';
 import TeamEfficiencyMetrics from './TeamEfficiencyMetrics';
+import RecommendationsEngine from './RecommendationsEngine';
 
 const ScenarioAnalysisDashboard = () => {
   const {
@@ -112,6 +112,7 @@ const ScenarioAnalysisDashboard = () => {
             <TabsTrigger value="efficiency">Team Efficiency</TabsTrigger>
             <TabsTrigger value="skills">Skill Analysis</TabsTrigger>
             <TabsTrigger value="gaps">Gap Analysis</TabsTrigger>
+            <TabsTrigger value="recommendations">AI Recommendations</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -262,6 +263,15 @@ const ScenarioAnalysisDashboard = () => {
             <SkillGapAnalysis 
               skillGaps={analysisResults.skillGaps}
               teamMatches={analysisResults.teamMatches}
+            />
+          </TabsContent>
+
+          <TabsContent value="recommendations">
+            <RecommendationsEngine 
+              teamMatches={analysisResults.teamMatches}
+              skillGaps={analysisResults.skillGaps}
+              projectBudget={projects.find(p => p.id === selectedProject)?.budget}
+              projectTimeline="Q2 2024"
             />
           </TabsContent>
         </Tabs>

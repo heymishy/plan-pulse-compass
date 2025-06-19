@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +14,7 @@ import ProjectTeamFinderDialog from '@/components/scenarios/ProjectTeamFinderDia
 
 const Projects = () => {
   const { projects, epics, allocations, cycles, isSetupComplete } = useApp();
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [viewMode, setViewMode<'table' | 'card'>('table');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -82,6 +83,12 @@ const Projects = () => {
           <p className="text-gray-600">Manage your project portfolio and team allocations</p>
         </div>
         <div className="flex items-center space-x-2">
+          <Button variant="outline" asChild>
+            <Link to="/scenario-analysis">
+              <Search className="h-4 w-4 mr-2" />
+              Scenario Analysis
+            </Link>
+          </Button>
           <ProjectTeamFinderDialog>
             <Button variant="outline">
               <Search className="h-4 w-4 mr-2" />
