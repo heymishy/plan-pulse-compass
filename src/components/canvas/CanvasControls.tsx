@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Building, Users, FolderOpen } from 'lucide-react';
@@ -50,6 +51,9 @@ export const CanvasControls = ({
             <SelectItem value="team-skills-summary">Team Skills Summary</SelectItem>
             <SelectItem value="projects-solutions">Projects & Solutions</SelectItem>
             <SelectItem value="solutions-skills">Solutions & Skills</SelectItem>
+            <SelectItem value="scenario-analysis">Scenario Analysis</SelectItem>
+            <SelectItem value="capacity-planning">Capacity Planning</SelectItem>
+            <SelectItem value="skill-gap-analysis">Skill Gap Analysis</SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Users, Search, Settings } from 'lucide-react';
+import { Plus, Users, Search, Settings, Star } from 'lucide-react';
 import TeamTable from '@/components/teams/TeamTable';
 import TeamCards from '@/components/teams/TeamCards';
 import TeamDialog from '@/components/teams/TeamDialog';
 import CapacityOverview from '@/components/teams/CapacityOverview';
+import TeamSkillsSummary from '@/components/scenarios/TeamSkillsSummary';
 
 const Teams = () => {
   const { teams, people, divisions, isSetupComplete } = useApp();
@@ -19,6 +20,7 @@ const Teams = () => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
+  const [selectedTeamForSkills, setSelectedTeamForSkills] = useState<string>('');
 
   if (!isSetupComplete) {
     return (
@@ -118,6 +120,7 @@ const Teams = () => {
         <TabsList>
           <TabsTrigger value="teams">Teams</TabsTrigger>
           <TabsTrigger value="capacity">Capacity Overview</TabsTrigger>
+          <TabsTrigger value="skills">Skills Analysis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="teams" className="space-y-6">
@@ -174,6 +177,42 @@ const Teams = () => {
 
         <TabsContent value="capacity">
           <CapacityOverview />
+        </TabsContent>
+
+        <TabsContent value="skills" className="space-y-6">
+          {/* Team Selection for Skills Analysis */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Star className="h-5 w-5 mr-2" />
+                Team Skills Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Select Team to Analyze:</label>
+                  <select
+                    value={selectedTeamForSkills}
+                    onChange={(e) => setSelectedTeamForSkills(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Choose a team...</option>
+                    {teams.map(team => (
+                      <option key={team.id} value={team.id}>
+                        {team.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Skills Summary */}
+          {selectedTeamForSkills && (
+            <TeamSkillsSummary teamId={selectedTeamForSkills} />
+          )}
         </TabsContent>
       </Tabs>
 

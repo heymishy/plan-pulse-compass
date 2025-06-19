@@ -1,4 +1,3 @@
-
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -167,7 +166,9 @@ export type CanvasViewType =
   | 'financial-overview'
   | 'projects-solutions'
   | 'solutions-skills'
-  | 'scenario-analysis';
+  | 'scenario-analysis'
+  | 'capacity-planning'
+  | 'skill-gap-analysis';
 
 // NEW: Tracking system types
 export interface ActualAllocation {
