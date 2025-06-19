@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
@@ -14,7 +15,7 @@ import ProjectTeamFinderDialog from '@/components/scenarios/ProjectTeamFinderDia
 
 const Projects = () => {
   const { projects, epics, allocations, cycles, isSetupComplete } = useApp();
-  const [viewMode, setViewMode<'table' | 'card'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
