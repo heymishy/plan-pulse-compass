@@ -20,7 +20,6 @@ import Settings from '@/pages/Settings';
 import Setup from '@/pages/Setup';
 import Milestones from '@/pages/Milestones';
 import NotFound from '@/pages/NotFound';
-import Index from '@/pages/Index';
 import { Toaster } from '@/components/ui/sonner';
 import './App.css';
 
@@ -30,13 +29,13 @@ function App() {
       <Router>
         <div className="flex min-h-screen bg-gray-50">
           <Routes>
-            <Route path="/" element={<Index />} />
             <Route path="/setup" element={<Setup />} />
             <Route path="*" element={
               <>
                 <Navigation />
                 <div className="flex-1 overflow-auto">
                   <Routes>
+                    <Route path="/" element={<Dashboard />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/teams" element={<Teams />} />
                     <Route path="/people" element={<People />} />
