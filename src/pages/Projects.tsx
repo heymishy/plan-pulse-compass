@@ -9,12 +9,15 @@ import { Plus, FolderOpen, Search, Grid, Target, DollarSign, Calendar, Users } f
 import ProjectTable from '@/components/projects/ProjectTable';
 import ProjectCards from '@/components/projects/ProjectCards';
 import ProjectDialog from '@/components/projects/ProjectDialog';
+import ProjectDetailsDialog from '@/components/projects/ProjectDetailsDialog';
 import ProjectTeamFinderDialog from '@/components/scenarios/ProjectTeamFinderDialog';
 
 const Projects = () => {
   const { projects, epics, allocations, cycles, isSetupComplete } = useApp();
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   if (!isSetupComplete) {
     return (
@@ -49,7 +52,28 @@ const Projects = () => {
     };
   };
 
+  const handleEditProject = (projectId: string) => {
+    setSelectedProject(projectId);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleViewProject = (projectId: string) => {
+    setSelectedProject(projectId);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleCloseCreateDialog = () => {
+    setIsCreateDialogOpen(false);
+    setSelectedProject(null);
+  };
+
+  const handleCloseViewDialog = () => {
+    setIsViewDialogOpen(false);
+    setSelectedProject(null);
+  };
+
   const stats = getProjectStats();
+  const currentProject = selectedProject ? projects.find(p => p.id === selectedProject) : null;
 
   return (
     <div className="p-6 space-y-6">
@@ -145,9 +169,17 @@ const Projects = () => {
 
         <TabsContent value="projects">
           {viewMode === 'table' ? (
-            <ProjectTable projects={projects} />
+            <ProjectTable 
+              projects={projects} 
+              onEditProject={handleEditProject}
+              onViewProject={handleViewProject}
+            />
           ) : (
-            <ProjectCards projects={projects} />
+            <ProjectCards 
+              projects={projects}
+              onEditProject={handleEditProject}
+              onViewProject={handleViewProject}
+            />
           )}
         </TabsContent>
 
@@ -176,10 +208,19 @@ const Projects = () => {
 
       {/* Project Dialog */}
       <ProjectDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        project={null}
+        isOpen={isCreateDialogOpen}
+        onClose={handleCloseCreateDialog}
+        project={currentProject}
       />
+
+      {/* Project Details Dialog */}
+      {selectedProject && (
+        <ProjectDetailsDialog
+          projectId={selectedProject}
+          open={isViewDialogOpen}
+          onOpenChange={setIsViewDialogOpen}
+        />
+      )}
     </div>
   );
 };
