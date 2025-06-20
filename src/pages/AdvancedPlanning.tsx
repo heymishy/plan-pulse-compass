@@ -7,6 +7,8 @@ import AdvancedPlanningDashboard from '@/components/planning/AdvancedPlanningDas
 import DivisionBudgetManager from '@/components/planning/DivisionBudgetManager';
 import ExecutiveReporting from '@/components/planning/ExecutiveReporting';
 import TrackingIntegration from '@/components/planning/TrackingIntegration';
+import ResourceOptimizationEngine from '@/components/planning/ResourceOptimizationEngine';
+import PredictiveAnalytics from '@/components/planning/PredictiveAnalytics';
 
 const AdvancedPlanning = () => {
   const { isSetupComplete } = useApp();
@@ -35,10 +37,12 @@ const AdvancedPlanning = () => {
       </div>
 
       <Tabs defaultValue="planning" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="planning">Project Planning</TabsTrigger>
           <TabsTrigger value="budgets">Budget Management</TabsTrigger>
           <TabsTrigger value="tracking">Tracking Integration</TabsTrigger>
+          <TabsTrigger value="optimization">Resource Optimization</TabsTrigger>
+          <TabsTrigger value="analytics">Predictive Analytics</TabsTrigger>
           <TabsTrigger value="executive">Executive Reports</TabsTrigger>
         </TabsList>
 
@@ -52,6 +56,14 @@ const AdvancedPlanning = () => {
 
         <TabsContent value="tracking">
           <TrackingIntegration />
+        </TabsContent>
+
+        <TabsContent value="optimization">
+          <ResourceOptimizationEngine />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <PredictiveAnalytics />
         </TabsContent>
 
         <TabsContent value="executive">
