@@ -299,7 +299,7 @@ const TrackingIntegration = () => {
                     <h4 className="font-medium text-red-800">High Variance Teams</h4>
                     <p className="text-sm text-red-700 mt-1">
                       {trackingMetrics.teamMetrics.filter(tm => Math.abs(tm.variance) > 15).length} teams 
-                      showing >15% variance from plan. Requires immediate attention.
+                      showing {'>'}15% variance from plan. Requires immediate attention.
                     </p>
                   </div>
                   
