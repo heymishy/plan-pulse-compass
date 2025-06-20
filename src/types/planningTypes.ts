@@ -1,4 +1,6 @@
 
+import { Team } from './index';
+
 // Advanced Planning and Budget Management Types
 export interface DivisionBudget {
   id: string;
@@ -45,6 +47,15 @@ export interface ProjectSkillRequirement {
   importance: 'critical' | 'important' | 'nice-to-have';
   minimumProficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   requiredHeadcount: number;
+}
+
+export interface SkillGap {
+  skillId: string;
+  skillName: string;
+  required: boolean;
+  importance: 'critical' | 'important' | 'nice-to-have';
+  availableInTeam: boolean;
+  alternativeSkills: string[];
 }
 
 export interface TeamRecommendation {
