@@ -429,7 +429,7 @@ const TrackingIntegration = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `$${(value / 1000).toFixed(0)}K`} />
+                  <Tooltip formatter={(value) => `$${(Number(value) / 1000).toFixed(0)}K`} />
                   <Bar dataKey="budgeted" fill="#8884d8" name="Budgeted" />
                   <Bar dataKey="actual" fill="#82ca9d" name="Actual" />
                 </BarChart>
@@ -448,15 +448,15 @@ const TrackingIntegration = () => {
                     <div>
                       <span className="font-medium">{team.name}</span>
                       <div className="text-sm text-gray-600">
-                        Budget: ${(team.budgeted / 1000).toFixed(0)}K | 
-                        Actual: ${(team.actual / 1000).toFixed(0)}K
+                        Budget: ${(Number(team.budgeted) / 1000).toFixed(0)}K | 
+                        Actual: ${(Number(team.actual) / 1000).toFixed(0)}K
                       </div>
                     </div>
                     <Badge 
-                      variant={team.variance > 0 ? 'destructive' : 'default'}
-                      className={team.variance < 0 ? 'bg-green-500' : ''}
+                      variant={Number(team.variance) > 0 ? 'destructive' : 'default'}
+                      className={Number(team.variance) < 0 ? 'bg-green-500' : ''}
                     >
-                      {team.variance > 0 ? '+' : ''}${(team.variance / 1000).toFixed(0)}K
+                      {Number(team.variance) > 0 ? '+' : ''}${(Number(team.variance) / 1000).toFixed(0)}K
                     </Badge>
                   </div>
                 ))}
