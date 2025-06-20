@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,9 +18,6 @@ const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
   feasibilityAnalyses
 }) => {
   const [scenarios, setScenarios] = useState<PlanningScenario[]>([]);
-  const [new
-
-
   const [newScenarioName, setNewScenarioName] = useState('');
 
   const createBaselineScenario = () => {
