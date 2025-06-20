@@ -29,9 +29,9 @@ function App() {
   return (
     <AppProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="flex min-h-screen bg-gray-50">
           <Navigation />
-          <main>
+          <main className="flex-1">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/setup" element={<Setup />} />
