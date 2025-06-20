@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import {
   AreaChart, Area, BarChart, Bar, ComposedChart
 } from 'recharts';
 import { 
-  TrendingUp, Crystal, AlertTriangle, Target, 
+  TrendingUp, Sparkles, AlertTriangle, Target, 
   Calendar, Brain, Lightbulb, Activity 
 } from 'lucide-react';
 
@@ -227,7 +226,7 @@ const PredictiveAnalytics = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Crystal className="h-5 w-5 mr-2" />
+                <Sparkles className="h-5 w-5 mr-2" />
                 {analysisType === 'capacity' ? 'Capacity' : 
                  analysisType === 'delivery' ? 'Delivery' : 'Budget'} Utilization Forecast
               </CardTitle>
@@ -342,7 +341,7 @@ const PredictiveAnalytics = () => {
                       insight.type === 'prediction' ? 'bg-purple-100' : 'bg-green-100'
                     }`}>
                       {insight.type === 'trend' ? <TrendingUp className="h-5 w-5 text-blue-600" /> :
-                       insight.type === 'prediction' ? <Crystal className="h-5 w-5 text-purple-600" /> :
+                       insight.type === 'prediction' ? <Sparkles className="h-5 w-5 text-purple-600" /> :
                        <Lightbulb className="h-5 w-5 text-green-600" />}
                     </div>
                     <div className="flex-1">
