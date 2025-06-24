@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FolderOpen, Target, Calendar, 
   BarChart3, Settings, Activity, GitBranch, DollarSign,
-  UserCheck, Network, Search
+  UserCheck, Network, Search, Map
 } from 'lucide-react';
 
 const Navigation = () => {
@@ -19,6 +19,7 @@ const Navigation = () => {
     { path: '/milestones', icon: Calendar, label: 'Milestones' },
     { path: '/planning', icon: GitBranch, label: 'Planning' },
     { path: '/advanced-planning', icon: Network, label: 'Advanced Planning' },
+    { path: '/journey-planning', icon: Map, label: 'Journey Planning' },
     { path: '/allocations', icon: Activity, label: 'Allocations' },
     { path: '/tracking', icon: BarChart3, label: 'Tracking' },
     { path: '/scenario-analysis', icon: Search, label: 'Scenario Analysis' },

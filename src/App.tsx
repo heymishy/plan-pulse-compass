@@ -14,6 +14,7 @@ import Epics from './pages/Epics';
 import Milestones from './pages/Milestones';
 import Planning from './pages/Planning';
 import AdvancedPlanning from './pages/AdvancedPlanning';
+import JourneyPlanning from './pages/JourneyPlanning';
 import Allocations from './pages/Allocations';
 import Tracking from './pages/Tracking';
 import Financials from './pages/Financials';
@@ -44,6 +45,7 @@ function App() {
               <Route path="/milestones" element={<Milestones />} />
               <Route path="/planning" element={<Planning />} />
               <Route path="/advanced-planning" element={<AdvancedPlanning />} />
+              <Route path="/journey-planning" element={<JourneyPlanning />} />
               <Route path="/allocations" element={<Allocations />} />
               <Route path="/tracking" element={<Tracking />} />
               <Route path="/financials" element={<Financials />} />

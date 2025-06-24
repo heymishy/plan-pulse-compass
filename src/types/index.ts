@@ -168,7 +168,10 @@ export type CanvasViewType =
   | 'solutions-skills'
   | 'scenario-analysis'
   | 'capacity-planning'
-  | 'skill-gap-analysis';
+  | 'skill-gap-analysis'
+  | 'goal-journey'
+  | 'goal-timeline'
+  | 'goal-hierarchy';
 
 // NEW: Tracking system types
 export interface ActualAllocation {
@@ -391,3 +394,39 @@ export interface ProjectReportData {
   teams: ProjectReportTeamPerformance;
   risks: ProjectRisk[];
 }
+
+// NEW: Goal-related imports and additions
+export type { 
+  Goal, 
+  GoalMetric, 
+  NorthStar, 
+  GoalEpic, 
+  GoalMilestone, 
+  GoalTeam,
+  JourneyPath,
+  GoalProgress,
+  JourneyCanvasConfig,
+  GoalFilterType,
+  CreateGoalRequest,
+  UpdateGoalRequest
+} from './goalTypes';
+
+// Update CanvasViewType to include goal-centric views
+export type CanvasViewType =
+  | 'all'
+  | 'teams-projects'
+  | 'projects-epics'
+  | 'team-allocations'
+  | 'people-teams'
+  | 'projects-milestones'
+  | 'people-skills'
+  | 'team-skills-summary'
+  | 'financial-overview'
+  | 'projects-solutions'
+  | 'solutions-skills'
+  | 'scenario-analysis'
+  | 'capacity-planning'
+  | 'skill-gap-analysis'
+  | 'goal-journey'
+  | 'goal-timeline'
+  | 'goal-hierarchy';
