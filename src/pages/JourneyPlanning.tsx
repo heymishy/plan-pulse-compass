@@ -3,10 +3,16 @@ import React from 'react';
 import { useApp } from '@/context/AppContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Map, Target, Users, Star } from 'lucide-react';
+import { Map, Target, Users, Star, BarChart3, Link, Clock, TrendingUp } from 'lucide-react';
 import GoalsTable from '@/components/goals/GoalsTable';
 import NorthStarDialog from '@/components/goals/NorthStarDialog';
 import JourneyCanvasView from '@/components/goals/JourneyCanvasView';
+import GoalProgressTracker from '@/components/goals/GoalProgressTracker';
+import JourneyInsightsDashboard from '@/components/goals/JourneyInsightsDashboard';
+import GoalDependenciesManager from '@/components/goals/GoalDependenciesManager';
+import GoalLinkingManager from '@/components/goals/GoalLinkingManager';
+import AdvancedJourneyTimeline from '@/components/goals/AdvancedJourneyTimeline';
+import GoalProjectImpactAnalysis from '@/components/goals/GoalProjectImpactAnalysis';
 
 const JourneyPlanning = () => {
   const { isSetupComplete, goals, northStar } = useApp();
@@ -94,9 +100,15 @@ const JourneyPlanning = () => {
       </div>
 
       <Tabs defaultValue="canvas" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="canvas">Journey Canvas</TabsTrigger>
-          <TabsTrigger value="manage">Manage Goals</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-8">
+          <TabsTrigger value="canvas">Canvas</TabsTrigger>
+          <TabsTrigger value="manage">Manage</TabsTrigger>
+          <TabsTrigger value="progress">Progress</TabsTrigger>
+          <TabsTrigger value="insights">Insights</TabsTrigger>
+          <TabsTrigger value="dependencies">Dependencies</TabsTrigger>
+          <TabsTrigger value="linking">Linking</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="impact">Impact</TabsTrigger>
         </TabsList>
 
         <TabsContent value="canvas">
@@ -105,6 +117,30 @@ const JourneyPlanning = () => {
 
         <TabsContent value="manage">
           <GoalsTable />
+        </TabsContent>
+
+        <TabsContent value="progress">
+          <GoalProgressTracker />
+        </TabsContent>
+
+        <TabsContent value="insights">
+          <JourneyInsightsDashboard />
+        </TabsContent>
+
+        <TabsContent value="dependencies">
+          <GoalDependenciesManager />
+        </TabsContent>
+
+        <TabsContent value="linking">
+          <GoalLinkingManager />
+        </TabsContent>
+
+        <TabsContent value="timeline">
+          <AdvancedJourneyTimeline />
+        </TabsContent>
+
+        <TabsContent value="impact">
+          <GoalProjectImpactAnalysis />
         </TabsContent>
       </Tabs>
     </div>
