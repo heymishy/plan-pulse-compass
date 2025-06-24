@@ -1,8 +1,12 @@
 
 import React from 'react';
 import { useApp } from '@/context/AppContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Map, Target, Users } from 'lucide-react';
+import { Map, Target, Users, Star } from 'lucide-react';
+import GoalsTable from '@/components/goals/GoalsTable';
+import NorthStarDialog from '@/components/goals/NorthStarDialog';
+import JourneyCanvasView from '@/components/goals/JourneyCanvasView';
 
 const JourneyPlanning = () => {
   const { isSetupComplete, goals, northStar } = useApp();
@@ -34,7 +38,7 @@ const JourneyPlanning = () => {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center">
-              <Target className="h-4 w-4 mr-2" />
+              <Star className="h-4 w-4 mr-2 text-yellow-500" />
               North Star Goal
             </CardTitle>
           </CardHeader>
@@ -43,9 +47,19 @@ const JourneyPlanning = () => {
               <div>
                 <div className="text-lg font-semibold">{northStar.title}</div>
                 <div className="text-sm text-gray-500">{northStar.timeHorizon}</div>
+                <div className="mt-2">
+                  <NorthStarDialog trigger={
+                    <button className="text-sm text-blue-600 hover:text-blue-800">
+                      Edit North Star
+                    </button>
+                  } />
+                </div>
               </div>
             ) : (
-              <div className="text-gray-500">No North Star defined</div>
+              <div className="space-y-2">
+                <div className="text-gray-500">No North Star defined</div>
+                <NorthStarDialog />
+              </div>
             )}
           </CardContent>
         </Card>
@@ -79,21 +93,20 @@ const JourneyPlanning = () => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Journey Canvas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-12">
-            <Map className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Journey Visualization Coming Soon</h3>
-            <p className="text-gray-600">
-              This is Phase 1 of the Goal-Centric Journey Planning implementation.
-              The interactive journey canvas will be available in the next phases.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="canvas" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="canvas">Journey Canvas</TabsTrigger>
+          <TabsTrigger value="manage">Manage Goals</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="canvas">
+          <JourneyCanvasView />
+        </TabsContent>
+
+        <TabsContent value="manage">
+          <GoalsTable />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
