@@ -1,12 +1,16 @@
-
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Goal } from '@/types/goalTypes';
-import { Plus, X } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Goal } from "@/types/goalTypes";
+import { Plus, X } from "lucide-react";
 
 interface GoalSplitDialogProps {
   open: boolean;
@@ -19,12 +23,12 @@ const GoalSplitDialog: React.FC<GoalSplitDialogProps> = ({
   open,
   onClose,
   parentGoal,
-  onSplit
+  onSplit,
 }) => {
-  const [subGoals, setSubGoals] = useState<string[]>(['', '']);
+  const [subGoals, setSubGoals] = useState<string[]>(["", ""]);
 
   const addSubGoal = () => {
-    setSubGoals([...subGoals, '']);
+    setSubGoals([...subGoals, ""]);
   };
 
   const removeSubGoal = (index: number) => {
@@ -42,16 +46,19 @@ const GoalSplitDialog: React.FC<GoalSplitDialogProps> = ({
   const handleSplit = () => {
     if (!parentGoal) return;
 
-    const validSubGoals = subGoals.filter(sg => sg.trim());
+    const validSubGoals = subGoals.filter((sg) => sg.trim());
     if (validSubGoals.length < 2) return;
 
-    const subGoalData = validSubGoals.map(title => ({
+    console.log("GoalSplitDialog - parentGoal:", parentGoal);
+    console.log("GoalSplitDialog - parentGoal.ownerId:", parentGoal.ownerId);
+
+    const subGoalData = validSubGoals.map((title) => ({
       title,
       description: `Split from: ${parentGoal.title}`,
       timeFrame: parentGoal.timeFrame,
       ownerId: parentGoal.ownerId,
       confidence: 0.8,
-      status: 'not-started' as const,
+      status: "not-started" as const,
       metric: {
         type: parentGoal.metric.type,
         target: Math.floor(parentGoal.metric.target / validSubGoals.length),
@@ -62,8 +69,9 @@ const GoalSplitDialog: React.FC<GoalSplitDialogProps> = ({
       dependencies: [parentGoal.id],
     }));
 
+    console.log("GoalSplitDialog - subGoalData:", subGoalData);
     onSplit(subGoalData);
-    setSubGoals(['', '']);
+    setSubGoals(["", ""]);
     onClose();
   };
 
@@ -76,7 +84,9 @@ const GoalSplitDialog: React.FC<GoalSplitDialogProps> = ({
 
         {parentGoal && (
           <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-            <Label className="text-sm font-medium text-gray-700">Parent Goal:</Label>
+            <Label className="text-sm font-medium text-gray-700">
+              Parent Goal:
+            </Label>
             <div className="text-sm mt-1">{parentGoal.title}</div>
             <Badge variant="outline" className="mt-1 text-xs">
               {parentGoal.timeFrame}
@@ -120,9 +130,9 @@ const GoalSplitDialog: React.FC<GoalSplitDialogProps> = ({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSplit}
-            disabled={subGoals.filter(sg => sg.trim()).length < 2}
+            disabled={subGoals.filter((sg) => sg.trim()).length < 2}
           >
             Split Goal
           </Button>

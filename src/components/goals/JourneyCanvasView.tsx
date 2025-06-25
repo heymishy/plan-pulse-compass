@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   ReactFlow,
   Controls,
@@ -11,43 +10,59 @@ import {
   MiniMap,
   Node,
   Edge,
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { useApp } from '@/context/AppContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Goal, JourneyCanvasConfig } from '@/types/goalTypes';
-import { Star, Target, Users, Calendar } from 'lucide-react';
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { useApp } from "@/context/AppContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Goal, JourneyCanvasConfig } from "@/types/goalTypes";
+import { Star, Target, Users, Calendar } from "lucide-react";
 
 // Custom node component for goals
 const GoalNode = ({ data }: { data: any }) => {
-  const getStatusColor = (status: Goal['status']) => {
+  const getStatusColor = (status: Goal["status"]) => {
     switch (status) {
-      case 'completed': return 'border-green-500 bg-green-50';
-      case 'in-progress': return 'border-blue-500 bg-blue-50';
-      case 'at-risk': return 'border-yellow-500 bg-yellow-50';
-      case 'cancelled': return 'border-red-500 bg-red-50';
-      default: return 'border-gray-500 bg-gray-50';
+      case "completed":
+        return "border-green-500 bg-green-50";
+      case "in-progress":
+        return "border-blue-500 bg-blue-50";
+      case "at-risk":
+        return "border-yellow-500 bg-yellow-50";
+      case "cancelled":
+        return "border-red-500 bg-red-50";
+      default:
+        return "border-gray-500 bg-gray-50";
     }
   };
 
   const getConfidenceRing = (confidence: number) => {
     const opacity = confidence;
-    const color = confidence > 0.7 ? 'green' : confidence > 0.4 ? 'yellow' : 'red';
+    const color =
+      confidence > 0.7 ? "green" : confidence > 0.4 ? "yellow" : "red";
     return {
       boxShadow: `0 0 0 ${Math.round(confidence * 10)}px rgba(${
-        color === 'green' ? '34, 197, 94' : 
-        color === 'yellow' ? '251, 191, 36' : 
-        '239, 68, 68'
-      }, ${opacity * 0.3})`
+        color === "green"
+          ? "34, 197, 94"
+          : color === "yellow"
+          ? "251, 191, 36"
+          : "239, 68, 68"
+      }, ${opacity * 0.3})`,
     };
   };
 
   return (
-    <div 
-      className={`p-4 rounded-lg border-2 min-w-[200px] ${getStatusColor(data.status)}`}
+    <div
+      className={`p-4 rounded-lg border-2 min-w-[200px] ${getStatusColor(
+        data.status
+      )}`}
       style={getConfidenceRing(data.confidence)}
     >
       <div className="flex items-center justify-between mb-2">
@@ -63,13 +78,14 @@ const GoalNode = ({ data }: { data: any }) => {
           {Math.round(data.confidence * 100)}%
         </Badge>
       </div>
-      
+
       {data.metric && (
         <div className="text-xs text-gray-600 mb-2">
-          {data.metric.current} / {data.metric.target}{data.metric.unit}
+          {data.metric.current} / {data.metric.target}
+          {data.metric.unit}
         </div>
       )}
-      
+
       <div className="flex items-center text-xs text-gray-500">
         <Calendar className="h-3 w-3 mr-1" />
         {data.timeFrame}
@@ -90,7 +106,7 @@ const JourneyCanvasView: React.FC = () => {
     projectFilter: [],
     showDependencies: true,
     showMetrics: true,
-    viewMode: 'journey'
+    viewMode: "journey",
   });
 
   const [showMiniMap, setShowMiniMap] = useState(true);
@@ -98,18 +114,18 @@ const JourneyCanvasView: React.FC = () => {
   // Generate nodes from goals and north star
   const initialNodes = useMemo(() => {
     const nodes: Node[] = [];
-    
+
     // Add North Star as central node
     if (northStar) {
       nodes.push({
         id: `north-star-${northStar.id}`,
-        type: 'goal',
+        type: "goal",
         position: { x: 400, y: 50 },
         data: {
           ...northStar,
           isNorthStar: true,
           confidence: 1.0,
-          status: 'in-progress',
+          status: "in-progress",
           timeFrame: northStar.timeHorizon,
         },
       });
@@ -124,12 +140,13 @@ const JourneyCanvasView: React.FC = () => {
 
       nodes.push({
         id: `goal-${goal.id}`,
-        type: 'goal',
+        type: "goal",
         position: { x, y },
         data: {
           ...goal,
           isNorthStar: false,
-          timeFrame: cycles.find(c => c.id === goal.timeFrame)?.name || goal.timeFrame,
+          timeFrame:
+            cycles.find((c) => c.id === goal.timeFrame)?.name || goal.timeFrame,
         },
       });
     });
@@ -148,10 +165,10 @@ const JourneyCanvasView: React.FC = () => {
           id: `edge-goal-${goal.id}-to-north-star`,
           source: `goal-${goal.id}`,
           target: `north-star-${northStar.id}`,
-          type: 'smoothstep',
-          animated: goal.status === 'in-progress',
-          style: { 
-            stroke: goal.status === 'completed' ? '#22c55e' : '#64748b',
+          type: "smoothstep",
+          animated: goal.status === "in-progress",
+          style: {
+            stroke: goal.status === "completed" ? "#22c55e" : "#64748b",
             strokeWidth: 2,
           },
         });
@@ -160,17 +177,17 @@ const JourneyCanvasView: React.FC = () => {
 
     // Add dependency edges
     goals.forEach((goal) => {
-      goal.dependencies.forEach((depId) => {
-        if (goals.find(g => g.id === depId)) {
+      (goal.dependencies || []).forEach((depId) => {
+        if (goals.find((g) => g.id === depId)) {
           edges.push({
             id: `edge-dep-${depId}-to-${goal.id}`,
             source: `goal-${depId}`,
             target: `goal-${goal.id}`,
-            type: 'step',
-            style: { 
-              stroke: '#f59e0b',
+            type: "step",
+            style: {
+              stroke: "#f59e0b",
               strokeWidth: 2,
-              strokeDasharray: '5,5'
+              strokeDasharray: "5,5",
             },
           });
         }
@@ -185,7 +202,7 @@ const JourneyCanvasView: React.FC = () => {
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
+    [setEdges]
   );
 
   useEffect(() => {
@@ -194,7 +211,7 @@ const JourneyCanvasView: React.FC = () => {
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    console.log('Goal clicked:', node.data);
+    console.log("Goal clicked:", node.data);
     // TODO: Show goal detail panel
   }, []);
 
@@ -203,7 +220,12 @@ const JourneyCanvasView: React.FC = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Journey Canvas</h2>
         <div className="flex items-center space-x-2">
-          <Select value={canvasConfig.viewMode} onValueChange={(value) => setCanvasConfig({...canvasConfig, viewMode: value as any})}>
+          <Select
+            value={canvasConfig.viewMode}
+            onValueChange={(value) =>
+              setCanvasConfig({ ...canvasConfig, viewMode: value as any })
+            }
+          >
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
@@ -213,12 +235,12 @@ const JourneyCanvasView: React.FC = () => {
               <SelectItem value="hierarchy">Hierarchy View</SelectItem>
             </SelectContent>
           </Select>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => setShowMiniMap(!showMiniMap)}
           >
-            {showMiniMap ? 'Hide' : 'Show'} MiniMap
+            {showMiniMap ? "Hide" : "Show"} MiniMap
           </Button>
         </div>
       </div>
@@ -249,7 +271,7 @@ const JourneyCanvasView: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {goals.filter(g => g.status === 'in-progress').length}
+              {goals.filter((g) => g.status === "in-progress").length}
             </div>
           </CardContent>
         </Card>
@@ -263,7 +285,7 @@ const JourneyCanvasView: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {new Set(goals.flatMap(g => g.dependencies)).size}
+              {new Set(goals.flatMap((g) => g.dependencies || [])).size}
             </div>
           </CardContent>
         </Card>
@@ -277,7 +299,7 @@ const JourneyCanvasView: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {new Set(goals.map(g => g.timeFrame)).size}
+              {new Set(goals.map((g) => g.timeFrame)).size}
             </div>
           </CardContent>
         </Card>
@@ -285,7 +307,7 @@ const JourneyCanvasView: React.FC = () => {
 
       <Card>
         <CardContent className="p-0">
-          <div style={{ width: '100%', height: '600px' }}>
+          <div style={{ width: "100%", height: "600px" }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -295,18 +317,18 @@ const JourneyCanvasView: React.FC = () => {
               onNodeClick={onNodeClick}
               nodeTypes={nodeTypes}
               fitView
-              style={{ backgroundColor: '#fafafa' }}
+              style={{ backgroundColor: "#fafafa" }}
             >
               <Controls />
               <Background color="#e2e8f0" gap={16} />
               {showMiniMap && (
-                <MiniMap 
-                  zoomable 
-                  pannable 
+                <MiniMap
+                  zoomable
+                  pannable
                   style={{
                     height: 120,
                     width: 200,
-                    backgroundColor: '#f1f5f9',
+                    backgroundColor: "#f1f5f9",
                   }}
                 />
               )}
