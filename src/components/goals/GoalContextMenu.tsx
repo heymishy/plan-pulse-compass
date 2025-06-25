@@ -3,16 +3,27 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useApp } from '@/context/AppContext';
-import { Edit, Copy, Split, Archive, Link, Target } from 'lucide-react';
+import { Edit, Copy, Split, Archive, Link, Target, TrendingUp, Pause } from 'lucide-react';
 
 interface GoalContextMenuProps {
   x: number;
   y: number;
   goalId?: string;
   onClose: () => void;
+  onEdit?: (goalId: string) => void;
+  onSplit?: (goalId: string) => void;
+  onClone?: (goalId: string) => void;
 }
 
-const GoalContextMenu: React.FC<GoalContextMenuProps> = ({ x, y, goalId, onClose }) => {
+const GoalContextMenu: React.FC<GoalContextMenuProps> = ({ 
+  x, 
+  y, 
+  goalId, 
+  onClose,
+  onEdit,
+  onSplit,
+  onClone
+}) => {
   const { goals, updateGoal } = useApp();
   
   const goal = goalId ? goals.find(g => g.id === goalId) : null;
@@ -22,13 +33,25 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({ x, y, goalId, onClose
 
     switch (action) {
       case 'edit':
-        console.log('Edit goal:', goal.id);
+        onEdit?.(goal.id);
         break;
       case 'clone':
-        console.log('Clone goal:', goal.id);
+        onClone?.(goal.id);
         break;
       case 'split':
-        console.log('Split goal:', goal.id);
+        onSplit?.(goal.id);
+        break;
+      case 'park':
+        updateGoal(goal.id, { timeFrame: 'unassigned', status: 'not-started' });
+        break;
+      case 'complete':
+        updateGoal(goal.id, { 
+          status: 'completed',
+          metric: { ...goal.metric, current: goal.metric.target }
+        });
+        break;
+      case 'at-risk':
+        updateGoal(goal.id, { status: 'at-risk', confidence: Math.min(goal.confidence, 0.4) });
         break;
       case 'archive':
         updateGoal(goal.id, { status: 'cancelled' });
@@ -42,7 +65,7 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({ x, y, goalId, onClose
 
   return (
     <Card 
-      className="absolute z-50 p-2 shadow-lg border bg-white min-w-[160px]"
+      className="absolute z-50 p-2 shadow-lg border bg-white min-w-[180px]"
       style={{ left: x, top: y }}
     >
       <div className="space-y-1">
@@ -83,7 +106,43 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({ x, y, goalId, onClose
           onClick={() => handleAction('link')}
         >
           <Link className="h-3 w-3 mr-2" />
-          Link to Epic
+          Link to Epic/Project
+        </Button>
+
+        <hr className="my-1" />
+
+        {goal?.status !== 'completed' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sm text-green-600"
+            onClick={() => handleAction('complete')}
+          >
+            <Target className="h-3 w-3 mr-2" />
+            Mark Complete
+          </Button>
+        )}
+
+        {goal?.status !== 'at-risk' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start text-sm text-yellow-600"
+            onClick={() => handleAction('at-risk')}
+          >
+            <TrendingUp className="h-3 w-3 mr-2" />
+            Mark At Risk
+          </Button>
+        )}
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-sm text-blue-600"
+          onClick={() => handleAction('park')}
+        >
+          <Pause className="h-3 w-3 mr-2" />
+          Park Goal
         </Button>
 
         <hr className="my-1" />

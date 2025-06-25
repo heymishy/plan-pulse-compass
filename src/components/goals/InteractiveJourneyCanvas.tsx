@@ -13,8 +13,6 @@ import {
   Edge,
   NodeChange,
   EdgeChange,
-  OnConnectStartParams,
-  OnConnectEnd,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useApp } from '@/context/AppContext';
@@ -22,11 +20,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Goal } from '@/types/goalTypes';
-import { Plus } from 'lucide-react';
+import { Plus, Eye, EyeOff } from 'lucide-react';
 import InteractiveGoalNode from './InteractiveGoalNode';
 import TimeBandBackground from './TimeBandBackground';
 import GoalCreationModal from './GoalCreationModal';
 import GoalContextMenu from './GoalContextMenu';
+import GoalSplitDialog from './GoalSplitDialog';
+import UnassignedZone from './UnassignedZone';
 import { useCanvasInteractions } from '../../hooks/useCanvasInteractions';
 
 const nodeTypes = {
@@ -38,8 +38,11 @@ const InteractiveJourneyCanvas: React.FC = () => {
   const { goals, northStar, cycles, teams, updateGoal, addGoal } = useApp();
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [showMiniMap, setShowMiniMap] = useState(true);
+  const [showDependencies, setShowDependencies] = useState(true);
   const [creationModalOpen, setCreationModalOpen] = useState(false);
   const [creationPosition, setCreationPosition] = useState<{ x: number; y: number } | null>(null);
+  const [splitDialogOpen, setSplitDialogOpen] = useState(false);
+  const [goalToSplit, setGoalToSplit] = useState<Goal | null>(null);
   const [contextMenu, setContextMenu] = useState<{ 
     visible: boolean; 
     x: number; 
@@ -47,21 +50,49 @@ const InteractiveJourneyCanvas: React.FC = () => {
     goalId?: string 
   }>({ visible: false, x: 0, y: 0 });
 
-  // Generate time band zones
+  // Generate time band zones including unassigned
   const timeBands = useMemo(() => {
-    return cycles.map((cycle, index) => ({
+    const bands = cycles.map((cycle, index) => ({
       id: `timeband-${cycle.id}`,
       type: 'timeBand',
-      position: { x: 0, y: index * 200 + 100 },
+      position: { x: 0, y: index * 220 + 100 },
       data: {
         cycle,
-        width: 1200,
-        height: 180,
+        width: 1400,
+        height: 200,
       },
       draggable: false,
       selectable: false,
     }));
+
+    // Add unassigned zone
+    bands.push({
+      id: 'timeband-unassigned',
+      type: 'timeBand',
+      position: { x: 0, y: cycles.length * 220 + 100 },
+      data: {
+        cycle: {
+          id: 'unassigned',
+          name: 'Parking Zone',
+          startDate: '',
+          endDate: '',
+        },
+        width: 1400,
+        height: 150,
+        isUnassigned: true,
+      },
+      draggable: false,
+      selectable: false,
+    });
+
+    return bands;
   }, [cycles]);
+
+  // Filter goals by team
+  const filteredGoals = useMemo(() => {
+    if (selectedTeam === 'all') return goals;
+    return goals.filter(goal => goal.ownerId === selectedTeam);
+  }, [goals, selectedTeam]);
 
   // Generate goal nodes positioned within time bands
   const goalNodes = useMemo(() => {
@@ -72,7 +103,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
       nodes.push({
         id: `north-star-${northStar.id}`,
         type: 'goalNode',
-        position: { x: 600, y: 20 },
+        position: { x: 700, y: 20 },
         data: {
           ...northStar,
           isNorthStar: true,
@@ -84,35 +115,54 @@ const InteractiveJourneyCanvas: React.FC = () => {
     }
 
     // Position goals within their time bands
-    goals.forEach((goal, index) => {
-      const cycleIndex = cycles.findIndex(c => c.id === goal.timeFrame);
-      const bandY = cycleIndex >= 0 ? cycleIndex * 200 + 140 : 50;
-      const offsetX = (index % 4) * 250 + 100;
+    const goalsByTimeFrame = new Map();
+    filteredGoals.forEach(goal => {
+      const timeFrame = goal.timeFrame || 'unassigned';
+      if (!goalsByTimeFrame.has(timeFrame)) {
+        goalsByTimeFrame.set(timeFrame, []);
+      }
+      goalsByTimeFrame.get(timeFrame).push(goal);
+    });
+
+    goalsByTimeFrame.forEach((goalsInFrame, timeFrame) => {
+      const cycleIndex = timeFrame === 'unassigned' 
+        ? cycles.length 
+        : cycles.findIndex(c => c.id === timeFrame);
       
-      nodes.push({
-        id: `goal-${goal.id}`,
-        type: 'goalNode',
-        position: { x: offsetX, y: bandY },
-        data: {
-          ...goal,
-          isNorthStar: false,
-          cycle: cycles.find(c => c.id === goal.timeFrame),
-        },
+      const bandY = cycleIndex >= 0 ? cycleIndex * 220 + 150 : cycles.length * 220 + 150;
+      
+      goalsInFrame.forEach((goal: Goal, index: number) => {
+        const offsetX = (index % 5) * 280 + 120;
+        const offsetY = Math.floor(index / 5) * 100;
+        
+        nodes.push({
+          id: `goal-${goal.id}`,
+          type: 'goalNode',
+          position: { x: offsetX, y: bandY + offsetY },
+          data: {
+            ...goal,
+            isNorthStar: false,
+            cycle: cycles.find(c => c.id === goal.timeFrame),
+            canSplit: goal.status !== 'completed',
+          },
+        });
       });
     });
 
     return nodes;
-  }, [goals, northStar, cycles]);
+  }, [filteredGoals, northStar, cycles]);
 
   const initialNodes = [...timeBands, ...goalNodes];
 
   // Generate dependency edges
   const initialEdges = useMemo(() => {
+    if (!showDependencies) return [];
+    
     const edges: Edge[] = [];
 
     // Connect goals to North Star
     if (northStar) {
-      goals.forEach((goal) => {
+      filteredGoals.forEach((goal) => {
         edges.push({
           id: `edge-goal-${goal.id}-to-north-star`,
           source: `goal-${goal.id}`,
@@ -122,15 +172,16 @@ const InteractiveJourneyCanvas: React.FC = () => {
           style: { 
             stroke: goal.status === 'completed' ? '#22c55e' : '#64748b',
             strokeWidth: 2,
+            opacity: 0.6,
           },
         });
       });
     }
 
     // Add dependency edges
-    goals.forEach((goal) => {
+    filteredGoals.forEach((goal) => {
       goal.dependencies.forEach((depId) => {
-        if (goals.find(g => g.id === depId)) {
+        if (filteredGoals.find(g => g.id === depId)) {
           edges.push({
             id: `edge-dep-${depId}-to-${goal.id}`,
             source: `goal-${depId}`,
@@ -147,7 +198,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
     });
 
     return edges;
-  }, [goals, northStar]);
+  }, [filteredGoals, northStar, showDependencies]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -211,8 +262,14 @@ const InteractiveJourneyCanvas: React.FC = () => {
     (goalData: Partial<Goal>) => {
       if (creationPosition) {
         // Determine time frame based on position
-        const bandIndex = Math.floor((creationPosition.y - 100) / 200);
-        const cycle = cycles[bandIndex];
+        const bandIndex = Math.floor((creationPosition.y - 100) / 220);
+        let cycle;
+        
+        if (bandIndex >= cycles.length) {
+          cycle = { id: 'unassigned' };
+        } else {
+          cycle = cycles[bandIndex];
+        }
         
         addGoal({
           ...goalData,
@@ -224,6 +281,24 @@ const InteractiveJourneyCanvas: React.FC = () => {
     },
     [creationPosition, cycles, addGoal]
   );
+
+  const handleGoalSplit = useCallback(
+    (subGoals: Partial<Goal>[]) => {
+      subGoals.forEach(subGoal => {
+        addGoal(subGoal as any);
+      });
+    },
+    [addGoal]
+  );
+
+  const handleParkGoal = useCallback(
+    (goalId: string) => {
+      updateGoal(goalId, { timeFrame: 'unassigned', status: 'not-started' });
+    },
+    [updateGoal]
+  );
+
+  const parkedGoalsCount = goals.filter(g => g.timeFrame === 'unassigned').length;
 
   return (
     <div className="space-y-4">
@@ -246,6 +321,14 @@ const InteractiveJourneyCanvas: React.FC = () => {
           <Button 
             variant="outline" 
             size="sm"
+            onClick={() => setShowDependencies(!showDependencies)}
+          >
+            {showDependencies ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            Dependencies
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={() => setShowMiniMap(!showMiniMap)}
           >
             {showMiniMap ? 'Hide' : 'Show'} MiniMap
@@ -254,15 +337,25 @@ const InteractiveJourneyCanvas: React.FC = () => {
       </div>
 
       <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-        <div className="flex items-center space-x-2">
-          <Plus className="h-4 w-4" />
-          <span>Click anywhere on the canvas to create a new goal • Drag goals between time bands to reassign</span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Plus className="h-4 w-4" />
+            <span>Click anywhere to create goals</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span>•</span>
+            <span>Drag goals between time bands</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span>•</span>
+            <span>Right-click for actions</span>
+          </div>
         </div>
       </div>
 
       <Card>
         <CardContent className="p-0">
-          <div style={{ width: '100%', height: '700px', position: 'relative' }}>
+          <div style={{ width: '100%', height: '800px', position: 'relative' }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -274,7 +367,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
               nodeTypes={nodeTypes}
               fitView
               style={{ backgroundColor: '#fafafa' }}
-              minZoom={0.3}
+              minZoom={0.2}
               maxZoom={1.5}
             >
               <Controls />
@@ -292,12 +385,24 @@ const InteractiveJourneyCanvas: React.FC = () => {
               )}
             </ReactFlow>
 
+            <UnassignedZone 
+              onDrop={handleParkGoal}
+              goalCount={parkedGoalsCount}
+            />
+
             {contextMenu.visible && (
               <GoalContextMenu
                 x={contextMenu.x}
                 y={contextMenu.y}
                 goalId={contextMenu.goalId}
                 onClose={() => setContextMenu({ visible: false, x: 0, y: 0 })}
+                onSplit={(goalId) => {
+                  const goal = goals.find(g => g.id === goalId);
+                  if (goal) {
+                    setGoalToSplit(goal);
+                    setSplitDialogOpen(true);
+                  }
+                }}
               />
             )}
           </div>
@@ -309,6 +414,13 @@ const InteractiveJourneyCanvas: React.FC = () => {
         onClose={() => setCreationModalOpen(false)}
         onSave={handleGoalCreation}
         position={creationPosition}
+      />
+
+      <GoalSplitDialog
+        open={splitDialogOpen}
+        onClose={() => setSplitDialogOpen(false)}
+        parentGoal={goalToSplit}
+        onSplit={handleGoalSplit}
       />
     </div>
   );
