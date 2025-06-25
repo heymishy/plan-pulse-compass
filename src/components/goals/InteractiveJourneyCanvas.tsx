@@ -35,7 +35,7 @@ const nodeTypes = {
 };
 
 const InteractiveJourneyCanvas: React.FC = () => {
-  const { goals, northStar, cycles, teams, updateGoal, createGoal } = useApp();
+  const { goals, northStar, cycles, teams, updateGoal, addGoal } = useApp();
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [showMiniMap, setShowMiniMap] = useState(true);
   const [creationModalOpen, setCreationModalOpen] = useState(false);
@@ -214,7 +214,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
         const bandIndex = Math.floor((creationPosition.y - 100) / 200);
         const cycle = cycles[bandIndex];
         
-        createGoal({
+        addGoal({
           ...goalData,
           timeFrame: cycle?.id || cycles[0]?.id || '',
         } as any);
@@ -222,7 +222,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
       setCreationModalOpen(false);
       setCreationPosition(null);
     },
-    [creationPosition, cycles, createGoal]
+    [creationPosition, cycles, addGoal]
   );
 
   return (

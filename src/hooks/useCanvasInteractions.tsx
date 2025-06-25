@@ -7,7 +7,7 @@ interface UseCanvasInteractionsProps {
   setCreationModalOpen: (open: boolean) => void;
   setCreationPosition: (position: { x: number; y: number } | null) => void;
   setContextMenu: (menu: { visible: boolean; x: number; y: number; goalId?: string }) => void;
-  updateGoal: (goal: Goal) => void;
+  updateGoal: (goalId: string, goalData: Partial<Goal>) => void;
   cycles: Array<{ id: string; name: string }>;
 }
 
@@ -35,12 +35,13 @@ export const useCanvasInteractions = ({
         
         if (targetCycle) {
           console.log(`Goal ${change.id} moved to ${targetCycle.name}`);
-          // Here you would update the goal's timeFrame
-          // This is a placeholder - you'd need access to the actual goal data
+          // Extract goal ID and update timeFrame
+          const goalId = change.id.replace('goal-', '');
+          updateGoal(goalId, { timeFrame: targetCycle.id });
         }
       }
     });
-  }, [cycles]);
+  }, [cycles, updateGoal]);
 
   const handleNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
     if (node.id.startsWith('goal-') || node.id.startsWith('north-star-')) {

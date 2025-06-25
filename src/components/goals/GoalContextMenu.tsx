@@ -31,7 +31,7 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({ x, y, goalId, onClose
         console.log('Split goal:', goal.id);
         break;
       case 'archive':
-        updateGoal({ ...goal, status: 'cancelled' });
+        updateGoal(goal.id, { status: 'cancelled' });
         break;
       case 'link':
         console.log('Link to epic/project:', goal.id);
