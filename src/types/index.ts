@@ -1,3 +1,4 @@
+
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -153,7 +154,7 @@ export interface ProjectSolution {
   notes?: string;
 }
 
-// NEW: Canvas View Types
+// Canvas View Types - Updated to include goal-centric views
 export type CanvasViewType =
   | 'all'
   | 'teams-projects'
@@ -168,7 +169,10 @@ export type CanvasViewType =
   | 'solutions-skills'
   | 'scenario-analysis'
   | 'capacity-planning'
-  | 'skill-gap-analysis';
+  | 'skill-gap-analysis'
+  | 'goal-journey'
+  | 'goal-timeline'
+  | 'goal-hierarchy';
 
 // NEW: Tracking system types
 export interface ActualAllocation {
@@ -391,3 +395,19 @@ export interface ProjectReportData {
   teams: ProjectReportTeamPerformance;
   risks: ProjectRisk[];
 }
+
+// Goal-related imports and additions
+export type { 
+  Goal, 
+  GoalMetric, 
+  NorthStar, 
+  GoalEpic, 
+  GoalMilestone, 
+  GoalTeam,
+  JourneyPath,
+  GoalProgress,
+  JourneyCanvasConfig,
+  GoalFilterType,
+  CreateGoalRequest,
+  UpdateGoalRequest
+} from './goalTypes';

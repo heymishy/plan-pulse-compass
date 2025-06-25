@@ -3,7 +3,7 @@ import { useEncryptedLocalStorage, useLocalStorage } from '@/hooks/useLocalStora
 import { 
   Person, Role, Team, Project, Allocation, Cycle, AppConfig, Division, Epic, RunWorkCategory,
   ActualAllocation, IterationReview, IterationSnapshot, Skill, PersonSkill, Release,
-  Solution, ProjectSkill, ProjectSolution
+  Solution, ProjectSkill, ProjectSolution, Goal, NorthStar, GoalEpic, GoalMilestone, GoalTeam
 } from '@/types';
 
 interface AppContextType {
@@ -62,6 +62,22 @@ interface AppContextType {
   isSetupComplete: boolean;
   setIsSetupComplete: (complete: boolean) => void;
   isDataLoading: boolean;
+  
+  // NEW: Goal data
+  goals: Goal[];
+  setGoals: (goals: Goal[] | ((prev: Goal[]) => Goal[])) => void;
+  northStar: NorthStar | null;
+  setNorthStar: (northStar: NorthStar | null | ((prev: NorthStar | null) => NorthStar | null)) => void;
+  goalEpics: GoalEpic[];
+  setGoalEpics: (goalEpics: GoalEpic[] | ((prev: GoalEpic[]) => GoalEpic[])) => void;
+  goalMilestones: GoalMilestone[];
+  setGoalMilestones: (goalMilestones: GoalMilestone[] | ((prev: GoalMilestone[]) => GoalMilestone[])) => void;
+  goalTeams: GoalTeam[];
+  setGoalTeams: (goalTeams: GoalTeam[] | ((prev: GoalTeam[]) => GoalTeam[])) => void;
+  
+  // Goal helper methods
+  addGoal: (goalData: Omit<Goal, 'id' | 'createdDate' | 'updatedDate'>) => void;
+  updateGoal: (goalId: string, goalData: Partial<Goal>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -102,6 +118,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [projectSkills, setProjectSkills] = useLocalStorage<ProjectSkill[]>('planning-project-skills', []);
   const [projectSolutions, setProjectSolutions] = useLocalStorage<ProjectSolution[]>('planning-project-solutions', []);
 
+  // Goal data with encrypted storage for sensitive goal information
+  const [goals, setGoals, isGoalsLoading] = useEncryptedLocalStorage<Goal[]>('planning-goals', []);
+  const [northStar, setNorthStar] = useLocalStorage<NorthStar | null>('planning-north-star', null);
+  const [goalEpics, setGoalEpics] = useLocalStorage<GoalEpic[]>('planning-goal-epics', []);
+  const [goalMilestones, setGoalMilestones] = useLocalStorage<GoalMilestone[]>('planning-goal-milestones', []);
+  const [goalTeams, setGoalTeams] = useLocalStorage<GoalTeam[]>('planning-goal-teams', []);
+
   // Tracking data
   const [actualAllocations, setActualAllocations] = useLocalStorage<ActualAllocation[]>('planning-actual-allocations', []);
   const [iterationReviews, setIterationReviews] = useLocalStorage<IterationReview[]>('planning-iteration-reviews', []);
@@ -129,7 +152,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
-  const isDataLoading = isPeopleLoading || isProjectsLoading;
+  const addGoal = (goalData: Omit<Goal, 'id' | 'createdDate' | 'updatedDate'>) => {
+    const now = new Date().toISOString();
+    const newGoal: Goal = {
+      ...goalData,
+      id: Date.now().toString(),
+      createdDate: now,
+      updatedDate: now,
+    };
+    setGoals(prevGoals => [...prevGoals, newGoal]);
+  };
+
+  const updateGoal = (goalId: string, goalData: Partial<Goal>) => {
+    setGoals(prevGoals => 
+      prevGoals.map(goal => 
+        goal.id === goalId 
+          ? { ...goal, ...goalData, updatedDate: new Date().toISOString() } 
+          : goal
+      )
+    );
+  };
+
+  const isDataLoading = isPeopleLoading || isProjectsLoading || isGoalsLoading;
 
   // Debug logging for context state changes
   useEffect(() => {
@@ -153,11 +197,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         actualAllocationsCount: actualAllocations.length,
         iterationReviewsCount: iterationReviews.length,
         iterationSnapshotsCount: iterationSnapshots.length,
+        goalsCount: goals.length,
+        goalEpicsCount: goalEpics.length,
+        goalMilestonesCount: goalMilestones.length,
+        goalTeamsCount: goalTeams.length,
+        hasNorthStar: !!northStar,
         hasConfig: !!config,
         isSetupComplete,
       });
     }
-  }, [people, projects, roles, teams, divisions, epics, releases, allocations, cycles, runWorkCategories, skills, personSkills, solutions, projectSkills, projectSolutions, actualAllocations, iterationReviews, iterationSnapshots, config, isSetupComplete, isDataLoading]);
+  }, [
+    people, projects, roles, teams, divisions, epics, releases, allocations, cycles, runWorkCategories, skills, personSkills, solutions, projectSkills, projectSolutions, actualAllocations, iterationReviews, iterationSnapshots, goals, goalEpics, goalMilestones, goalTeams, northStar, config, isSetupComplete, isDataLoading
+  ]);
 
   const value: AppContextType = {
     people, setPeople, addPerson, updatePerson,
@@ -179,6 +230,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     actualAllocations, setActualAllocations,
     iterationReviews, setIterationReviews,
     iterationSnapshots, setIterationSnapshots,
+    goals, setGoals, addGoal, updateGoal,
+    northStar, setNorthStar,
+    goalEpics, setGoalEpics,
+    goalMilestones, setGoalMilestones,
+    goalTeams, setGoalTeams,
     config, setConfig,
     isSetupComplete, setIsSetupComplete,
     isDataLoading,

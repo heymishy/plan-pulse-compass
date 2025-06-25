@@ -4,20 +4,22 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FolderOpen, Target, Calendar, 
   BarChart3, Settings, Activity, GitBranch, DollarSign,
-  UserCheck, Network, Search
+  UserCheck, Network, Search, Map
 } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
 
   const navItems = [
-    { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/teams', icon: Users, label: 'Teams' },
     { path: '/people', icon: UserCheck, label: 'People' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: '/epics', icon: Target, label: 'Epics' },
     { path: '/milestones', icon: Calendar, label: 'Milestones' },
     { path: '/planning', icon: GitBranch, label: 'Planning' },
+    { path: '/advanced-planning', icon: Network, label: 'Advanced Planning' },
+    { path: '/journey-planning', icon: Map, label: 'Journey Planning' },
     { path: '/allocations', icon: Activity, label: 'Allocations' },
     { path: '/tracking', icon: BarChart3, label: 'Tracking' },
     { path: '/scenario-analysis', icon: Search, label: 'Scenario Analysis' },
@@ -29,11 +31,11 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-r border-gray-200 min-h-screen w-64">
+    <nav className="bg-white shadow-sm border-r border-gray-200 w-64 flex-shrink-0">
       <div className="p-6">
         <h1 className="text-xl font-bold text-gray-900">Resource Planner</h1>
       </div>
-      <div className="px-3">
+      <div className="px-3 pb-6">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
