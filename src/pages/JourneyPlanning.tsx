@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Map, Target, Users, Star, BarChart3, Link, Clock, TrendingUp } from 'lucide-react';
 import GoalsTable from '@/components/goals/GoalsTable';
 import NorthStarDialog from '@/components/goals/NorthStarDialog';
-import JourneyCanvasView from '@/components/goals/JourneyCanvasView';
+import InteractiveJourneyCanvas from '@/components/goals/InteractiveJourneyCanvas';
 import GoalProgressTracker from '@/components/goals/GoalProgressTracker';
 import JourneyInsightsDashboard from '@/components/goals/JourneyInsightsDashboard';
 import GoalDependenciesManager from '@/components/goals/GoalDependenciesManager';
@@ -101,7 +101,7 @@ const JourneyPlanning = () => {
 
       <Tabs defaultValue="canvas" className="space-y-6">
         <TabsList className="grid w-full grid-cols-8">
-          <TabsTrigger value="canvas">Canvas</TabsTrigger>
+          <TabsTrigger value="canvas">Interactive Canvas</TabsTrigger>
           <TabsTrigger value="manage">Manage</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
@@ -112,7 +112,7 @@ const JourneyPlanning = () => {
         </TabsList>
 
         <TabsContent value="canvas">
-          <JourneyCanvasView />
+          <InteractiveJourneyCanvas />
         </TabsContent>
 
         <TabsContent value="manage">
