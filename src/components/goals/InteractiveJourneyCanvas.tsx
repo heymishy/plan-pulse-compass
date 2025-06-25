@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
@@ -76,6 +75,8 @@ const InteractiveJourneyCanvas: React.FC = () => {
           name: 'Parking Zone',
           startDate: '',
           endDate: '',
+          type: 'iteration' as const,
+          status: 'planning' as const,
         },
         width: 1400,
         height: 150,
