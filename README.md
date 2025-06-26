@@ -4,6 +4,8 @@
 [![Essential Checks](https://github.com/your-username/plan-pulse-compass/workflows/Essential%20Checks/badge.svg)](https://github.com/your-username/plan-pulse-compass/actions/workflows/essential.yml)
 [![CI/CD Pipeline](https://github.com/your-username/plan-pulse-compass/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/your-username/plan-pulse-compass/actions/workflows/ci.yml)
 
+**Plan Pulse Compass** is a comprehensive team planning and resource management application that enables organizations to manage complex project portfolios, team allocations, and financial tracking across multiple quarters and iterations. The app provides strategic planning tools for resource allocation, real-time progress tracking with variance analysis, and sophisticated financial modeling that supports both permanent employees and contractors with different rate structures. Built with a focus on data privacy and local-first architecture, it offers interactive visualizations, comprehensive reporting, and automated CI/CD deployment for modern development teams.
+
 A comprehensive team planning and resource management application designed for organizations that need to manage complex project portfolios, team allocations, and financial tracking.
 
 ## Quick Start
