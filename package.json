@@ -15,7 +15,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:run:fast": "vitest run --no-coverage",
-    "test:run:single": "vitest run --no-coverage --pool=forks --poolOptions.forks.singleFork=true",
+    "test:run:single": "vitest run --no-coverage",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
     "test:unit": "vitest run src/components/ui/__tests__/",
