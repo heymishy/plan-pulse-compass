@@ -2,16 +2,16 @@ name: Essential Checks
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   essential:
     name: Essential Checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run linting
         run: npm run lint
@@ -38,4 +38,4 @@ jobs:
         run: npm run build
 
       - name: Security audit
-        run: npm run audit 
+        run: npm run audit
