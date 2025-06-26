@@ -1,5 +1,5 @@
-import "@testing-library/jest-dom";
-import { beforeAll, afterEach, afterAll, vi } from "vitest";
+import '@testing-library/jest-dom';
+import { beforeAll, afterEach, afterAll, vi } from 'vitest';
 // import { server } from "./mocks/server";
 
 // Establish API mocking before all tests
@@ -13,18 +13,18 @@ import { beforeAll, afterEach, afterAll, vi } from "vitest";
 // afterAll(() => server.close());
 
 // Mock crypto operations to reduce resource usage in tests
-vi.mock("@/utils/crypto", () => ({
-  deriveKey: vi.fn().mockResolvedValue("mock-key"),
+vi.mock('@/utils/crypto', () => ({
+  deriveKey: vi.fn().mockResolvedValue('mock-key'),
   encryptData: vi
     .fn()
-    .mockResolvedValue({ iv: "mock-iv", encrypted: "mock-data" }),
-  decryptData: vi.fn().mockResolvedValue("mock-decrypted"),
+    .mockResolvedValue({ iv: 'mock-iv', encrypted: 'mock-data' }),
+  decryptData: vi.fn().mockResolvedValue('mock-decrypted'),
 }));
 
 // Mock date-fns to avoid date formatting errors
-vi.mock("date-fns", () => ({
-  format: vi.fn(() => "2024-01-15"),
-  parseISO: vi.fn(() => new Date("2024-01-15")),
+vi.mock('date-fns', () => ({
+  format: vi.fn(() => '2024-01-15'),
+  parseISO: vi.fn(() => new Date('2024-01-15')),
   isValid: vi.fn(() => true),
   addDays: vi.fn(
     (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000)
@@ -39,10 +39,13 @@ vi.mock("date-fns", () => ({
   differenceInDays: vi.fn(() => 30),
   differenceInWeeks: vi.fn(() => 4),
   differenceInMonths: vi.fn(() => 1),
-  startOfWeek: vi.fn((date) => new Date("2024-01-15")),
-  endOfWeek: vi.fn((date) => new Date("2024-01-21")),
-  startOfMonth: vi.fn((date) => new Date("2024-01-01")),
-  endOfMonth: vi.fn((date) => new Date("2024-01-31")),
+  startOfWeek: vi.fn(date => new Date('2024-01-15')),
+  endOfWeek: vi.fn(date => new Date('2024-01-21')),
+  startOfMonth: vi.fn(date => new Date('2024-01-01')),
+  endOfMonth: vi.fn(date => new Date('2024-01-31')),
+  startOfToday: vi.fn(() => new Date('2024-01-15')),
+  isWithinInterval: vi.fn(() => true),
+  isBefore: vi.fn(() => false),
   isToday: vi.fn(() => false),
   isYesterday: vi.fn(() => false),
   isTomorrow: vi.fn(() => false),
@@ -55,7 +58,7 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
 };
-Object.defineProperty(window, "localStorage", {
+Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
@@ -74,9 +77,9 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 }));
 
 // Mock matchMedia
-Object.defineProperty(window, "matchMedia", {
+Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation((query) => ({
+  value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
@@ -89,7 +92,7 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 // Mock window.scrollTo
-Object.defineProperty(window, "scrollTo", {
+Object.defineProperty(window, 'scrollTo', {
   writable: true,
   value: vi.fn(),
 });
