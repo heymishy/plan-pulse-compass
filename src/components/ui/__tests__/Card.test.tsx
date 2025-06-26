@@ -1,6 +1,6 @@
-import React from "react";
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@/test/utils/test-utils";
+import React from 'react';
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@/test/utils/test-utils';
 import {
   Card,
   CardContent,
@@ -8,52 +8,52 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../card";
+} from '../card';
 
-describe("Card", () => {
-  it("renders card with basic content", () => {
+describe('Card', () => {
+  it('renders card with basic content', () => {
     render(
       <Card>
-        <CardContent>Card content</CardContent>
+        <CardContent>Basic card content</CardContent>
       </Card>
     );
 
-    expect(screen.getByText("Card content")).toBeInTheDocument();
-    expect(screen.getByText("Card content").closest("div")).toHaveClass(
-      "rounded-lg",
-      "border"
-    );
+    expect(screen.getByText('Basic card content')).toBeInTheDocument();
+    const cardElement = screen
+      .getByText('Basic card content')
+      .closest('[class*="rounded-lg"]');
+    expect(cardElement).toHaveClass('rounded-lg', 'border');
   });
 
-  it("renders card with header", () => {
+  it('renders card with header', () => {
     render(
       <Card>
         <CardHeader>
           <CardTitle>Card Title</CardTitle>
           <CardDescription>Card Description</CardDescription>
         </CardHeader>
-        <CardContent>Card content</CardContent>
+        <CardContent>Header card content</CardContent>
       </Card>
     );
 
-    expect(screen.getByText("Card Title")).toBeInTheDocument();
-    expect(screen.getByText("Card Description")).toBeInTheDocument();
-    expect(screen.getByText("Card content")).toBeInTheDocument();
+    expect(screen.getByText('Card Title')).toBeInTheDocument();
+    expect(screen.getByText('Card Description')).toBeInTheDocument();
+    expect(screen.getByText('Header card content')).toBeInTheDocument();
   });
 
-  it("renders card with footer", () => {
+  it('renders card with footer', () => {
     render(
       <Card>
-        <CardContent>Card content</CardContent>
+        <CardContent>Footer card content</CardContent>
         <CardFooter>Card footer</CardFooter>
       </Card>
     );
 
-    expect(screen.getByText("Card content")).toBeInTheDocument();
-    expect(screen.getByText("Card footer")).toBeInTheDocument();
+    expect(screen.getByText('Footer card content')).toBeInTheDocument();
+    expect(screen.getByText('Card footer')).toBeInTheDocument();
   });
 
-  it("renders complete card structure", () => {
+  it('renders complete card structure', () => {
     render(
       <Card>
         <CardHeader>
@@ -65,20 +65,22 @@ describe("Card", () => {
       </Card>
     );
 
-    expect(screen.getByText("Complete Card")).toBeInTheDocument();
-    expect(screen.getByText("This is a complete card")).toBeInTheDocument();
-    expect(screen.getByText("Main content area")).toBeInTheDocument();
-    expect(screen.getByText("Footer content")).toBeInTheDocument();
+    expect(screen.getByText('Complete Card')).toBeInTheDocument();
+    expect(screen.getByText('This is a complete card')).toBeInTheDocument();
+    expect(screen.getByText('Main content area')).toBeInTheDocument();
+    expect(screen.getByText('Footer content')).toBeInTheDocument();
   });
 
-  it("applies custom className", () => {
+  it('applies custom className', () => {
     render(
       <Card className="custom-card">
-        <CardContent>Custom card</CardContent>
+        <CardContent>Custom card content</CardContent>
       </Card>
     );
 
-    const card = screen.getByText("Custom card").closest("div");
-    expect(card).toHaveClass("custom-card");
+    const cardElement = screen
+      .getByText('Custom card content')
+      .closest('[class*="custom-card"]');
+    expect(cardElement).toHaveClass('custom-card');
   });
 });

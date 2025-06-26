@@ -32,13 +32,13 @@ import { useToast } from '@/hooks/use-toast';
 const Epics = () => {
   const { epics, setEpics, projects, teams, divisions, releases } = useApp();
   const { toast } = useToast();
-  
+
   const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
   const [isEpicDialogOpen, setIsEpicDialogOpen] = useState(false);
   const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false);
   const [isRankingDialogOpen, setIsRankingDialogOpen] = useState(false);
   const [selectedEpic, setSelectedEpic] = useState<Epic | null>(null);
-  
+
   // Filters
   const [filters, setFilters] = useState({
     search: '',
@@ -52,7 +52,9 @@ const Epics = () => {
   });
 
   // Sort and view options
-  const [sortBy, setSortBy] = useState<'name' | 'mvpPriority' | 'releasePriority' | 'effort' | 'targetDate'>('name');
+  const [sortBy, setSortBy] = useState<
+    'name' | 'mvpPriority' | 'releasePriority' | 'effort' | 'targetDate'
+  >('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showMvpLine, setShowMvpLine] = useState(false);
   const [showReleaseLine, setShowReleaseLine] = useState(false);
@@ -61,10 +63,16 @@ const Epics = () => {
   const enrichedEpics = useMemo(() => {
     return epics.map(epic => {
       const project = projects.find(p => p.id === epic.projectId);
-      const team = epic.assignedTeamId ? teams.find(t => t.id === epic.assignedTeamId) : null;
-      const division = team?.divisionId ? divisions.find(d => d.id === team.divisionId) : null;
-      const release = epic.releaseId ? releases.find(r => r.id === epic.releaseId) : null;
-      
+      const team = epic.assignedTeamId
+        ? teams.find(t => t.id === epic.assignedTeamId)
+        : null;
+      const division = team?.divisionId
+        ? divisions.find(d => d.id === team.divisionId)
+        : null;
+      const release = epic.releaseId
+        ? releases.find(r => r.id === epic.releaseId)
+        : null;
+
       return {
         ...epic,
         projectName: project?.name || 'Unknown Project',
@@ -78,28 +86,50 @@ const Epics = () => {
 
   // Apply filters and sorting
   const filteredAndSortedEpics = useMemo(() => {
-    let filtered = enrichedEpics.filter(epic => {
-      const matchesSearch = !filters.search || 
+    const filtered = enrichedEpics.filter(epic => {
+      const matchesSearch =
+        !filters.search ||
         epic.name.toLowerCase().includes(filters.search.toLowerCase()) ||
         epic.description?.toLowerCase().includes(filters.search.toLowerCase());
-      
-      const matchesProject = filters.projectId === 'all' || epic.projectId === filters.projectId;
-      const matchesDivision = filters.divisionId === 'all' || epic.divisionName === divisions.find(d => d.id === filters.divisionId)?.name;
-      const matchesTeam = filters.teamId === 'all' || epic.assignedTeamId === filters.teamId;
-      const matchesStatus = filters.status === 'all' || epic.status === filters.status;
-      const matchesRelease = filters.releaseId === 'all' || epic.releaseId === filters.releaseId;
-      
-      const matchesStartDate = !filters.startDate || !epic.startDate || epic.startDate >= filters.startDate;
-      const matchesEndDate = !filters.endDate || !epic.targetEndDate || epic.targetEndDate <= filters.endDate;
-      
-      return matchesSearch && matchesProject && matchesDivision && matchesTeam && 
-             matchesStatus && matchesRelease && matchesStartDate && matchesEndDate;
+
+      const matchesProject =
+        filters.projectId === 'all' || epic.projectId === filters.projectId;
+      const matchesDivision =
+        filters.divisionId === 'all' ||
+        epic.divisionName ===
+          divisions.find(d => d.id === filters.divisionId)?.name;
+      const matchesTeam =
+        filters.teamId === 'all' || epic.assignedTeamId === filters.teamId;
+      const matchesStatus =
+        filters.status === 'all' || epic.status === filters.status;
+      const matchesRelease =
+        filters.releaseId === 'all' || epic.releaseId === filters.releaseId;
+
+      const matchesStartDate =
+        !filters.startDate ||
+        !epic.startDate ||
+        epic.startDate >= filters.startDate;
+      const matchesEndDate =
+        !filters.endDate ||
+        !epic.targetEndDate ||
+        epic.targetEndDate <= filters.endDate;
+
+      return (
+        matchesSearch &&
+        matchesProject &&
+        matchesDivision &&
+        matchesTeam &&
+        matchesStatus &&
+        matchesRelease &&
+        matchesStartDate &&
+        matchesEndDate
+      );
     });
 
     // Sort the filtered results
     filtered.sort((a, b) => {
       let aValue, bValue;
-      
+
       switch (sortBy) {
         case 'mvpPriority':
           aValue = a.mvpPriority || 999999;
@@ -121,7 +151,7 @@ const Epics = () => {
           aValue = a.name.toLowerCase();
           bValue = b.name.toLowerCase();
       }
-      
+
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
       return 0;
@@ -165,23 +195,28 @@ const Epics = () => {
   };
 
   const handleBulkStatusUpdate = (newStatus: Epic['status']) => {
-    setEpics(prev => prev.map(epic => 
-      selectedEpics.includes(epic.id) ? { ...epic, status: newStatus } : epic
-    ));
-    
+    setEpics(prev =>
+      prev.map(epic =>
+        selectedEpics.includes(epic.id) ? { ...epic, status: newStatus } : epic
+      )
+    );
+
     toast({
-      title: "Success",
+      title: 'Success',
       description: `Updated ${selectedEpics.length} epics to ${newStatus}`,
     });
-    
+
     setSelectedEpics([]);
   };
 
   const getStatusBadgeVariant = (status: Epic['status']) => {
     switch (status) {
-      case 'completed': return 'default';
-      case 'in-progress': return 'secondary';
-      default: return 'outline';
+      case 'completed':
+        return 'default';
+      case 'in-progress':
+        return 'secondary';
+      default:
+        return 'outline';
     }
   };
 
@@ -213,13 +248,20 @@ const Epics = () => {
                 id="search"
                 placeholder="Search epics..."
                 value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                onChange={e =>
+                  setFilters(prev => ({ ...prev, search: e.target.value }))
+                }
               />
             </div>
-            
+
             <div>
               <Label>Project</Label>
-              <Select value={filters.projectId} onValueChange={(value) => setFilters(prev => ({ ...prev, projectId: value }))}>
+              <Select
+                value={filters.projectId}
+                onValueChange={value =>
+                  setFilters(prev => ({ ...prev, projectId: value }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All projects" />
                 </SelectTrigger>
@@ -236,7 +278,12 @@ const Epics = () => {
 
             <div>
               <Label>Division</Label>
-              <Select value={filters.divisionId} onValueChange={(value) => setFilters(prev => ({ ...prev, divisionId: value }))}>
+              <Select
+                value={filters.divisionId}
+                onValueChange={value =>
+                  setFilters(prev => ({ ...prev, divisionId: value }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All divisions" />
                 </SelectTrigger>
@@ -253,7 +300,12 @@ const Epics = () => {
 
             <div>
               <Label>Team</Label>
-              <Select value={filters.teamId} onValueChange={(value) => setFilters(prev => ({ ...prev, teamId: value }))}>
+              <Select
+                value={filters.teamId}
+                onValueChange={value =>
+                  setFilters(prev => ({ ...prev, teamId: value }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All teams" />
                 </SelectTrigger>
@@ -272,7 +324,12 @@ const Epics = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
             <div>
               <Label>Status</Label>
-              <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+              <Select
+                value={filters.status}
+                onValueChange={value =>
+                  setFilters(prev => ({ ...prev, status: value }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
@@ -287,7 +344,12 @@ const Epics = () => {
 
             <div>
               <Label>Release</Label>
-              <Select value={filters.releaseId} onValueChange={(value) => setFilters(prev => ({ ...prev, releaseId: value }))}>
+              <Select
+                value={filters.releaseId}
+                onValueChange={value =>
+                  setFilters(prev => ({ ...prev, releaseId: value }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All releases" />
                 </SelectTrigger>
@@ -308,7 +370,9 @@ const Epics = () => {
                 id="startDate"
                 type="date"
                 value={filters.startDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                onChange={e =>
+                  setFilters(prev => ({ ...prev, startDate: e.target.value }))
+                }
               />
             </div>
 
@@ -318,7 +382,9 @@ const Epics = () => {
                 id="endDate"
                 type="date"
                 value={filters.endDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                onChange={e =>
+                  setFilters(prev => ({ ...prev, endDate: e.target.value }))
+                }
               />
             </div>
           </div>
@@ -334,29 +400,29 @@ const Epics = () => {
                 {selectedEpics.length} epic(s) selected
               </span>
               <div className="flex space-x-2">
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => handleBulkStatusUpdate('not-started')}
                 >
                   Mark as Not Started
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => handleBulkStatusUpdate('in-progress')}
                 >
                   Mark as In Progress
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => handleBulkStatusUpdate('completed')}
                 >
                   Mark as Completed
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="ghost"
                   onClick={() => setSelectedEpics([])}
                 >
@@ -371,7 +437,10 @@ const Epics = () => {
       {/* Sort Controls */}
       <div className="flex items-center space-x-4">
         <Label>Sort by:</Label>
-        <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+        <Select
+          value={sortBy}
+          onValueChange={(value: string) => setSortBy(value)}
+        >
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>
@@ -401,7 +470,10 @@ const Epics = () => {
               <TableRow>
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={selectedEpics.length === filteredAndSortedEpics.length && filteredAndSortedEpics.length > 0}
+                    checked={
+                      selectedEpics.length === filteredAndSortedEpics.length &&
+                      filteredAndSortedEpics.length > 0
+                    }
                     onCheckedChange={handleSelectAll}
                   />
                 </TableHead>
@@ -418,12 +490,14 @@ const Epics = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedEpics.map((epic) => (
+              {filteredAndSortedEpics.map(epic => (
                 <TableRow key={epic.id}>
                   <TableCell>
                     <Checkbox
                       checked={selectedEpics.includes(epic.id)}
-                      onCheckedChange={(checked) => handleSelectEpic(epic.id, checked as boolean)}
+                      onCheckedChange={checked =>
+                        handleSelectEpic(epic.id, checked as boolean)
+                      }
                     />
                   </TableCell>
                   <TableCell>
@@ -440,36 +514,26 @@ const Epics = () => {
                     <div>
                       <div className="font-medium">{epic.projectName}</div>
                       {epic.divisionName && (
-                        <div className="text-sm text-gray-500">{epic.divisionName}</div>
+                        <div className="text-sm text-gray-500">
+                          {epic.divisionName}
+                        </div>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    {epic.teamName || 'Unassigned'}
-                  </TableCell>
+                  <TableCell>{epic.teamName || 'Unassigned'}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(epic.status)}>
                       {epic.status.replace('-', ' ')}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    {epic.estimatedEffort || 'Not set'}
-                  </TableCell>
-                  <TableCell>
-                    {epic.targetEndDate || 'Not set'}
-                  </TableCell>
-                  <TableCell>
-                    {epic.releaseName || 'No release'}
-                  </TableCell>
+                  <TableCell>{epic.estimatedEffort || 'Not set'}</TableCell>
+                  <TableCell>{epic.targetEndDate || 'Not set'}</TableCell>
+                  <TableCell>{epic.releaseName || 'No release'}</TableCell>
                   {showMvpLine && (
-                    <TableCell>
-                      {epic.mvpPriority || 'Not set'}
-                    </TableCell>
+                    <TableCell>{epic.mvpPriority || 'Not set'}</TableCell>
                   )}
                   {showReleaseLine && (
-                    <TableCell>
-                      {epic.releasePriority || 'Not set'}
-                    </TableCell>
+                    <TableCell>{epic.releasePriority || 'Not set'}</TableCell>
                   )}
                   <TableCell>
                     <Button
