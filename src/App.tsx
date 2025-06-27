@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Navigation from './components/Navigation';
 import Index from './pages/Index';
 import Setup from './pages/Setup';
@@ -28,38 +29,40 @@ import './App.css';
 
 function App() {
   return (
-    <AppProvider>
-      <Router>
-        <div className="flex min-h-screen bg-gray-50">
-          <Navigation />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/setup" element={<Setup />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/teams" element={<Teams />} />
-              <Route path="/people" element={<People />} />
-              <Route path="/skills" element={<Skills />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/epics" element={<Epics />} />
-              <Route path="/milestones" element={<Milestones />} />
-              <Route path="/planning" element={<Planning />} />
-              <Route path="/advanced-planning" element={<AdvancedPlanning />} />
-              <Route path="/journey-planning" element={<JourneyPlanning />} />
-              <Route path="/allocations" element={<Allocations />} />
-              <Route path="/tracking" element={<Tracking />} />
-              <Route path="/financials" element={<Financials />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/canvas" element={<Canvas />} />
-              <Route path="/scenario-analysis" element={<ScenarioAnalysis />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Toaster />
-        </div>
-      </Router>
-    </AppProvider>
+    <ThemeProvider>
+      <AppProvider>
+        <Router>
+          <div className="flex min-h-screen bg-gray-50">
+            <Navigation />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/setup" element={<Setup />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/teams" element={<Teams />} />
+                <Route path="/people" element={<People />} />
+                <Route path="/skills" element={<Skills />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/epics" element={<Epics />} />
+                <Route path="/milestones" element={<Milestones />} />
+                <Route path="/planning" element={<Planning />} />
+                <Route path="/advanced-planning" element={<AdvancedPlanning />} />
+                <Route path="/journey-planning" element={<JourneyPlanning />} />
+                <Route path="/allocations" element={<Allocations />} />
+                <Route path="/tracking" element={<Tracking />} />
+                <Route path="/financials" element={<Financials />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/canvas" element={<Canvas />} />
+                <Route path="/scenario-analysis" element={<ScenarioAnalysis />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Toaster />
+          </div>
+        </Router>
+      </AppProvider>
+    </ThemeProvider>
   );
 }
 
