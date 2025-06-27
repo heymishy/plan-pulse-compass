@@ -1,3 +1,4 @@
+
 import { http, HttpResponse } from "msw";
 
 // Mock data
@@ -88,12 +89,12 @@ export const handlers = [
   }),
 
   http.post("/api/people", async ({ request }) => {
-    const newPerson = await request.json();
+    const newPerson = (await request.json()) as Record<string, any>;
     return HttpResponse.json({ ...newPerson, id: Date.now().toString() });
   }),
 
   http.put("/api/people/:id", async ({ request }) => {
-    const updatedPerson = await request.json();
+    const updatedPerson = (await request.json()) as Record<string, any>;
     return HttpResponse.json(updatedPerson);
   }),
 
@@ -107,7 +108,7 @@ export const handlers = [
   }),
 
   http.post("/api/teams", async ({ request }) => {
-    const newTeam = await request.json();
+    const newTeam = (await request.json()) as Record<string, any>;
     return HttpResponse.json({ ...newTeam, id: Date.now().toString() });
   }),
 
@@ -117,7 +118,7 @@ export const handlers = [
   }),
 
   http.post("/api/projects", async ({ request }) => {
-    const newProject = await request.json();
+    const newProject = (await request.json()) as Record<string, any>;
     return HttpResponse.json({ ...newProject, id: Date.now().toString() });
   }),
 

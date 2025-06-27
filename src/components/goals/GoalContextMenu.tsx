@@ -46,14 +46,15 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
   const foundGoal = goal || northStarGoal;
 
   console.log("GoalContextMenu - found goal:", foundGoal);
-  console.log("GoalContextMenu - goal status:", foundGoal?.status);
-  console.log("GoalContextMenu - rendering context menu");
 
   // Handle north star goals (they have a different structure)
   const isNorthStar = foundGoal?.isNorthStar || false;
 
-  // For North Star goals, we need to handle the different structure
-  const goalStatus = isNorthStar ? "not-started" : foundGoal?.status;
+  // Safely access status with fallback
+  const goalStatus = foundGoal && 'status' in foundGoal ? foundGoal.status : 'not-started';
+
+  console.log("GoalContextMenu - goal status:", goalStatus);
+  console.log("GoalContextMenu - rendering context menu");
 
   const handleAction = (action: string) => {
     console.log("GoalContextMenu - handleAction called with:", action);
@@ -93,9 +94,10 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
         break;
       case "at-risk":
         console.log("GoalContextMenu - At-risk action, updating goal");
+        const currentConfidence = foundGoal && 'confidence' in foundGoal ? foundGoal.confidence : 0.5;
         updateGoal(foundGoal.id, {
           status: "at-risk",
-          confidence: Math.min(foundGoal.confidence, 0.4),
+          confidence: Math.min(currentConfidence, 0.4),
         });
         break;
       case "archive":
@@ -167,9 +169,10 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
     event.stopPropagation();
     console.log("GoalContextMenu - handleAtRisk called for goalId:", goalId);
     if (foundGoal && updateGoal) {
+      const currentConfidence = foundGoal && 'confidence' in foundGoal ? foundGoal.confidence : 0.5;
       updateGoal(foundGoal.id, {
         status: "at-risk",
-        confidence: Math.min(foundGoal.confidence, 0.4),
+        confidence: Math.min(currentConfidence, 0.4),
       });
     }
   };
@@ -205,7 +208,13 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start text-sm"
-                onClick={handleSplit}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (goalId && onSplit) {
+                    onSplit(goalId);
+                  }
+                }}
               >
                 <Split className="h-4 w-4 mr-2" />
                 Split Goal
@@ -214,7 +223,13 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start text-sm"
-                onClick={handleEdit}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (goalId && onEdit) {
+                    onEdit(goalId);
+                  }
+                }}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Goal
@@ -223,7 +238,13 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start text-sm"
-                onClick={handleClone}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (goalId && onClone) {
+                    onClone(goalId);
+                  }
+                }}
               >
                 <Copy className="h-4 w-4 mr-2" />
                 Clone Goal
@@ -232,7 +253,10 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start text-sm"
-                onClick={handleLink}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log("Link to epic/project:", goalId);
+                }}
               >
                 <Link className="h-4 w-4 mr-2" />
                 Link to Epic/Project
@@ -245,7 +269,15 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start text-sm text-green-600"
-                  onClick={handleComplete}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (foundGoal && updateGoal) {
+                      updateGoal(foundGoal.id, {
+                        status: "completed",
+                        metric: { ...foundGoal.metric, current: foundGoal.metric.target },
+                      });
+                    }
+                  }}
                 >
                   <Target className="h-4 w-4 mr-2" />
                   Mark Complete
@@ -257,7 +289,16 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start text-sm text-yellow-600"
-                  onClick={handleAtRisk}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (foundGoal && updateGoal) {
+                      const currentConfidence = foundGoal && 'confidence' in foundGoal ? foundGoal.confidence : 0.5;
+                      updateGoal(foundGoal.id, {
+                        status: "at-risk",
+                        confidence: Math.min(currentConfidence, 0.4),
+                      });
+                    }
+                  }}
                 >
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Mark At Risk
@@ -268,7 +309,15 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start text-sm text-blue-600"
-                onClick={handlePark}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (foundGoal && updateGoal) {
+                    updateGoal(foundGoal.id, {
+                      timeFrame: "unassigned",
+                      status: "not-started",
+                    });
+                  }
+                }}
               >
                 <Pause className="h-4 w-4 mr-2" />
                 Park Goal
@@ -280,7 +329,12 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start text-sm text-red-600 hover:text-red-700"
-                onClick={handleArchive}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (foundGoal && updateGoal) {
+                    updateGoal(foundGoal.id, { status: "cancelled" });
+                  }
+                }}
               >
                 <Archive className="h-4 w-4 mr-2" />
                 Archive Goal
@@ -294,7 +348,13 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start text-sm"
-                onClick={handleEdit}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (goalId && onEdit) {
+                    onEdit(goalId);
+                  }
+                }}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit North Star
@@ -303,7 +363,10 @@ const GoalContextMenu: React.FC<GoalContextMenuProps> = ({
                 variant="ghost"
                 size="sm"
                 className="w-full justify-start text-sm"
-                onClick={handleLink}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log("Link to epic/project:", goalId);
+                }}
               >
                 <Link className="h-4 w-4 mr-2" />
                 Link to Epic/Project

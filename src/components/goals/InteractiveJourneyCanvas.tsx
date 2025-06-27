@@ -220,9 +220,11 @@ const InteractiveJourneyCanvas: React.FC = () => {
         data: {
           ...northStar,
           isNorthStar: true,
-          confidence: 1.0,
-          status: "in-progress",
+          confidence: northStar.confidence || 1.0,
+          status: northStar.status || "in-progress",
           timeFrame: northStar.timeHorizon,
+          dependencies: northStar.dependencies || [],
+          updatedDate: northStar.updatedDate || northStar.createdDate,
         },
       });
     }
@@ -264,7 +266,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
           draggable: true,
           data: {
             ...goal,
-            isNorthStar: false,
+            isNorthStar: goal.isNorthStar || false,
             cycle: effectiveCycles.find((c) => c.id === goal.timeFrame),
             canSplit: goal.status !== "completed",
           },
@@ -531,7 +533,21 @@ const InteractiveJourneyCanvas: React.FC = () => {
       // Check if it's a North Star goal
       if (northStar && northStar.id === goalId) {
         console.log("InteractiveJourneyCanvas - Editing North Star goal");
-        setGoalToEdit(northStar);
+        // Convert NorthStar to Goal-compatible format for editing
+        const goalCompatibleNorthStar: Goal = {
+          id: northStar.id,
+          title: northStar.title,
+          description: northStar.description,
+          status: northStar.status || 'in-progress',
+          confidence: northStar.confidence || 1.0,
+          metric: northStar.metric,
+          timeFrame: northStar.timeHorizon,
+          dependencies: northStar.dependencies || [],
+          createdDate: northStar.createdDate,
+          updatedDate: northStar.updatedDate || northStar.createdDate,
+          isNorthStar: true,
+        };
+        setGoalToEdit(goalCompatibleNorthStar);
         setEditModalOpen(true);
       } else {
         // Check regular goals

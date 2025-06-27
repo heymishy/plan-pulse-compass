@@ -1,4 +1,3 @@
-
 // Goal-Centric Journey Planning Types
 export interface Goal {
   id: string;
@@ -13,6 +12,7 @@ export interface Goal {
   createdDate: string;
   updatedDate: string;
   notes?: string;
+  isNorthStar?: boolean; // Add this to distinguish goal types
 }
 
 export interface GoalMetric {
@@ -32,6 +32,12 @@ export interface NorthStar {
   metric: GoalMetric;
   isActive: boolean;
   createdDate: string;
+  isNorthStar: boolean; // Add this for type safety
+  status?: 'not-started' | 'in-progress' | 'completed' | 'at-risk' | 'cancelled'; // Add status
+  confidence?: number; // Add confidence for compatibility
+  timeFrame?: string; // Add timeFrame for compatibility
+  dependencies?: string[]; // Add dependencies for compatibility
+  updatedDate?: string; // Add updatedDate for compatibility
 }
 
 // Linking interfaces for goals
