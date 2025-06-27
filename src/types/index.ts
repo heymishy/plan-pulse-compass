@@ -1,4 +1,3 @@
-
 // Core data types for the planning app
 export interface Person {
   id: string;
@@ -30,7 +29,7 @@ export interface Role {
 
 export interface Team {
   id: string;
-  name:string;
+  name: string;
   divisionId?: string;
   divisionName?: string;
   productOwnerId?: string;
@@ -128,7 +127,7 @@ export interface Solution {
   createdDate: string;
 }
 
-export type SolutionCategory = 
+export type SolutionCategory =
   | 'platform'
   | 'framework-stack'
   | 'methodology'
@@ -212,10 +211,10 @@ export interface VarianceAnalysis {
   impactLevel: 'low' | 'medium' | 'high';
 }
 
-export type VarianceReasonType = 
+export type VarianceReasonType =
   | 'none'
   | 'production-support'
-  | 'scope-change' 
+  | 'scope-change'
   | 'resource-unavailable'
   | 'technical-blocker'
   | 'priority-shift'
@@ -296,7 +295,7 @@ export interface Skill {
   createdDate: string;
 }
 
-export type SkillCategory = 
+export type SkillCategory =
   | 'programming-language'
   | 'framework'
   | 'platform'
@@ -351,7 +350,11 @@ export interface ProjectReportExecutiveSummary {
   keyMetrics: {
     budget: { value: number; trend: 'up' | 'down' | 'stable' };
     timeline: { value: string; trend: 'ahead' | 'behind' | 'stable' };
-    scope: { completed: number; total: number; trend: 'up' | 'down' | 'stable' };
+    scope: {
+      completed: number;
+      total: number;
+      trend: 'up' | 'down' | 'stable';
+    };
   };
 }
 
@@ -360,8 +363,19 @@ export interface ProjectReportFinancials {
   budget: number;
   variance: number;
   burnRate: number; // monthly
-  costBreakdown: any[]; // from calculateProjectCost
-  teamBreakdown: any[]; // from calculateProjectCost
+  costBreakdown: {
+    personId: string;
+    personName: string;
+    allocationPercentage: number;
+    duration: number;
+    totalPersonCost: number;
+  }[];
+  teamBreakdown: {
+    teamId: string;
+    teamName: string;
+    totalCost: number;
+    allocationPercentage: number;
+  }[];
 }
 
 export interface ProjectReportProgress {
@@ -397,17 +411,17 @@ export interface ProjectReportData {
 }
 
 // Goal-related imports and additions
-export type { 
-  Goal, 
-  GoalMetric, 
-  NorthStar, 
-  GoalEpic, 
-  GoalMilestone, 
+export type {
+  Goal,
+  GoalMetric,
+  NorthStar,
+  GoalEpic,
+  GoalMilestone,
   GoalTeam,
   JourneyPath,
   GoalProgress,
   JourneyCanvasConfig,
   GoalFilterType,
   CreateGoalRequest,
-  UpdateGoalRequest
+  UpdateGoalRequest,
 } from './goalTypes';

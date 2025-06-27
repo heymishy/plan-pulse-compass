@@ -1,8 +1,8 @@
-import React, { createContext, useContext, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import {
   useEncryptedLocalStorage,
   useLocalStorage,
-} from "@/hooks/useLocalStorage";
+} from '@/hooks/useLocalStorage';
 import {
   Person,
   Role,
@@ -23,20 +23,20 @@ import {
   Solution,
   ProjectSkill,
   ProjectSolution,
-} from "@/types";
+} from '@/types';
 import {
   Goal,
   NorthStar,
   GoalEpic,
   GoalMilestone,
   GoalTeam,
-} from "@/types/goalTypes";
+} from '@/types/goalTypes';
 
 interface AppContextType {
   // Data
   people: Person[];
   setPeople: (people: Person[] | ((prev: Person[]) => Person[])) => void;
-  addPerson: (personData: Omit<Person, "id">) => void;
+  addPerson: (personData: Omit<Person, 'id'>) => void;
   updatePerson: (personId: string, personData: Partial<Person>) => void;
   roles: Role[];
   setRoles: (roles: Role[] | ((prev: Role[]) => Role[])) => void;
@@ -144,7 +144,7 @@ interface AppContextType {
   ) => void;
 
   // Goal helper methods
-  addGoal: (goalData: Omit<Goal, "id" | "createdDate" | "updatedDate">) => void;
+  addGoal: (goalData: Omit<Goal, 'id' | 'createdDate' | 'updatedDate'>) => void;
   updateGoal: (goalId: string, goalData: Partial<Goal>) => void;
 }
 
@@ -153,7 +153,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const useApp = () => {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error("useApp must be used within an AppProvider");
+    throw new Error('useApp must be used within an AppProvider');
   }
   return context;
 };
@@ -161,122 +161,122 @@ export const useApp = () => {
 export const AppProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  console.log("AppProvider: Initializing context...");
+  console.log('AppProvider: Initializing context...');
 
   // Encrypted sensitive data
   const [people, setPeople, isPeopleLoading] = useEncryptedLocalStorage<
     Person[]
-  >("planning-people", []);
+  >('planning-people', []);
   const [projects, setProjects, isProjectsLoading] = useEncryptedLocalStorage<
     Project[]
-  >("planning-projects", []);
+  >('planning-projects', []);
 
   // Non-sensitive configuration data
-  const [roles, setRoles] = useLocalStorage<Role[]>("planning-roles", []);
-  const [teams, setTeams] = useLocalStorage<Team[]>("planning-teams", []);
+  const [roles, setRoles] = useLocalStorage<Role[]>('planning-roles', []);
+  const [teams, setTeams] = useLocalStorage<Team[]>('planning-teams', []);
   const [divisions, setDivisions] = useLocalStorage<Division[]>(
-    "planning-divisions",
+    'planning-divisions',
     []
   );
-  const [epics, setEpics] = useLocalStorage<Epic[]>("planning-epics", []);
+  const [epics, setEpics] = useLocalStorage<Epic[]>('planning-epics', []);
   const [releases, setReleases] = useLocalStorage<Release[]>(
-    "planning-releases",
+    'planning-releases',
     []
   );
   const [allocations, setAllocations] = useLocalStorage<Allocation[]>(
-    "planning-allocations",
+    'planning-allocations',
     []
   );
-  const [cycles, setCycles] = useLocalStorage<Cycle[]>("planning-cycles", []);
+  const [cycles, setCycles] = useLocalStorage<Cycle[]>('planning-cycles', []);
   const [runWorkCategories, setRunWorkCategories] = useLocalStorage<
     RunWorkCategory[]
-  >("planning-run-categories", []);
+  >('planning-run-categories', []);
   const [config, setConfig] = useLocalStorage<AppConfig | null>(
-    "planning-config",
+    'planning-config',
     null
   );
   const [isSetupComplete, setIsSetupComplete] = useLocalStorage<boolean>(
-    "planning-setup-complete",
+    'planning-setup-complete',
     false
   );
 
   // Skills data
-  const [skills, setSkills] = useLocalStorage<Skill[]>("planning-skills", []);
+  const [skills, setSkills] = useLocalStorage<Skill[]>('planning-skills', []);
   const [personSkills, setPersonSkills] = useLocalStorage<PersonSkill[]>(
-    "planning-person-skills",
+    'planning-person-skills',
     []
   );
 
   // NEW: Solutions data
   const [solutions, setSolutions] = useLocalStorage<Solution[]>(
-    "planning-solutions",
+    'planning-solutions',
     []
   );
   const [projectSkills, setProjectSkills] = useLocalStorage<ProjectSkill[]>(
-    "planning-project-skills",
+    'planning-project-skills',
     []
   );
   const [projectSolutions, setProjectSolutions] = useLocalStorage<
     ProjectSolution[]
-  >("planning-project-solutions", []);
+  >('planning-project-solutions', []);
 
   // Goal data with encrypted storage for sensitive goal information
   const [goals, setGoals, isGoalsLoading] = useEncryptedLocalStorage<Goal[]>(
-    "planning-goals",
+    'planning-goals',
     []
   );
   const [northStar, setNorthStar] = useLocalStorage<NorthStar | null>(
-    "planning-north-star",
+    'planning-north-star',
     null
   );
   const [goalEpics, setGoalEpics] = useLocalStorage<GoalEpic[]>(
-    "planning-goal-epics",
+    'planning-goal-epics',
     []
   );
   const [goalMilestones, setGoalMilestones] = useLocalStorage<GoalMilestone[]>(
-    "planning-goal-milestones",
+    'planning-goal-milestones',
     []
   );
   const [goalTeams, setGoalTeams] = useLocalStorage<GoalTeam[]>(
-    "planning-goal-teams",
+    'planning-goal-teams',
     []
   );
 
   // Tracking data
   const [actualAllocations, setActualAllocations] = useLocalStorage<
     ActualAllocation[]
-  >("planning-actual-allocations", []);
+  >('planning-actual-allocations', []);
   const [iterationReviews, setIterationReviews] = useLocalStorage<
     IterationReview[]
-  >("planning-iteration-reviews", []);
+  >('planning-iteration-reviews', []);
   const [iterationSnapshots, setIterationSnapshots] = useLocalStorage<
     IterationSnapshot[]
-  >("planning-iteration-snapshots", []);
+  >('planning-iteration-snapshots', []);
 
-  const addPerson = (personData: Omit<Person, "id">) => {
+  const addPerson = (personData: Omit<Person, 'id'>) => {
     const newPerson: Person = {
       ...personData,
       id: Date.now().toString(), // Simple ID generation
     };
-    setPeople((prevPeople) => [...prevPeople, newPerson]);
+    setPeople(prevPeople => [...prevPeople, newPerson]);
   };
 
   const updatePerson = (personId: string, personData: Partial<Person>) => {
-    setPeople((prevPeople) =>
-      prevPeople.map((person) =>
+    setPeople(prevPeople =>
+      prevPeople.map(person =>
         person.id === personId ? { ...person, ...personData } : person
       )
     );
   };
 
   const updateProject = (projectId: string, updatedProject: Project) => {
-    setProjects((prevProjects) =>
-      prevProjects.map((p) => (p.id === projectId ? updatedProject : p))
+    setProjects(prevProjects =>
+      prevProjects.map(p => (p.id === projectId ? updatedProject : p))
     );
   };
 
   const addGoal = (
-    goalData: Omit<Goal, "id" | "createdDate" | "updatedDate">
+    goalData: Omit<Goal, 'id' | 'createdDate' | 'updatedDate'>
   ) => {
     const now = new Date().toISOString();
     const newGoal: Goal = {
@@ -286,24 +286,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       createdDate: now,
       updatedDate: now,
     };
-    console.log("addGoal called with:", goalData);
-    console.log("Created new goal:", newGoal);
-    setGoals((prevGoals) => {
+    console.log('addGoal called with:', goalData);
+    console.log('Created new goal:', newGoal);
+    setGoals(prevGoals => {
       const updatedGoals = [...prevGoals, newGoal];
-      console.log("Updated goals array:", updatedGoals);
+      console.log('Updated goals array:', updatedGoals);
       return updatedGoals;
     });
   };
 
   const updateGoal = (goalId: string, goalData: Partial<Goal>) => {
-    console.log("updateGoal called with:", { goalId, goalData });
-    setGoals((prevGoals) => {
-      const updatedGoals = prevGoals.map((goal) =>
+    console.log('updateGoal called with:', { goalId, goalData });
+    setGoals(prevGoals => {
+      const updatedGoals = prevGoals.map(goal =>
         goal.id === goalId
           ? { ...goal, ...goalData, updatedDate: new Date().toISOString() }
           : goal
       );
-      console.log("Goals after update:", updatedGoals);
+      console.log('Goals after update:', updatedGoals);
       return updatedGoals;
     });
   };
@@ -313,22 +313,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Initialize default data if none exists
   useEffect(() => {
     if (!isDataLoading && divisions.length === 0) {
-      console.log("Initializing default divisions");
+      console.log('Initializing default divisions');
       const defaultDivisions = [
         {
-          id: "engineering-division",
-          name: "Engineering",
-          description: "Software development and technical teams",
+          id: 'engineering-division',
+          name: 'Engineering',
+          description: 'Software development and technical teams',
         },
         {
-          id: "product-division",
-          name: "Product",
-          description: "Product management and design teams",
+          id: 'product-division',
+          name: 'Product',
+          description: 'Product management and design teams',
         },
         {
-          id: "business-division",
-          name: "Business",
-          description: "Marketing, sales, and business operations",
+          id: 'business-division',
+          name: 'Business',
+          description: 'Marketing, sales, and business operations',
         },
       ];
       setDivisions(defaultDivisions);
@@ -337,59 +337,59 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     if (!isDataLoading && teams.length === 0 && divisions.length > 0) {
-      console.log("Initializing default teams");
+      console.log('Initializing default teams');
       setTeams([
         {
-          id: "engineering",
-          name: "Engineering",
-          divisionId: "engineering-division",
+          id: 'engineering',
+          name: 'Engineering',
+          divisionId: 'engineering-division',
           capacity: 40,
         },
         {
-          id: "product",
-          name: "Product",
-          divisionId: "product-division",
+          id: 'product',
+          name: 'Product',
+          divisionId: 'product-division',
           capacity: 40,
         },
         {
-          id: "design",
-          name: "Design",
-          divisionId: "product-division",
+          id: 'design',
+          name: 'Design',
+          divisionId: 'product-division',
           capacity: 40,
         },
         {
-          id: "marketing",
-          name: "Marketing",
-          divisionId: "business-division",
+          id: 'marketing',
+          name: 'Marketing',
+          divisionId: 'business-division',
           capacity: 40,
         },
       ]);
     }
-  }, [isDataLoading, teams.length, divisions.length, setTeams]);
+  }, [isDataLoading, teams.length, divisions.length, setTeams, teams]);
 
   // Fix existing teams that have empty divisionId
   useEffect(() => {
     if (!isDataLoading && teams.length > 0 && divisions.length > 0) {
       const teamsWithEmptyDivision = teams.filter(
-        (team) => !team.divisionId || team.divisionId === ""
+        team => !team.divisionId || team.divisionId === ''
       );
       if (teamsWithEmptyDivision.length > 0) {
-        console.log("Fixing teams with empty divisionId");
-        setTeams((prevTeams) =>
-          prevTeams.map((team) => {
-            if (!team.divisionId || team.divisionId === "") {
+        console.log('Fixing teams with empty divisionId');
+        setTeams(prevTeams =>
+          prevTeams.map(team => {
+            if (!team.divisionId || team.divisionId === '') {
               // Map teams to appropriate divisions based on name
-              let divisionId = "engineering-division"; // default
+              let divisionId = 'engineering-division'; // default
               if (
-                team.name.toLowerCase().includes("product") ||
-                team.name.toLowerCase().includes("design")
+                team.name.toLowerCase().includes('product') ||
+                team.name.toLowerCase().includes('design')
               ) {
-                divisionId = "product-division";
+                divisionId = 'product-division';
               } else if (
-                team.name.toLowerCase().includes("marketing") ||
-                team.name.toLowerCase().includes("sales")
+                team.name.toLowerCase().includes('marketing') ||
+                team.name.toLowerCase().includes('sales')
               ) {
-                divisionId = "business-division";
+                divisionId = 'business-division';
               }
               return { ...team, divisionId };
             }
@@ -398,43 +398,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         );
       }
     }
-  }, [isDataLoading, teams.length, divisions.length, setTeams]);
+  }, [isDataLoading, teams.length, divisions.length, setTeams, teams]);
 
   useEffect(() => {
     if (!isDataLoading && cycles.length === 0) {
-      console.log("Initializing default cycles");
+      console.log('Initializing default cycles');
       setCycles([
         {
-          id: "q1-2024",
-          name: "Q1 2024",
-          startDate: "2024-01-01",
-          endDate: "2024-03-31",
-          type: "quarterly",
-          status: "planning",
+          id: 'q1-2024',
+          name: 'Q1 2024',
+          startDate: '2024-01-01',
+          endDate: '2024-03-31',
+          type: 'quarterly',
+          status: 'planning',
         },
         {
-          id: "q2-2024",
-          name: "Q2 2024",
-          startDate: "2024-04-01",
-          endDate: "2024-06-30",
-          type: "quarterly",
-          status: "planning",
+          id: 'q2-2024',
+          name: 'Q2 2024',
+          startDate: '2024-04-01',
+          endDate: '2024-06-30',
+          type: 'quarterly',
+          status: 'planning',
         },
         {
-          id: "q3-2024",
-          name: "Q3 2024",
-          startDate: "2024-07-01",
-          endDate: "2024-09-30",
-          type: "quarterly",
-          status: "planning",
+          id: 'q3-2024',
+          name: 'Q3 2024',
+          startDate: '2024-07-01',
+          endDate: '2024-09-30',
+          type: 'quarterly',
+          status: 'planning',
         },
         {
-          id: "q4-2024",
-          name: "Q4 2024",
-          startDate: "2024-10-01",
-          endDate: "2024-12-31",
-          type: "quarterly",
-          status: "planning",
+          id: 'q4-2024',
+          name: 'Q4 2024',
+          startDate: '2024-10-01',
+          endDate: '2024-12-31',
+          type: 'quarterly',
+          status: 'planning',
         },
       ]);
     }
@@ -443,7 +443,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Debug logging for context state changes
   useEffect(() => {
     if (!isDataLoading) {
-      console.log("AppProvider: Context state updated:", {
+      console.log('AppProvider: Context state updated:', {
         peopleCount: people.length,
         projectsCount: projects.length,
         rolesCount: roles.length,

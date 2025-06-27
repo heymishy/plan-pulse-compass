@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { Edge, Node } from '@xyflow/react';
 import { useApp } from '@/context/AppContext';
@@ -17,7 +16,6 @@ import {
   generateSolutionsSkillsView,
 } from '@/utils/canvas/nodeEdgeGenerators';
 
-
 interface UseCanvasDataProps {
   viewType: CanvasViewType;
   selectedDivision: string;
@@ -31,26 +29,28 @@ export const useCanvasData = ({
   selectedTeam,
   selectedProject,
 }: UseCanvasDataProps) => {
-  const { 
-    people, 
-    roles, 
-    teams, 
-    projects, 
-    epics, 
-    allocations, 
-    divisions, 
-    runWorkCategories, 
-    skills, 
-    personSkills, 
+  const {
+    people,
+    roles,
+    teams,
+    projects,
+    epics,
+    allocations,
+    divisions,
+    runWorkCategories,
+    skills,
+    personSkills,
     cycles,
     solutions,
     projectSolutions,
-    projectSkills
+    projectSkills,
   } = useApp();
 
   const { nodes, edges, stats } = useMemo(() => {
     const now = new Date();
-    const activeCycle = cycles.find(c => new Date(c.startDate) <= now && new Date(c.endDate) >= now);
+    const activeCycle = cycles.find(
+      c => new Date(c.startDate) <= now && new Date(c.endDate) >= now
+    );
 
     const currentAllocations = activeCycle
       ? allocations.filter(a => a.cycleId === activeCycle.id)
@@ -81,7 +81,11 @@ export const useCanvasData = ({
 
     switch (viewType) {
       case 'people-teams': {
-        const res = generatePeopleTeamsView({ teamsToShow, peopleToShow, roles });
+        const res = generatePeopleTeamsView({
+          teamsToShow,
+          peopleToShow,
+          roles,
+        });
         currentNodes = res.nodes;
         currentEdges = res.edges;
         break;
@@ -93,13 +97,22 @@ export const useCanvasData = ({
         break;
       }
       case 'people-skills': {
-        const res = generatePeopleSkillsView({ peopleToShow, personSkills, skills });
+        const res = generatePeopleSkillsView({
+          peopleToShow,
+          personSkills,
+          skills,
+        });
         currentNodes = res.nodes;
         currentEdges = res.edges;
         break;
       }
       case 'team-skills-summary': {
-        const res = generateTeamSkillsSummaryView({ teamsToShow, people, personSkills, skills });
+        const res = generateTeamSkillsSummaryView({
+          teamsToShow,
+          people,
+          personSkills,
+          skills,
+        });
         currentNodes = res.nodes;
         currentEdges = res.edges;
         break;
@@ -122,13 +135,24 @@ export const useCanvasData = ({
         break;
       }
       case 'teams-projects': {
-        const res = generateTeamsProjectsView({ divisionsToShow, teamsToShow, projectsToShow, epics: epicsToShow, allocations: allocationsToShow });
+        const res = generateTeamsProjectsView({
+          divisionsToShow,
+          teamsToShow,
+          projectsToShow,
+          epics: epicsToShow,
+          allocations: allocationsToShow,
+        });
         currentNodes = res.nodes;
         currentEdges = res.edges;
         break;
       }
       case 'projects-epics': {
-        const res = generateProjectsEpicsView({ projectsToShow, epicsToShow, teamsToShow, allocations: allocationsToShow });
+        const res = generateProjectsEpicsView({
+          projectsToShow,
+          epicsToShow,
+          teamsToShow,
+          allocations: allocationsToShow,
+        });
         currentNodes = res.nodes;
         currentEdges = res.edges;
         break;
@@ -147,7 +171,11 @@ export const useCanvasData = ({
         break;
       }
       case 'projects-solutions': {
-        const res = generateProjectsSolutionsView({ projectsToShow, solutions, projectSolutions });
+        const res = generateProjectsSolutionsView({
+          projectsToShow,
+          solutions,
+          projectSolutions,
+        });
         currentNodes = res.nodes;
         currentEdges = res.edges;
         break;
@@ -159,8 +187,20 @@ export const useCanvasData = ({
         break;
       }
       case 'all': {
-        const tp = generateTeamsProjectsView({ divisionsToShow, teamsToShow, projectsToShow, epics: epicsToShow, allocations: allocationsToShow });
-        const pe = generateProjectsEpicsView({ projectsToShow, epicsToShow, teamsToShow, isAllView: true, allocations: allocationsToShow });
+        const tp = generateTeamsProjectsView({
+          divisionsToShow,
+          teamsToShow,
+          projectsToShow,
+          epics: epicsToShow,
+          allocations: allocationsToShow,
+        });
+        const pe = generateProjectsEpicsView({
+          projectsToShow,
+          epicsToShow,
+          teamsToShow,
+          isAllView: true,
+          allocations: allocationsToShow,
+        });
 
         currentNodes = [...tp.nodes, ...pe.nodes];
         currentEdges = [...tp.edges, ...pe.edges];
@@ -178,7 +218,25 @@ export const useCanvasData = ({
     };
 
     return { nodes: currentNodes, edges: currentEdges, stats: finalStats };
-  }, [people, roles, teams, projects, epics, allocations, divisions, runWorkCategories, skills, personSkills, cycles, solutions, projectSolutions, projectSkills, viewType, selectedDivision, selectedTeam, selectedProject]);
+  }, [
+    people,
+    roles,
+    teams,
+    projects,
+    epics,
+    allocations,
+    divisions,
+    runWorkCategories,
+    skills,
+    personSkills,
+    cycles,
+    solutions,
+    projectSolutions,
+    viewType,
+    selectedDivision,
+    selectedTeam,
+    selectedProject,
+  ]);
 
   return { nodes, edges, stats };
 };

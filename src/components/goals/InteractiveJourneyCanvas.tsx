@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -14,27 +14,27 @@ import {
   EdgeChange,
   applyNodeChanges,
   applyEdgeChanges,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
-import { useApp } from "@/context/AppContext";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { useApp } from '@/context/AppContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Goal } from "@/types/goalTypes";
-import { Plus, Eye, EyeOff } from "lucide-react";
-import InteractiveGoalNode from "./InteractiveGoalNode";
-import TimeBandBackground from "./TimeBandBackground";
-import GoalCreationModal from "./GoalCreationModal";
-import GoalContextMenu from "./GoalContextMenu";
-import GoalSplitDialog from "./GoalSplitDialog";
-import UnassignedZone from "./UnassignedZone";
-import { useCanvasInteractions } from "../../hooks/useCanvasInteractions";
+} from '@/components/ui/select';
+import { Goal } from '@/types/goalTypes';
+import { Plus, Eye, EyeOff } from 'lucide-react';
+import InteractiveGoalNode from './InteractiveGoalNode';
+import TimeBandBackground from './TimeBandBackground';
+import GoalCreationModal from './GoalCreationModal';
+import GoalContextMenu from './GoalContextMenu';
+import GoalSplitDialog from './GoalSplitDialog';
+import UnassignedZone from './UnassignedZone';
+import { useCanvasInteractions } from '../../hooks/useCanvasInteractions';
 
 const nodeTypes = {
   goalNode: InteractiveGoalNode,
@@ -52,8 +52,8 @@ const InteractiveJourneyCanvas: React.FC = () => {
     addGoal,
     setNorthStar,
   } = useApp();
-  const [selectedDivision, setSelectedDivision] = useState<string>("all");
-  const [selectedTeam, setSelectedTeam] = useState<string>("all");
+  const [selectedDivision, setSelectedDivision] = useState<string>('all');
+  const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [showMiniMap, setShowMiniMap] = useState(true);
   const [showDependencies, setShowDependencies] = useState(true);
   const [creationModalOpen, setCreationModalOpen] = useState(false);
@@ -73,46 +73,46 @@ const InteractiveJourneyCanvas: React.FC = () => {
   }>({ visible: false, x: 0, y: 0 });
 
   // Debug logging
-  console.log("InteractiveJourneyCanvas - cycles:", cycles);
-  console.log("InteractiveJourneyCanvas - teams:", teams);
-  console.log("InteractiveJourneyCanvas - goals:", goals);
+  console.log('InteractiveJourneyCanvas - cycles:', cycles);
+  console.log('InteractiveJourneyCanvas - teams:', teams);
+  console.log('InteractiveJourneyCanvas - goals:', goals);
 
   // Create default cycles if none exist
   const effectiveCycles = useMemo(() => {
     if (cycles.length === 0) {
-      console.log("No cycles found, creating default cycles");
+      console.log('No cycles found, creating default cycles');
       return [
         {
-          id: "q1-2024",
-          name: "Q1 2024",
-          startDate: "2024-01-01",
-          endDate: "2024-03-31",
-          type: "quarter" as const,
-          status: "planning" as const,
+          id: 'q1-2024',
+          name: 'Q1 2024',
+          startDate: '2024-01-01',
+          endDate: '2024-03-31',
+          type: 'quarter' as const,
+          status: 'planning' as const,
         },
         {
-          id: "q2-2024",
-          name: "Q2 2024",
-          startDate: "2024-04-01",
-          endDate: "2024-06-30",
-          type: "quarter" as const,
-          status: "planning" as const,
+          id: 'q2-2024',
+          name: 'Q2 2024',
+          startDate: '2024-04-01',
+          endDate: '2024-06-30',
+          type: 'quarter' as const,
+          status: 'planning' as const,
         },
         {
-          id: "q3-2024",
-          name: "Q3 2024",
-          startDate: "2024-07-01",
-          endDate: "2024-09-30",
-          type: "quarter" as const,
-          status: "planning" as const,
+          id: 'q3-2024',
+          name: 'Q3 2024',
+          startDate: '2024-07-01',
+          endDate: '2024-09-30',
+          type: 'quarter' as const,
+          status: 'planning' as const,
         },
         {
-          id: "q4-2024",
-          name: "Q4 2024",
-          startDate: "2024-10-01",
-          endDate: "2024-12-31",
-          type: "quarter" as const,
-          status: "planning" as const,
+          id: 'q4-2024',
+          name: 'Q4 2024',
+          startDate: '2024-10-01',
+          endDate: '2024-12-31',
+          type: 'quarter' as const,
+          status: 'planning' as const,
         },
       ];
     }
@@ -123,7 +123,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
   const timeBands = useMemo(() => {
     const bands = effectiveCycles.map((cycle, index) => ({
       id: `timeband-${cycle.id}`,
-      type: "timeBand",
+      type: 'timeBand',
       position: { x: 0, y: index * 220 + 100 },
       data: {
         cycle,
@@ -136,22 +136,22 @@ const InteractiveJourneyCanvas: React.FC = () => {
 
     // Add unassigned zone
     bands.push({
-      id: "timeband-unassigned",
-      type: "timeBand",
+      id: 'timeband-unassigned',
+      type: 'timeBand',
       position: { x: 0, y: effectiveCycles.length * 220 + 100 },
       data: {
         cycle: {
-          id: "unassigned",
-          name: "Parking Zone",
-          startDate: "",
-          endDate: "",
-          type: "iteration" as const,
-          status: "planning" as const,
+          id: 'unassigned',
+          name: 'Parking Zone',
+          startDate: '',
+          endDate: '',
+          type: 'iteration' as const,
+          status: 'planning' as const,
         },
         width: 1400,
         height: 150,
         isUnassigned: true,
-      },
+      } as any,
       draggable: false,
       selectable: false,
     });
@@ -162,50 +162,50 @@ const InteractiveJourneyCanvas: React.FC = () => {
   // Filter goals based on selected team and division
   const filteredGoals = useMemo(() => {
     console.log(
-      "InteractiveJourneyCanvas - selectedDivision:",
+      'InteractiveJourneyCanvas - selectedDivision:',
       selectedDivision
     );
-    console.log("InteractiveJourneyCanvas - selectedTeam:", selectedTeam);
-    console.log("InteractiveJourneyCanvas - all goals:", goals);
-    console.log("InteractiveJourneyCanvas - all teams:", teams);
-    console.log("InteractiveJourneyCanvas - all divisions:", divisions);
+    console.log('InteractiveJourneyCanvas - selectedTeam:', selectedTeam);
+    console.log('InteractiveJourneyCanvas - all goals:', goals);
+    console.log('InteractiveJourneyCanvas - all teams:', teams);
+    console.log('InteractiveJourneyCanvas - all divisions:', divisions);
 
     // First, filter teams by division
     const teamsInDivision =
-      selectedDivision === "all"
+      selectedDivision === 'all'
         ? teams
-        : teams.filter((team) => team.divisionId === selectedDivision);
+        : teams.filter(team => team.divisionId === selectedDivision);
 
-    console.log("InteractiveJourneyCanvas - teamsInDivision:", teamsInDivision);
+    console.log('InteractiveJourneyCanvas - teamsInDivision:', teamsInDivision);
 
     // Then, filter goals by team within the division
-    if (selectedTeam === "all") {
+    if (selectedTeam === 'all') {
       // If "all teams" is selected, show goals from all teams in the selected division
-      const filtered = goals.filter((goal) => {
+      const filtered = goals.filter(goal => {
         if (!goal.ownerId) return true; // Goals without owners are shown
-        const team = teamsInDivision.find((t) => t.id === goal.ownerId);
+        const team = teamsInDivision.find(t => t.id === goal.ownerId);
         return team !== undefined;
       });
       console.log(
-        "InteractiveJourneyCanvas - filtered goals (all teams):",
+        'InteractiveJourneyCanvas - filtered goals (all teams):',
         filtered
       );
       return filtered;
     } else {
       // Show goals from the specific selected team
-      const filtered = goals.filter((goal) => goal.ownerId === selectedTeam);
+      const filtered = goals.filter(goal => goal.ownerId === selectedTeam);
       console.log(
-        "InteractiveJourneyCanvas - filtered goals (specific team):",
+        'InteractiveJourneyCanvas - filtered goals (specific team):',
         filtered
       );
       return filtered;
     }
-  }, [goals, teams, selectedTeam, selectedDivision]);
+  }, [goals, teams, selectedTeam, selectedDivision, divisions]);
 
   // Generate goal nodes positioned within time bands
   const goalNodes = useMemo(() => {
     console.log(
-      "InteractiveJourneyCanvas - Creating goal nodes from filteredGoals:",
+      'InteractiveJourneyCanvas - Creating goal nodes from filteredGoals:',
       filteredGoals
     );
     const nodes: Node[] = [];
@@ -214,14 +214,14 @@ const InteractiveJourneyCanvas: React.FC = () => {
     if (northStar) {
       nodes.push({
         id: `north-star-${northStar.id}`,
-        type: "goalNode",
+        type: 'goalNode',
         position: { x: 700, y: 20 },
         draggable: true,
         data: {
           ...northStar,
           isNorthStar: true,
           confidence: northStar.confidence || 1.0,
-          status: northStar.status || "in-progress",
+          status: northStar.status || 'in-progress',
           timeFrame: northStar.timeHorizon,
           dependencies: northStar.dependencies || [],
           updatedDate: northStar.updatedDate || northStar.createdDate,
@@ -231,8 +231,8 @@ const InteractiveJourneyCanvas: React.FC = () => {
 
     // Position goals within their time bands
     const goalsByTimeFrame = new Map();
-    filteredGoals.forEach((goal) => {
-      const timeFrame = goal.timeFrame || "unassigned";
+    filteredGoals.forEach(goal => {
+      const timeFrame = goal.timeFrame || 'unassigned';
       if (!goalsByTimeFrame.has(timeFrame)) {
         goalsByTimeFrame.set(timeFrame, []);
       }
@@ -240,15 +240,15 @@ const InteractiveJourneyCanvas: React.FC = () => {
     });
 
     console.log(
-      "InteractiveJourneyCanvas - goalsByTimeFrame:",
+      'InteractiveJourneyCanvas - goalsByTimeFrame:',
       goalsByTimeFrame
     );
 
     goalsByTimeFrame.forEach((goalsInFrame, timeFrame) => {
       const cycleIndex =
-        timeFrame === "unassigned"
+        timeFrame === 'unassigned'
           ? effectiveCycles.length
-          : effectiveCycles.findIndex((c) => c.id === timeFrame);
+          : effectiveCycles.findIndex(c => c.id === timeFrame);
 
       const bandY =
         cycleIndex >= 0
@@ -261,18 +261,18 @@ const InteractiveJourneyCanvas: React.FC = () => {
 
         const node = {
           id: `goal-${goal.id}`,
-          type: "goalNode",
+          type: 'goalNode',
           position: { x: offsetX, y: bandY + offsetY },
           draggable: true,
           data: {
             ...goal,
             isNorthStar: goal.isNorthStar || false,
-            cycle: effectiveCycles.find((c) => c.id === goal.timeFrame),
-            canSplit: goal.status !== "completed",
+            cycle: effectiveCycles.find(c => c.id === goal.timeFrame),
+            canSplit: goal.status !== 'completed',
           },
         };
         console.log(
-          "InteractiveJourneyCanvas - Creating node for goal:",
+          'InteractiveJourneyCanvas - Creating node for goal:',
           goal.title,
           node
         );
@@ -281,13 +281,16 @@ const InteractiveJourneyCanvas: React.FC = () => {
     });
 
     console.log(
-      "InteractiveJourneyCanvas - Total nodes created:",
+      'InteractiveJourneyCanvas - Total nodes created:',
       nodes.length
     );
     return nodes;
   }, [filteredGoals, northStar, effectiveCycles]);
 
-  const initialNodes = [...timeBands, ...goalNodes];
+  const initialNodes = useMemo(
+    () => [...timeBands, ...goalNodes],
+    [timeBands, goalNodes]
+  );
 
   // Generate dependency edges
   const initialEdges = useMemo(() => {
@@ -297,15 +300,15 @@ const InteractiveJourneyCanvas: React.FC = () => {
 
     // Connect goals to North Star
     if (northStar) {
-      filteredGoals.forEach((goal) => {
+      filteredGoals.forEach(goal => {
         edges.push({
           id: `edge-goal-${goal.id}-to-north-star`,
           source: `goal-${goal.id}`,
           target: `north-star-${northStar.id}`,
-          type: "smoothstep",
-          animated: goal.status === "in-progress",
+          type: 'smoothstep',
+          animated: goal.status === 'in-progress',
           style: {
-            stroke: goal.status === "completed" ? "#22c55e" : "#64748b",
+            stroke: goal.status === 'completed' ? '#22c55e' : '#64748b',
             strokeWidth: 2,
             opacity: 0.6,
           },
@@ -314,18 +317,18 @@ const InteractiveJourneyCanvas: React.FC = () => {
     }
 
     // Add dependency edges
-    filteredGoals.forEach((goal) => {
-      (goal.dependencies || []).forEach((depId) => {
-        if (filteredGoals.find((g) => g.id === depId)) {
+    filteredGoals.forEach(goal => {
+      (goal.dependencies || []).forEach(depId => {
+        if (filteredGoals.find(g => g.id === depId)) {
           edges.push({
             id: `edge-dep-${depId}-to-${goal.id}`,
             source: `goal-${depId}`,
             target: `goal-${goal.id}`,
-            type: "step",
+            type: 'step',
             style: {
-              stroke: "#f59e0b",
+              stroke: '#f59e0b',
               strokeWidth: 2,
-              strokeDasharray: "5,5",
+              strokeDasharray: '5,5',
             },
           });
         }
@@ -341,20 +344,20 @@ const InteractiveJourneyCanvas: React.FC = () => {
   // Update nodes when goals change
   useEffect(() => {
     console.log(
-      "InteractiveJourneyCanvas - Updating nodes due to goal changes"
+      'InteractiveJourneyCanvas - Updating nodes due to goal changes'
     );
-    console.log("InteractiveJourneyCanvas - New initialNodes:", initialNodes);
+    console.log('InteractiveJourneyCanvas - New initialNodes:', initialNodes);
     setNodes(initialNodes);
-  }, [goals, filteredGoals]);
+  }, [goals, filteredGoals, initialNodes]);
 
   // Update edges when goals change
   useEffect(() => {
     console.log(
-      "InteractiveJourneyCanvas - Updating edges due to goal changes"
+      'InteractiveJourneyCanvas - Updating edges due to goal changes'
     );
-    console.log("InteractiveJourneyCanvas - New initialEdges:", initialEdges);
+    console.log('InteractiveJourneyCanvas - New initialEdges:', initialEdges);
     setEdges(initialEdges);
-  }, [goals, filteredGoals, showDependencies]);
+  }, [goals, filteredGoals, showDependencies, initialEdges]);
 
   // Close context menu when modals open
   useEffect(() => {
@@ -365,18 +368,18 @@ const InteractiveJourneyCanvas: React.FC = () => {
 
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     console.log(
-      "InteractiveJourneyCanvas - onNodesChange called with:",
+      'InteractiveJourneyCanvas - onNodesChange called with:',
       changes
     );
-    setNodes((nds) => applyNodeChanges(changes, nds));
+    setNodes(nds => applyNodeChanges(changes, nds));
   }, []);
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
     console.log(
-      "InteractiveJourneyCanvas - onEdgesChange called with:",
+      'InteractiveJourneyCanvas - onEdgesChange called with:',
       changes
     );
-    setEdges((eds) => applyEdgeChanges(changes, eds));
+    setEdges(eds => applyEdgeChanges(changes, eds));
   }, []);
 
   const {
@@ -395,7 +398,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
   const onConnect = useCallback(
     (params: Connection) => {
       handleConnection(params);
-      setEdges((eds) => addEdge(params, eds));
+      setEdges(eds => addEdge(params, eds));
     },
     [handleConnection, setEdges]
   );
@@ -433,11 +436,11 @@ const InteractiveJourneyCanvas: React.FC = () => {
   const handleGoalCreation = useCallback(
     (goalData: Partial<Goal>) => {
       console.log(
-        "InteractiveJourneyCanvas - handleGoalCreation called with:",
+        'InteractiveJourneyCanvas - handleGoalCreation called with:',
         goalData
       );
       console.log(
-        "InteractiveJourneyCanvas - creationPosition:",
+        'InteractiveJourneyCanvas - creationPosition:',
         creationPosition
       );
 
@@ -451,12 +454,12 @@ const InteractiveJourneyCanvas: React.FC = () => {
           let cycle;
 
           if (bandIndex >= effectiveCycles.length) {
-            cycle = { id: "unassigned" };
+            cycle = { id: 'unassigned' };
           } else {
             cycle = effectiveCycles[bandIndex];
           }
 
-          timeFrame = cycle?.id || effectiveCycles[0]?.id || "";
+          timeFrame = cycle?.id || effectiveCycles[0]?.id || '';
         }
 
         const finalGoalData = {
@@ -465,7 +468,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
         };
 
         console.log(
-          "InteractiveJourneyCanvas - Final goal data:",
+          'InteractiveJourneyCanvas - Final goal data:',
           finalGoalData
         );
         addGoal(finalGoalData as any);
@@ -478,12 +481,12 @@ const InteractiveJourneyCanvas: React.FC = () => {
 
   const handleGoalSplit = useCallback(
     (subGoals: Partial<Goal>[]) => {
-      console.log("handleGoalSplit called with:", subGoals);
-      subGoals.forEach((subGoal) => {
-        console.log("Adding sub-goal:", subGoal);
+      console.log('handleGoalSplit called with:', subGoals);
+      subGoals.forEach(subGoal => {
+        console.log('Adding sub-goal:', subGoal);
         addGoal(subGoal as any);
       });
-      console.log("Sub-goals added, closing split dialog");
+      console.log('Sub-goals added, closing split dialog');
       setSplitDialogOpen(false);
     },
     [addGoal]
@@ -492,13 +495,13 @@ const InteractiveJourneyCanvas: React.FC = () => {
   const handleGoalEdit = useCallback(
     (goalData: Partial<Goal>) => {
       console.log(
-        "InteractiveJourneyCanvas - handleGoalEdit called with:",
+        'InteractiveJourneyCanvas - handleGoalEdit called with:',
         goalData
       );
       if (goalToEdit) {
         // Check if it's a North Star goal
         if (goalToEdit.isNorthStar && northStar) {
-          console.log("InteractiveJourneyCanvas - Updating North Star goal");
+          console.log('InteractiveJourneyCanvas - Updating North Star goal');
           const updatedNorthStar = {
             ...northStar,
             ...goalData,
@@ -506,7 +509,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
           };
           setNorthStar(updatedNorthStar);
         } else {
-          console.log("InteractiveJourneyCanvas - Updating regular goal");
+          console.log('InteractiveJourneyCanvas - Updating regular goal');
           updateGoal(goalToEdit.id, goalData);
         }
       }
@@ -518,7 +521,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
 
   const handleParkGoal = useCallback(
     (goalId: string) => {
-      updateGoal(goalId, { timeFrame: "unassigned", status: "not-started" });
+      updateGoal(goalId, { timeFrame: 'unassigned', status: 'not-started' });
     },
     [updateGoal]
   );
@@ -526,13 +529,13 @@ const InteractiveJourneyCanvas: React.FC = () => {
   const handleEditGoal = useCallback(
     (goalId: string) => {
       console.log(
-        "InteractiveJourneyCanvas - handleEditGoal called with:",
+        'InteractiveJourneyCanvas - handleEditGoal called with:',
         goalId
       );
 
       // Check if it's a North Star goal
       if (northStar && northStar.id === goalId) {
-        console.log("InteractiveJourneyCanvas - Editing North Star goal");
+        console.log('InteractiveJourneyCanvas - Editing North Star goal');
         // Convert NorthStar to Goal-compatible format for editing
         const goalCompatibleNorthStar: Goal = {
           id: northStar.id,
@@ -551,9 +554,9 @@ const InteractiveJourneyCanvas: React.FC = () => {
         setEditModalOpen(true);
       } else {
         // Check regular goals
-        const goal = goals.find((g) => g.id === goalId);
+        const goal = goals.find(g => g.id === goalId);
         if (goal) {
-          console.log("InteractiveJourneyCanvas - Editing regular goal");
+          console.log('InteractiveJourneyCanvas - Editing regular goal');
           setGoalToEdit(goal);
           setEditModalOpen(true);
         }
@@ -566,20 +569,20 @@ const InteractiveJourneyCanvas: React.FC = () => {
   const handleCloneGoal = useCallback(
     (goalId: string) => {
       console.log(
-        "InteractiveJourneyCanvas - handleCloneGoal called with:",
+        'InteractiveJourneyCanvas - handleCloneGoal called with:',
         goalId
       );
-      const goal = goals.find((g) => g.id === goalId);
+      const goal = goals.find(g => g.id === goalId);
       if (goal) {
         // Create a clone of the goal with a new ID
-        const clonedGoal: Omit<Goal, "id" | "createdDate" | "updatedDate"> = {
+        const clonedGoal: Omit<Goal, 'id' | 'createdDate' | 'updatedDate'> = {
           ...goal,
           title: `${goal.title} (Copy)`,
-          status: "not-started",
+          status: 'not-started',
           metric: { ...goal.metric, current: 0 },
         };
         console.log(
-          "InteractiveJourneyCanvas - Creating cloned goal:",
+          'InteractiveJourneyCanvas - Creating cloned goal:',
           clonedGoal
         );
         addGoal(clonedGoal);
@@ -590,12 +593,12 @@ const InteractiveJourneyCanvas: React.FC = () => {
   );
 
   const parkedGoalsCount = goals.filter(
-    (g) => g.timeFrame === "unassigned"
+    g => g.timeFrame === 'unassigned'
   ).length;
 
   // Reset team selection when division changes
   useEffect(() => {
-    setSelectedTeam("all");
+    setSelectedTeam('all');
   }, [selectedDivision]);
 
   return (
@@ -609,7 +612,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Divisions</SelectItem>
-              {divisions.map((division) => (
+              {divisions.map(division => (
                 <SelectItem key={division.id} value={division.id}>
                   {division.name}
                 </SelectItem>
@@ -624,11 +627,11 @@ const InteractiveJourneyCanvas: React.FC = () => {
               <SelectItem value="all">All Teams</SelectItem>
               {teams
                 .filter(
-                  (team) =>
-                    selectedDivision === "all" ||
+                  team =>
+                    selectedDivision === 'all' ||
                     team.divisionId === selectedDivision
                 )
-                .map((team) => (
+                .map(team => (
                   <SelectItem key={team.id} value={team.id}>
                     {team.name}
                   </SelectItem>
@@ -652,7 +655,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
             size="sm"
             onClick={() => setShowMiniMap(!showMiniMap)}
           >
-            {showMiniMap ? "Hide" : "Show"} MiniMap
+            {showMiniMap ? 'Hide' : 'Show'} MiniMap
           </Button>
         </div>
       </div>
@@ -676,7 +679,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
 
       <Card>
         <CardContent className="p-0">
-          <div style={{ width: "100%", height: "800px", position: "relative" }}>
+          <div style={{ width: '100%', height: '800px', position: 'relative' }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -687,7 +690,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
               onNodeContextMenu={onNodeContextMenu}
               nodeTypes={nodeTypes}
               fitView
-              style={{ backgroundColor: "#fafafa" }}
+              style={{ backgroundColor: '#fafafa' }}
               minZoom={0.2}
               maxZoom={1.5}
             >
@@ -700,7 +703,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
                   style={{
                     height: 120,
                     width: 200,
-                    backgroundColor: "#f1f5f9",
+                    backgroundColor: '#f1f5f9',
                   }}
                 />
               )}
@@ -717,7 +720,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
                 style={{
                   left: contextMenu.x,
                   top: contextMenu.y,
-                  transform: "translate(-50%, -50%)",
+                  transform: 'translate(-50%, -50%)',
                 }}
               >
                 <GoalContextMenu
@@ -726,16 +729,16 @@ const InteractiveJourneyCanvas: React.FC = () => {
                   goalId={contextMenu.goalId}
                   onClose={() => {
                     console.log(
-                      "InteractiveJourneyCanvas - Closing context menu"
+                      'InteractiveJourneyCanvas - Closing context menu'
                     );
                     setContextMenu({ visible: false, x: 0, y: 0 });
                   }}
-                  onSplit={(goalId) => {
+                  onSplit={goalId => {
                     console.log(
-                      "InteractiveJourneyCanvas - onSplit called with:",
+                      'InteractiveJourneyCanvas - onSplit called with:',
                       goalId
                     );
-                    const goal = goals.find((g) => g.id === goalId);
+                    const goal = goals.find(g => g.id === goalId);
                     if (goal) {
                       setGoalToSplit(goal);
                       setSplitDialogOpen(true);

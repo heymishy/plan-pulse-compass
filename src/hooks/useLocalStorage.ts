@@ -13,7 +13,11 @@ const isLocalStorageAvailable = (): boolean => {
   }
 };
 
-export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryptionKey: string = 'default-key') {
+export function useEncryptedLocalStorage<T>(
+  key: string,
+  initialValue: T,
+  encryptionKey: string = 'default-key'
+) {
   const [storedValue, setStoredValue] = useState<T>(initialValue);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,33 +33,52 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
     const loadValue = async () => {
       setIsLoading(true);
       try {
-        const derivedKey = await deriveKey(encryptionKey, new TextEncoder().encode(key));
+        const derivedKey = await deriveKey(
+          encryptionKey,
+          new TextEncoder().encode(key)
+        );
         const item = window.localStorage.getItem(key);
         if (item) {
           const parsedItem = JSON.parse(item);
-          
-          if (parsedItem && typeof parsedItem.iv === 'string' && typeof parsedItem.encrypted === 'string') {
+
+          if (
+            parsedItem &&
+            typeof parsedItem.iv === 'string' &&
+            typeof parsedItem.encrypted === 'string'
+          ) {
             // Data is already encrypted, decrypt it
             const decrypted = await decryptData(parsedItem, derivedKey);
             if (isMounted) {
               setStoredValue(JSON.parse(decrypted));
             }
-            console.log(`Successfully loaded and decrypted data for key "${key}"`);
+            console.log(
+              `Successfully loaded and decrypted data for key "${key}"`
+            );
           } else {
             // Data is unencrypted (old format), migrate it
-            console.log(`Old data format detected for key "${key}". Migrating to encrypted format.`);
+            console.log(
+              `Old data format detected for key "${key}". Migrating to encrypted format.`
+            );
             if (isMounted) {
               setStoredValue(parsedItem);
             }
-            const encrypted = await encryptData(JSON.stringify(parsedItem), derivedKey);
+            const encrypted = await encryptData(
+              JSON.stringify(parsedItem),
+              derivedKey
+            );
             window.localStorage.setItem(key, JSON.stringify(encrypted));
-            console.log(`Successfully migrated and encrypted data for key "${key}"`);
+            console.log(
+              `Successfully migrated and encrypted data for key "${key}"`
+            );
           }
         } else if (isMounted) {
           setStoredValue(initialValue);
         }
       } catch (error) {
-        console.error(`Error reading, decrypting, or migrating data from localStorage key "${key}". Data may be corrupted. Using initial value for this session, but not deleting stored data.`, error);
+        console.error(
+          `Error reading, decrypting, or migrating data from localStorage key "${key}". Data may be corrupted. Using initial value for this session, but not deleting stored data.`,
+          error
+        );
         if (isMounted) {
           setStoredValue(initialValue);
         }
@@ -67,30 +90,42 @@ export function useEncryptedLocalStorage<T>(key: string, initialValue: T, encryp
     };
 
     loadValue();
-    
+
     return () => {
       isMounted = false;
     };
   }, [key, encryptionKey]);
 
-  const setValue = useCallback(async (value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
+  const setValue = useCallback(
+    async (value: T | ((val: T) => T)) => {
+      try {
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+        setStoredValue(valueToStore);
 
-      if (isLocalStorageAvailable()) {
-        const derivedKey = await deriveKey(encryptionKey, new TextEncoder().encode(key));
-        const encrypted = await encryptData(JSON.stringify(valueToStore), derivedKey);
-        window.localStorage.setItem(key, JSON.stringify(encrypted));
-        console.log(`Successfully encrypted and saved data for key "${key}"`);
-      } else {
-        console.warn('localStorage is not available, data will not persist');
+        if (isLocalStorageAvailable()) {
+          const derivedKey = await deriveKey(
+            encryptionKey,
+            new TextEncoder().encode(key)
+          );
+          const encrypted = await encryptData(
+            JSON.stringify(valueToStore),
+            derivedKey
+          );
+          window.localStorage.setItem(key, JSON.stringify(encrypted));
+          console.log(`Successfully encrypted and saved data for key "${key}"`);
+        } else {
+          console.warn('localStorage is not available, data will not persist');
+        }
+      } catch (error) {
+        console.error(
+          `Error saving encrypted data to localStorage key "${key}":`,
+          error
+        );
       }
-    } catch (error)
-    {
-      console.error(`Error saving encrypted data to localStorage key "${key}":`, error);
-    }
-  }, [storedValue, key, encryptionKey]);
+    },
+    [storedValue, key, encryptionKey]
+  );
 
   return [storedValue, setValue, isLoading] as const;
 }
@@ -119,7 +154,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
 
   const setValue = (value: T | ((val: T) => T)) => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      const valueToStore =
+        value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
 
       if (isLocalStorageAvailable()) {

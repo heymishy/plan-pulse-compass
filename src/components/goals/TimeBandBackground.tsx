@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
+import { Cycle } from '@/types';
 
 interface TimeBandBackgroundProps {
   data: {
-    cycle: any;
+    cycle: Cycle;
     width: number;
     height: number;
     isUnassigned?: boolean;
@@ -31,17 +31,9 @@ const TimeBandBackground: React.FC<TimeBandBackgroundProps> = ({ data }) => {
           </div>
         )}
       </div>
-      
-      <Handle
-        type="target"
-        position={Position.Top}
-        style={{ opacity: 0 }}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        style={{ opacity: 0 }}
-      />
+
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
     </div>
   );
 };

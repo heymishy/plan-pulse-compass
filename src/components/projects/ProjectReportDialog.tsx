@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project, Epic } from '@/types';
@@ -22,21 +21,39 @@ interface ProjectReportDialogProps {
   project: Project | null;
 }
 
-const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClose, project }) => {
+const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({
+  isOpen,
+  onClose,
+  project,
+}) => {
   const { epics, allocations, cycles, people, roles, teams } = useApp();
   const { toast } = useToast();
 
   // Memoize the financial calculations to prevent recalculations on every render
   const projectFinancials = useMemo(() => {
-    if (!project) return { totalCost: 0, breakdown: [], teamBreakdown: [], monthlyBurnRate: 0 };
-    return calculateProjectCost(project, epics, allocations, cycles, people, roles, teams);
-  }, [project?.id, epics, allocations, cycles, people, roles, teams]);
+    if (!project)
+      return {
+        totalCost: 0,
+        breakdown: [],
+        teamBreakdown: [],
+        monthlyBurnRate: 0,
+      };
+    return calculateProjectCost(
+      project,
+      epics,
+      allocations,
+      cycles,
+      people,
+      roles,
+      teams
+    );
+  }, [project, epics, allocations, cycles, people, roles, teams]);
 
   // Memoize project epics to prevent recalculations
   const projectEpics = useMemo(() => {
     if (!project) return [];
     return epics.filter(epic => epic.projectId === project.id);
-  }, [epics, project?.id]);
+  }, [epics, project]);
 
   if (!project) return null;
 
@@ -49,27 +66,34 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
       estimatedCost: projectFinancials.totalCost,
       epics: projectEpics.length,
       milestones: project.milestones.length,
-      completedMilestones: project.milestones.filter(m => m.status === 'completed').length,
+      completedMilestones: project.milestones.filter(
+        m => m.status === 'completed'
+      ).length,
     };
 
     const dataStr = JSON.stringify(reportData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
+    const dataUri =
+      'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
     const exportFileDefaultName = `${project.name.replace(/\s+/g, '_')}_report.json`;
-    
+
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
 
     toast({
-      title: "Report Exported",
+      title: 'Report Exported',
       description: `Project report for ${project.name} has been downloaded.`,
     });
   };
 
-  const completedMilestones = project.milestones.filter(m => m.status === 'completed').length;
-  const completedEpics = projectEpics.filter(e => e.status === 'completed').length;
+  const completedMilestones = project.milestones.filter(
+    m => m.status === 'completed'
+  ).length;
+  const completedEpics = projectEpics.filter(
+    e => e.status === 'completed'
+  ).length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -98,7 +122,11 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
               )}
               <div>
                 <h4 className="font-semibold">Budget</h4>
-                <p>{project.budget ? `$${project.budget.toLocaleString()}` : 'Not set'}</p>
+                <p>
+                  {project.budget
+                    ? `$${project.budget.toLocaleString()}`
+                    : 'Not set'}
+                </p>
               </div>
             </div>
             {project.description && (
@@ -115,24 +143,37 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
               <div>
                 <h4 className="font-semibold">Estimated Cost</h4>
                 <p className="text-2xl font-bold">
-                  ${projectFinancials.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  $
+                  {projectFinancials.totalCost.toLocaleString(undefined, {
+                    maximumFractionDigits: 0,
+                  })}
                 </p>
               </div>
               {project.budget && (
                 <div>
                   <h4 className="font-semibold">Budget Variance</h4>
-                  <p className={`text-2xl font-bold ${(project.budget - projectFinancials.totalCost) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    ${Math.abs(project.budget - projectFinancials.totalCost).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  <p
+                    className={`text-2xl font-bold ${project.budget - projectFinancials.totalCost >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    $
+                    {Math.abs(
+                      project.budget - projectFinancials.totalCost
+                    ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {(project.budget - projectFinancials.totalCost) >= 0 ? 'Under budget' : 'Over budget'}
+                    {project.budget - projectFinancials.totalCost >= 0
+                      ? 'Under budget'
+                      : 'Over budget'}
                   </p>
                 </div>
               )}
               <div>
                 <h4 className="font-semibold">Monthly Burn Rate</h4>
                 <p className="text-xl font-semibold">
-                  ${projectFinancials.monthlyBurnRate.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  $
+                  {projectFinancials.monthlyBurnRate.toLocaleString(undefined, {
+                    maximumFractionDigits: 0,
+                  })}
                 </p>
               </div>
             </div>
@@ -147,10 +188,9 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
                   {completedMilestones}/{project.milestones.length}
                 </div>
                 <p className="text-sm text-gray-600">
-                  {project.milestones.length > 0 
+                  {project.milestones.length > 0
                     ? `${Math.round((completedMilestones / project.milestones.length) * 100)}% Complete`
-                    : 'No milestones defined'
-                  }
+                    : 'No milestones defined'}
                 </p>
               </div>
               <div>
@@ -159,10 +199,9 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
                   {completedEpics}/{projectEpics.length}
                 </div>
                 <p className="text-sm text-gray-600">
-                  {projectEpics.length > 0 
+                  {projectEpics.length > 0
                     ? `${Math.round((completedEpics / projectEpics.length) * 100)}% Complete`
-                    : 'No epics defined'
-                  }
+                    : 'No epics defined'}
                 </p>
               </div>
             </div>
@@ -179,23 +218,32 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({ isOpen, onClo
           {projectEpics.length > 0 && (
             <ReportSection title="Epics Summary">
               <div className="space-y-3">
-                {projectEpics.map((epic) => (
-                  <div key={epic.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                {projectEpics.map(epic => (
+                  <div
+                    key={epic.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
                     <div>
                       <h5 className="font-medium">{epic.name}</h5>
                       {epic.description && (
-                        <p className="text-sm text-gray-600 line-clamp-1">{epic.description}</p>
+                        <p className="text-sm text-gray-600 line-clamp-1">
+                          {epic.description}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center space-x-4">
                       <span className="text-sm font-medium">
                         {epic.estimatedEffort} pts
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        epic.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        epic.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          epic.status === 'completed'
+                            ? 'bg-green-100 text-green-800'
+                            : epic.status === 'in-progress'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
                         {epic.status.replace('-', ' ')}
                       </span>
                     </div>
