@@ -1,0 +1,55 @@
+# Test files and mocks - EXCLUDE ENTIRELY
+src/test/
+**/*.test.*
+**/*.spec.*
+**/__tests__/
+**/__mocks__/
+**/mocks/
+**/handlers.ts
+**/setupTests.ts
+**/test-utils.ts
+**/test-setup.ts
+
+# Test configurations
+vitest.config.*
+vitest.config.jsdom-test.ts
+vitest.config.minimal.ts
+vitest.config.node.ts
+vitest.config.isolated.ts
+
+# Development files
+.env.local
+.env.development
+.env.test
+
+# Build artifacts
+coverage/
+.nyc_output/
+
+# Documentation
+README.md
+*.md
+CI_CD_SETUP.md
+TESTING.md
+PRD-spec.md
+
+# Development tools
+.vscode/
+.idea/
+*.log
+
+# Dependencies (will be installed by Vercel)
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Husky
+.husky/
+
+# Lock files (Vercel will use package-lock.json)
+bun.lockb 
