@@ -1,10 +1,10 @@
-import React from "react";
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { BrowserRouter } from "react-router-dom";
+import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 
 // Mock all the complex dependencies
-vi.mock("@/context/AppContext", () => ({
+vi.mock('@/context/AppContext', () => ({
   useApp: vi.fn(() => ({
     isSetupComplete: true,
     isDataLoading: false,
@@ -14,10 +14,10 @@ vi.mock("@/context/AppContext", () => ({
   })),
 }));
 
-vi.mock("@/utils/dashboardUtils", () => ({
+vi.mock('@/utils/dashboardUtils', () => ({
   getDashboardData: vi.fn(() => ({
-    currentQuarter: "Q1 2024",
-    currentIteration: "Iteration 1",
+    currentQuarter: 'Q1 2024',
+    currentIteration: 'Iteration 1',
     quarterlyProgress: [],
     attentionItems: [],
     iterationMetrics: {},
@@ -25,25 +25,25 @@ vi.mock("@/utils/dashboardUtils", () => ({
 }));
 
 // Mock dashboard components
-vi.mock("@/components/dashboard/CurrentStatusCard", () => ({
+vi.mock('@/components/dashboard/CurrentStatusCard', () => ({
   CurrentStatusCard: () => (
     <div data-testid="current-status-card">Current Status</div>
   ),
 }));
 
-vi.mock("@/components/dashboard/QuarterlyProgressCard", () => ({
+vi.mock('@/components/dashboard/QuarterlyProgressCard', () => ({
   QuarterlyProgressCard: () => (
     <div data-testid="quarterly-progress-card">Quarterly Progress</div>
   ),
 }));
 
-vi.mock("@/components/dashboard/IterationMetricsCard", () => ({
+vi.mock('@/components/dashboard/IterationMetricsCard', () => ({
   IterationMetricsCard: () => (
     <div data-testid="iteration-metrics-card">Iteration Metrics</div>
   ),
 }));
 
-vi.mock("@/components/dashboard/AttentionItemsCard", () => ({
+vi.mock('@/components/dashboard/AttentionItemsCard', () => ({
   AttentionItemsCard: () => (
     <div data-testid="attention-items-card">Attention Items</div>
   ),
@@ -60,32 +60,37 @@ const MockDashboard = () => (
   </div>
 );
 
-vi.mock("../Dashboard", () => ({
+vi.mock('../Dashboard', () => ({
   default: MockDashboard,
 }));
 
-describe("Dashboard", () => {
-  it("renders dashboard components", () => {
+describe('Dashboard', () => {
+  it('renders dashboard components', () => {
     render(
       <BrowserRouter>
         <MockDashboard />
       </BrowserRouter>
     );
 
-    expect(screen.getByTestId("dashboard")).toBeInTheDocument();
-    expect(screen.getByTestId("current-status-card")).toBeInTheDocument();
-    expect(screen.getByTestId("quarterly-progress-card")).toBeInTheDocument();
-    expect(screen.getByTestId("iteration-metrics-card")).toBeInTheDocument();
-    expect(screen.getByTestId("attention-items-card")).toBeInTheDocument();
+    expect(screen.getByTestId('dashboard')).toBeInTheDocument();
+    expect(screen.getByTestId('current-status-card')).toBeInTheDocument();
+    expect(screen.getByTestId('quarterly-progress-card')).toBeInTheDocument();
+    expect(screen.getByTestId('iteration-metrics-card')).toBeInTheDocument();
+    expect(screen.getByTestId('attention-items-card')).toBeInTheDocument();
   });
 
-  it("shows dashboard title", () => {
+  it('shows dashboard title', () => {
     render(
       <BrowserRouter>
         <MockDashboard />
       </BrowserRouter>
     );
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    // Use getAllByTestId to handle multiple instances and test the first one
+    const dashboardElements = screen.getAllByTestId('dashboard');
+    expect(dashboardElements.length).toBeGreaterThan(0);
+
+    const firstDashboard = dashboardElements[0];
+    expect(firstDashboard.querySelector('h1')).toHaveTextContent('Dashboard');
   });
 });

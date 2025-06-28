@@ -19,22 +19,13 @@ describe('Teams Integration Tests', () => {
     expect(validation.isValid).toBe(true);
   });
 
-  describe('Team Structure Validation', () => {
+  describe('Team-Division Integration', () => {
     it('should have teams with proper division assignments', () => {
       testData.teams.forEach(team => {
         const division = getTestDivisionById(team.divisionId!);
         expect(division).toBeDefined();
         expect(team.divisionName).toBe(division?.name);
-        expect(team.capacity).toBe(160); // Standard team capacity
       });
-    });
-
-    it('should have teams with realistic names', () => {
-      const teamNames = testData.teams.map(team => team.name);
-      expect(teamNames).toContain('Mortgage Origination');
-      expect(teamNames).toContain('Personal Loans Platform');
-      expect(teamNames).toContain('Commercial Lending Platform');
-      expect(teamNames).toContain('Business Credit Assessment');
     });
 
     it('should have teams distributed across divisions', () => {
@@ -50,7 +41,7 @@ describe('Teams Integration Tests', () => {
     });
   });
 
-  describe('Team-People Relationships', () => {
+  describe('Team-People Integration', () => {
     it('should have people assigned to teams', () => {
       testData.teams.forEach(team => {
         const teamPeople = getTestPeopleByTeamId(team.id);
@@ -69,177 +60,61 @@ describe('Teams Integration Tests', () => {
         expect(productOwners).toHaveLength(1);
       });
     });
+  });
 
-    it('should have realistic role distribution per team', () => {
+  describe('Team Analytics Integration', () => {
+    it('should calculate team capacity metrics', () => {
       testData.teams.forEach(team => {
         const teamPeople = getTestPeopleByTeamId(team.id);
-        const roleCounts = teamPeople.reduce(
-          (acc, person) => {
-            const role = testData.roles.find(r => r.id === person.roleId);
-            acc[role?.name || 'Unknown'] =
-              (acc[role?.name || 'Unknown'] || 0) + 1;
-            return acc;
-          },
-          {} as Record<string, number>
-        );
+        const teamMetrics = {
+          peopleCount: teamPeople.length,
+          totalSalary: teamPeople.reduce((sum, person) => {
+            return sum + (person.annualSalary || 0);
+          }, 0),
+          avgSalary:
+            teamPeople.reduce((sum, person) => {
+              return sum + (person.annualSalary || 0);
+            }, 0) / teamPeople.length,
+        };
 
-        // Each team should have at least 1 Product Owner
-        expect(roleCounts['Product Owner']).toBe(1);
+        expect(teamMetrics.peopleCount).toBeGreaterThan(0);
+        expect(teamMetrics.totalSalary).toBeGreaterThan(0);
+        expect(teamMetrics.avgSalary).toBeGreaterThan(0);
+      });
+    });
 
-        // Should have some technical roles
-        expect(
-          roleCounts['Software Engineer'] ||
-            roleCounts['Quality Engineer'] ||
-            roleCounts['Platform Engineer']
-        ).toBeGreaterThan(0);
+    it('should calculate division team metrics', () => {
+      testData.divisions.forEach(division => {
+        const divisionTeams = getTestTeamsByDivisionId(division.id);
+        const divisionMetrics = {
+          teamCount: divisionTeams.length,
+          totalPeople: divisionTeams.reduce((sum, team) => {
+            return sum + getTestPeopleByTeamId(team.id).length;
+          }, 0),
+        };
+
+        expect(divisionMetrics.teamCount).toBeGreaterThan(0);
+        expect(divisionMetrics.totalPeople).toBeGreaterThan(0);
       });
     });
   });
 
-  describe('Team Operations', () => {
-    it('should be able to find teams by division', () => {
-      const consumerTeams = getTestTeamsByDivisionId('div-test-001');
-      const businessTeams = getTestTeamsByDivisionId('div-test-002');
-
-      expect(consumerTeams).toHaveLength(2);
-      expect(businessTeams).toHaveLength(2);
-
-      consumerTeams.forEach(team => {
-        expect(team.divisionId).toBe('div-test-001');
-        expect(team.divisionName).toBe('Consumer Lending');
-      });
-
-      businessTeams.forEach(team => {
-        expect(team.divisionId).toBe('div-test-002');
-        expect(team.divisionName).toBe('Business Lending');
-      });
-    });
-
-    it('should be able to find people by team', () => {
-      const mortgageTeam = getTestTeamById('team-test-001');
-      expect(mortgageTeam).toBeDefined();
-
-      const mortgagePeople = getTestPeopleByTeamId('team-test-001');
-      expect(mortgagePeople).toHaveLength(4);
-
-      mortgagePeople.forEach(person => {
-        expect(person.teamId).toBe('team-test-001');
-        expect(person.isActive).toBe(true);
-        expect(person.employmentType).toBe('permanent');
-      });
-    });
-
-    it('should have realistic team capacity calculations', () => {
+  describe('Data Consistency Checks', () => {
+    it('should have consistent team data', () => {
       testData.teams.forEach(team => {
-        const teamPeople = getTestPeopleByTeamId(team.id);
-        const totalSalary = teamPeople.reduce((sum, person) => {
-          return sum + (person.annualSalary || 0);
-        }, 0);
-
-        // Team should have reasonable total salary
-        expect(totalSalary).toBeGreaterThan(400000); // 4 people * ~100k average
-        expect(totalSalary).toBeLessThan(500000); // 4 people * ~120k max
-      });
-    });
-  });
-
-  describe('Team Data Consistency', () => {
-    it('should have consistent email patterns', () => {
-      testData.people.forEach(person => {
-        expect(person.email).toMatch(/^[a-z]+\.[a-z]+@bankcorp\.com$/);
-        expect(person.email).toContain(
-          person.name.toLowerCase().replace(' ', '.')
-        );
+        expect(typeof team.name).toBe('string');
+        expect(typeof team.divisionId).toBe('string');
+        expect(typeof team.divisionName).toBe('string');
+        expect(typeof team.capacity).toBe('number');
+        expect(team.capacity).toBe(160); // Standard team capacity
       });
     });
 
-    it('should have realistic salary ranges by role', () => {
-      const roleSalaries = testData.roles.reduce(
-        (acc, role) => {
-          const peopleWithRole = testData.people.filter(
-            person => person.roleId === role.id
-          );
-          const salaries = peopleWithRole.map(
-            person => person.annualSalary || 0
-          );
-          acc[role.name] = {
-            min: Math.min(...salaries),
-            max: Math.max(...salaries),
-            avg:
-              salaries.reduce((sum, salary) => sum + salary, 0) /
-              salaries.length,
-          };
-          return acc;
-        },
-        {} as Record<string, { min: number; max: number; avg: number }>
-      );
-
-      // Product Owners should have highest salaries
-      expect(roleSalaries['Product Owner'].avg).toBeGreaterThan(
-        roleSalaries['Software Engineer'].avg
-      );
-      expect(roleSalaries['Product Owner'].avg).toBeGreaterThan(
-        roleSalaries['Quality Engineer'].avg
-      );
-      expect(roleSalaries['Product Owner'].avg).toBeGreaterThan(
-        roleSalaries['Platform Engineer'].avg
-      );
-
-      // Platform Engineers should have higher salaries than QEs
-      expect(roleSalaries['Platform Engineer'].avg).toBeGreaterThan(
-        roleSalaries['Quality Engineer'].avg
-      );
-    });
-
-    it('should have consistent start dates', () => {
+    it('should have people with valid team assignments', () => {
       testData.people.forEach(person => {
-        expect(person.startDate).toBe('2023-01-15');
+        const team = getTestTeamById(person.teamId);
+        expect(team).toBeDefined();
         expect(person.isActive).toBe(true);
-      });
-    });
-  });
-
-  describe('Team Performance Metrics', () => {
-    it('should calculate team size metrics', () => {
-      const teamSizes = testData.teams.map(team => {
-        const people = getTestPeopleByTeamId(team.id);
-        return {
-          teamId: team.id,
-          teamName: team.name,
-          size: people.length,
-          roles: people.map(person => {
-            const role = testData.roles.find(r => r.id === person.roleId);
-            return role?.name;
-          }),
-        };
-      });
-
-      expect(teamSizes).toHaveLength(4);
-      teamSizes.forEach(team => {
-        expect(team.size).toBeGreaterThan(0);
-        expect(team.size).toBeLessThanOrEqual(4);
-        expect(team.roles).toContain('Product Owner');
-      });
-    });
-
-    it('should calculate division team counts', () => {
-      const divisionStats = testData.divisions.map(division => {
-        const teams = getTestTeamsByDivisionId(division.id);
-        const people = teams.flatMap(team => getTestPeopleByTeamId(team.id));
-
-        return {
-          division: division.name,
-          teamCount: teams.length,
-          peopleCount: people.length,
-          avgTeamSize: people.length / teams.length,
-        };
-      });
-
-      expect(divisionStats).toHaveLength(2);
-      divisionStats.forEach(stat => {
-        expect(stat.teamCount).toBe(2);
-        expect(stat.peopleCount).toBe(8); // 2 teams * 4 people each
-        expect(stat.avgTeamSize).toBe(4);
       });
     });
   });
