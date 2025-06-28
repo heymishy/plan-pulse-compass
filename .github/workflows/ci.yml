@@ -196,8 +196,8 @@ jobs:
           # Set environment
           ENVIRONMENT="production"
 
-          # Create version info JSON
-          VERSION_INFO=$(cat <<EOF
+          # Create version info JSON and save to file
+          cat > version-info.json << EOF
           {
             "version": "$VERSION",
             "buildNumber": "$BUILD_NUMBER",
@@ -208,18 +208,19 @@ jobs:
             "environment": "$ENVIRONMENT"
           }
           EOF
-          )
 
+          # Set individual outputs (avoiding the problematic JSON output)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
           echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
           echo "commit_hash_short=$COMMIT_HASH_SHORT" >> $GITHUB_OUTPUT
           echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-          echo "version_info=$VERSION_INFO" >> $GITHUB_OUTPUT
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
 
-          # Save version info to file for build process
-          echo "$VERSION_INFO" > version-info.json
+          # If we need the JSON in an output, encode it as base64
+          VERSION_INFO_B64=$(cat version-info.json | base64 -w 0)
+          echo "version_info_b64=$VERSION_INFO_B64" >> $GITHUB_OUTPUT
 
       - name: Build application
         run: npm run build
@@ -309,19 +310,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build for preview
-        run: npm run build
-        env:
-          CI: true
+          name: build-artifacts
+          path: .
 
       - name: Deploy to Vercel (Preview)
         uses: amondnet/vercel-action@v25
@@ -344,19 +337,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build for production
-        run: npm run build
-        env:
-          CI: true
+          name: build-artifacts
+          path: .
 
       - name: Deploy to Vercel (Production)
         uses: amondnet/vercel-action@v25
