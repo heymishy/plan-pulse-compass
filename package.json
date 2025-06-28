@@ -1,7 +1,7 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "plan-pulse-compass",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -28,6 +28,9 @@
     "typecheck": "tsc --noEmit",
     "audit": "npm audit --audit-level=high",
     "audit:fix": "npm audit fix",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major",
     "prepare": "husky"
   },
   "dependencies": {

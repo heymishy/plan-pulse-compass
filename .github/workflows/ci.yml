@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -45,6 +47,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -79,6 +83,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -114,6 +120,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -154,6 +162,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -164,16 +174,72 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate version info
+        id: version
+        run: |
+          # Get package version
+          VERSION=$(node -p "require('./package.json').version")
+
+          # Get build number from GitHub run number
+          BUILD_NUMBER=${{ github.run_number }}
+
+          # Get commit hash
+          COMMIT_HASH=${{ github.sha }}
+          COMMIT_HASH_SHORT=$(echo $COMMIT_HASH | cut -c1-7)
+
+          # Get branch name
+          BRANCH=${GITHUB_REF#refs/heads/}
+
+          # Get build date
+          BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Set environment
+          ENVIRONMENT="production"
+
+          # Create version info JSON
+          VERSION_INFO=$(cat <<EOF
+          {
+            "version": "$VERSION",
+            "buildNumber": "$BUILD_NUMBER",
+            "commitHash": "$COMMIT_HASH",
+            "commitHashShort": "$COMMIT_HASH_SHORT",
+            "buildDate": "$BUILD_DATE",
+            "branch": "$BRANCH",
+            "environment": "$ENVIRONMENT"
+          }
+          EOF
+          )
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+          echo "commit_hash_short=$COMMIT_HASH_SHORT" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "version_info=$VERSION_INFO" >> $GITHUB_OUTPUT
+
+          # Save version info to file for build process
+          echo "$VERSION_INFO" > version-info.json
+
       - name: Build application
         run: npm run build
         env:
           CI: true
+          VITE_APP_VERSION: ${{ steps.version.outputs.version }}
+          VITE_APP_BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+          VITE_APP_COMMIT_HASH: ${{ steps.version.outputs.commit_hash }}
+          VITE_APP_COMMIT_HASH_SHORT: ${{ steps.version.outputs.commit_hash_short }}
+          VITE_APP_BUILD_DATE: ${{ steps.version.outputs.build_date }}
+          VITE_APP_BRANCH: ${{ steps.version.outputs.branch }}
+          VITE_APP_ENVIRONMENT: ${{ steps.version.outputs.environment }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: dist/
+          path: |
+            dist/
+            version-info.json
           retention-days: 30
 
   # Security Audit

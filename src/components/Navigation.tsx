@@ -1,11 +1,22 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, FolderOpen, Target, Calendar, 
-  BarChart3, Settings, Activity, GitBranch, DollarSign,
-  UserCheck, Network, Search, Map
+import {
+  LayoutDashboard,
+  Users,
+  FolderOpen,
+  Target,
+  Calendar,
+  BarChart3,
+  Settings,
+  Activity,
+  GitBranch,
+  DollarSign,
+  UserCheck,
+  Network,
+  Search,
+  Map,
 } from 'lucide-react';
+import { VersionInfo } from './ui/version-info';
 
 const Navigation = () => {
   const location = useLocation();
@@ -33,13 +44,16 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-sm border-r border-gray-200 w-64 flex-shrink-0">
       <div className="p-6">
-        <h1 className="text-xl font-bold text-gray-900">Resource Planner</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-xl font-bold text-gray-900">Resource Planner</h1>
+        </div>
+        <VersionInfo variant="compact" className="w-full justify-start" />
       </div>
       <div className="px-3 pb-6">
-        {navItems.map((item) => {
+        {navItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
-          
+
           return (
             <Link
               key={item.path}

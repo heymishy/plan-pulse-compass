@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navigation from './components/Navigation';
+import Footer from './components/Footer';
 import Index from './pages/Index';
 import Setup from './pages/Setup';
 import Dashboard from './pages/Dashboard';
@@ -32,7 +32,7 @@ function App() {
     <ThemeProvider>
       <AppProvider>
         <Router>
-          <div className="flex min-h-screen bg-gray-50">
+          <div className="flex min-h-screen flex-col bg-background">
             <Navigation />
             <main className="flex-1">
               <Routes>
@@ -46,7 +46,10 @@ function App() {
                 <Route path="/epics" element={<Epics />} />
                 <Route path="/milestones" element={<Milestones />} />
                 <Route path="/planning" element={<Planning />} />
-                <Route path="/advanced-planning" element={<AdvancedPlanning />} />
+                <Route
+                  path="/advanced-planning"
+                  element={<AdvancedPlanning />}
+                />
                 <Route path="/journey-planning" element={<JourneyPlanning />} />
                 <Route path="/allocations" element={<Allocations />} />
                 <Route path="/tracking" element={<Tracking />} />
@@ -54,10 +57,14 @@ function App() {
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/canvas" element={<Canvas />} />
-                <Route path="/scenario-analysis" element={<ScenarioAnalysis />} />
+                <Route
+                  path="/scenario-analysis"
+                  element={<ScenarioAnalysis />}
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
+            <Footer />
             <Toaster />
           </div>
         </Router>
