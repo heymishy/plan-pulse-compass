@@ -1,0 +1,21 @@
+graph TB
+    subgraph App.tsx
+        ThemeProvider --> AppProvider
+        AppProvider --> Router
+        Router --> Navigation
+        Router --> MainContent
+        Router --> Footer
+        Router --> Toaster
+    end
+    MainContent --> Dashboard
+    MainContent --> Teams
+    MainContent --> People
+    MainContent --> Projects
+    MainContent --> Epics
+    MainContent --> Planning
+    MainContent --> Allocations
+    MainContent --> Tracking
+    MainContent --> Financials
+    MainContent --> Reports
+    MainContent --> Settings
+    MainContent --> Canvas 

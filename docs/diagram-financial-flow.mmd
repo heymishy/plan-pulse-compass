@@ -1,0 +1,20 @@
+flowchart TD
+    A[Person Data] --> B{Employment Type?}
+    B -->|Permanent| C[Check Individual Salary]
+    B -->|Contractor| D[Check Contract Rates]
+    C --> E{Individual Salary?}
+    E -->|Yes| F[Use Individual Salary]
+    E -->|No| G[Check Role Default Annual]
+    G -->|Yes| H[Use Role Default Annual]
+    G -->|No| I[Use Legacy Fallback]
+    D --> J{Individual Rates?}
+    J -->|Hourly| K[Use Individual Hourly]
+    J -->|Daily| L[Use Individual Daily]
+    J -->|No| M[Check Role Defaults]
+    M -->|Hourly| N[Use Role Default Hourly]
+    M -->|Daily| O[Use Role Default Daily]
+    M -->|No| P[Use Legacy Fallback]
+    F & H & I & K & L & N & O & P --> Q[Calculate Hourly Rate]
+    Q --> R[Calculate Daily/Weekly/Monthly/Annual Cost]
+    R --> S[Person Cost Calculation]
+    S --> T[Project/Team Cost Analysis] 

@@ -1,0 +1,22 @@
+flowchart TD
+    A[Project Planning] --> B[Epic Breakdown]
+    B --> C[Skill Requirements Analysis]
+    C --> D[Team Availability Check]
+    D --> E[Capacity Planning]
+    E --> F[Allocation Matrix Creation]
+    F --> G{Capacity Available?}
+    G -->|Yes| H[Create Allocations]
+    G -->|No| I[Optimization Required]
+    I --> J[Scenario Analysis]
+    J --> K[Budget Impact Assessment]
+    K --> L[Risk Assessment]
+    L --> M[Feasibility Score Calculation]
+    M --> N{Feasible?}
+    N -->|Yes| O[Proceed with Planning]
+    N -->|No| P[Adjust Scope/Timeline]
+    O & P & H --> Q[Iteration Planning]
+    Q --> R[Allocation Validation]
+    R --> S[Conflict Detection]
+    S --> T[Final Allocation Matrix]
+    T --> U[Progress Tracking Setup]
+    U --> V[Monitoring & Reporting] 

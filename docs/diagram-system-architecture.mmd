@@ -1,0 +1,35 @@
+graph TB
+    subgraph "Frontend Layer"
+        A[React App] --> B[App Context]
+        B --> C[Theme Context]
+        A --> D[Pages]
+        A --> E[Components]
+        A --> F[UI Components]
+    end
+    
+    subgraph "Business Logic Layer"
+        G[Financial Calculations] --> H[Planning Engine]
+        H --> I[Tracking System]
+        I --> J[Scenario Analysis]
+        J --> K[Budget Optimization]
+    end
+    
+    subgraph "Data Layer"
+        L[Encrypted Storage] --> M[Local Storage]
+        M --> N[Data Loader]
+        N --> O[CSV Import/Export]
+    end
+    
+    subgraph "Visualization Layer"
+        P[Canvas Views] --> Q[React Flow]
+        Q --> R[Charts & Reports]
+    end
+    
+    B --> G
+    D --> H
+    E --> I
+    F --> P
+    G --> L
+    H --> M
+    I --> N
+    P --> O 

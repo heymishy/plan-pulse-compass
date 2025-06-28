@@ -1,0 +1,18 @@
+erDiagram
+    Division ||--o{ Team : contains
+    Team ||--o{ Person : employs
+    Team ||--o{ Allocation : has
+    Person ||--o{ PersonSkill : has
+    Person ||--|| Role : assigned
+    Project ||--o{ Epic : contains
+    Project ||--o{ Milestone : has
+    Project ||--o{ ProjectSkill : requires
+    Project ||--o{ ProjectSolution : uses
+    Epic ||--o{ Allocation : allocated
+    Cycle ||--o{ Allocation : contains
+    Skill ||--o{ PersonSkill : possessed_by
+    Skill ||--o{ ProjectSkill : required_by
+    Solution ||--o{ ProjectSolution : used_by
+    Solution ||--o{ Skill : requires
+    RunWorkCategory ||--o{ Allocation : categorized_as
+    ActualAllocation ||--o{ IterationReview : tracked_in 
