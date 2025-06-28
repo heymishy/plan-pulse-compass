@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,6 +6,7 @@
 
 @layer base {
   :root {
+    /* Light theme - Clean and modern */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -31,12 +31,22 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 210 40% 98%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
 
+    /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -45,9 +55,17 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Chart colors */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 
   .dark {
+    /* Dark theme - Easy on the eyes */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
@@ -72,9 +90,20 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 210 40% 98%;
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* Sidebar */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -83,9 +112,17 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Chart colors */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 
   .enterprise {
+    /* Enterprise theme - Professional blue tones */
     --background: 214 100% 98%;
     --foreground: 213 31% 12%;
 
@@ -110,10 +147,20 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 210 40% 98%;
+
     --border: 213 31% 88%;
     --input: 213 31% 88%;
     --ring: 213 94% 48%;
 
+    /* Sidebar */
     --sidebar-background: 213 100% 97%;
     --sidebar-foreground: 213 31% 20%;
     --sidebar-primary: 213 94% 48%;
@@ -122,9 +169,17 @@
     --sidebar-accent-foreground: 213 31% 12%;
     --sidebar-border: 213 31% 85%;
     --sidebar-ring: 213 94% 48%;
+
+    /* Chart colors */
+    --chart-1: 213 94% 48%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 173 58% 39%;
+    --chart-4: 142 76% 36%;
+    --chart-5: 38 92% 50%;
   }
 
   .corporate {
+    /* Corporate theme - Sophisticated gray palette */
     --background: 210 11% 98%;
     --foreground: 210 11% 12%;
 
@@ -149,10 +204,20 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 210 40% 98%;
+
     --border: 210 11% 88%;
     --input: 210 11% 88%;
     --ring: 210 11% 25%;
 
+    /* Sidebar */
     --sidebar-background: 210 11% 96%;
     --sidebar-foreground: 210 11% 20%;
     --sidebar-primary: 210 11% 25%;
@@ -161,6 +226,13 @@
     --sidebar-accent-foreground: 210 11% 12%;
     --sidebar-border: 210 11% 82%;
     --sidebar-ring: 210 11% 25%;
+
+    /* Chart colors */
+    --chart-1: 210 11% 25%;
+    --chart-2: 210 11% 45%;
+    --chart-3: 210 11% 65%;
+    --chart-4: 210 11% 85%;
+    --chart-5: 210 11% 95%;
   }
 }
 
@@ -171,5 +243,60 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+
+  /* Smooth transitions for theme changes */
+  * {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  /* Custom scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+}
+
+/* Utility classes for theme-aware components */
+@layer utilities {
+  .theme-transition {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .theme-elevation-1 {
+    box-shadow:
+      0 1px 3px 0 hsl(var(--foreground) / 0.1),
+      0 1px 2px 0 hsl(var(--foreground) / 0.06);
+  }
+
+  .theme-elevation-2 {
+    box-shadow:
+      0 4px 6px -1px hsl(var(--foreground) / 0.1),
+      0 2px 4px -1px hsl(var(--foreground) / 0.06);
+  }
+
+  .theme-elevation-3 {
+    box-shadow:
+      0 10px 15px -3px hsl(var(--foreground) / 0.1),
+      0 4px 6px -2px hsl(var(--foreground) / 0.05);
   }
 }
