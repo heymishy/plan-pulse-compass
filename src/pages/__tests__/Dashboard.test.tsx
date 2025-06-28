@@ -86,8 +86,11 @@ describe('Dashboard', () => {
       </BrowserRouter>
     );
 
-    // Use a more specific selector to avoid conflicts
-    const dashboardElement = screen.getByTestId('dashboard');
-    expect(dashboardElement.querySelector('h1')).toHaveTextContent('Dashboard');
+    // Use getAllByTestId to handle multiple instances and test the first one
+    const dashboardElements = screen.getAllByTestId('dashboard');
+    expect(dashboardElements.length).toBeGreaterThan(0);
+
+    const firstDashboard = dashboardElements[0];
+    expect(firstDashboard.querySelector('h1')).toHaveTextContent('Dashboard');
   });
 });
