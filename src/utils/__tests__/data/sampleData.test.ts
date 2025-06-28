@@ -6,19 +6,19 @@ import {
   getPeopleByTeamId,
   getTeamsByDivisionId,
   getRoleById,
-} from '@/data/sampleData';
+} from '../../../data/sampleData';
 import {
   loadSampleData,
   validateLoadedData,
   getDataSummary,
-} from '@/utils/dataLoader';
+} from '../../dataLoader';
 import {
-  loadTestData,
   loadMinimalTestData,
   loadPeopleTestData,
   loadFullTestData,
   validateTestData,
-} from '@/test/utils/testDataLoader';
+  loadTestData,
+} from '../../../test/utils/testDataLoader';
 
 describe('Sample Data', () => {
   describe('Core Sample Data', () => {
@@ -172,7 +172,7 @@ describe('Sample Data', () => {
       expect(data.people).toHaveLength(16);
       expect(data.roles).toHaveLength(4);
       expect(data.skills).toHaveLength(5);
-      expect(data.personSkills).toHaveLength(5);
+      expect(data.personSkills).toHaveLength(20);
     });
 
     it('should load full test data', () => {
@@ -184,7 +184,7 @@ describe('Sample Data', () => {
       expect(data.cycles).toHaveLength(3);
       expect(data.runWorkCategories).toHaveLength(3);
       expect(data.skills).toHaveLength(5);
-      expect(data.personSkills).toHaveLength(5);
+      expect(data.personSkills).toHaveLength(20);
       expect(data.solutions).toHaveLength(2);
     });
 

@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { beforeAll, afterEach, afterAll, vi } from 'vitest';
+import { afterEach, afterAll, vi } from 'vitest';
 // import { server } from "./mocks/server";
 
 // Establish API mocking before all tests
@@ -21,7 +21,7 @@ vi.mock('@/utils/crypto', () => ({
   decryptData: vi.fn().mockResolvedValue('mock-decrypted'),
 }));
 
-// Mock date-fns to avoid date formatting errors
+// Simplified date-fns mock - only mock what's actually used
 vi.mock('date-fns', () => ({
   format: vi.fn(() => '2024-01-15'),
   parseISO: vi.fn(() => new Date('2024-01-15')),
@@ -29,29 +29,18 @@ vi.mock('date-fns', () => ({
   addDays: vi.fn(
     (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000)
   ),
-  addWeeks: vi.fn(
-    (date, weeks) => new Date(date.getTime() + weeks * 7 * 24 * 60 * 60 * 1000)
-  ),
-  addMonths: vi.fn(
-    (date, months) =>
-      new Date(date.getTime() + months * 30 * 24 * 60 * 60 * 1000)
-  ),
   differenceInDays: vi.fn(() => 30),
-  differenceInWeeks: vi.fn(() => 4),
-  differenceInMonths: vi.fn(() => 1),
-  startOfWeek: vi.fn(date => new Date('2024-01-15')),
-  endOfWeek: vi.fn(date => new Date('2024-01-21')),
-  startOfMonth: vi.fn(date => new Date('2024-01-01')),
-  endOfMonth: vi.fn(date => new Date('2024-01-31')),
+  startOfWeek: vi.fn(() => new Date('2024-01-15')),
+  endOfWeek: vi.fn(() => new Date('2024-01-21')),
+  startOfMonth: vi.fn(() => new Date('2024-01-01')),
+  endOfMonth: vi.fn(() => new Date('2024-01-31')),
   startOfToday: vi.fn(() => new Date('2024-01-15')),
   isWithinInterval: vi.fn(() => true),
   isBefore: vi.fn(() => false),
   isToday: vi.fn(() => false),
-  isYesterday: vi.fn(() => false),
-  isTomorrow: vi.fn(() => false),
 }));
 
-// Mock localStorage to avoid async operations
+// Mock localStorage
 const localStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
@@ -83,8 +72,8 @@ Object.defineProperty(window, 'matchMedia', {
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
@@ -107,3 +96,25 @@ global.console = {
   // warn: vi.fn(),
   // error: vi.fn(),
 };
+
+// Cleanup after each test to prevent hanging
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.clearAllTimers();
+
+  // Clear any remaining timers
+  if (typeof window !== 'undefined') {
+    window.clearTimeout = vi.fn();
+    window.clearInterval = vi.fn();
+  }
+});
+
+// Final cleanup after all tests
+afterAll(() => {
+  vi.restoreAllMocks();
+
+  // Force garbage collection if available
+  if (global.gc) {
+    global.gc();
+  }
+});

@@ -134,7 +134,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-001',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 125000,
+    annualSalary: 135000,
     startDate: '2023-01-15',
   },
   {
@@ -156,7 +156,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-001',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 92000,
+    annualSalary: 95000,
     startDate: '2023-01-15',
   },
   {
@@ -167,7 +167,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-001',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 115000,
+    annualSalary: 110000,
     startDate: '2023-01-15',
   },
 
@@ -180,7 +180,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-002',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 125000,
+    annualSalary: 140000,
     startDate: '2023-01-15',
   },
   {
@@ -191,7 +191,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-002',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 98000,
+    annualSalary: 105000,
     startDate: '2023-01-15',
   },
   {
@@ -202,13 +202,13 @@ export const testPeople: Person[] = [
     teamId: 'team-test-002',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 98000,
+    annualSalary: 95000,
     startDate: '2023-01-15',
   },
   {
     id: 'person-test-008',
-    name: 'Jennifer Garcia',
-    email: 'jennifer.garcia@bankcorp.com',
+    name: 'Jennifer Lee',
+    email: 'jennifer.lee@bankcorp.com',
     roleId: 'role-test-qe',
     teamId: 'team-test-002',
     isActive: true,
@@ -226,7 +226,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-003',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 125000,
+    annualSalary: 145000,
     startDate: '2023-01-15',
   },
   {
@@ -237,7 +237,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-003',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 98000,
+    annualSalary: 115000,
     startDate: '2023-01-15',
   },
   {
@@ -248,18 +248,18 @@ export const testPeople: Person[] = [
     teamId: 'team-test-003',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 115000,
+    annualSalary: 125000,
     startDate: '2023-01-15',
   },
   {
     id: 'person-test-012',
-    name: 'Michelle Lee',
-    email: 'michelle.lee@bankcorp.com',
+    name: 'Rachel Green',
+    email: 'rachel.green@bankcorp.com',
     roleId: 'role-test-qe',
     teamId: 'team-test-003',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 92000,
+    annualSalary: 93000,
     startDate: '2023-01-15',
   },
 
@@ -272,7 +272,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-004',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 125000,
+    annualSalary: 150000,
     startDate: '2023-01-15',
   },
   {
@@ -283,7 +283,7 @@ export const testPeople: Person[] = [
     teamId: 'team-test-004',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 98000,
+    annualSalary: 108000,
     startDate: '2023-01-15',
   },
   {
@@ -294,18 +294,18 @@ export const testPeople: Person[] = [
     teamId: 'team-test-004',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 115000,
+    annualSalary: 120000,
     startDate: '2023-01-15',
   },
   {
     id: 'person-test-016',
-    name: 'Rachel Green',
-    email: 'rachel.green@bankcorp.com',
+    name: 'Michelle Garcia',
+    email: 'michelle.garcia@bankcorp.com',
     roleId: 'role-test-qe',
     teamId: 'team-test-004',
     isActive: true,
     employmentType: 'permanent',
-    annualSalary: 92000,
+    annualSalary: 94000,
     startDate: '2023-01-15',
   },
 ];
@@ -399,9 +399,10 @@ export const testSkills: Skill[] = [
 ];
 
 export const testPersonSkills: PersonSkill[] = [
+  // Product Owners - should have domain skills
   {
     id: 'person-skill-test-001',
-    personId: 'person-test-001',
+    personId: 'person-test-001', // John Smith - Product Owner
     skillId: 'skill-test-lending',
     proficiencyLevel: 'expert',
     yearsOfExperience: 8,
@@ -410,43 +411,7 @@ export const testPersonSkills: PersonSkill[] = [
   },
   {
     id: 'person-skill-test-002',
-    personId: 'person-test-002',
-    skillId: 'skill-test-js',
-    proficiencyLevel: 'advanced',
-    yearsOfExperience: 5,
-    lastUsed: '2024-01-01',
-    notes: 'Primary frontend developer',
-  },
-  {
-    id: 'person-skill-test-003',
-    personId: 'person-test-002',
-    skillId: 'skill-test-react',
-    proficiencyLevel: 'expert',
-    yearsOfExperience: 4,
-    lastUsed: '2024-01-01',
-    notes: 'React specialist',
-  },
-  {
-    id: 'person-skill-test-004',
-    personId: 'person-test-010',
-    skillId: 'skill-test-java',
-    proficiencyLevel: 'intermediate',
-    yearsOfExperience: 3,
-    lastUsed: '2024-01-01',
-    notes: 'Backend development',
-  },
-  {
-    id: 'person-skill-test-005',
-    personId: 'person-test-011',
-    skillId: 'skill-test-aws',
-    proficiencyLevel: 'advanced',
-    yearsOfExperience: 6,
-    lastUsed: '2024-01-01',
-    notes: 'Cloud infrastructure',
-  },
-  {
-    id: 'person-skill-test-006',
-    personId: 'person-test-005',
+    personId: 'person-test-005', // David Kim - Product Owner
     skillId: 'skill-test-lending',
     proficiencyLevel: 'expert',
     yearsOfExperience: 7,
@@ -454,8 +419,46 @@ export const testPersonSkills: PersonSkill[] = [
     notes: 'Domain expert',
   },
   {
+    id: 'person-skill-test-003',
+    personId: 'person-test-009', // Christopher Martinez - Product Owner
+    skillId: 'skill-test-lending',
+    proficiencyLevel: 'expert',
+    yearsOfExperience: 6,
+    lastUsed: '2024-01-01',
+    notes: 'Domain expert',
+  },
+  {
+    id: 'person-skill-test-004',
+    personId: 'person-test-013', // Daniel Brown - Product Owner
+    skillId: 'skill-test-lending',
+    proficiencyLevel: 'expert',
+    yearsOfExperience: 9,
+    lastUsed: '2024-01-01',
+    notes: 'Senior domain expert',
+  },
+
+  // Software Engineers - should have technical skills
+  {
+    id: 'person-skill-test-005',
+    personId: 'person-test-002', // Sarah Johnson - Software Engineer
+    skillId: 'skill-test-js',
+    proficiencyLevel: 'advanced',
+    yearsOfExperience: 5,
+    lastUsed: '2024-01-01',
+    notes: 'Primary frontend developer',
+  },
+  {
+    id: 'person-skill-test-006',
+    personId: 'person-test-002', // Sarah Johnson - Software Engineer
+    skillId: 'skill-test-react',
+    proficiencyLevel: 'expert',
+    yearsOfExperience: 5,
+    lastUsed: '2024-01-01',
+    notes: 'React specialist',
+  },
+  {
     id: 'person-skill-test-007',
-    personId: 'person-test-006',
+    personId: 'person-test-006', // Lisa Anderson - Software Engineer
     skillId: 'skill-test-js',
     proficiencyLevel: 'advanced',
     yearsOfExperience: 5,
@@ -464,7 +467,7 @@ export const testPersonSkills: PersonSkill[] = [
   },
   {
     id: 'person-skill-test-008',
-    personId: 'person-test-006',
+    personId: 'person-test-006', // Lisa Anderson - Software Engineer
     skillId: 'skill-test-react',
     proficiencyLevel: 'advanced',
     yearsOfExperience: 4,
@@ -473,7 +476,81 @@ export const testPersonSkills: PersonSkill[] = [
   },
   {
     id: 'person-skill-test-009',
-    personId: 'person-test-015',
+    personId: 'person-test-007', // Robert Taylor - Software Engineer
+    skillId: 'skill-test-js',
+    proficiencyLevel: 'intermediate',
+    yearsOfExperience: 3,
+    lastUsed: '2024-01-01',
+    notes: 'Backend development',
+  },
+  {
+    id: 'person-skill-test-010',
+    personId: 'person-test-007', // Robert Taylor - Software Engineer
+    skillId: 'skill-test-react',
+    proficiencyLevel: 'intermediate',
+    yearsOfExperience: 2,
+    lastUsed: '2024-01-01',
+    notes: 'React development',
+  },
+  {
+    id: 'person-skill-test-011',
+    personId: 'person-test-010', // Amanda Wilson - Software Engineer
+    skillId: 'skill-test-java',
+    proficiencyLevel: 'intermediate',
+    yearsOfExperience: 3,
+    lastUsed: '2024-01-01',
+    notes: 'Backend development',
+  },
+  {
+    id: 'person-skill-test-012',
+    personId: 'person-test-010', // Amanda Wilson - Software Engineer
+    skillId: 'skill-test-js',
+    proficiencyLevel: 'advanced',
+    yearsOfExperience: 4,
+    lastUsed: '2024-01-01',
+    notes: 'Full-stack development',
+  },
+  {
+    id: 'person-skill-test-013',
+    personId: 'person-test-010', // Amanda Wilson - Software Engineer
+    skillId: 'skill-test-react',
+    proficiencyLevel: 'advanced',
+    yearsOfExperience: 3,
+    lastUsed: '2024-01-01',
+    notes: 'React development',
+  },
+  {
+    id: 'person-skill-test-014',
+    personId: 'person-test-014', // Jessica Davis - Software Engineer
+    skillId: 'skill-test-js',
+    proficiencyLevel: 'advanced',
+    yearsOfExperience: 5,
+    lastUsed: '2024-01-01',
+    notes: 'Frontend development',
+  },
+  {
+    id: 'person-skill-test-015',
+    personId: 'person-test-014', // Jessica Davis - Software Engineer
+    skillId: 'skill-test-react',
+    proficiencyLevel: 'advanced',
+    yearsOfExperience: 4,
+    lastUsed: '2024-01-01',
+    notes: 'React development',
+  },
+
+  // Platform Engineers - should have infrastructure skills
+  {
+    id: 'person-skill-test-016',
+    personId: 'person-test-004', // Emily Rodriguez - Platform Engineer
+    skillId: 'skill-test-aws',
+    proficiencyLevel: 'advanced',
+    yearsOfExperience: 6,
+    lastUsed: '2024-01-01',
+    notes: 'Cloud infrastructure',
+  },
+  {
+    id: 'person-skill-test-017',
+    personId: 'person-test-011', // James Thompson - Platform Engineer
     skillId: 'skill-test-aws',
     proficiencyLevel: 'expert',
     yearsOfExperience: 7,
@@ -481,13 +558,32 @@ export const testPersonSkills: PersonSkill[] = [
     notes: 'Senior cloud engineer',
   },
   {
-    id: 'person-skill-test-010',
-    personId: 'person-test-013',
-    skillId: 'skill-test-lending',
+    id: 'person-skill-test-018',
+    personId: 'person-test-015', // Kevin Johnson - Platform Engineer
+    skillId: 'skill-test-aws',
     proficiencyLevel: 'expert',
-    yearsOfExperience: 9,
+    yearsOfExperience: 8,
     lastUsed: '2024-01-01',
-    notes: 'Senior domain expert',
+    notes: 'Senior cloud engineer',
+  },
+  // Additional expert skills to meet the minimum count
+  {
+    id: 'person-skill-test-019',
+    personId: 'person-test-002', // Sarah Johnson - Software Engineer
+    skillId: 'skill-test-java',
+    proficiencyLevel: 'expert',
+    yearsOfExperience: 6,
+    lastUsed: '2024-01-01',
+    notes: 'Senior Java developer',
+  },
+  {
+    id: 'person-skill-test-020',
+    personId: 'person-test-006', // Lisa Anderson - Software Engineer
+    skillId: 'skill-test-java',
+    proficiencyLevel: 'expert',
+    yearsOfExperience: 7,
+    lastUsed: '2024-01-01',
+    notes: 'Senior Java developer',
   },
 ];
 
@@ -521,7 +617,7 @@ export const testProjects: TestProject[] = [
     status: 'in-progress',
     priority: 'high',
     startDate: '2024-01-01',
-    endDate: '2024-06-30',
+    endDate: '06-30-2024',
     budget: 500000,
   },
   {
@@ -532,7 +628,7 @@ export const testProjects: TestProject[] = [
     status: 'planning',
     priority: 'medium',
     startDate: '2024-02-01',
-    endDate: '2024-08-31',
+    endDate: '08-31-2024',
     budget: 300000,
   },
   {
@@ -543,7 +639,7 @@ export const testProjects: TestProject[] = [
     status: 'in-progress',
     priority: 'critical',
     startDate: '2024-01-15',
-    endDate: '2024-07-15',
+    endDate: '07-15-2024',
     budget: 750000,
   },
   {
@@ -554,7 +650,7 @@ export const testProjects: TestProject[] = [
     status: 'planning',
     priority: 'high',
     startDate: '2024-03-01',
-    endDate: '2024-09-30',
+    endDate: '09-30-2024',
     budget: 400000,
   },
 ];
@@ -562,7 +658,7 @@ export const testProjects: TestProject[] = [
 export const testWorkItems: TestWorkItem[] = [
   {
     id: 'work-test-001',
-    title: 'Digital User Authentication System',
+    title: 'Implement Digital User Authentication',
     description:
       'Build secure user authentication system for mortgage platform',
     projectId: 'project-test-001',
@@ -574,7 +670,7 @@ export const testWorkItems: TestWorkItem[] = [
   },
   {
     id: 'work-test-002',
-    title: 'Digital Database Schema Design',
+    title: 'Design Digital Database Schema',
     description: 'Design and implement database schema for loan processing',
     projectId: 'project-test-001',
     status: 'done',
@@ -585,7 +681,7 @@ export const testWorkItems: TestWorkItem[] = [
   },
   {
     id: 'work-test-003',
-    title: 'Personal Loan API Endpoints',
+    title: 'Create Personal Loan API Endpoints',
     description:
       'Develop RESTful API endpoints for loan application processing',
     projectId: 'project-test-002',
@@ -597,7 +693,7 @@ export const testWorkItems: TestWorkItem[] = [
   },
   {
     id: 'work-test-004',
-    title: 'Commercial Credit Scoring Tests',
+    title: 'Write Commercial Credit Scoring Tests',
     description:
       'Comprehensive unit test coverage for credit scoring algorithms',
     projectId: 'project-test-003',
@@ -609,7 +705,7 @@ export const testWorkItems: TestWorkItem[] = [
   },
   {
     id: 'work-test-005',
-    title: 'Business Lending CI/CD Pipeline',
+    title: 'Setup Business Lending CI/CD Pipeline',
     description: 'Configure continuous integration and deployment pipeline',
     projectId: 'project-test-004',
     status: 'todo',
@@ -620,14 +716,14 @@ export const testWorkItems: TestWorkItem[] = [
   },
   {
     id: 'work-test-006',
-    title: 'Commercial Credit Scoring Model',
+    title: 'Implement Commercial Credit Scoring Model',
     description: 'Develop machine learning model for credit risk assessment',
     projectId: 'project-test-003',
     status: 'review',
     priority: 'critical',
     type: 'feature',
     estimatedHours: 60,
-    actualHours: 55,
+    actualHours: 56,
   },
 ];
 

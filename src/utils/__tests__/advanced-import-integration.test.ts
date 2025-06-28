@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { parseActualAllocationCSV } from '../utils/trackingImportUtils';
-import { parseTeamsWithDivisionsCSV } from '../utils/enhancedCsvUtils';
+import { parseActualAllocationCSV } from '../trackingImportUtils';
+import { parseTeamsWithDivisionsCSV } from '../enhancedCsvUtils';
 
 describe('Advanced Import Integration', () => {
   let importedTeams: any[] = [];

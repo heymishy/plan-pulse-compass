@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseActualAllocationCSV } from '../utils/trackingImportUtils';
+import { parseActualAllocationCSV } from '../trackingImportUtils';
 
 describe('Actual Allocation Import', () => {
   const mockTeams = [

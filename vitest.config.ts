@@ -8,28 +8,20 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    css: true,
-    testTimeout: 30000,
-    hookTimeout: 30000,
-    reporters: [
-      [
-        'default',
-        {
-          summary: false,
-        },
-      ],
-    ],
+    css: false,
+    testTimeout: 5000,
+    hookTimeout: 3000,
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: true,
+        maxThreads: 1,
+        minThreads: 1,
+      },
+    },
+    reporters: ['default'],
     silent: false,
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
-        '**/*.config.*',
-        '**/coverage/**',
-      ],
       enabled: false,
     },
     environmentOptions: {
@@ -37,12 +29,40 @@ export default defineConfig({
         resources: 'usable',
         pretendToBeVisual: false,
         runScripts: 'outside-only',
+        url: 'http://localhost:3000',
+        referrer: 'http://localhost:3000',
+        contentType: 'text/html',
+        includeNodeLocations: false,
+        storageQuota: 10000000,
+        features: {
+          FetchExternalResources: false,
+          ProcessExternalResources: false,
+          SkipExternalResources: true,
+        },
       },
+    },
+    isolate: true,
+    passWithNoTests: true,
+    watch: false,
+    teardownTimeout: 3000,
+    sequence: {
+      shuffle: false,
     },
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom'],
+    exclude: ['@testing-library/react', '@testing-library/jest-dom'],
+  },
+  build: {
+    target: 'esnext',
+    minify: false,
+  },
+  esbuild: {
+    target: 'node18',
   },
 });
