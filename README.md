@@ -87,3 +87,5 @@ npm run audit            # Run security audit
 ## License
 
 MIT License - see LICENSE file for details.
+
+# Test commit
