@@ -18,17 +18,28 @@ const LightweightProviders = ({ children }: { children: React.ReactNode }) => {
   return <BrowserRouter>{children}</BrowserRouter>;
 };
 
+// Wrapper for components that already have a router (like App component)
+const NoRouterProviders = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
+
 // Lightweight render for simple component tests (default)
 const customRender = (
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>
 ) => render(ui, { wrapper: LightweightProviders, ...options });
 
+// Render for components that already have a router
+const renderWithoutRouter = (
+  ui: ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) => render(ui, { wrapper: NoRouterProviders, ...options });
+
 // Re-export everything
 export * from '@testing-library/react';
 
 // Override render method
-export { customRender as render };
+export { customRender as render, renderWithoutRouter };
 
 // Helper function to create mock data
 export const createMockPerson = (overrides = {}) => ({

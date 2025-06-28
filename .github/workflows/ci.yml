@@ -74,6 +74,42 @@ jobs:
             test-results/
           retention-days: 7
 
+  # UI Tests (Layout and Navigation)
+  ui-tests:
+    name: UI Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run UI tests
+        run: npm run test:layout
+        env:
+          CI: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-test-results
+          path: |
+            coverage/
+            test-results/
+          retention-days: 7
+
   # Integration Tests
   integration-tests:
     name: Integration Tests
@@ -115,7 +151,7 @@ jobs:
     name: Full Test Suite
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: [unit-tests, integration-tests]
+    needs: [unit-tests, integration-tests, ui-tests]
 
     steps:
       - name: Checkout code
@@ -360,6 +396,7 @@ jobs:
       [
         lint-and-typecheck,
         unit-tests,
+        ui-tests,
         integration-tests,
         full-tests,
         build,

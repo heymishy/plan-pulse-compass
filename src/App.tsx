@@ -25,6 +25,11 @@ import Canvas from './pages/Canvas';
 import ScenarioAnalysis from './pages/ScenarioAnalysis';
 import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarInset,
+} from '@/components/ui/sidebar';
 import './App.css';
 
 function App() {
@@ -32,41 +37,52 @@ function App() {
     <ThemeProvider>
       <AppProvider>
         <Router>
-          <div className="flex min-h-screen flex-col bg-background">
-            <Navigation />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/setup" element={<Setup />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/teams" element={<Teams />} />
-                <Route path="/people" element={<People />} />
-                <Route path="/skills" element={<Skills />} />
-                <Route path="/projects" element={<Projects />} />
-                <Route path="/epics" element={<Epics />} />
-                <Route path="/milestones" element={<Milestones />} />
-                <Route path="/planning" element={<Planning />} />
-                <Route
-                  path="/advanced-planning"
-                  element={<AdvancedPlanning />}
-                />
-                <Route path="/journey-planning" element={<JourneyPlanning />} />
-                <Route path="/allocations" element={<Allocations />} />
-                <Route path="/tracking" element={<Tracking />} />
-                <Route path="/financials" element={<Financials />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/canvas" element={<Canvas />} />
-                <Route
-                  path="/scenario-analysis"
-                  element={<ScenarioAnalysis />}
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <Footer />
+          <SidebarProvider>
+            <div className="flex min-h-screen bg-background">
+              <Sidebar>
+                <Navigation />
+              </Sidebar>
+              <SidebarInset>
+                <div className="flex flex-col min-h-screen">
+                  <main className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/setup" element={<Setup />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/teams" element={<Teams />} />
+                      <Route path="/people" element={<People />} />
+                      <Route path="/skills" element={<Skills />} />
+                      <Route path="/projects" element={<Projects />} />
+                      <Route path="/epics" element={<Epics />} />
+                      <Route path="/milestones" element={<Milestones />} />
+                      <Route path="/planning" element={<Planning />} />
+                      <Route
+                        path="/advanced-planning"
+                        element={<AdvancedPlanning />}
+                      />
+                      <Route
+                        path="/journey-planning"
+                        element={<JourneyPlanning />}
+                      />
+                      <Route path="/allocations" element={<Allocations />} />
+                      <Route path="/tracking" element={<Tracking />} />
+                      <Route path="/financials" element={<Financials />} />
+                      <Route path="/reports" element={<Reports />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/canvas" element={<Canvas />} />
+                      <Route
+                        path="/scenario-analysis"
+                        element={<ScenarioAnalysis />}
+                      />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                </div>
+              </SidebarInset>
+            </div>
             <Toaster />
-          </div>
+          </SidebarProvider>
         </Router>
       </AppProvider>
     </ThemeProvider>
