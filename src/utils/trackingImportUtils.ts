@@ -1287,16 +1287,19 @@ export const parsePlanningAllocationCSVWithMapping = (
           if (runWork) {
             runWorkCategoryId = runWork.id;
           } else {
-            errors.push({
-              row: rowNum,
-              message: `Epic/Work "${translatedEpicName}" not found.`,
-            });
-            return;
+            // For planning allocations, if epic/work name doesn't exist,
+            // we'll include it in notes rather than throwing an error
+            // This allows importing allocations for epics that haven't been created yet
           }
         }
       }
 
       const notes = getValue('notes');
+      // Include epic name in notes if it wasn't matched to an existing epic or run work category
+      const finalNotes =
+        epicName && !epicId && !runWorkCategoryId
+          ? `${notes ? notes + ' - ' : ''}Epic/Work: ${epicName}`
+          : notes;
 
       // Create allocation object
       const allocation: Allocation = {
@@ -1307,7 +1310,7 @@ export const parsePlanningAllocationCSVWithMapping = (
         epicId,
         runWorkCategoryId,
         percentage,
-        notes,
+        notes: finalNotes,
       };
 
       allocations.push(allocation);
