@@ -45,7 +45,19 @@ The Advanced Data Import feature has been enhanced to provide better field mappi
 - Milestone Name
 - Milestone Due Date
 
-### 2. Actual Allocations
+### 2. Planning Allocations
+
+**Fields Available:**
+
+- Team Name (required) - Auto-populated from existing teams
+- Quarter (required) - Auto-populated from existing quarters
+- Iteration Number (required) - Options: 1, 2, 3, 4, 5, 6
+- Epic/Work Name - Auto-populated from existing epics and run work categories
+- Epic Type - Options: Project, Run Work
+- Allocation Percentage (required)
+- Notes
+
+### 3. Actual Allocations
 
 **Fields Available:**
 
@@ -58,7 +70,7 @@ The Advanced Data Import feature has been enhanced to provide better field mappi
 - Variance Reason - Options: none, production-support, scope-change, resource-unavailable, technical-blocker, priority-shift, other
 - Notes
 
-### 3. Iteration Reviews
+### 4. Iteration Reviews
 
 **Fields Available:**
 
@@ -70,7 +82,7 @@ The Advanced Data Import feature has been enhanced to provide better field mappi
 - Completed Milestones - Auto-populated from existing milestones
 - Notes
 
-### 4. Bulk Tracking Data (Combined)
+### 5. Bulk Tracking Data (Combined)
 
 **Fields Available:**
 
@@ -227,6 +239,7 @@ This error occurs when quarter names don't match existing quarterly cycles. Ensu
 
 - `sample-people-teams-import.csv` - People and teams import
 - `sample-allocation-import.csv` - Basic allocation import
+- `sample-planning-allocation-import.csv` - Planning allocation import
 - `sample-advanced-allocation-with-mapping.csv` - Advanced allocation with custom column names
 
 ## Technical Details

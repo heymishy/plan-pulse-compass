@@ -1,4 +1,9 @@
-import { ActualAllocation, IterationReview, IterationSnapshot } from '@/types';
+import {
+  ActualAllocation,
+  IterationReview,
+  IterationSnapshot,
+  Allocation,
+} from '@/types';
 
 export interface ActualAllocationImport {
   teamName: string;
@@ -33,6 +38,16 @@ export interface BulkTrackingImport {
   status?: string;
   completedEpics?: string;
   completedMilestones?: string;
+  notes?: string;
+}
+
+export interface PlanningAllocationImport {
+  teamName: string;
+  quarter: string;
+  iterationNumber: number;
+  epicName?: string;
+  epicType?: string;
+  percentage: number;
   notes?: string;
 }
 
@@ -1106,6 +1121,241 @@ export const exportTrackingDataCSV = (
   const a = document.createElement('a');
   a.href = url;
   a.download = `tracking-data-export-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
+
+// Enhanced parsing function for planning allocations with field mapping support
+export const parsePlanningAllocationCSVWithMapping = (
+  csvContent: string,
+  mapping: Record<string, string>,
+  teams: any[],
+  cycles: any[],
+  epics: any[],
+  runWorkCategories: any[],
+  valueMappings?: Record<string, Record<string, string | number>>
+): {
+  allocations: Allocation[];
+  errors: { row: number; message: string }[];
+} => {
+  const lines = parseCSV(csvContent);
+  const headers = lines[0];
+  const dataRows = lines.slice(1);
+
+  const allocations: Allocation[] = [];
+  const errors: { row: number; message: string }[] = [];
+
+  // Create reverse mapping from field ID to header index
+  const fieldToIndex: Record<string, number> = {};
+  Object.entries(mapping).forEach(([fieldId, headerName]) => {
+    const index = headers.findIndex(h => h === headerName);
+    if (index !== -1) {
+      fieldToIndex[fieldId] = index;
+    }
+  });
+
+  // Helper function to translate CSV value to system value
+  const translateValue = (fieldId: string, csvValue: string): string => {
+    if (!valueMappings || !valueMappings[fieldId]) {
+      return csvValue;
+    }
+    return String(valueMappings[fieldId][csvValue] || csvValue);
+  };
+
+  dataRows.forEach((row, index) => {
+    const rowNum = index + 2;
+    try {
+      // Extract values using mapping
+      const getValue = (fieldId: string): string => {
+        const index = fieldToIndex[fieldId];
+        return index !== undefined ? (row[index] || '').trim() : '';
+      };
+
+      const teamName = getValue('team_name');
+      if (!teamName) {
+        errors.push({ row: rowNum, message: 'Team Name is required.' });
+        return;
+      }
+      const translatedTeamName = translateValue('team_name', teamName);
+      const team = teams.find(
+        t => t.name.toLowerCase() === translatedTeamName.toLowerCase()
+      );
+      if (!team) {
+        errors.push({
+          row: rowNum,
+          message: `Team "${translatedTeamName}" not found.`,
+        });
+        return;
+      }
+
+      const quarterName = getValue('quarter');
+      if (!quarterName) {
+        errors.push({ row: rowNum, message: 'Quarter is required.' });
+        return;
+      }
+      const translatedQuarterName = translateValue('quarter', quarterName);
+      const cycle = cycles.find(
+        c =>
+          c.name.toLowerCase() === translatedQuarterName.toLowerCase() &&
+          c.type === 'quarterly'
+      );
+      if (!cycle) {
+        errors.push({
+          row: rowNum,
+          message: `Quarter "${translatedQuarterName}" not found.`,
+        });
+        return;
+      }
+
+      const iterationNumberStr = getValue('iteration_number');
+      if (!iterationNumberStr) {
+        errors.push({ row: rowNum, message: 'Iteration Number is required.' });
+        return;
+      }
+      const translatedIterationNumberStr = translateValue(
+        'iteration_number',
+        iterationNumberStr
+      );
+      const iterationNumber = parseInt(translatedIterationNumberStr, 10);
+      if (isNaN(iterationNumber)) {
+        errors.push({
+          row: rowNum,
+          message: `Invalid iteration number: "${translatedIterationNumberStr}". Must be a whole number.`,
+        });
+        return;
+      }
+
+      const percentageStr = getValue('percentage');
+      if (!percentageStr) {
+        errors.push({
+          row: rowNum,
+          message: 'Allocation Percentage is required.',
+        });
+        return;
+      }
+      const translatedPercentageStr = translateValue(
+        'percentage',
+        percentageStr
+      );
+      const percentage = parseFloat(translatedPercentageStr);
+      if (isNaN(percentage)) {
+        errors.push({
+          row: rowNum,
+          message: `Invalid allocation percentage: "${translatedPercentageStr}". Must be a number.`,
+        });
+        return;
+      }
+
+      let epicId: string | undefined;
+      let runWorkCategoryId: string | undefined;
+      const epicName = getValue('epic_name');
+      if (epicName) {
+        const translatedEpicName = translateValue('epic_name', epicName);
+        const epic = epics.find(
+          e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
+        );
+        if (epic) {
+          epicId = epic.id;
+        } else {
+          const runWork = runWorkCategories.find(
+            r => r.name.toLowerCase() === translatedEpicName.toLowerCase()
+          );
+          if (runWork) {
+            runWorkCategoryId = runWork.id;
+          } else {
+            errors.push({
+              row: rowNum,
+              message: `Epic/Work "${translatedEpicName}" not found.`,
+            });
+            return;
+          }
+        }
+      }
+
+      const notes = getValue('notes');
+
+      // Create allocation object
+      const allocation: Allocation = {
+        id: `planning-${Date.now()}-${index}`,
+        teamId: team.id,
+        cycleId: cycle.id,
+        iterationNumber,
+        epicId,
+        runWorkCategoryId,
+        percentage,
+        notes,
+      };
+
+      allocations.push(allocation);
+    } catch (error) {
+      errors.push({
+        row: rowNum,
+        message: `Error processing row: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+    }
+  });
+
+  return { allocations, errors };
+};
+
+export const downloadPlanningAllocationSampleCSV = () => {
+  const sampleData = [
+    [
+      'Team Name',
+      'Quarter',
+      'Iteration Number',
+      'Epic Name',
+      'Epic Type',
+      'Allocation Percentage',
+      'Notes',
+    ],
+    [
+      'Mortgage Origination',
+      'Q1 2024',
+      '1',
+      'User Authentication',
+      'Project',
+      '60',
+      'Core authentication system',
+    ],
+    [
+      'Mortgage Origination',
+      'Q1 2024',
+      '1',
+      'Support Tickets',
+      'Run Work',
+      '40',
+      'Ongoing support work',
+    ],
+    [
+      'Personal Loans Platform',
+      'Q1 2024',
+      '1',
+      'Payments Integration',
+      'Project',
+      '80',
+      'Payment gateway integration',
+    ],
+    [
+      'Personal Loans Platform',
+      'Q1 2024',
+      '1',
+      'Support Tickets',
+      'Run Work',
+      '20',
+      'Regular support activities',
+    ],
+  ];
+
+  const csvContent = sampleData
+    .map(row => row.map(cell => `"${cell}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'planning-allocations-sample.csv';
   a.click();
   window.URL.revokeObjectURL(url);
 };

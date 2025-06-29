@@ -39,6 +39,7 @@ import {
   parseActualAllocationCSVWithMapping,
   parseIterationReviewCSVWithMapping,
   parseBulkTrackingCSVWithMapping,
+  parsePlanningAllocationCSVWithMapping,
 } from '@/utils/trackingImportUtils';
 import { useImportMappings } from '@/hooks/useImportMappings';
 import { useValueMappings } from '@/hooks/useValueMappings';
@@ -123,6 +124,53 @@ const IMPORT_TYPES = {
         required: false,
         type: 'date',
       },
+    ],
+  },
+  'planning-allocations': {
+    label: 'Planning Allocations',
+    fields: [
+      {
+        id: 'team_name',
+        label: 'Team Name',
+        required: true,
+        type: 'select',
+        options: [],
+      },
+      {
+        id: 'quarter',
+        label: 'Quarter',
+        required: true,
+        type: 'select',
+        options: [],
+      },
+      {
+        id: 'iteration_number',
+        label: 'Iteration Number',
+        required: true,
+        type: 'select',
+        options: [1, 2, 3, 4, 5, 6],
+      },
+      {
+        id: 'epic_name',
+        label: 'Epic/Work Name',
+        required: false,
+        type: 'select',
+        options: [],
+      },
+      {
+        id: 'epic_type',
+        label: 'Epic Type',
+        required: false,
+        type: 'select',
+        options: ['Project', 'Run Work'],
+      },
+      {
+        id: 'percentage',
+        label: 'Allocation Percentage',
+        required: true,
+        type: 'number',
+      },
+      { id: 'notes', label: 'Notes', required: false, type: 'text' },
     ],
   },
   'actual-allocations': {
@@ -333,6 +381,7 @@ const AdvancedDataImport = () => {
     setEpics,
     setActualAllocations,
     setIterationReviews,
+    setAllocations,
     teams,
     cycles,
     epics,
@@ -403,10 +452,6 @@ const AdvancedDataImport = () => {
         case 'epic_team': {
           return teams.map(team => team.name);
         }
-        case 'actual_percentage': {
-          // Common percentage values for suggestions
-          return [0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
-        }
         default:
           return [];
       }
@@ -457,7 +502,6 @@ const AdvancedDataImport = () => {
         'epic_team',
         'completed_epics',
         'completed_milestones',
-        'actual_percentage',
       ];
 
       config.fields.forEach(field => {
@@ -570,7 +614,7 @@ const AdvancedDataImport = () => {
     const dataRows = parsed.slice(1);
     const config = IMPORT_TYPES[importType];
 
-    // Fields that can be mapped through value mapping
+    // Fields that can be mapped through value mapping (excluding percentage fields)
     const mappableFields = [
       'team_name',
       'quarter',
@@ -579,7 +623,6 @@ const AdvancedDataImport = () => {
       'epic_team',
       'completed_epics',
       'completed_milestones',
-      'actual_percentage',
     ];
 
     for (const field of config.fields) {
@@ -590,26 +633,6 @@ const AdvancedDataImport = () => {
 
       const headerIndex = headers.findIndex(h => h === mappedHeader);
       if (headerIndex === -1) continue;
-
-      // For number fields like actual_percentage, check if values need mapping
-      if (field.type === 'number') {
-        for (const row of dataRows) {
-          const value = row[headerIndex];
-          if (value && value.trim() !== '') {
-            // Check if the value is not a valid number or has formatting that might need mapping
-            const numValue = parseFloat(value);
-            if (
-              isNaN(numValue) ||
-              value.includes('%') ||
-              value.includes(' ') ||
-              value !== String(numValue)
-            ) {
-              return true; // Found a value that might need mapping
-            }
-          }
-        }
-        continue;
-      }
 
       // For select fields, check if any values don't match the available options
       if (field.type === 'select') {
@@ -707,6 +730,32 @@ const AdvancedDataImport = () => {
         setStatus({
           type: 'success',
           message: `Successfully imported ${result.projects.length} projects and ${result.epics.length} epics.`,
+        });
+      }
+    } else if (importType === 'planning-allocations') {
+      const result = parsePlanningAllocationCSVWithMapping(
+        fileContent,
+        mapping,
+        teams,
+        cycles,
+        epics,
+        runWorkCategories,
+        valueMappings
+      );
+      if (result.errors.length > 0) {
+        setStatus({
+          type: 'error',
+          message: result.errors
+            .map(e => `Row ${e.row}: ${e.message}`)
+            .join(', '),
+        });
+        return;
+      }
+      if ('allocations' in result) {
+        setAllocations(prev => [...prev, ...result.allocations]);
+        setStatus({
+          type: 'success',
+          message: `Successfully imported ${result.allocations.length} planning allocations.`,
         });
       }
     } else if (importType === 'actual-allocations') {
