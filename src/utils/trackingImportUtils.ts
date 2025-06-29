@@ -778,6 +778,7 @@ export const parseActualAllocationCSV = (
     quarter: 'Quarter',
     iteration_number: 'Iteration Number',
     epic_name: epicColumnName,
+    epic_type: 'Epic Type',
     actual_percentage: 'Actual Percentage',
     variance_reason: 'Variance Reason',
     notes: 'Notes',
