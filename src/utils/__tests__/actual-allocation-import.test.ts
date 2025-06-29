@@ -90,7 +90,9 @@ NonExistentTeam,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional se
     );
 
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toContain('Team "NonExistentTeam" not found');
+    expect(result.errors[0].message).toContain(
+      'Team "NonExistentTeam" not found'
+    );
     expect(result.allocations).toHaveLength(0);
   });
 
@@ -107,7 +109,7 @@ unassigned,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional securit
     );
 
     expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toContain('Team "unassigned" not found');
+    expect(result.errors[0].message).toContain('Team "unassigned" not found');
     expect(result.allocations).toHaveLength(0);
   });
 
