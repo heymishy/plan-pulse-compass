@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { UploadCloud, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import { UploadCloud, AlertCircle, CheckCircle, ArrowRight, Save } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { parseCSV, parseCombinedProjectEpicCSVWithMapping } from '@/utils/projectsCsvUtils';
 import { parseActualAllocationCSV, parseIterationReviewCSV, parseBulkTrackingCSV } from '@/utils/trackingImportUtils';
+import { useImportMappings } from '@/hooks/useImportMappings';
 
 const IMPORT_TYPES = {
   'projects-epics': {
@@ -90,16 +91,24 @@ const AdvancedDataImport = () => {
     runWorkCategories,
     projects
   } = useApp();
+  const { saveMapping, getMapping } = useImportMappings();
   const [step, setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
   const [headers, setHeaders] = useState<string[]>([]);
   const [preview, setPreview] = useState<string[][]>([]);
   const [importType, setImportType] = useState<keyof typeof IMPORT_TYPES>('projects-epics');
-  const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
+  const [status, setStatus] = useState<{ type: 'success' | 'error' | null; message: string | { row: number; message: string }[] }>({ type: null, message: '' });
 
   const methods = useForm();
-  const { handleSubmit, control, trigger, formState } = methods;
+  const { handleSubmit, control, trigger, formState, reset } = methods;
+
+  useEffect(() => {
+    if (step === 2) {
+      const savedMapping = getMapping(importType);
+      reset(savedMapping);
+    }
+  }, [step, importType, getMapping, reset]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -135,10 +144,16 @@ const AdvancedDataImport = () => {
         }
       });
       
+      saveMapping(importType, mapping);
+
       const appData = { teams, cycles, epics, runWorkCategories, projects };
       
       if (importType === 'projects-epics') {
-        const result = parseCombinedProjectEpicCSVWithMapping(fileContent, mapping);
+        const result = parseCombinedProjectEpicCSVWithMapping(fileContent, mapping, projects, epics);
+        if (result.errors.length > 0) {
+          setStatus({ type: 'error', message: result.errors });
+          return;
+        }
         if ('projects' in result && 'epics' in result) {
           setProjects(prev => [...prev, ...result.projects]);
           setEpics(prev => [...prev, ...result.epics]);
@@ -146,31 +161,31 @@ const AdvancedDataImport = () => {
         }
       } else if (importType === 'actual-allocations') {
         const result = parseActualAllocationCSV(fileContent, teams, cycles, epics, runWorkCategories);
-        if ('allocations' in result && 'errors' in result) {
-          if (result.errors.length > 0) {
-            setStatus({ type: 'error', message: `Import errors: ${result.errors.join(', ')}` });
-            return;
-          }
+        if (result.errors.length > 0) {
+          setStatus({ type: 'error', message: result.errors.map(e => `Row ${e.row}: ${e.message}`).join(', ') });
+          return;
+        }
+        if ('allocations' in result) {
           setActualAllocations(prev => [...prev, ...result.allocations]);
           setStatus({ type: 'success', message: `Successfully imported ${result.allocations.length} actual allocations.` });
         }
       } else if (importType === 'iteration-reviews') {
         const result = parseIterationReviewCSV(fileContent, cycles, epics, projects);
-        if ('reviews' in result && 'errors' in result) {
-          if (result.errors.length > 0) {
-            setStatus({ type: 'error', message: `Import errors: ${result.errors.join(', ')}` });
-            return;
-          }
+        if (result.errors.length > 0) {
+          setStatus({ type: 'error', message: result.errors.join(', ') });
+          return;
+        }
+        if ('reviews' in result) {
           setIterationReviews(prev => [...prev, ...result.reviews]);
           setStatus({ type: 'success', message: `Successfully imported ${result.reviews.length} iteration reviews.` });
         }
       } else if (importType === 'bulk-tracking') {
         const result = parseBulkTrackingCSV(fileContent, teams, cycles, epics, runWorkCategories, projects);
-        if ('allocations' in result && 'reviews' in result && 'errors' in result) {
-          if (result.errors.length > 0) {
-            setStatus({ type: 'error', message: `Import errors: ${result.errors.join(', ')}` });
-            return;
-          }
+        if (result.errors.length > 0) {
+          setStatus({ type: 'error', message: result.errors.join(', ') });
+          return;
+        }
+        if ('allocations' in result && 'reviews' in result) {
           setActualAllocations(prev => [...prev, ...result.allocations]);
           setIterationReviews(prev => [...prev, ...result.reviews]);
           setStatus({ 
@@ -204,7 +219,11 @@ const AdvancedDataImport = () => {
           <Alert className={`mb-4 ${status.type === 'error' ? 'border-red-500' : 'border-green-500'}`}>
             {status.type === 'error' ? <AlertCircle className="h-4 w-4 text-red-500" /> : <CheckCircle className="h-4 w-4 text-green-500" />}
             <AlertDescription className={status.type === 'error' ? 'text-red-700' : 'text-green-700'}>
-              {status.message}
+              {typeof status.message === 'string' ? status.message : 
+                <ul>
+                  {status.message.map((e, i) => <li key={i}>Row {e.row}: {e.message}</li>)}
+                </ul>
+              }
             </AlertDescription>
           </Alert>
         )}
@@ -295,9 +314,15 @@ const AdvancedDataImport = () => {
 
               <div className="flex justify-between mt-6">
                 <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-                <Button type="submit">
-                  Import Data <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => saveMapping(importType, methods.getValues())}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Mapping
+                  </Button>
+                  <Button type="submit">
+                    Import Data <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </form>
           </FormProvider>
