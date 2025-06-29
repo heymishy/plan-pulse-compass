@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -338,7 +338,6 @@ const AdvancedDataImport = () => {
     epics,
     runWorkCategories,
     projects,
-    actualAllocations,
   } = useApp();
   const { saveMapping, getMapping } = useImportMappings();
   const { saveValueMapping, getValueMapping } = useValueMappings();
@@ -365,152 +364,152 @@ const AdvancedDataImport = () => {
   const watchedValues = watch();
 
   // Get available options for select fields
-  const getFieldOptions = (fieldId: string): (string | number)[] => {
-    const config = IMPORT_TYPES[importType];
-    const field = config.fields.find(f => f.id === fieldId);
+  const getFieldOptions = useCallback(
+    (fieldId: string): (string | number)[] => {
+      const config = IMPORT_TYPES[importType];
+      const field = config.fields.find(f => f.id === fieldId);
 
-    if (!field) return [];
+      if (!field) return [];
 
-    // Return predefined options or dynamic options based on field type
-    if (field.options && field.options.length > 0) {
-      return field.options;
-    }
+      // Return predefined options or dynamic options based on field type
+      if (field.options && field.options.length > 0) {
+        return field.options;
+      }
 
-    // Dynamic options based on field type
-    switch (fieldId) {
-      case 'team_name':
-        return teams.map(team => team.name);
-      case 'quarter':
-        return cycles
-          .filter(cycle => cycle.type === 'quarterly')
-          .map(cycle => cycle.name);
-      case 'epic_name':
-        return [
-          ...epics.map(epic => epic.name),
-          ...runWorkCategories.map(rw => rw.name),
-        ];
-      case 'completed_epics':
-        return epics.map(epic => epic.name);
-      case 'completed_milestones':
-        return projects.flatMap(project =>
-          project.milestones.map(milestone => milestone.name)
-        );
-      case 'epic_team':
-        return teams.map(team => team.name);
-      case 'actual_percentage':
-        // Get existing actual allocation percentage values from the data store
-        const existingPercentages = [
-          ...new Set(
-            actualAllocations.map(allocation => allocation.actualPercentage)
-          ),
-        ];
-
-        // Combine existing values with common percentage suggestions
-        const commonPercentages = [
-          0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100,
-        ];
-
-        // Merge and sort unique values
-        const allPercentages = [
-          ...new Set([...existingPercentages, ...commonPercentages]),
-        ].sort((a, b) => a - b);
-
-        return allPercentages;
-      default:
-        return [];
-    }
-  };
+      // Dynamic options based on field type
+      switch (fieldId) {
+        case 'team_name': {
+          return teams.map(team => team.name);
+        }
+        case 'quarter': {
+          return cycles
+            .filter(cycle => cycle.type === 'quarterly')
+            .map(cycle => cycle.name);
+        }
+        case 'epic_name': {
+          return [
+            ...epics.map(epic => epic.name),
+            ...runWorkCategories.map(rw => rw.name),
+          ];
+        }
+        case 'completed_epics': {
+          return epics.map(epic => epic.name);
+        }
+        case 'completed_milestones': {
+          return projects.flatMap(project =>
+            project.milestones.map(milestone => milestone.name)
+          );
+        }
+        case 'epic_team': {
+          return teams.map(team => team.name);
+        }
+        case 'actual_percentage': {
+          // Common percentage values for suggestions
+          return [0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
+        }
+        default:
+          return [];
+      }
+    },
+    [importType, teams, cycles, epics, runWorkCategories, projects]
+  );
 
   // Validate field mapping
-  const validateMapping = (mapping: Record<string, string>) => {
-    const errors: string[] = [];
-    const config = IMPORT_TYPES[importType];
+  const validateMapping = useCallback(
+    (mapping: Record<string, string>) => {
+      const errors: string[] = [];
+      const config = IMPORT_TYPES[importType];
 
-    config.fields.forEach(field => {
-      if (
-        field.required &&
-        (!mapping[field.id] || mapping[field.id] === SKIP_MAPPING)
-      ) {
-        errors.push(`${field.label} is required but not mapped.`);
-      }
-    });
-
-    return errors;
-  };
-
-  // Validate CSV data against mapping
-  const validateCSVData = (mapping: Record<string, string>) => {
-    const errors: string[] = [];
-    const config = IMPORT_TYPES[importType];
-
-    if (!fileContent || preview.length === 0) return errors;
-
-    const parsed = parseCSV(fileContent);
-    if (parsed.length === 0) return errors;
-
-    const headers = parsed[0];
-
-    // Fields that should skip "not found in available options" validation
-    // because they can be mapped through the value mapping step
-    const mappableFields = [
-      'team_name',
-      'quarter',
-      'iteration_number',
-      'epic_name',
-      'epic_team',
-      'completed_epics',
-      'completed_milestones',
-      'actual_percentage',
-    ];
-
-    config.fields.forEach(field => {
-      const mappedHeader = mapping[field.id];
-      if (!mappedHeader || mappedHeader === SKIP_MAPPING) return;
-
-      const headerIndex = headers.findIndex(h => h === mappedHeader);
-      if (headerIndex === -1) {
-        errors.push(
-          `Mapped header "${mappedHeader}" for ${field.label} not found in CSV.`
-        );
-        return;
-      }
-
-      // Validate data in preview rows
-      preview.forEach((row, rowIndex) => {
-        const value = row[headerIndex];
-        if (field.required && (!value || value.trim() === '')) {
-          errors.push(
-            `Row ${rowIndex + 2}: ${field.label} is required but empty.`
-          );
-        }
-
-        if (field.type === 'number' && value && isNaN(parseFloat(value))) {
-          errors.push(
-            `Row ${rowIndex + 2}: ${field.label} must be a number, got "${value}".`
-          );
-        }
-
-        // Only validate select field options for non-mappable fields
+      config.fields.forEach(field => {
         if (
-          field.type === 'select' &&
-          value &&
-          !mappableFields.includes(field.id)
+          field.required &&
+          (!mapping[field.id] || mapping[field.id] === SKIP_MAPPING)
         ) {
-          const options = getFieldOptions(field.id);
-          if (
-            options.length > 0 &&
-            !options.some(option => String(option) === value)
-          ) {
-            errors.push(
-              `Row ${rowIndex + 2}: ${field.label} value "${value}" not found in available options.`
-            );
-          }
+          errors.push(`${field.label} is required but not mapped.`);
         }
       });
-    });
 
-    return errors;
-  };
+      return errors;
+    },
+    [importType]
+  );
+
+  // Validate CSV data against mapping
+  const validateCSVData = useCallback(
+    (mapping: Record<string, string>) => {
+      const errors: string[] = [];
+      const config = IMPORT_TYPES[importType];
+
+      if (!fileContent || preview.length === 0) return errors;
+
+      const parsed = parseCSV(fileContent);
+      if (parsed.length === 0) return errors;
+
+      const headers = parsed[0];
+
+      // Fields that should skip "not found in available options" validation
+      // because they can be mapped through the value mapping step
+      const mappableFields = [
+        'team_name',
+        'quarter',
+        'iteration_number',
+        'epic_name',
+        'epic_team',
+        'completed_epics',
+        'completed_milestones',
+        'actual_percentage',
+      ];
+
+      config.fields.forEach(field => {
+        const mappedHeader = mapping[field.id];
+        if (!mappedHeader || mappedHeader === SKIP_MAPPING) return;
+
+        const headerIndex = headers.findIndex(h => h === mappedHeader);
+        if (headerIndex === -1) {
+          errors.push(
+            `Mapped header "${mappedHeader}" for ${field.label} not found in CSV.`
+          );
+          return;
+        }
+
+        // Validate data in preview rows
+        preview.forEach((row, rowIndex) => {
+          const value = row[headerIndex];
+          if (field.required && (!value || value.trim() === '')) {
+            errors.push(
+              `Row ${rowIndex + 2}: ${field.label} is required but empty.`
+            );
+          }
+
+          if (field.type === 'number' && value && isNaN(parseFloat(value))) {
+            errors.push(
+              `Row ${rowIndex + 2}: ${field.label} must be a number, got "${value}".`
+            );
+          }
+
+          // Only validate select field options for non-mappable fields
+          if (
+            field.type === 'select' &&
+            value &&
+            !mappableFields.includes(field.id)
+          ) {
+            const options = getFieldOptions(field.id);
+            if (
+              options.length > 0 &&
+              !options.some(option => String(option) === value)
+            ) {
+              errors.push(
+                `Row ${rowIndex + 2}: ${field.label} value "${value}" not found in available options.`
+              );
+            }
+          }
+        });
+      });
+
+      return errors;
+    },
+    [importType, fileContent, preview, getFieldOptions]
+  );
 
   useEffect(() => {
     if (step === 2) {
@@ -526,7 +525,7 @@ const AdvancedDataImport = () => {
       const csvErrors = validateCSVData(watchedValues);
       setValidationErrors([...mappingErrors, ...csvErrors]);
     }
-  }, [watchedValues, step]);
+  }, [watchedValues, step, validateMapping, validateCSVData]);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -629,7 +628,7 @@ const AdvancedDataImport = () => {
     return false;
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: Record<string, string>) => {
     setStatus({ type: null, message: '' });
     if (!fileContent || !importType) return;
 
@@ -834,7 +833,9 @@ const AdvancedDataImport = () => {
               <Label htmlFor="import-type">Select data type to import</Label>
               <Select
                 value={importType}
-                onValueChange={v => setImportType(v as any)}
+                onValueChange={(v: keyof typeof IMPORT_TYPES) =>
+                  setImportType(v)
+                }
               >
                 <SelectTrigger id="import-type">
                   <SelectValue placeholder="Select type..." />
@@ -922,7 +923,9 @@ const AdvancedDataImport = () => {
                           rules={{ required: field.required }}
                           render={({ field: controllerField }) => (
                             <Select
-                              onValueChange={controllerField.onChange}
+                              onValueChange={(value: string) =>
+                                controllerField.onChange(value)
+                              }
                               defaultValue={controllerField.value}
                             >
                               <SelectTrigger>
