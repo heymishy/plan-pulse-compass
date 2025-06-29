@@ -121,13 +121,25 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
     csvValue: string,
     systemValue: string | number
   ) => {
-    setValueMappings(prev => ({
-      ...prev,
-      [fieldId]: {
-        ...prev[fieldId],
-        [csvValue]: systemValue,
-      },
-    }));
+    // Handle "Create new" option
+    if (String(systemValue).startsWith('CREATE_NEW:')) {
+      const newValue = String(systemValue).replace('CREATE_NEW:', '');
+      setValueMappings(prev => ({
+        ...prev,
+        [fieldId]: {
+          ...prev[fieldId],
+          [csvValue]: `NEW:${newValue}`, // Mark as new record
+        },
+      }));
+    } else {
+      setValueMappings(prev => ({
+        ...prev,
+        [fieldId]: {
+          ...prev[fieldId],
+          [csvValue]: systemValue,
+        },
+      }));
+    }
   };
 
   const validateMappings = (): string[] => {
@@ -136,7 +148,7 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
     Object.entries(csvValuesByField).forEach(([fieldId, csvValues]) => {
       const fieldMappings = valueMappings[fieldId] || {};
       const unmappedValues = Array.from(csvValues).filter(
-        csvValue => !fieldMappings[csvValue]
+        csvValue => !fieldMappings[csvValue] || fieldMappings[csvValue] === ''
       );
 
       if (unmappedValues.length > 0) {
@@ -253,13 +265,17 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
                   {Array.from(csvValues).map(csvValue => {
                     const currentMapping = fieldMappings[csvValue];
                     const isMapped = !!currentMapping;
+                    const isNewRecord =
+                      String(currentMapping).startsWith('NEW:');
 
                     return (
                       <div
                         key={csvValue}
                         className={`grid grid-cols-3 items-center gap-4 p-3 rounded-lg border ${
                           isMapped
-                            ? 'bg-green-50 border-green-200'
+                            ? isNewRecord
+                              ? 'bg-blue-50 border-blue-200'
+                              : 'bg-green-50 border-green-200'
                             : 'bg-gray-50 border-gray-200'
                         }`}
                       >
@@ -267,14 +283,24 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
                           <span className="font-medium text-sm">
                             {csvValue}
                           </span>
-                          {isMapped && (
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                          )}
+                          {isMapped &&
+                            (isNewRecord ? (
+                              <Badge
+                                variant="outline"
+                                className="text-blue-600 text-xs"
+                              >
+                                New
+                              </Badge>
+                            ) : (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            ))}
                         </div>
 
                         <div className="flex items-center gap-2">
                           <ArrowRight className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-500">maps to</span>
+                          <span className="text-sm text-gray-500">
+                            {isNewRecord ? 'will create' : 'maps to'}
+                          </span>
                         </div>
 
                         <div>
@@ -296,6 +322,12 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
                                   {option}
                                 </SelectItem>
                               ))}
+                              <SelectItem
+                                value={`CREATE_NEW:${csvValue}`}
+                                className="text-blue-600 font-medium"
+                              >
+                                ✨ Create new: "{csvValue}"
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>

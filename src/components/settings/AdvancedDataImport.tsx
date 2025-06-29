@@ -387,6 +387,9 @@ const AdvancedDataImport = () => {
     epics,
     runWorkCategories,
     projects,
+    setTeams,
+    setCycles,
+    setRunWorkCategories,
   } = useApp();
   const { saveMapping, getMapping } = useImportMappings();
   const { saveValueMapping, getValueMapping } = useValueMappings();
@@ -492,8 +495,7 @@ const AdvancedDataImport = () => {
 
       const headers = parsed[0];
 
-      // Fields that should skip "not found in available options" validation
-      // because they can be mapped through the value mapping step
+      // Fields that can be mapped through value mapping (excluding percentage fields)
       const mappableFields = [
         'team_name',
         'quarter',
@@ -637,11 +639,18 @@ const AdvancedDataImport = () => {
       // For select fields, check if any values don't match the available options
       if (field.type === 'select') {
         const options = getFieldOptions(field.id);
-        if (options.length === 0) continue; // Skip if no options defined
 
+        // If no options defined, skip validation
+        if (options.length === 0) continue;
+
+        // Check if any CSV values don't match existing options
         for (const row of dataRows) {
           const value = row[headerIndex];
-          if (value && !options.some(option => String(option) === value)) {
+          if (
+            value &&
+            value.trim() !== '' &&
+            !options.some(option => String(option) === value)
+          ) {
             return true; // Found an unmapped value
           }
         }
@@ -680,6 +689,24 @@ const AdvancedDataImport = () => {
       // Check if we need value mapping step
       const needsValueMapping =
         hasUnmappedValues(mapping) || Object.keys(valueMappings).length > 0;
+
+      // For planning allocations, always go to value mapping step for mappable fields
+      // to allow mapping of all CSV values to existing data or creation of new records
+      if (importType === 'planning-allocations') {
+        const hasMappableFields = config.fields.some(
+          field =>
+            ['team_name', 'quarter', 'iteration_number', 'epic_name'].includes(
+              field.id
+            ) &&
+            mapping[field.id] &&
+            mapping[field.id] !== SKIP_MAPPING
+        );
+
+        if (hasMappableFields) {
+          setStep(3);
+          return;
+        }
+      }
 
       if (needsValueMapping) {
         setStep(3);
@@ -752,10 +779,58 @@ const AdvancedDataImport = () => {
         return;
       }
       if ('allocations' in result) {
+        // Add new records to the system
+        if (result.newTeams && result.newTeams.length > 0) {
+          setTeams(prev => [...prev, ...result.newTeams]);
+        }
+        if (result.newCycles && result.newCycles.length > 0) {
+          setCycles(prev => [...prev, ...result.newCycles]);
+        }
+        if (result.newEpics && result.newEpics.length > 0) {
+          setEpics(prev => [...prev, ...result.newEpics]);
+        }
+        if (
+          result.newRunWorkCategories &&
+          result.newRunWorkCategories.length > 0
+        ) {
+          setRunWorkCategories(prev => [
+            ...prev,
+            ...result.newRunWorkCategories,
+          ]);
+        }
+
+        // Add allocations
         setAllocations(prev => [...prev, ...result.allocations]);
+
+        // Create success message with details about new records
+        const newRecordsMessage = [];
+        if (result.newTeams && result.newTeams.length > 0) {
+          newRecordsMessage.push(`${result.newTeams.length} new teams`);
+        }
+        if (result.newCycles && result.newCycles.length > 0) {
+          newRecordsMessage.push(`${result.newCycles.length} new quarters`);
+        }
+        if (result.newEpics && result.newEpics.length > 0) {
+          newRecordsMessage.push(`${result.newEpics.length} new epics`);
+        }
+        if (
+          result.newRunWorkCategories &&
+          result.newRunWorkCategories.length > 0
+        ) {
+          newRecordsMessage.push(
+            `${result.newRunWorkCategories.length} new run work categories`
+          );
+        }
+
+        const successMessage =
+          `Successfully imported ${result.allocations.length} planning allocations.` +
+          (newRecordsMessage.length > 0
+            ? ` Created: ${newRecordsMessage.join(', ')}.`
+            : '');
+
         setStatus({
           type: 'success',
-          message: `Successfully imported ${result.allocations.length} planning allocations.`,
+          message: successMessage,
         });
       }
     } else if (importType === 'actual-allocations') {
@@ -837,6 +912,17 @@ const AdvancedDataImport = () => {
   };
 
   const config = IMPORT_TYPES[importType];
+
+  // Fields that can be mapped through value mapping (excluding percentage fields)
+  const mappableFields = [
+    'team_name',
+    'quarter',
+    'iteration_number',
+    'epic_name',
+    'epic_team',
+    'completed_epics',
+    'completed_milestones',
+  ];
 
   return (
     <Card>
@@ -1005,11 +1091,11 @@ const AdvancedDataImport = () => {
                             <div className="flex items-center gap-1 mb-1">
                               <Info className="h-3 w-3" />
                               <span className="font-medium">
-                                Available options:
+                                Available options ({options.length}):
                               </span>
                             </div>
-                            <div className="flex flex-wrap gap-1">
-                              {options.slice(0, 5).map((option, index) => (
+                            <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                              {options.map((option, index) => (
                                 <Badge
                                   key={index}
                                   variant="secondary"
@@ -1018,12 +1104,13 @@ const AdvancedDataImport = () => {
                                   {option}
                                 </Badge>
                               ))}
-                              {options.length > 5 && (
-                                <Badge variant="secondary" className="text-xs">
-                                  +{options.length - 5} more
-                                </Badge>
-                              )}
                             </div>
+                            {mappableFields.includes(field.id) && (
+                              <div className="mt-2 text-blue-600 text-xs">
+                                💡 Unmapped values will be handled in the next
+                                step
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
