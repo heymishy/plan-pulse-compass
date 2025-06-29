@@ -68,7 +68,8 @@ export const parseActualAllocationCSVWithMapping = (
   teams: any[],
   cycles: any[],
   epics: any[],
-  runWorkCategories: any[]
+  runWorkCategories: any[],
+  valueMappings?: Record<string, Record<string, string | number>>
 ): {
   allocations: ActualAllocation[];
   errors: { row: number; message: string }[];
@@ -89,6 +90,14 @@ export const parseActualAllocationCSVWithMapping = (
     }
   });
 
+  // Helper function to translate CSV value to system value
+  const translateValue = (fieldId: string, csvValue: string): string => {
+    if (!valueMappings || !valueMappings[fieldId]) {
+      return csvValue;
+    }
+    return String(valueMappings[fieldId][csvValue] || csvValue);
+  };
+
   dataRows.forEach((row, index) => {
     const rowNum = index + 2;
     try {
@@ -103,11 +112,15 @@ export const parseActualAllocationCSVWithMapping = (
         errors.push({ row: rowNum, message: 'Team Name is required.' });
         return;
       }
+      const translatedTeamName = translateValue('team_name', teamName);
       const team = teams.find(
-        t => t.name.toLowerCase() === teamName.toLowerCase()
+        t => t.name.toLowerCase() === translatedTeamName.toLowerCase()
       );
       if (!team) {
-        errors.push({ row: rowNum, message: `Team "${teamName}" not found.` });
+        errors.push({
+          row: rowNum,
+          message: `Team "${translatedTeamName}" not found.`,
+        });
         return;
       }
 
@@ -116,15 +129,16 @@ export const parseActualAllocationCSVWithMapping = (
         errors.push({ row: rowNum, message: 'Quarter is required.' });
         return;
       }
+      const translatedQuarterName = translateValue('quarter', quarterName);
       const cycle = cycles.find(
         c =>
-          c.name.toLowerCase() === quarterName.toLowerCase() &&
+          c.name.toLowerCase() === translatedQuarterName.toLowerCase() &&
           c.type === 'quarterly'
       );
       if (!cycle) {
         errors.push({
           row: rowNum,
-          message: `Quarter "${quarterName}" not found.`,
+          message: `Quarter "${translatedQuarterName}" not found.`,
         });
         return;
       }
@@ -134,11 +148,15 @@ export const parseActualAllocationCSVWithMapping = (
         errors.push({ row: rowNum, message: 'Iteration Number is required.' });
         return;
       }
-      const iterationNumber = parseInt(iterationNumberStr, 10);
+      const translatedIterationNumberStr = translateValue(
+        'iteration_number',
+        iterationNumberStr
+      );
+      const iterationNumber = parseInt(translatedIterationNumberStr, 10);
       if (isNaN(iterationNumber)) {
         errors.push({
           row: rowNum,
-          message: `Invalid iteration number: "${iterationNumberStr}". Must be a whole number.`,
+          message: `Invalid iteration number: "${translatedIterationNumberStr}". Must be a whole number.`,
         });
         return;
       }
@@ -161,21 +179,22 @@ export const parseActualAllocationCSVWithMapping = (
       let actualRunWorkCategoryId: string | undefined;
       const epicName = getValue('epic_name');
       if (epicName) {
+        const translatedEpicName = translateValue('epic_name', epicName);
         const epic = epics.find(
-          e => e.name.toLowerCase() === epicName.toLowerCase()
+          e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
         );
         if (epic) {
           actualEpicId = epic.id;
         } else {
           const runWork = runWorkCategories.find(
-            r => r.name.toLowerCase() === epicName.toLowerCase()
+            r => r.name.toLowerCase() === translatedEpicName.toLowerCase()
           );
           if (runWork) {
             actualRunWorkCategoryId = runWork.id;
           } else {
             errors.push({
               row: rowNum,
-              message: `Epic or run work category "${epicName}" not found.`,
+              message: `Epic or run work category "${translatedEpicName}" not found.`,
             });
             return;
           }
@@ -213,7 +232,8 @@ export const parseIterationReviewCSVWithMapping = (
   mapping: Record<string, string>,
   cycles: any[],
   epics: any[],
-  projects: any[]
+  projects: any[],
+  valueMappings?: Record<string, Record<string, string | number>>
 ): {
   reviews: IterationReview[];
   errors: { row: number; message: string }[];
@@ -234,6 +254,14 @@ export const parseIterationReviewCSVWithMapping = (
     }
   });
 
+  // Helper function to translate CSV value to system value
+  const translateValue = (fieldId: string, csvValue: string): string => {
+    if (!valueMappings || !valueMappings[fieldId]) {
+      return csvValue;
+    }
+    return String(valueMappings[fieldId][csvValue] || csvValue);
+  };
+
   dataRows.forEach((row, index) => {
     const rowNum = index + 2;
     try {
@@ -249,15 +277,16 @@ export const parseIterationReviewCSVWithMapping = (
         errors.push({ row: rowNum, message: 'Quarter is required.' });
         return;
       }
+      const translatedQuarterName = translateValue('quarter', quarterName);
       const cycle = cycles.find(
         c =>
-          c.name.toLowerCase() === quarterName.toLowerCase() &&
+          c.name.toLowerCase() === translatedQuarterName.toLowerCase() &&
           c.type === 'quarterly'
       );
       if (!cycle) {
         errors.push({
           row: rowNum,
-          message: `Quarter "${quarterName}" not found.`,
+          message: `Quarter "${translatedQuarterName}" not found.`,
         });
         return;
       }
@@ -267,11 +296,15 @@ export const parseIterationReviewCSVWithMapping = (
         errors.push({ row: rowNum, message: 'Iteration Number is required.' });
         return;
       }
-      const iterationNumber = parseInt(iterationNumberStr);
+      const translatedIterationNumberStr = translateValue(
+        'iteration_number',
+        iterationNumberStr
+      );
+      const iterationNumber = parseInt(translatedIterationNumberStr, 10);
       if (isNaN(iterationNumber)) {
         errors.push({
           row: rowNum,
-          message: `Invalid iteration number "${iterationNumberStr}".`,
+          message: `Invalid iteration number: "${translatedIterationNumberStr}". Must be a whole number.`,
         });
         return;
       }
@@ -280,22 +313,24 @@ export const parseIterationReviewCSVWithMapping = (
       const completedEpics: string[] = [];
       const completedEpicsStr = getValue('completed_epics');
       if (completedEpicsStr) {
-        const epicNames = completedEpicsStr
-          .split(',')
-          .map((name: string) => name.trim());
-        for (const epicName of epicNames) {
+        const epicNames = completedEpicsStr.split(',').map(name => name.trim());
+        epicNames.forEach(epicName => {
+          const translatedEpicName = translateValue(
+            'completed_epics',
+            epicName
+          );
           const epic = epics.find(
-            e => e.name.toLowerCase() === epicName.toLowerCase()
+            e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
           );
           if (epic) {
             completedEpics.push(epic.id);
           } else {
             errors.push({
               row: rowNum,
-              message: `Completed epic "${epicName}" not found.`,
+              message: `Epic "${translatedEpicName}" not found.`,
             });
           }
-        }
+        });
       }
 
       // Parse completed milestones
@@ -304,20 +339,24 @@ export const parseIterationReviewCSVWithMapping = (
       if (completedMilestonesStr) {
         const milestoneNames = completedMilestonesStr
           .split(',')
-          .map((name: string) => name.trim());
-        for (const milestoneName of milestoneNames) {
-          const milestone = projects
-            .flatMap(p => p.milestones)
-            .find(m => m.name.toLowerCase() === milestoneName.toLowerCase());
-          if (milestone) {
-            completedMilestones.push(milestone.id);
+          .map(name => name.trim());
+        milestoneNames.forEach(milestoneName => {
+          const translatedMilestoneName = translateValue(
+            'completed_milestones',
+            milestoneName
+          );
+          const project = projects.find(
+            p => p.name.toLowerCase() === translatedMilestoneName.toLowerCase()
+          );
+          if (project) {
+            completedMilestones.push(project.id);
           } else {
             errors.push({
               row: rowNum,
-              message: `Completed milestone "${milestoneName}" not found.`,
+              message: `Milestone "${translatedMilestoneName}" not found.`,
             });
           }
-        }
+        });
       }
 
       const review: IterationReview = {
@@ -354,7 +393,8 @@ export const parseBulkTrackingCSVWithMapping = (
   cycles: any[],
   epics: any[],
   runWorkCategories: any[],
-  projects: any[]
+  projects: any[],
+  valueMappings?: Record<string, Record<string, string | number>>
 ): {
   allocations: ActualAllocation[];
   reviews: IterationReview[];
@@ -376,6 +416,14 @@ export const parseBulkTrackingCSVWithMapping = (
       fieldToIndex[fieldId] = index;
     }
   });
+
+  // Helper function to translate CSV value to system value
+  const translateValue = (fieldId: string, csvValue: string): string => {
+    if (!valueMappings || !valueMappings[fieldId]) {
+      return csvValue;
+    }
+    return String(valueMappings[fieldId][csvValue] || csvValue);
+  };
 
   dataRows.forEach((row, index) => {
     const rowNum = index + 2;
@@ -402,31 +450,36 @@ export const parseBulkTrackingCSVWithMapping = (
           });
           return;
         }
+        const translatedTeamName = translateValue('team_name', teamName);
         const team = teams.find(
-          t => t.name.toLowerCase() === teamName.toLowerCase()
+          t => t.name.toLowerCase() === translatedTeamName.toLowerCase()
         );
         if (!team) {
           errors.push({
             row: rowNum,
-            message: `Team "${teamName}" not found.`,
+            message: `Team "${translatedTeamName}" not found.`,
           });
           return;
         }
 
         const quarterName = getValue('quarter');
         if (!quarterName) {
-          errors.push({ row: rowNum, message: 'Quarter is required.' });
+          errors.push({
+            row: rowNum,
+            message: 'Quarter is required for allocation data.',
+          });
           return;
         }
+        const translatedQuarterName = translateValue('quarter', quarterName);
         const cycle = cycles.find(
           c =>
-            c.name.toLowerCase() === quarterName.toLowerCase() &&
+            c.name.toLowerCase() === translatedQuarterName.toLowerCase() &&
             c.type === 'quarterly'
         );
         if (!cycle) {
           errors.push({
             row: rowNum,
-            message: `Quarter "${quarterName}" not found.`,
+            message: `Quarter "${translatedQuarterName}" not found.`,
           });
           return;
         }
@@ -435,15 +488,19 @@ export const parseBulkTrackingCSVWithMapping = (
         if (!iterationNumberStr) {
           errors.push({
             row: rowNum,
-            message: 'Iteration Number is required.',
+            message: 'Iteration Number is required for allocation data.',
           });
           return;
         }
-        const iterationNumber = parseInt(iterationNumberStr, 10);
+        const translatedIterationNumberStr = translateValue(
+          'iteration_number',
+          iterationNumberStr
+        );
+        const iterationNumber = parseInt(translatedIterationNumberStr, 10);
         if (isNaN(iterationNumber)) {
           errors.push({
             row: rowNum,
-            message: `Invalid iteration number: "${iterationNumberStr}".`,
+            message: `Invalid iteration number: "${translatedIterationNumberStr}".`,
           });
           return;
         }
@@ -469,21 +526,22 @@ export const parseBulkTrackingCSVWithMapping = (
         let actualRunWorkCategoryId: string | undefined;
         const epicName = getValue('epic_name');
         if (epicName) {
+          const translatedEpicName = translateValue('epic_name', epicName);
           const epic = epics.find(
-            e => e.name.toLowerCase() === epicName.toLowerCase()
+            e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
           );
           if (epic) {
             actualEpicId = epic.id;
           } else {
             const runWork = runWorkCategories.find(
-              r => r.name.toLowerCase() === epicName.toLowerCase()
+              r => r.name.toLowerCase() === translatedEpicName.toLowerCase()
             );
             if (runWork) {
               actualRunWorkCategoryId = runWork.id;
             } else {
               errors.push({
                 row: rowNum,
-                message: `Epic or run work category "${epicName}" not found.`,
+                message: `Epic or run work category "${translatedEpicName}" not found.`,
               });
               return;
             }
@@ -513,15 +571,16 @@ export const parseBulkTrackingCSVWithMapping = (
           });
           return;
         }
+        const translatedQuarterName = translateValue('quarter', quarterName);
         const cycle = cycles.find(
           c =>
-            c.name.toLowerCase() === quarterName.toLowerCase() &&
+            c.name.toLowerCase() === translatedQuarterName.toLowerCase() &&
             c.type === 'quarterly'
         );
         if (!cycle) {
           errors.push({
             row: rowNum,
-            message: `Quarter "${quarterName}" not found.`,
+            message: `Quarter "${translatedQuarterName}" not found.`,
           });
           return;
         }
@@ -534,11 +593,15 @@ export const parseBulkTrackingCSVWithMapping = (
           });
           return;
         }
-        const iterationNumber = parseInt(iterationNumberStr);
+        const translatedIterationNumberStr = translateValue(
+          'iteration_number',
+          iterationNumberStr
+        );
+        const iterationNumber = parseInt(translatedIterationNumberStr, 10);
         if (isNaN(iterationNumber)) {
           errors.push({
             row: rowNum,
-            message: `Invalid iteration number "${iterationNumberStr}".`,
+            message: `Invalid iteration number: "${translatedIterationNumberStr}".`,
           });
           return;
         }
@@ -549,20 +612,24 @@ export const parseBulkTrackingCSVWithMapping = (
         if (completedEpicsStr) {
           const epicNames = completedEpicsStr
             .split(',')
-            .map((name: string) => name.trim());
-          for (const epicName of epicNames) {
+            .map(name => name.trim());
+          epicNames.forEach(epicName => {
+            const translatedEpicName = translateValue(
+              'completed_epics',
+              epicName
+            );
             const epic = epics.find(
-              e => e.name.toLowerCase() === epicName.toLowerCase()
+              e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
             );
             if (epic) {
               completedEpics.push(epic.id);
             } else {
               errors.push({
                 row: rowNum,
-                message: `Completed epic "${epicName}" not found.`,
+                message: `Epic "${translatedEpicName}" not found.`,
               });
             }
-          }
+          });
         }
 
         // Parse completed milestones
@@ -571,20 +638,25 @@ export const parseBulkTrackingCSVWithMapping = (
         if (completedMilestonesStr) {
           const milestoneNames = completedMilestonesStr
             .split(',')
-            .map((name: string) => name.trim());
-          for (const milestoneName of milestoneNames) {
-            const milestone = projects
-              .flatMap(p => p.milestones)
-              .find(m => m.name.toLowerCase() === milestoneName.toLowerCase());
-            if (milestone) {
-              completedMilestones.push(milestone.id);
+            .map(name => name.trim());
+          milestoneNames.forEach(milestoneName => {
+            const translatedMilestoneName = translateValue(
+              'completed_milestones',
+              milestoneName
+            );
+            const project = projects.find(
+              p =>
+                p.name.toLowerCase() === translatedMilestoneName.toLowerCase()
+            );
+            if (project) {
+              completedMilestones.push(project.id);
             } else {
               errors.push({
                 row: rowNum,
-                message: `Completed milestone "${milestoneName}" not found.`,
+                message: `Milestone "${translatedMilestoneName}" not found.`,
               });
             }
-          }
+          });
         }
 
         const review: IterationReview = {
@@ -604,7 +676,7 @@ export const parseBulkTrackingCSVWithMapping = (
       } else {
         errors.push({
           row: rowNum,
-          message: `Invalid data type "${dataType}". Must be "allocation" or "review".`,
+          message: `Invalid data type: "${dataType}". Must be "allocation" or "review".`,
         });
       }
     } catch (error) {

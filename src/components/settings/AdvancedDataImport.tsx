@@ -430,6 +430,18 @@ const AdvancedDataImport = () => {
 
     const headers = parsed[0];
 
+    // Fields that should skip "not found in available options" validation
+    // because they can be mapped through the value mapping step
+    const mappableFields = [
+      'team_name',
+      'quarter',
+      'iteration_number',
+      'epic_name',
+      'epic_team',
+      'completed_epics',
+      'completed_milestones',
+    ];
+
     config.fields.forEach(field => {
       const mappedHeader = mapping[field.id];
       if (!mappedHeader || mappedHeader === SKIP_MAPPING) return;
@@ -457,7 +469,12 @@ const AdvancedDataImport = () => {
           );
         }
 
-        if (field.type === 'select' && value) {
+        // Only validate select field options for non-mappable fields
+        if (
+          field.type === 'select' &&
+          value &&
+          !mappableFields.includes(field.id)
+        ) {
           const options = getFieldOptions(field.id);
           if (
             options.length > 0 &&
@@ -522,6 +539,52 @@ const AdvancedDataImport = () => {
     }
   };
 
+  // Check if there are unmapped values that need value mapping
+  const hasUnmappedValues = (mapping: Record<string, string>): boolean => {
+    if (!fileContent || !importType) return false;
+
+    const parsed = parseCSV(fileContent);
+    if (parsed.length < 2) return false; // Need headers + at least one data row
+
+    const headers = parsed[0];
+    const dataRows = parsed.slice(1);
+    const config = IMPORT_TYPES[importType];
+
+    // Fields that can be mapped through value mapping
+    const mappableFields = [
+      'team_name',
+      'quarter',
+      'iteration_number',
+      'epic_name',
+      'epic_team',
+      'completed_epics',
+      'completed_milestones',
+    ];
+
+    for (const field of config.fields) {
+      if (!mappableFields.includes(field.id)) continue;
+
+      const mappedHeader = mapping[field.id];
+      if (!mappedHeader || mappedHeader === SKIP_MAPPING) continue;
+
+      const headerIndex = headers.findIndex(h => h === mappedHeader);
+      if (headerIndex === -1) continue;
+
+      // Check if any values in this column don't match the available options
+      const options = getFieldOptions(field.id);
+      if (options.length === 0) continue; // Skip if no options defined
+
+      for (const row of dataRows) {
+        const value = row[headerIndex];
+        if (value && !options.some(option => String(option) === value)) {
+          return true; // Found an unmapped value
+        }
+      }
+    }
+
+    return false;
+  };
+
   const onSubmit = async (data: any) => {
     setStatus({ type: null, message: '' });
     if (!fileContent || !importType) return;
@@ -548,8 +611,11 @@ const AdvancedDataImport = () => {
 
       saveMapping(importType, mapping);
 
-      // If we have value mappings, proceed to step 3, otherwise go directly to import
-      if (Object.keys(valueMappings).length > 0) {
+      // Check if we need value mapping step
+      const needsValueMapping =
+        hasUnmappedValues(mapping) || Object.keys(valueMappings).length > 0;
+
+      if (needsValueMapping) {
         setStep(3);
         return;
       }
@@ -607,7 +673,8 @@ const AdvancedDataImport = () => {
         teams,
         cycles,
         epics,
-        runWorkCategories
+        runWorkCategories,
+        valueMappings
       );
       if (result.errors.length > 0) {
         setStatus({
@@ -631,7 +698,8 @@ const AdvancedDataImport = () => {
         mapping,
         cycles,
         epics,
-        projects
+        projects,
+        valueMappings
       );
       if (result.errors.length > 0) {
         setStatus({ type: 'error', message: result.errors.join(', ') });
@@ -652,7 +720,8 @@ const AdvancedDataImport = () => {
         cycles,
         epics,
         runWorkCategories,
-        projects
+        projects,
+        valueMappings
       );
       if (result.errors.length > 0) {
         setStatus({ type: 'error', message: result.errors.join(', ') });
