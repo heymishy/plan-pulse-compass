@@ -1,4 +1,5 @@
 import { Project, Epic, Milestone } from '@/types';
+import { parseDateString } from './dateUtils';
 
 export interface ProjectCSVRow {
   project_name: string;
@@ -96,8 +97,8 @@ export const parseProjectsCSV = (text: string): {
       name: rowData.project_name,
       description: rowData.description || undefined,
       status: status,
-      startDate: rowData.start_date || new Date().toISOString().split('T')[0],
-      endDate: rowData.end_date || undefined,
+      startDate: parseDateString(rowData.start_date) || new Date().toISOString().split('T')[0],
+      endDate: parseDateString(rowData.end_date),
       budget: rowData.budget ? parseFloat(rowData.budget) : undefined,
       milestones: [],
     };
@@ -121,7 +122,7 @@ export const parseProjectsCSV = (text: string): {
           projectId: projectId,
           name: name,
           description: milestoneDescs[milestoneIndex] || undefined,
-          dueDate: milestoneDates[milestoneIndex] || project.endDate || new Date().toISOString().split('T')[0],
+          dueDate: parseDateString(milestoneDates[milestoneIndex]) || project.endDate || new Date().toISOString().split('T')[0],
           status: milestoneStatus,
         };
         
@@ -190,9 +191,9 @@ export const parseEpicsCSV = (text: string, existingProjects: Project[]): {
       estimatedEffort: rowData.estimated_effort ? parseFloat(rowData.estimated_effort) : undefined,
       status: status,
       assignedTeamId: rowData.assigned_team_id || undefined,
-      startDate: rowData.start_date || undefined,
-      targetEndDate: rowData.target_end_date || undefined,
-      actualEndDate: rowData.actual_end_date || undefined,
+      startDate: parseDateString(rowData.start_date),
+      targetEndDate: parseDateString(rowData.target_end_date),
+      actualEndDate: parseDateString(rowData.actual_end_date),
     };
     
     epics.push(epic);
@@ -241,8 +242,8 @@ export const parseCombinedProjectEpicCSV = (text: string): {
         name: projectName,
         description: rowData.project_description || undefined,
         status: projectStatus,
-        startDate: rowData.project_start_date || new Date().toISOString().split('T')[0],
-        endDate: rowData.project_end_date || undefined,
+        startDate: parseDateString(rowData.project_start_date) || new Date().toISOString().split('T')[0],
+        endDate: parseDateString(rowData.project_end_date),
         budget: rowData.project_budget ? parseFloat(rowData.project_budget) : undefined,
         milestones: [],
       };
@@ -259,7 +260,7 @@ export const parseCombinedProjectEpicCSV = (text: string): {
         description: rowData.epic_description || undefined,
         estimatedEffort: rowData.epic_effort ? parseFloat(rowData.epic_effort) : undefined,
         status: 'not-started',
-        targetEndDate: rowData.epic_target_date || undefined,
+        targetEndDate: parseDateString(rowData.epic_target_date),
       };
       
       epics.push(epic);
@@ -271,7 +272,7 @@ export const parseCombinedProjectEpicCSV = (text: string): {
         id: crypto.randomUUID(),
         projectId: projectId,
         name: rowData.milestone_name,
-        dueDate: rowData.milestone_due_date,
+        dueDate: parseDateString(rowData.milestone_due_date) || new Date().toISOString().split('T')[0],
         status: 'not-started',
       };
       
@@ -292,24 +293,33 @@ export const parseCombinedProjectEpicCSV = (text: string): {
 
 export const parseCombinedProjectEpicCSVWithMapping = (
   text: string,
-  mapping: Record<string, string>
+  mapping: Record<string, string>,
+  existingProjects: Project[],
+  existingEpics: Epic[]
 ): {
   projects: Project[];
   epics: Epic[];
   milestones: Milestone[];
+  errors: { row: number; message: string }[];
 } => {
   const rows = parseCSV(text);
-  const headers = rows[0];
+  const headers = rows[0].map(h => h.trim());
   const dataRows = rows.slice(1);
 
-  const projectsMap = new Map<string, Project>();
-  const epics: Epic[] = [];
-  const milestones: Milestone[] = [];
+  const projectsMap = new Map<string, Project>(existingProjects.map(p => [p.name.toLowerCase(), p]));
+  const epicsMap = new Map<string, Epic>(existingEpics.map(e => [e.name.toLowerCase(), e]));
+  const updatedProjects = new Set<string>();
+  const updatedEpics = new Set<string>();
+
+  const newProjects: Project[] = [];
+  const newEpics: Epic[] = [];
+  const newMilestones: Milestone[] = [];
+  const errors: { row: number; message: string }[] = [];
 
   dataRows.forEach((row, index) => {
     const sourceData: Record<string, string> = {};
     headers.forEach((header, i) => {
-      sourceData[header] = row[i] || '';
+      sourceData[header] = (row[i] || '').trim();
     });
     
     const rowData: Record<string, string> = {};
@@ -321,63 +331,86 @@ export const parseCombinedProjectEpicCSVWithMapping = (
     }
 
     const projectName = rowData.project_name;
-    if (!projectName) return;
+    if (!projectName) {
+      errors.push({ row: index + 2, message: 'Project Name is required.' });
+      return;
+    }
 
-    const projectId = `project-${projectName.toLowerCase().replace(/\s+/g, '-')}`;
-
-    if (!projectsMap.has(projectId)) {
+    let project = projectsMap.get(projectName.toLowerCase());
+    if (project) {
+      // Update existing project
+      project.description = rowData.project_description || project.description;
+      project.status = (rowData.project_status?.toLowerCase() as Project['status']) || project.status;
+      project.startDate = parseDateString(rowData.project_start_date) || project.startDate;
+      project.endDate = parseDateString(rowData.project_end_date) || project.endDate;
+      project.budget = rowData.project_budget ? parseFloat(rowData.project_budget) : project.budget;
+      updatedProjects.add(project.id);
+    } else {
+      // Create new project
+      const projectId = `project-${projectName.toLowerCase().replace(/\s+/g, '-')}`;
       const projectStatus = (rowData.project_status?.toLowerCase() === 'active' ? 'active' :
                             rowData.project_status?.toLowerCase() === 'completed' ? 'completed' :
                             rowData.project_status?.toLowerCase() === 'cancelled' ? 'cancelled' : 'planning') as Project['status'];
       
-      const project: Project = {
+      project = {
         id: projectId,
         name: projectName,
         description: rowData.project_description || undefined,
         status: projectStatus,
-        startDate: rowData.project_start_date || new Date().toISOString().split('T')[0],
-        endDate: rowData.project_end_date || undefined,
+        startDate: parseDateString(rowData.project_start_date) || new Date().toISOString().split('T')[0],
+        endDate: parseDateString(rowData.project_end_date),
         budget: rowData.project_budget ? parseFloat(rowData.project_budget) : undefined,
         milestones: [],
       };
-      
-      projectsMap.set(projectId, project);
+      projectsMap.set(projectName.toLowerCase(), project);
+      newProjects.push(project);
     }
     
     if (rowData.epic_name) {
-      const epic: Epic = {
-        id: `epic-${index + 1}`,
-        projectId: projectId,
-        name: rowData.epic_name,
-        description: rowData.epic_description || undefined,
-        estimatedEffort: rowData.epic_effort ? parseFloat(rowData.epic_effort) : undefined,
-        status: 'not-started',
-        targetEndDate: rowData.epic_target_date || undefined,
-        assignedTeamId: rowData.epic_team || undefined,
-      };
-      epics.push(epic);
+      let epic = epicsMap.get(rowData.epic_name.toLowerCase());
+      if (epic) {
+        // Update existing epic
+        epic.description = rowData.epic_description || epic.description;
+        epic.estimatedEffort = rowData.epic_effort ? parseFloat(rowData.epic_effort) : epic.estimatedEffort;
+        epic.status = (rowData.epic_status?.toLowerCase() as Epic['status']) || epic.status;
+        epic.targetEndDate = parseDateString(rowData.epic_target_date) || epic.targetEndDate;
+        epic.assignedTeamId = rowData.epic_team || epic.assignedTeamId;
+        updatedEpics.add(epic.id);
+      } else {
+        // Create new epic
+        epic = {
+          id: `epic-${rowData.epic_name.toLowerCase().replace(/\s+/g, '-')}`,
+          projectId: project.id,
+          name: rowData.epic_name,
+          description: rowData.epic_description || undefined,
+          estimatedEffort: rowData.epic_effort ? parseFloat(rowData.epic_effort) : undefined,
+          status: 'not-started',
+          targetEndDate: parseDateString(rowData.epic_target_date),
+          assignedTeamId: rowData.epic_team || undefined,
+        };
+        epicsMap.set(rowData.epic_name.toLowerCase(), epic);
+        newEpics.push(epic);
+      }
     }
 
     if (rowData.milestone_name && rowData.milestone_due_date) {
       const milestone: Milestone = {
         id: crypto.randomUUID(),
-        projectId: projectId,
+        projectId: project.id,
         name: rowData.milestone_name,
-        dueDate: rowData.milestone_due_date,
+        dueDate: parseDateString(rowData.milestone_due_date) || new Date().toISOString().split('T')[0],
         status: 'not-started',
       };
-      milestones.push(milestone);
-      const project = projectsMap.get(projectId);
-      if (project) {
-        project.milestones.push(milestone);
-      }
+      newMilestones.push(milestone);
+      project.milestones.push(milestone);
     }
   });
 
   return {
-    projects: Array.from(projectsMap.values()),
-    epics,
-    milestones,
+    projects: [...newProjects, ...Array.from(updatedProjects).map(id => existingProjects.find(p => p.id === id)).filter(Boolean) as Project[]],
+    epics: [...newEpics, ...Array.from(updatedEpics).map(id => existingEpics.find(e => e.id === id)).filter(Boolean) as Epic[]],
+    milestones: newMilestones,
+    errors,
   };
 };
 

@@ -68,70 +68,69 @@ export const parseActualAllocationCSV = (
   cycles: any[],
   epics: any[],
   runWorkCategories: any[]
-): { allocations: ActualAllocation[], errors: string[] } => {
+): { allocations: ActualAllocation[], errors: { row: number, message: string }[] } => {
   const lines = parseCSV(csvContent);
-  const headers = lines[0];
+  const headers = lines[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
   const dataRows = lines.slice(1);
   
   const allocations: ActualAllocation[] = [];
-  const errors: string[] = [];
+  const errors: { row: number, message: string }[] = [];
 
   dataRows.forEach((row, index) => {
+    const rowNum = index + 2;
     try {
       const rowData: any = {};
       headers.forEach((header, i) => {
-        rowData[header.toLowerCase().replace(/\s+/g, '_')] = row[i] || '';
+        rowData[header] = (row[i] || '').trim();
       });
 
-      // Find team
-      const team = teams.find(t => 
-        t.name.toLowerCase() === rowData.team_name?.toLowerCase()
-      );
+      const teamName = rowData.team_name;
+      if (!teamName) {
+        errors.push({ row: rowNum, message: 'Team Name is required.' });
+        return;
+      }
+      const team = teams.find(t => t.name.toLowerCase() === teamName.toLowerCase());
       if (!team) {
-        errors.push(`Row ${index + 2}: Team "${rowData.team_name}" not found`);
+        errors.push({ row: rowNum, message: `Team "${teamName}" not found.` });
         return;
       }
 
-      // Find cycle
-      const cycle = cycles.find(c => 
-        c.name.toLowerCase() === rowData.quarter?.toLowerCase() && c.type === 'quarterly'
-      );
+      const quarterName = rowData.quarter;
+      if (!quarterName) {
+        errors.push({ row: rowNum, message: 'Quarter is required.' });
+        return;
+      }
+      const cycle = cycles.find(c => c.name.toLowerCase() === quarterName.toLowerCase() && c.type === 'quarterly');
       if (!cycle) {
-        errors.push(`Row ${index + 2}: Quarter "${rowData.quarter}" not found`);
+        errors.push({ row: rowNum, message: `Quarter "${quarterName}" not found.` });
         return;
       }
 
-      const iterationNumber = parseInt(rowData.iteration_number);
+      const iterationNumber = parseInt(rowData.iteration_number, 10);
       if (isNaN(iterationNumber)) {
-        errors.push(`Row ${index + 2}: Invalid iteration number "${rowData.iteration_number}"`);
+        errors.push({ row: rowNum, message: `Invalid iteration number: "${rowData.iteration_number}". Must be a whole number.` });
         return;
       }
 
       const actualPercentage = parseFloat(rowData.actual_percentage);
       if (isNaN(actualPercentage)) {
-        errors.push(`Row ${index + 2}: Invalid actual percentage "${rowData.actual_percentage}"`);
+        errors.push({ row: rowNum, message: `Invalid actual percentage: "${rowData.actual_percentage}". Must be a number.` });
         return;
       }
 
-      // Find epic or run work category
       let actualEpicId: string | undefined;
       let actualRunWorkCategoryId: string | undefined;
-
-      if (rowData.epic_name) {
-        const epic = epics.find(e => 
-          e.name.toLowerCase() === rowData.epic_name.toLowerCase()
-        );
+      const epicName = rowData.epic_name;
+      if (epicName) {
+        const epic = epics.find(e => e.name.toLowerCase() === epicName.toLowerCase());
         if (epic) {
           actualEpicId = epic.id;
         } else {
-          // Check if it's a run work category
-          const runWork = runWorkCategories.find(r => 
-            r.name.toLowerCase() === rowData.epic_name.toLowerCase()
-          );
+          const runWork = runWorkCategories.find(r => r.name.toLowerCase() === epicName.toLowerCase());
           if (runWork) {
             actualRunWorkCategoryId = runWork.id;
           } else {
-            errors.push(`Row ${index + 2}: Epic or run work category "${rowData.epic_name}" not found`);
+            errors.push({ row: rowNum, message: `Epic or run work category "${epicName}" not found.` });
             return;
           }
         }
@@ -151,7 +150,7 @@ export const parseActualAllocationCSV = (
 
       allocations.push(actualAllocation);
     } catch (error) {
-      errors.push(`Row ${index + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      errors.push({ row: rowNum, message: error instanceof Error ? error.message : 'An unknown error occurred.' });
     }
   });
 
