@@ -36,9 +36,9 @@ import {
   parseCombinedProjectEpicCSVWithMapping,
 } from '@/utils/projectsCsvUtils';
 import {
-  parseActualAllocationCSV,
-  parseIterationReviewCSV,
-  parseBulkTrackingCSV,
+  parseActualAllocationCSVWithMapping,
+  parseIterationReviewCSVWithMapping,
+  parseBulkTrackingCSVWithMapping,
 } from '@/utils/trackingImportUtils';
 import { useImportMappings } from '@/hooks/useImportMappings';
 
@@ -358,7 +358,7 @@ const AdvancedDataImport = () => {
   const watchedValues = watch();
 
   // Get available options for select fields
-  const getFieldOptions = (fieldId: string) => {
+  const getFieldOptions = (fieldId: string): (string | number)[] => {
     const config = IMPORT_TYPES[importType];
     const field = config.fields.find(f => f.id === fieldId);
 
@@ -419,8 +419,10 @@ const AdvancedDataImport = () => {
 
     if (!fileContent || preview.length === 0) return errors;
 
-    const lines = fileContent.trim().split('\n');
-    const headers = lines[0].map(h => h.trim());
+    const parsed = parseCSV(fileContent);
+    if (parsed.length === 0) return errors;
+
+    const headers = parsed[0];
 
     config.fields.forEach(field => {
       const mappedHeader = mapping[field.id];
@@ -451,7 +453,10 @@ const AdvancedDataImport = () => {
 
         if (field.type === 'select' && value) {
           const options = getFieldOptions(field.id);
-          if (options.length > 0 && !options.includes(value)) {
+          if (
+            options.length > 0 &&
+            !options.some(option => String(option) === value)
+          ) {
             errors.push(
               `Row ${rowIndex + 2}: ${field.label} value "${value}" not found in available options.`
             );
@@ -547,7 +552,12 @@ const AdvancedDataImport = () => {
           epics
         );
         if (result.errors.length > 0) {
-          setStatus({ type: 'error', message: result.errors });
+          setStatus({
+            type: 'error',
+            message: result.errors
+              .map(e => `Row ${e.row}: ${e.message}`)
+              .join(', '),
+          });
           return;
         }
         if ('projects' in result && 'epics' in result) {
@@ -559,8 +569,9 @@ const AdvancedDataImport = () => {
           });
         }
       } else if (importType === 'actual-allocations') {
-        const result = parseActualAllocationCSV(
+        const result = parseActualAllocationCSVWithMapping(
           fileContent,
+          mapping,
           teams,
           cycles,
           epics,
@@ -583,8 +594,9 @@ const AdvancedDataImport = () => {
           });
         }
       } else if (importType === 'iteration-reviews') {
-        const result = parseIterationReviewCSV(
+        const result = parseIterationReviewCSVWithMapping(
           fileContent,
+          mapping,
           cycles,
           epics,
           projects
@@ -601,8 +613,9 @@ const AdvancedDataImport = () => {
           });
         }
       } else if (importType === 'bulk-tracking') {
-        const result = parseBulkTrackingCSV(
+        const result = parseBulkTrackingCSVWithMapping(
           fileContent,
+          mapping,
           teams,
           cycles,
           epics,
