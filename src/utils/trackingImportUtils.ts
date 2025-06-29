@@ -107,6 +107,12 @@ export const parseActualAllocationCSVWithMapping = (
 
   // Helper function to translate CSV value to system value
   const translateValue = (fieldId: string, csvValue: string): string => {
+    // Don't apply value mappings to percentage fields - they should just be parsed as numbers
+    const percentageFields = ['percentage', 'actual_percentage'];
+    if (percentageFields.includes(fieldId)) {
+      return csvValue;
+    }
+
     if (!valueMappings || !valueMappings[fieldId]) {
       return csvValue;
     }
@@ -275,6 +281,12 @@ export const parseIterationReviewCSVWithMapping = (
 
   // Helper function to translate CSV value to system value
   const translateValue = (fieldId: string, csvValue: string): string => {
+    // Don't apply value mappings to percentage fields - they should just be parsed as numbers
+    const percentageFields = ['percentage', 'actual_percentage'];
+    if (percentageFields.includes(fieldId)) {
+      return csvValue;
+    }
+
     if (!valueMappings || !valueMappings[fieldId]) {
       return csvValue;
     }
@@ -438,6 +450,12 @@ export const parseBulkTrackingCSVWithMapping = (
 
   // Helper function to translate CSV value to system value
   const translateValue = (fieldId: string, csvValue: string): string => {
+    // Don't apply value mappings to percentage fields - they should just be parsed as numbers
+    const percentageFields = ['percentage', 'actual_percentage'];
+    if (percentageFields.includes(fieldId)) {
+      return csvValue;
+    }
+
     if (!valueMappings || !valueMappings[fieldId]) {
       return csvValue;
     }
@@ -1156,6 +1174,12 @@ export const parsePlanningAllocationCSVWithMapping = (
 
   // Helper function to translate CSV value to system value
   const translateValue = (fieldId: string, csvValue: string): string => {
+    // Don't apply value mappings to percentage fields - they should just be parsed as numbers
+    const percentageFields = ['percentage', 'actual_percentage'];
+    if (percentageFields.includes(fieldId)) {
+      return csvValue;
+    }
+
     if (!valueMappings || !valueMappings[fieldId]) {
       return csvValue;
     }

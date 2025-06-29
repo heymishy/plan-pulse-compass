@@ -1080,7 +1080,13 @@ const AdvancedDataImport = () => {
         {step === 3 && (
           <ValueMappingStep
             importType={importType}
-            fieldMappings={methods.getValues()}
+            fieldMappings={Object.fromEntries(
+              Object.entries(methods.getValues()).filter(([fieldId]) => {
+                // Exclude percentage fields from value mapping
+                const percentageFields = ['percentage', 'actual_percentage'];
+                return !percentageFields.includes(fieldId);
+              })
+            )}
             csvData={[headers, ...preview]}
             systemOptions={Object.fromEntries(
               config.fields
