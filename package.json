@@ -21,6 +21,8 @@
     "test:unit": "vitest run src/components/ui/__tests__/",
     "test:integration": "vitest run src/__tests__/",
     "test:layout": "vitest run src/components/__tests__/Layout.test.tsx src/components/__tests__/Navigation.test.tsx",
+    "test:sidebar:ci": "vitest run --reporter=verbose --no-coverage src/components/__tests__/SidebarMinimize.test.tsx",
+    "test:sidebar:minimize": "vitest run --reporter=verbose --no-coverage src/components/__tests__/SidebarMinimize.test.tsx --grep 'Minimize'",
     "test:fast": "vitest run --config vitest.config.minimal.ts --no-coverage",
     "test:unit:fast": "vitest run --config vitest.config.minimal.ts --no-coverage src/components/ui/__tests__/",
     "test:logic": "vitest run --config vitest.config.node.ts --no-coverage src/utils/__tests__/",

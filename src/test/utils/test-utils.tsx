@@ -2,6 +2,7 @@ import React, { ReactElement } from 'react';
 import { render, RenderOptions, cleanup } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi, afterEach } from 'vitest';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 // Mock the Toaster component to avoid issues in tests
 vi.mock('@/components/ui/toaster', () => ({
@@ -18,6 +19,15 @@ const LightweightProviders = ({ children }: { children: React.ReactNode }) => {
   return <BrowserRouter>{children}</BrowserRouter>;
 };
 
+// Wrapper for components that need sidebar context (like Navigation component)
+const SidebarProviders = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <BrowserRouter>
+      <SidebarProvider>{children}</SidebarProvider>
+    </BrowserRouter>
+  );
+};
+
 // Wrapper for components that already have a router (like App component)
 const NoRouterProviders = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
@@ -29,6 +39,12 @@ const customRender = (
   options?: Omit<RenderOptions, 'wrapper'>
 ) => render(ui, { wrapper: LightweightProviders, ...options });
 
+// Render for components that need sidebar context
+const renderWithSidebar = (
+  ui: ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) => render(ui, { wrapper: SidebarProviders, ...options });
+
 // Render for components that already have a router
 const renderWithoutRouter = (
   ui: ReactElement,
@@ -39,7 +55,7 @@ const renderWithoutRouter = (
 export * from '@testing-library/react';
 
 // Override render method
-export { customRender as render, renderWithoutRouter };
+export { customRender as render, renderWithSidebar, renderWithoutRouter };
 
 // Helper function to create mock data
 export const createMockPerson = (overrides = {}) => ({
