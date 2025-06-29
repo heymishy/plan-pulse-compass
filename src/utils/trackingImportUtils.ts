@@ -205,12 +205,9 @@ export const parseActualAllocationCSVWithMapping = (
       const epicName = getValue('epic_name');
       if (epicName) {
         const translatedEpicName = translateValue('epic_name', epicName);
-        const epic = epics.find(
-          e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
-        );
-        if (epic) {
-          actualEpicId = epic.id;
-        } else {
+        const epicType = getValue('epic_type');
+
+        if (epicType && epicType.toLowerCase() === 'run work') {
           const runWork = runWorkCategories.find(
             r => r.name.toLowerCase() === translatedEpicName.toLowerCase()
           );
@@ -219,7 +216,20 @@ export const parseActualAllocationCSVWithMapping = (
           } else {
             errors.push({
               row: rowNum,
-              message: `Epic or run work category "${translatedEpicName}" not found.`,
+              message: `Run work category "${translatedEpicName}" not found.`,
+            });
+            return;
+          }
+        } else {
+          const epic = epics.find(
+            e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
+          );
+          if (epic) {
+            actualEpicId = epic.id;
+          } else {
+            errors.push({
+              row: rowNum,
+              message: `Epic "${translatedEpicName}" not found.`,
             });
             return;
           }
@@ -568,12 +578,9 @@ export const parseBulkTrackingCSVWithMapping = (
         const epicName = getValue('epic_name');
         if (epicName) {
           const translatedEpicName = translateValue('epic_name', epicName);
-          const epic = epics.find(
-            e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
-          );
-          if (epic) {
-            actualEpicId = epic.id;
-          } else {
+          const epicType = getValue('epic_type');
+
+          if (epicType && epicType.toLowerCase() === 'run work') {
             const runWork = runWorkCategories.find(
               r => r.name.toLowerCase() === translatedEpicName.toLowerCase()
             );
@@ -582,7 +589,20 @@ export const parseBulkTrackingCSVWithMapping = (
             } else {
               errors.push({
                 row: rowNum,
-                message: `Epic or run work category "${translatedEpicName}" not found.`,
+                message: `Run work category "${translatedEpicName}" not found.`,
+              });
+              return;
+            }
+          } else {
+            const epic = epics.find(
+              e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
+            );
+            if (epic) {
+              actualEpicId = epic.id;
+            } else {
+              errors.push({
+                row: rowNum,
+                message: `Epic "${translatedEpicName}" not found.`,
               });
               return;
             }
@@ -1155,6 +1175,10 @@ export const parsePlanningAllocationCSVWithMapping = (
 ): {
   allocations: Allocation[];
   errors: { row: number; message: string }[];
+  newTeams?: any[];
+  newCycles?: any[];
+  newEpics?: any[];
+  newRunWorkCategories?: any[];
 } => {
   const lines = parseCSV(csvContent);
   const headers = lines[0];
@@ -1162,6 +1186,12 @@ export const parsePlanningAllocationCSVWithMapping = (
 
   const allocations: Allocation[] = [];
   const errors: { row: number; message: string }[] = [];
+
+  // Track new records that need to be created
+  const newTeams: any[] = [];
+  const newCycles: any[] = [];
+  const newEpics: any[] = [];
+  const newRunWorkCategories: any[] = [];
 
   // Create reverse mapping from field ID to header index
   const fieldToIndex: Record<string, number> = {};
@@ -1183,7 +1213,117 @@ export const parsePlanningAllocationCSVWithMapping = (
     if (!valueMappings || !valueMappings[fieldId]) {
       return csvValue;
     }
-    return String(valueMappings[fieldId][csvValue] || csvValue);
+
+    const mappedValue = valueMappings[fieldId][csvValue];
+    if (!mappedValue) {
+      return csvValue;
+    }
+
+    // Handle "NEW:" prefix for creating new records
+    if (String(mappedValue).startsWith('NEW:')) {
+      return String(mappedValue).replace('NEW:', '');
+    }
+
+    return String(mappedValue);
+  };
+
+  // Helper function to get or create team
+  const getOrCreateTeam = (teamName: string): any => {
+    let team = teams.find(t => t.name.toLowerCase() === teamName.toLowerCase());
+    if (!team) {
+      // Check if we already created this team in this import
+      team = newTeams.find(
+        t => t.name.toLowerCase() === teamName.toLowerCase()
+      );
+      if (!team) {
+        team = {
+          id: `team-${teamName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+          name: teamName,
+          capacity: 40, // Default capacity
+        };
+        newTeams.push(team);
+      }
+    }
+    return team;
+  };
+
+  // Helper function to get or create cycle
+  const getOrCreateCycle = (cycleName: string): any => {
+    let cycle = cycles.find(
+      c =>
+        c.name.toLowerCase() === cycleName.toLowerCase() &&
+        c.type === 'quarterly'
+    );
+    if (!cycle) {
+      // Check if we already created this cycle in this import
+      cycle = newCycles.find(
+        c => c.name.toLowerCase() === cycleName.toLowerCase()
+      );
+      if (!cycle) {
+        // Parse quarter name to get start/end dates
+        const quarterMatch = cycleName.match(/Q(\d)\s+(\d{4})/);
+        if (quarterMatch) {
+          const quarter = parseInt(quarterMatch[1]);
+          const year = parseInt(quarterMatch[2]);
+          const startMonth = (quarter - 1) * 3;
+          const startDate = new Date(year, startMonth, 1);
+          const endDate = new Date(year, startMonth + 3, 0);
+
+          cycle = {
+            id: `cycle-${cycleName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+            name: cycleName,
+            type: 'quarterly',
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+          };
+          newCycles.push(cycle);
+        }
+      }
+    }
+    return cycle;
+  };
+
+  // Helper function to get or create epic
+  const getOrCreateEpic = (epicName: string): any => {
+    let epic = epics.find(e => e.name.toLowerCase() === epicName.toLowerCase());
+    if (!epic) {
+      // Check if we already created this epic in this import
+      epic = newEpics.find(
+        e => e.name.toLowerCase() === epicName.toLowerCase()
+      );
+      if (!epic) {
+        epic = {
+          id: `epic-${epicName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+          name: epicName,
+          description: `Imported epic: ${epicName}`,
+          effort: 0,
+        };
+        newEpics.push(epic);
+      }
+    }
+    return epic;
+  };
+
+  // Helper function to get or create run work category
+  const getOrCreateRunWorkCategory = (categoryName: string): any => {
+    let category = runWorkCategories.find(
+      r => r.name.toLowerCase() === categoryName.toLowerCase()
+    );
+    if (!category) {
+      // Check if we already created this category in this import
+      category = newRunWorkCategories.find(
+        r => r.name.toLowerCase() === categoryName.toLowerCase()
+      );
+      if (!category) {
+        category = {
+          id: `runwork-${categoryName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+          name: categoryName,
+          description: `Imported run work: ${categoryName}`,
+        };
+        newRunWorkCategories.push(category);
+      }
+    }
+    return category;
   };
 
   dataRows.forEach((row, index) => {
@@ -1201,16 +1341,7 @@ export const parsePlanningAllocationCSVWithMapping = (
         return;
       }
       const translatedTeamName = translateValue('team_name', teamName);
-      const team = teams.find(
-        t => t.name.toLowerCase() === translatedTeamName.toLowerCase()
-      );
-      if (!team) {
-        errors.push({
-          row: rowNum,
-          message: `Team "${translatedTeamName}" not found.`,
-        });
-        return;
-      }
+      const team = getOrCreateTeam(translatedTeamName);
 
       const quarterName = getValue('quarter');
       if (!quarterName) {
@@ -1218,18 +1349,7 @@ export const parsePlanningAllocationCSVWithMapping = (
         return;
       }
       const translatedQuarterName = translateValue('quarter', quarterName);
-      const cycle = cycles.find(
-        c =>
-          c.name.toLowerCase() === translatedQuarterName.toLowerCase() &&
-          c.type === 'quarterly'
-      );
-      if (!cycle) {
-        errors.push({
-          row: rowNum,
-          message: `Quarter "${translatedQuarterName}" not found.`,
-        });
-        return;
-      }
+      const cycle = getOrCreateCycle(translatedQuarterName);
 
       const iterationNumberStr = getValue('iteration_number');
       if (!iterationNumberStr) {
@@ -1275,22 +1395,14 @@ export const parsePlanningAllocationCSVWithMapping = (
       const epicName = getValue('epic_name');
       if (epicName) {
         const translatedEpicName = translateValue('epic_name', epicName);
-        const epic = epics.find(
-          e => e.name.toLowerCase() === translatedEpicName.toLowerCase()
-        );
-        if (epic) {
-          epicId = epic.id;
+        const epicType = getValue('epic_type');
+
+        if (epicType && epicType.toLowerCase() === 'run work') {
+          const runWork = getOrCreateRunWorkCategory(translatedEpicName);
+          runWorkCategoryId = runWork.id;
         } else {
-          const runWork = runWorkCategories.find(
-            r => r.name.toLowerCase() === translatedEpicName.toLowerCase()
-          );
-          if (runWork) {
-            runWorkCategoryId = runWork.id;
-          } else {
-            // For planning allocations, if epic/work name doesn't exist,
-            // we'll include it in notes rather than throwing an error
-            // This allows importing allocations for epics that haven't been created yet
-          }
+          const epic = getOrCreateEpic(translatedEpicName);
+          epicId = epic.id;
         }
       }
 
@@ -1322,7 +1434,14 @@ export const parsePlanningAllocationCSVWithMapping = (
     }
   });
 
-  return { allocations, errors };
+  return {
+    allocations,
+    errors,
+    newTeams,
+    newCycles,
+    newEpics,
+    newRunWorkCategories,
+  };
 };
 
 export const downloadPlanningAllocationSampleCSV = () => {
