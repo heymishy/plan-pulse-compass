@@ -25,8 +25,8 @@ describe('Layout and Navigation UI', () => {
     it('renders version info in sidebar header', () => {
       renderNavigation();
 
-      // Check that version info is rendered (look for the button with version text)
-      expect(screen.getByText(/v\s*0\.0\.20/)).toBeInTheDocument();
+      // Check that version info is rendered (look for any version pattern)
+      expect(screen.getByText(/v\s*\d+\.\d+\.\d+/)).toBeInTheDocument();
     });
   });
 
