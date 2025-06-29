@@ -9,8 +9,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
-    testTimeout: 5000,
-    hookTimeout: 3000,
+    testTimeout: 3000,
+    hookTimeout: 2000,
     pool: 'threads',
     poolOptions: {
       threads: {
@@ -44,7 +44,7 @@ export default defineConfig({
     isolate: true,
     passWithNoTests: true,
     watch: false,
-    teardownTimeout: 3000,
+    teardownTimeout: 2000,
     sequence: {
       shuffle: false,
     },
