@@ -338,6 +338,7 @@ const AdvancedDataImport = () => {
     epics,
     runWorkCategories,
     projects,
+    actualAllocations,
   } = useApp();
   const { saveMapping, getMapping } = useImportMappings();
   const { saveValueMapping, getValueMapping } = useValueMappings();
@@ -397,8 +398,24 @@ const AdvancedDataImport = () => {
       case 'epic_team':
         return teams.map(team => team.name);
       case 'actual_percentage':
-        // Common percentage values for suggestions
-        return [0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
+        // Get existing actual allocation percentage values from the data store
+        const existingPercentages = [
+          ...new Set(
+            actualAllocations.map(allocation => allocation.actualPercentage)
+          ),
+        ];
+
+        // Combine existing values with common percentage suggestions
+        const commonPercentages = [
+          0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100,
+        ];
+
+        // Merge and sort unique values
+        const allPercentages = [
+          ...new Set([...existingPercentages, ...commonPercentages]),
+        ].sort((a, b) => a - b);
+
+        return allPercentages;
       default:
         return [];
     }
