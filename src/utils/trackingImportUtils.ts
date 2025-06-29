@@ -630,12 +630,21 @@ export const parseActualAllocationCSV = (
   allocations: ActualAllocation[];
   errors: { row: number; message: string }[];
 } => {
-  // Create default mapping based on expected headers
+  // Create flexible default mapping that can handle both column name variations
+  const lines = parseCSV(csvContent);
+  const headers = lines[0];
+
+  // Determine the correct epic column name based on what's in the CSV
+  const epicColumnName =
+    headers.find(h => h === 'Epic/Work Name') ||
+    headers.find(h => h === 'Epic Name') ||
+    'Epic/Work Name';
+
   const defaultMapping = {
     team_name: 'Team Name',
     quarter: 'Quarter',
     iteration_number: 'Iteration Number',
-    epic_name: 'Epic/Work Name',
+    epic_name: epicColumnName,
     actual_percentage: 'Actual Percentage',
     variance_reason: 'Variance Reason',
     notes: 'Notes',
