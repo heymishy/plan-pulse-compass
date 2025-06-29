@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -16,44 +15,63 @@ import AttentionItemsCard from '@/components/dashboard/AttentionItemsCard';
 import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import QuickActionsCard from '@/components/dashboard/QuickActionsCard';
 import IterationMetricsCard from '@/components/dashboard/IterationMetricsCard';
+import TeamPortfolioInsights from '@/components/dashboard/TeamPortfolioInsights';
 
 const Dashboard = () => {
-  const { 
-    people, 
-    teams, 
-    projects, 
-    allocations, 
-    isSetupComplete, 
-    cycles, 
-    actualAllocations, 
-    iterationReviews, 
-    epics, 
-    isDataLoading 
+  const {
+    people,
+    teams,
+    projects,
+    allocations,
+    isSetupComplete,
+    cycles,
+    actualAllocations,
+    iterationReviews,
+    epics,
+    isDataLoading,
   } = useApp();
 
   const dashboardData = useMemo(() => {
-    console.log('Dashboard: Computing dashboard data', { 
-      isSetupComplete, 
-      isDataLoading, 
+    console.log('Dashboard: Computing dashboard data', {
+      isSetupComplete,
+      isDataLoading,
       cyclesLength: cycles.length,
       projectsLength: projects.length,
-      epicsLength: epics.length
+      epicsLength: epics.length,
     });
-    
+
     if (!isSetupComplete || isDataLoading) {
-      console.log('Dashboard: Skipping dashboard data computation - setup incomplete or data loading');
+      console.log(
+        'Dashboard: Skipping dashboard data computation - setup incomplete or data loading'
+      );
       return null;
     }
-    
+
     try {
-      const data = getDashboardData(cycles, allocations, actualAllocations, iterationReviews, projects, epics);
+      const data = getDashboardData(
+        cycles,
+        allocations,
+        actualAllocations,
+        iterationReviews,
+        projects,
+        epics
+      );
       console.log('Dashboard: Successfully computed dashboard data', data);
       return data;
     } catch (error) {
       console.error('Dashboard: Error computing dashboard data', error);
       return null;
     }
-  }, [isSetupComplete, isDataLoading, cycles, allocations, actualAllocations, iterationReviews, projects, epics]);
+  }, [
+    isSetupComplete,
+    isDataLoading,
+    cycles,
+    allocations,
+    actualAllocations,
+    iterationReviews,
+    projects,
+    epics,
+  ]);
 
   // Show setup required if not complete
   if (!isSetupComplete) {
@@ -61,7 +79,9 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto p-6">
         <div className="text-center py-12">
           <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Setup Required</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Setup Required
+          </h2>
           <p className="text-gray-600 mb-6">
             Please complete the initial setup to start using the planning app.
           </p>
@@ -95,32 +115,39 @@ const Dashboard = () => {
           <div className="space-y-6">
             <Skeleton className="h-52" />
             <Skeleton className="h-52" />
+            <Skeleton className="h-52" />
           </div>
         </div>
       </div>
     );
   }
 
-  const { currentQuarter, currentIteration, quarterlyProgress, attentionItems, iterationMetrics } = dashboardData;
+  const {
+    currentQuarter,
+    currentIteration,
+    quarterlyProgress,
+    attentionItems,
+    iterationMetrics,
+  } = dashboardData;
 
   return (
     <div className="max-w-7xl mx-auto p-6">
       <DashboardHeader />
 
-      <StatCards 
-        people={people} 
-        teams={teams} 
-        projects={projects} 
-        allocations={allocations} 
+      <StatCards
+        people={people}
+        teams={teams}
+        projects={projects}
+        allocations={allocations}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main column */}
         <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <CurrentStatusCard 
-              currentQuarter={currentQuarter} 
-              currentIteration={currentIteration} 
+            <CurrentStatusCard
+              currentQuarter={currentQuarter}
+              currentIteration={currentIteration}
             />
             <IterationMetricsCard iterationMetrics={iterationMetrics} />
           </div>
@@ -129,6 +156,7 @@ const Dashboard = () => {
 
         {/* Sidebar column */}
         <div className="space-y-6">
+          <TeamPortfolioInsights />
           <AttentionItemsCard attentionItems={attentionItems} />
           <QuickActionsCard />
           <RecentActivityCard />

@@ -2,9 +2,24 @@ import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarCheck, BarChart3, Grid, Calendar, Users, Target, BookOpenCheck } from 'lucide-react';
+import {
+  CalendarCheck,
+  BarChart3,
+  Grid,
+  Calendar,
+  Users,
+  Target,
+  BookOpenCheck,
+  Activity,
+} from 'lucide-react';
 import AllocationTimeline from '@/components/allocations/AllocationTimeline';
 import AllocationMatrix from '@/components/allocations/AllocationMatrix';
 import CapacityChart from '@/components/allocations/CapacityChart';
@@ -13,30 +28,46 @@ import TeamQuarterPlans from '@/components/allocations/TeamQuarterPlans';
 import AllocationImportDialog from '@/components/allocations/AllocationImportDialog';
 import { useToast } from '@/hooks/use-toast';
 import AnnualFinancialReport from '@/components/allocations/AnnualFinancialReport';
+import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtilizationMatrix';
 
 const NoDataForQuarter = ({ selectedCycleId }: { selectedCycleId: string }) => (
-    <Card>
-      <CardContent className="text-center py-12">
-        <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Allocation Data</h3>
-        <p className="text-gray-600">
-          {!selectedCycleId 
-            ? "Select a quarter to view allocations" 
-            : "No iterations found for this quarter."}
-        </p>
-      </CardContent>
-    </Card>
+  <Card>
+    <CardContent className="text-center py-12">
+      <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        No Allocation Data
+      </h3>
+      <p className="text-gray-600">
+        {!selectedCycleId
+          ? 'Select a quarter to view allocations'
+          : 'No iterations found for this quarter.'}
+      </p>
+    </CardContent>
+  </Card>
 );
 
 const Allocations = () => {
-  const { teams, cycles, allocations, config, projects, epics, runWorkCategories, people, roles } = useApp();
+  const {
+    teams,
+    cycles,
+    allocations,
+    config,
+    projects,
+    epics,
+    runWorkCategories,
+    people,
+    roles,
+  } = useApp();
   const { toast } = useToast();
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
 
   // Get current quarter cycles
-  const quarterCycles = cycles.filter(c => c.type === 'quarterly' && c.status !== 'completed');
-  const currentQuarter = quarterCycles.find(c => c.status === 'active') || quarterCycles[0];
+  const quarterCycles = cycles.filter(
+    c => c.type === 'quarterly' && c.status !== 'completed'
+  );
+  const currentQuarter =
+    quarterCycles.find(c => c.status === 'active') || quarterCycles[0];
 
   React.useEffect(() => {
     if (currentQuarter && !selectedCycleId) {
@@ -45,19 +76,26 @@ const Allocations = () => {
   }, [currentQuarter, selectedCycleId]);
 
   // Get iterations for selected quarter
-  const iterations = cycles.filter(c => 
-    c.type === 'iteration' && 
-    c.parentCycleId === selectedCycleId
-  ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+  const iterations = cycles
+    .filter(c => c.type === 'iteration' && c.parentCycleId === selectedCycleId)
+    .sort(
+      (a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
 
   // Filter data based on selections
-  const filteredTeams = selectedTeamId === 'all' ? teams : teams.filter(t => t.id === selectedTeamId);
-  const filteredAllocations = allocations.filter(a => a.cycleId === selectedCycleId);
+  const filteredTeams =
+    selectedTeamId === 'all'
+      ? teams
+      : teams.filter(t => t.id === selectedTeamId);
+  const filteredAllocations = allocations.filter(
+    a => a.cycleId === selectedCycleId
+  );
 
   const handleImportComplete = () => {
     toast({
-      title: "Import Successful",
-      description: "Team allocations have been imported successfully.",
+      title: 'Import Successful',
+      description: 'Team allocations have been imported successfully.',
     });
   };
 
@@ -66,7 +104,9 @@ const Allocations = () => {
       return projects;
     }
     const teamAllocationProjectIds = new Set<string>();
-    const teamAllocations = allocations.filter(a => a.teamId === selectedTeamId);
+    const teamAllocations = allocations.filter(
+      a => a.teamId === selectedTeamId
+    );
     teamAllocations.forEach(alloc => {
       if (alloc.epicId) {
         const epic = epics.find(e => e.id === alloc.epicId);
@@ -83,8 +123,12 @@ const Allocations = () => {
       <div className="p-6">
         <div className="text-center py-12">
           <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Setup Required</h2>
-          <p className="text-gray-600">Please complete the setup to view allocations.</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Setup Required
+          </h2>
+          <p className="text-gray-600">
+            Please complete the setup to view allocations.
+          </p>
         </div>
       </div>
     );
@@ -95,7 +139,9 @@ const Allocations = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Team Allocations</h1>
-          <p className="text-gray-600">Visual views of team capacity and allocation planning</p>
+          <p className="text-gray-600">
+            Visual views of team capacity and allocation planning
+          </p>
         </div>
         <AllocationImportDialog onImportComplete={handleImportComplete} />
       </div>
@@ -136,7 +182,7 @@ const Allocations = () => {
       </div>
 
       {/* Stats Overview */}
-      <AllocationStats 
+      <AllocationStats
         allocations={filteredAllocations}
         teams={filteredTeams}
         iterations={iterations}
@@ -147,8 +193,11 @@ const Allocations = () => {
 
       {/* Visual Views */}
       <Tabs defaultValue="quarter-plans" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="quarter-plans" className="flex items-center space-x-2">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger
+            value="quarter-plans"
+            className="flex items-center space-x-2"
+          >
             <Target className="h-4 w-4" />
             <span>Quarter Plans</span>
           </TabsTrigger>
@@ -164,7 +213,17 @@ const Allocations = () => {
             <BarChart3 className="h-4 w-4" />
             <span>Capacity Chart</span>
           </TabsTrigger>
-          <TabsTrigger value="annual-view" className="flex items-center space-x-2">
+          <TabsTrigger
+            value="utilization"
+            className="flex items-center space-x-2"
+          >
+            <Activity className="h-4 w-4" />
+            <span>Utilization</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="annual-view"
+            className="flex items-center space-x-2"
+          >
             <BookOpenCheck className="h-4 w-4" />
             <span>Annual View</span>
           </TabsTrigger>
@@ -180,7 +239,9 @@ const Allocations = () => {
               epics={epics}
               runWorkCategories={runWorkCategories}
             />
-          ) : <NoDataForQuarter selectedCycleId={selectedCycleId} />}
+          ) : (
+            <NoDataForQuarter selectedCycleId={selectedCycleId} />
+          )}
         </TabsContent>
 
         <TabsContent value="timeline">
@@ -193,7 +254,9 @@ const Allocations = () => {
               epics={epics}
               runWorkCategories={runWorkCategories}
             />
-          ) : <NoDataForQuarter selectedCycleId={selectedCycleId} />}
+          ) : (
+            <NoDataForQuarter selectedCycleId={selectedCycleId} />
+          )}
         </TabsContent>
 
         <TabsContent value="matrix">
@@ -206,7 +269,9 @@ const Allocations = () => {
               epics={epics}
               runWorkCategories={runWorkCategories}
             />
-          ) : <NoDataForQuarter selectedCycleId={selectedCycleId} />}
+          ) : (
+            <NoDataForQuarter selectedCycleId={selectedCycleId} />
+          )}
         </TabsContent>
 
         <TabsContent value="capacity">
@@ -216,9 +281,15 @@ const Allocations = () => {
               iterations={iterations}
               allocations={filteredAllocations}
             />
-          ) : <NoDataForQuarter selectedCycleId={selectedCycleId} />}
+          ) : (
+            <NoDataForQuarter selectedCycleId={selectedCycleId} />
+          )}
         </TabsContent>
-        
+
+        <TabsContent value="utilization">
+          <TeamCapacityUtilizationMatrix />
+        </TabsContent>
+
         <TabsContent value="annual-view">
           <AnnualFinancialReport
             allocations={allocations}
