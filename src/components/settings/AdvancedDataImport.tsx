@@ -41,6 +41,8 @@ import {
   parseBulkTrackingCSVWithMapping,
 } from '@/utils/trackingImportUtils';
 import { useImportMappings } from '@/hooks/useImportMappings';
+import { useValueMappings } from '@/hooks/useValueMappings';
+import { ValueMappingStep } from './ValueMappingStep';
 
 const IMPORT_TYPES = {
   'projects-epics': {
@@ -338,6 +340,7 @@ const AdvancedDataImport = () => {
     projects,
   } = useApp();
   const { saveMapping, getMapping } = useImportMappings();
+  const { saveValueMapping, getValueMapping } = useValueMappings();
   const [step, setStep] = useState(1);
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
@@ -350,6 +353,9 @@ const AdvancedDataImport = () => {
     message: string | { row: number; message: string }[];
   }>({ type: null, message: '' });
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [valueMappings, setValueMappings] = useState<
+    Record<string, Record<string, string | number>>
+  >({});
 
   const methods = useForm();
   const { handleSubmit, control, trigger, formState, reset, watch } = methods;
@@ -542,110 +548,131 @@ const AdvancedDataImport = () => {
 
       saveMapping(importType, mapping);
 
-      const appData = { teams, cycles, epics, runWorkCategories, projects };
-
-      if (importType === 'projects-epics') {
-        const result = parseCombinedProjectEpicCSVWithMapping(
-          fileContent,
-          mapping,
-          projects,
-          epics
-        );
-        if (result.errors.length > 0) {
-          setStatus({
-            type: 'error',
-            message: result.errors
-              .map(e => `Row ${e.row}: ${e.message}`)
-              .join(', '),
-          });
-          return;
-        }
-        if ('projects' in result && 'epics' in result) {
-          setProjects(prev => [...prev, ...result.projects]);
-          setEpics(prev => [...prev, ...result.epics]);
-          setStatus({
-            type: 'success',
-            message: `Successfully imported ${result.projects.length} projects and ${result.epics.length} epics.`,
-          });
-        }
-      } else if (importType === 'actual-allocations') {
-        const result = parseActualAllocationCSVWithMapping(
-          fileContent,
-          mapping,
-          teams,
-          cycles,
-          epics,
-          runWorkCategories
-        );
-        if (result.errors.length > 0) {
-          setStatus({
-            type: 'error',
-            message: result.errors
-              .map(e => `Row ${e.row}: ${e.message}`)
-              .join(', '),
-          });
-          return;
-        }
-        if ('allocations' in result) {
-          setActualAllocations(prev => [...prev, ...result.allocations]);
-          setStatus({
-            type: 'success',
-            message: `Successfully imported ${result.allocations.length} actual allocations.`,
-          });
-        }
-      } else if (importType === 'iteration-reviews') {
-        const result = parseIterationReviewCSVWithMapping(
-          fileContent,
-          mapping,
-          cycles,
-          epics,
-          projects
-        );
-        if (result.errors.length > 0) {
-          setStatus({ type: 'error', message: result.errors.join(', ') });
-          return;
-        }
-        if ('reviews' in result) {
-          setIterationReviews(prev => [...prev, ...result.reviews]);
-          setStatus({
-            type: 'success',
-            message: `Successfully imported ${result.reviews.length} iteration reviews.`,
-          });
-        }
-      } else if (importType === 'bulk-tracking') {
-        const result = parseBulkTrackingCSVWithMapping(
-          fileContent,
-          mapping,
-          teams,
-          cycles,
-          epics,
-          runWorkCategories,
-          projects
-        );
-        if (result.errors.length > 0) {
-          setStatus({ type: 'error', message: result.errors.join(', ') });
-          return;
-        }
-        if ('allocations' in result && 'reviews' in result) {
-          setActualAllocations(prev => [...prev, ...result.allocations]);
-          setIterationReviews(prev => [...prev, ...result.reviews]);
-          setStatus({
-            type: 'success',
-            message: `Successfully imported ${result.allocations.length} allocations and ${result.reviews.length} reviews.`,
-          });
-        }
+      // If we have value mappings, proceed to step 3, otherwise go directly to import
+      if (Object.keys(valueMappings).length > 0) {
+        setStep(3);
+        return;
       }
 
-      // Reset form
-      setStep(1);
-      setFile(null);
-      methods.reset();
+      await performImport(mapping, {});
     } catch (e) {
       setStatus({
         type: 'error',
         message: `Import failed: ${e instanceof Error ? e.message : 'Unknown error'}`,
       });
     }
+  };
+
+  const handleValueMappingComplete = async (
+    valueMappings: Record<string, Record<string, string | number>>
+  ) => {
+    setValueMappings(valueMappings);
+    await performImport(methods.getValues(), valueMappings);
+  };
+
+  const performImport = async (
+    mapping: Record<string, string>,
+    valueMappings: Record<string, Record<string, string | number>>
+  ) => {
+    const appData = { teams, cycles, epics, runWorkCategories, projects };
+
+    if (importType === 'projects-epics') {
+      const result = parseCombinedProjectEpicCSVWithMapping(
+        fileContent,
+        mapping,
+        projects,
+        epics
+      );
+      if (result.errors.length > 0) {
+        setStatus({
+          type: 'error',
+          message: result.errors
+            .map(e => `Row ${e.row}: ${e.message}`)
+            .join(', '),
+        });
+        return;
+      }
+      if ('projects' in result && 'epics' in result) {
+        setProjects(prev => [...prev, ...result.projects]);
+        setEpics(prev => [...prev, ...result.epics]);
+        setStatus({
+          type: 'success',
+          message: `Successfully imported ${result.projects.length} projects and ${result.epics.length} epics.`,
+        });
+      }
+    } else if (importType === 'actual-allocations') {
+      const result = parseActualAllocationCSVWithMapping(
+        fileContent,
+        mapping,
+        teams,
+        cycles,
+        epics,
+        runWorkCategories
+      );
+      if (result.errors.length > 0) {
+        setStatus({
+          type: 'error',
+          message: result.errors
+            .map(e => `Row ${e.row}: ${e.message}`)
+            .join(', '),
+        });
+        return;
+      }
+      if ('allocations' in result) {
+        setActualAllocations(prev => [...prev, ...result.allocations]);
+        setStatus({
+          type: 'success',
+          message: `Successfully imported ${result.allocations.length} actual allocations.`,
+        });
+      }
+    } else if (importType === 'iteration-reviews') {
+      const result = parseIterationReviewCSVWithMapping(
+        fileContent,
+        mapping,
+        cycles,
+        epics,
+        projects
+      );
+      if (result.errors.length > 0) {
+        setStatus({ type: 'error', message: result.errors.join(', ') });
+        return;
+      }
+      if ('reviews' in result) {
+        setIterationReviews(prev => [...prev, ...result.reviews]);
+        setStatus({
+          type: 'success',
+          message: `Successfully imported ${result.reviews.length} iteration reviews.`,
+        });
+      }
+    } else if (importType === 'bulk-tracking') {
+      const result = parseBulkTrackingCSVWithMapping(
+        fileContent,
+        mapping,
+        teams,
+        cycles,
+        epics,
+        runWorkCategories,
+        projects
+      );
+      if (result.errors.length > 0) {
+        setStatus({ type: 'error', message: result.errors.join(', ') });
+        return;
+      }
+      if ('allocations' in result && 'reviews' in result) {
+        setActualAllocations(prev => [...prev, ...result.allocations]);
+        setIterationReviews(prev => [...prev, ...result.reviews]);
+        setStatus({
+          type: 'success',
+          message: `Successfully imported ${result.allocations.length} allocations and ${result.reviews.length} reviews.`,
+        });
+      }
+    }
+
+    // Reset form
+    setStep(1);
+    setFile(null);
+    setValueMappings({});
+    methods.reset();
   };
 
   const config = IMPORT_TYPES[importType];
@@ -877,12 +904,27 @@ const AdvancedDataImport = () => {
                     Save Mapping
                   </Button>
                   <Button type="submit" disabled={validationErrors.length > 0}>
-                    Import Data <ArrowRight className="ml-2 h-4 w-4" />
+                    Continue <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </form>
           </FormProvider>
+        )}
+
+        {step === 3 && (
+          <ValueMappingStep
+            importType={importType}
+            fieldMappings={methods.getValues()}
+            csvData={[headers, ...preview]}
+            systemOptions={Object.fromEntries(
+              config.fields
+                .filter(field => field.type === 'select')
+                .map(field => [field.id, getFieldOptions(field.id)])
+            )}
+            onNext={handleValueMappingComplete}
+            onBack={() => setStep(2)}
+          />
         )}
       </CardContent>
     </Card>
