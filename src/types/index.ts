@@ -66,6 +66,7 @@ export interface Milestone {
   status: 'not-started' | 'in-progress' | 'completed' | 'at-risk';
   description?: string;
   actualCompletionDate?: string;
+  isKey?: boolean; // Whether this is a key milestone for plan analysis
 }
 
 export interface Release {
@@ -97,6 +98,7 @@ export interface Epic {
   isDeployed?: boolean; // Whether epic is deployed
   isToggleEnabled?: boolean; // Whether feature toggle is enabled
   toggleEnabledDate?: string; // When toggle was enabled
+  isKey?: boolean; // Whether this is a key epic for plan analysis
 }
 
 export interface RunWorkCategory {

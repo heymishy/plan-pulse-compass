@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import {
   Target,
   BookOpenCheck,
   Activity,
+  Clock,
 } from 'lucide-react';
 import AllocationTimeline from '@/components/allocations/AllocationTimeline';
 import AllocationMatrix from '@/components/allocations/AllocationMatrix';
@@ -29,6 +30,7 @@ import AllocationImportDialog from '@/components/allocations/AllocationImportDia
 import { useToast } from '@/hooks/use-toast';
 import AnnualFinancialReport from '@/components/allocations/AnnualFinancialReport';
 import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtilizationMatrix';
+import EpicTimelineView from '@/components/planning/EpicTimelineView';
 
 const NoDataForQuarter = ({ selectedCycleId }: { selectedCycleId: string }) => (
   <Card>
@@ -57,6 +59,7 @@ const Allocations = () => {
     runWorkCategories,
     people,
     roles,
+    divisions,
   } = useApp();
   const { toast } = useToast();
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
@@ -88,9 +91,15 @@ const Allocations = () => {
     selectedTeamId === 'all'
       ? teams
       : teams.filter(t => t.id === selectedTeamId);
-  const filteredAllocations = allocations.filter(
-    a => a.cycleId === selectedCycleId
-  );
+  const filteredAllocations = useMemo(() => {
+    let filtered = allocations.filter(a => a.cycleId === selectedCycleId);
+
+    if (selectedTeamId !== 'all') {
+      filtered = filtered.filter(a => a.teamId === selectedTeamId);
+    }
+
+    return filtered;
+  }, [allocations, selectedCycleId, selectedTeamId]);
 
   const handleImportComplete = () => {
     toast({
@@ -99,15 +108,9 @@ const Allocations = () => {
     });
   };
 
-  const annualReportProjects = React.useMemo(() => {
-    if (selectedTeamId === 'all' || !selectedTeamId) {
-      return projects;
-    }
+  const annualReportProjects = useMemo(() => {
     const teamAllocationProjectIds = new Set<string>();
-    const teamAllocations = allocations.filter(
-      a => a.teamId === selectedTeamId
-    );
-    teamAllocations.forEach(alloc => {
+    filteredAllocations.forEach(alloc => {
       if (alloc.epicId) {
         const epic = epics.find(e => e.id === alloc.epicId);
         if (epic) {
@@ -193,7 +196,7 @@ const Allocations = () => {
 
       {/* Visual Views */}
       <Tabs defaultValue="quarter-plans" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger
             value="quarter-plans"
             className="flex items-center space-x-2"
@@ -219,6 +222,13 @@ const Allocations = () => {
           >
             <Activity className="h-4 w-4" />
             <span>Utilization</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="epic-timeline"
+            className="flex items-center space-x-2"
+          >
+            <Clock className="h-4 w-4" />
+            <span>Epic Timeline</span>
           </TabsTrigger>
           <TabsTrigger
             value="annual-view"
@@ -288,6 +298,25 @@ const Allocations = () => {
 
         <TabsContent value="utilization">
           <TeamCapacityUtilizationMatrix />
+        </TabsContent>
+
+        <TabsContent value="epic-timeline">
+          {selectedCycleId && iterations.length > 0 ? (
+            <EpicTimelineView
+              cycleId={selectedCycleId}
+              teams={teams}
+              iterations={iterations}
+              allocations={allocations}
+              projects={projects}
+              epics={epics}
+              milestones={projects.flatMap(p => p.milestones)}
+              runWorkCategories={runWorkCategories}
+              divisions={divisions}
+              people={people}
+            />
+          ) : (
+            <NoDataForQuarter selectedCycleId={selectedCycleId} />
+          )}
         </TabsContent>
 
         <TabsContent value="annual-view">
