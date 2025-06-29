@@ -166,11 +166,15 @@ export const parseActualAllocationCSVWithMapping = (
         errors.push({ row: rowNum, message: 'Actual Percentage is required.' });
         return;
       }
-      const actualPercentage = parseFloat(actualPercentageStr);
+      const translatedActualPercentageStr = translateValue(
+        'actual_percentage',
+        actualPercentageStr
+      );
+      const actualPercentage = parseFloat(translatedActualPercentageStr);
       if (isNaN(actualPercentage)) {
         errors.push({
           row: rowNum,
-          message: `Invalid actual percentage: "${actualPercentageStr}". Must be a number.`,
+          message: `Invalid actual percentage: "${translatedActualPercentageStr}". Must be a number.`,
         });
         return;
       }
@@ -513,11 +517,15 @@ export const parseBulkTrackingCSVWithMapping = (
           });
           return;
         }
-        const actualPercentage = parseFloat(actualPercentageStr);
+        const translatedActualPercentageStr = translateValue(
+          'actual_percentage',
+          actualPercentageStr
+        );
+        const actualPercentage = parseFloat(translatedActualPercentageStr);
         if (isNaN(actualPercentage)) {
           errors.push({
             row: rowNum,
-            message: `Invalid actual percentage: "${actualPercentageStr}".`,
+            message: `Invalid actual percentage: "${translatedActualPercentageStr}".`,
           });
           return;
         }

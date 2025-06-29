@@ -368,7 +368,7 @@ const AdvancedDataImport = () => {
     const config = IMPORT_TYPES[importType];
     const field = config.fields.find(f => f.id === fieldId);
 
-    if (!field || field.type !== 'select') return [];
+    if (!field) return [];
 
     // Return predefined options or dynamic options based on field type
     if (field.options && field.options.length > 0) {
@@ -396,6 +396,9 @@ const AdvancedDataImport = () => {
         );
       case 'epic_team':
         return teams.map(team => team.name);
+      case 'actual_percentage':
+        // Common percentage values for suggestions
+        return [0, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
       default:
         return [];
     }
@@ -440,6 +443,7 @@ const AdvancedDataImport = () => {
       'epic_team',
       'completed_epics',
       'completed_milestones',
+      'actual_percentage',
     ];
 
     config.fields.forEach(field => {
@@ -559,6 +563,7 @@ const AdvancedDataImport = () => {
       'epic_team',
       'completed_epics',
       'completed_milestones',
+      'actual_percentage',
     ];
 
     for (const field of config.fields) {
@@ -570,14 +575,36 @@ const AdvancedDataImport = () => {
       const headerIndex = headers.findIndex(h => h === mappedHeader);
       if (headerIndex === -1) continue;
 
-      // Check if any values in this column don't match the available options
-      const options = getFieldOptions(field.id);
-      if (options.length === 0) continue; // Skip if no options defined
+      // For number fields like actual_percentage, check if values need mapping
+      if (field.type === 'number') {
+        for (const row of dataRows) {
+          const value = row[headerIndex];
+          if (value && value.trim() !== '') {
+            // Check if the value is not a valid number or has formatting that might need mapping
+            const numValue = parseFloat(value);
+            if (
+              isNaN(numValue) ||
+              value.includes('%') ||
+              value.includes(' ') ||
+              value !== String(numValue)
+            ) {
+              return true; // Found a value that might need mapping
+            }
+          }
+        }
+        continue;
+      }
 
-      for (const row of dataRows) {
-        const value = row[headerIndex];
-        if (value && !options.some(option => String(option) === value)) {
-          return true; // Found an unmapped value
+      // For select fields, check if any values don't match the available options
+      if (field.type === 'select') {
+        const options = getFieldOptions(field.id);
+        if (options.length === 0) continue; // Skip if no options defined
+
+        for (const row of dataRows) {
+          const value = row[headerIndex];
+          if (value && !options.some(option => String(option) === value)) {
+            return true; // Found an unmapped value
+          }
         }
       }
     }
