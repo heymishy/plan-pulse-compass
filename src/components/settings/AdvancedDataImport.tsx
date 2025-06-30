@@ -233,6 +233,13 @@ const IMPORT_TYPES = {
         ],
       },
       {
+        id: 'project_name',
+        label: 'Project Name',
+        required: false,
+        type: 'select',
+        options: [],
+      },
+      {
         id: 'actual_percentage',
         label: 'Actual Percentage',
         required: true,
@@ -396,382 +403,6 @@ const IMPORT_TYPES = {
 
 const SKIP_MAPPING = '__SKIP_MAPPING__';
 
-// Smart CSV content detection
-interface DetectedContent {
-  hasProjects: boolean;
-  hasEpics: boolean;
-  hasMilestones: boolean;
-  hasAllocations: boolean;
-  hasIterationReviews: boolean;
-  detectedType: string;
-  confidence: number;
-}
-
-const detectCSVContent = (
-  headers: string[],
-  dataRows: string[][]
-): DetectedContent => {
-  const headerLower = headers.map(h => h.toLowerCase());
-  const allData = dataRows.flat().join(' ').toLowerCase();
-
-  // Project indicators
-  const projectIndicators = ['project', 'initiative', 'program'];
-  const hasProjectHeaders = projectIndicators.some(indicator =>
-    headerLower.some(h => h.includes(indicator))
-  );
-  const hasProjectData = projectIndicators.some(indicator =>
-    allData.includes(indicator)
-  );
-
-  // Epic indicators
-  const epicIndicators = ['epic', 'story', 'feature', 'task'];
-  const hasEpicHeaders = epicIndicators.some(indicator =>
-    headerLower.some(h => h.includes(indicator))
-  );
-  const hasEpicData = epicIndicators.some(indicator =>
-    allData.includes(indicator)
-  );
-
-  // Milestone indicators
-  const milestoneIndicators = ['milestone', 'deliverable', 'phase'];
-  const hasMilestoneHeaders = milestoneIndicators.some(indicator =>
-    headerLower.some(h => h.includes(indicator))
-  );
-  const hasMilestoneData = milestoneIndicators.some(indicator =>
-    allData.includes(indicator)
-  );
-
-  // Allocation indicators
-  const allocationIndicators = [
-    'allocation',
-    'percentage',
-    'capacity',
-    'effort',
-    'story points',
-  ];
-  const hasAllocationHeaders = allocationIndicators.some(indicator =>
-    headerLower.some(h => h.includes(indicator))
-  );
-  const hasAllocationData = allocationIndicators.some(indicator =>
-    allData.includes(indicator)
-  );
-
-  // Iteration review indicators
-  const reviewIndicators = ['review', 'retrospective', 'completed', 'status'];
-  const hasReviewHeaders = reviewIndicators.some(indicator =>
-    headerLower.some(h => h.includes(indicator))
-  );
-  const hasReviewData = reviewIndicators.some(indicator =>
-    allData.includes(indicator)
-  );
-
-  // Team/Quarter indicators (common across types)
-  const teamIndicators = ['team', 'squad', 'group'];
-  const quarterIndicators = ['quarter', 'sprint', 'iteration'];
-  const hasTeamHeaders = teamIndicators.some(indicator =>
-    headerLower.some(h => h.includes(indicator))
-  );
-  const hasQuarterHeaders = quarterIndicators.some(indicator =>
-    headerLower.some(h => h.includes(indicator))
-  );
-
-  // Determine content type with confidence
-  let detectedType = 'unknown';
-  let confidence = 0;
-
-  // Check for specific patterns
-  if (hasAllocationHeaders && hasTeamHeaders && hasQuarterHeaders) {
-    if (headerLower.some(h => h.includes('actual'))) {
-      detectedType = 'actual-allocations';
-      confidence = 0.9;
-    } else if (headerLower.some(h => h.includes('planning'))) {
-      detectedType = 'planning-allocations';
-      confidence = 0.9;
-    } else {
-      detectedType = 'planning-allocations';
-      confidence = 0.7;
-    }
-  } else if (hasReviewHeaders && hasTeamHeaders && hasQuarterHeaders) {
-    detectedType = 'iteration-reviews';
-    confidence = 0.8;
-  } else if (hasProjectHeaders && hasEpicHeaders && hasMilestoneHeaders) {
-    detectedType = 'projects-epics';
-    confidence = 0.95;
-  } else if (hasProjectHeaders && hasEpicHeaders) {
-    detectedType = 'projects-epics';
-    confidence = 0.8;
-  } else if (hasProjectHeaders && hasMilestoneHeaders) {
-    detectedType = 'projects-epics';
-    confidence = 0.7;
-  } else if (hasProjectHeaders) {
-    detectedType = 'projects-epics';
-    confidence = 0.6;
-  } else if (hasEpicHeaders) {
-    detectedType = 'projects-epics';
-    confidence = 0.5;
-  } else if (hasMilestoneHeaders) {
-    detectedType = 'projects-epics';
-    confidence = 0.4;
-  }
-
-  return {
-    hasProjects: hasProjectHeaders || hasProjectData,
-    hasEpics: hasEpicHeaders || hasEpicData,
-    hasMilestones: hasMilestoneHeaders || hasMilestoneData,
-    hasAllocations: hasAllocationHeaders || hasAllocationData,
-    hasIterationReviews: hasReviewHeaders || hasReviewData,
-    detectedType,
-    confidence,
-  };
-};
-
-// Dynamic field configuration based on detected content
-const getDynamicFieldConfig = (
-  detectedContent: DetectedContent,
-  teams: Team[],
-  cycles: Cycle[],
-  epics: Epic[],
-  projects: Project[]
-) => {
-  const fields: any[] = [];
-
-  if (detectedContent.hasProjects) {
-    fields.push(
-      {
-        id: 'project_name',
-        label: 'Project Name',
-        required: true,
-        type: 'text',
-      },
-      {
-        id: 'project_description',
-        label: 'Project Description',
-        required: false,
-        type: 'text',
-      },
-      {
-        id: 'project_status',
-        label: 'Project Status',
-        required: false,
-        type: 'select',
-        options: ['planning', 'active', 'completed', 'cancelled'],
-      },
-      {
-        id: 'project_start_date',
-        label: 'Project Start Date',
-        required: false,
-        type: 'date',
-      },
-      {
-        id: 'project_end_date',
-        label: 'Project End Date',
-        required: false,
-        type: 'date',
-      },
-      {
-        id: 'project_budget',
-        label: 'Project Budget',
-        required: false,
-        type: 'number',
-      }
-    );
-  }
-
-  if (detectedContent.hasEpics) {
-    fields.push(
-      {
-        id: 'epic_name',
-        label: 'Epic Name',
-        required: detectedContent.hasProjects ? false : true,
-        type: 'text',
-      },
-      {
-        id: 'epic_description',
-        label: 'Epic Description',
-        required: false,
-        type: 'text',
-      },
-      {
-        id: 'epic_effort',
-        label: 'Epic Effort',
-        required: false,
-        type: 'number',
-      },
-      {
-        id: 'epic_team',
-        label: 'Epic Team',
-        required: false,
-        type: 'select',
-        options: teams.map(t => t.name),
-      },
-      {
-        id: 'epic_target_date',
-        label: 'Epic Target Date',
-        required: false,
-        type: 'date',
-      },
-      {
-        id: 'epic_type',
-        label: 'Epic Type',
-        required: false,
-        type: 'select',
-        options: [
-          'Feature',
-          'Platform',
-          'Tech Debt',
-          'Critical Run',
-          'Project',
-        ],
-      }
-    );
-  }
-
-  if (detectedContent.hasMilestones) {
-    fields.push(
-      {
-        id: 'milestone_name',
-        label: 'Milestone Name',
-        required: false,
-        type: 'text',
-      },
-      {
-        id: 'milestone_due_date',
-        label: 'Milestone Due Date',
-        required: false,
-        type: 'date',
-      }
-    );
-  }
-
-  if (detectedContent.hasAllocations) {
-    fields.push(
-      {
-        id: 'team_name',
-        label: 'Team Name',
-        required: true,
-        type: 'select',
-        options: teams.map(t => t.name),
-      },
-      {
-        id: 'quarter',
-        label: 'Quarter',
-        required: true,
-        type: 'select',
-        options: cycles.map(c => c.name),
-      },
-      {
-        id: 'iteration_number',
-        label: 'Iteration Number',
-        required: true,
-        type: 'select',
-        options: [1, 2, 3, 4, 5, 6],
-      },
-      {
-        id: 'epic_name',
-        label: 'Epic/Work Name',
-        required: false,
-        type: 'text',
-      },
-      {
-        id: 'epic_type',
-        label: 'Epic Type',
-        required: false,
-        type: 'select',
-        options: [
-          'Feature',
-          'Platform',
-          'Tech Debt',
-          'Critical Run',
-          'Project',
-        ],
-      },
-      {
-        id: 'project_name',
-        label: 'Project Name',
-        required: false,
-        type: 'text',
-      }
-    );
-
-    // Add percentage field based on detected type
-    if (detectedContent.detectedType === 'actual-allocations') {
-      fields.push({
-        id: 'actual_percentage',
-        label: 'Actual Percentage',
-        required: true,
-        type: 'number',
-      });
-    } else {
-      fields.push({
-        id: 'percentage',
-        label: 'Allocation Percentage',
-        required: true,
-        type: 'number',
-      });
-    }
-
-    fields.push({
-      id: 'notes',
-      label: 'Notes',
-      required: false,
-      type: 'text',
-    });
-  }
-
-  if (detectedContent.hasIterationReviews) {
-    fields.push(
-      {
-        id: 'team_name',
-        label: 'Team Name',
-        required: true,
-        type: 'select',
-        options: teams.map(t => t.name),
-      },
-      {
-        id: 'quarter',
-        label: 'Quarter',
-        required: true,
-        type: 'select',
-        options: cycles.map(c => c.name),
-      },
-      {
-        id: 'iteration_number',
-        label: 'Iteration Number',
-        required: true,
-        type: 'select',
-        options: [1, 2, 3, 4, 5, 6],
-      },
-      {
-        id: 'status',
-        label: 'Status',
-        required: false,
-        type: 'select',
-        options: ['not-started', 'in-progress', 'completed'],
-      },
-      {
-        id: 'completed_epics',
-        label: 'Completed Epics',
-        required: false,
-        type: 'text',
-      },
-      {
-        id: 'completed_milestones',
-        label: 'Completed Milestones',
-        required: false,
-        type: 'text',
-      },
-      {
-        id: 'notes',
-        label: 'Notes',
-        required: false,
-        type: 'text',
-      }
-    );
-  }
-
-  return fields;
-};
-
 const AdvancedDataImport = () => {
   const {
     setProjects,
@@ -797,9 +428,6 @@ const AdvancedDataImport = () => {
   const [preview, setPreview] = useState<string[][]>([]);
   const [importType, setImportType] =
     useState<keyof typeof IMPORT_TYPES>('projects-epics');
-  const [detectedContent, setDetectedContent] =
-    useState<DetectedContent | null>(null);
-  const [dynamicFields, setDynamicFields] = useState<any[]>([]);
   const [status, setStatus] = useState<{
     type: 'success' | 'error' | null;
     message: string | { row: number; message: string }[];
@@ -904,10 +532,7 @@ const AdvancedDataImport = () => {
   const validateMapping = useCallback(
     (mapping: Record<string, string>) => {
       const errors: string[] = [];
-      const config =
-        dynamicFields.length > 0
-          ? { fields: dynamicFields }
-          : IMPORT_TYPES[importType];
+      const config = IMPORT_TYPES[importType];
 
       config.fields.forEach(field => {
         if (
@@ -920,17 +545,14 @@ const AdvancedDataImport = () => {
 
       return errors;
     },
-    [importType, dynamicFields]
+    [importType]
   );
 
   // Validate CSV data against mapping
   const validateCSVData = useCallback(
     (mapping: Record<string, string>) => {
       const errors: string[] = [];
-      const config =
-        dynamicFields.length > 0
-          ? { fields: dynamicFields }
-          : IMPORT_TYPES[importType];
+      const config = IMPORT_TYPES[importType];
 
       if (!fileContent || preview.length === 0) return errors;
 
@@ -955,11 +577,7 @@ const AdvancedDataImport = () => {
                 `Row ${rowIndex + 2}: ${field.label} is required but empty.`
               );
             }
-            return;
-          }
-
-          // Type validation
-          if (field.type === 'number') {
+          } else if (field.type === 'number') {
             const numValue = parseFloat(value);
             if (isNaN(numValue)) {
               errors.push(
@@ -974,14 +592,9 @@ const AdvancedDataImport = () => {
               );
             }
           } else if (field.type === 'select' && field.options) {
-            // Case-insensitive validation for select fields
-            const normalizedValue = value.toLowerCase().trim();
-            const normalizedOptions = field.options.map(opt =>
-              String(opt).toLowerCase().trim()
-            );
-            if (!normalizedOptions.includes(normalizedValue)) {
+            if (!field.options.some(option => String(option) === value)) {
               errors.push(
-                `Row ${rowIndex + 2}: ${field.label} value "${value}" is not in the allowed options: ${field.options.join(', ')}.`
+                `Row ${rowIndex + 2}: ${field.label} value "${value}" is not in the allowed options.`
               );
             }
           }
@@ -990,7 +603,7 @@ const AdvancedDataImport = () => {
 
       return errors;
     },
-    [importType, fileContent, preview, dynamicFields]
+    [importType, fileContent, preview]
   );
 
   useEffect(() => {
@@ -1033,25 +646,6 @@ const AdvancedDataImport = () => {
           const dataRows = parsed.slice(1);
           setHeaders(headers);
 
-          // Smart content detection
-          const detected = detectCSVContent(headers, dataRows);
-          setDetectedContent(detected);
-
-          // Set import type based on detection
-          if (detected.confidence > 0.5) {
-            setImportType(detected.detectedType as keyof typeof IMPORT_TYPES);
-          }
-
-          // Generate dynamic field configuration
-          const dynamicConfig = getDynamicFieldConfig(
-            detected,
-            teams,
-            cycles,
-            epics,
-            projects
-          );
-          setDynamicFields(dynamicConfig);
-
           // For large datasets, show fewer preview rows to improve performance
           const totalRows = dataRows.length;
           let previewRows;
@@ -1091,10 +685,7 @@ const AdvancedDataImport = () => {
 
     const headers = parsed[0];
     const dataRows = parsed.slice(1);
-    const config =
-      dynamicFields.length > 0
-        ? { fields: dynamicFields }
-        : IMPORT_TYPES[importType];
+    const config = IMPORT_TYPES[importType];
 
     // For allocation imports, always go to value mapping step to handle large datasets efficiently
     if (
@@ -1216,152 +807,104 @@ const AdvancedDataImport = () => {
   ) => {
     const appData = { teams, cycles, epics, runWorkCategories, projects };
 
-    if (importType === 'projects-epics') {
-      const result = parseCombinedProjectEpicCSVWithMapping(
-        fileContent,
-        mapping,
-        projects,
-        epics
-      );
-      if (result.errors.length > 0) {
-        setStatus({
-          type: 'error',
-          message: result.errors
-            .map(e => `Row ${e.row}: ${e.message}`)
-            .join(', '),
-        });
-        return;
-      }
-      if ('projects' in result && 'epics' in result) {
-        setProjects(prev => [...prev, ...result.projects]);
-        setEpics(prev => [...prev, ...result.epics]);
-        setStatus({
-          type: 'success',
-          message: `Successfully imported ${result.projects.length} projects and ${result.epics.length} epics.`,
-        });
-      }
-    } else if (importType === 'planning-allocations') {
-      const result = parsePlanningAllocationCSVWithMapping(
-        fileContent,
-        mapping,
-        teams,
-        cycles,
-        epics,
-        runWorkCategories,
-        projects,
-        valueMappings
-      );
-      if (result.errors.length > 0) {
-        setStatus({ type: 'error', message: result.errors });
-        return;
-      }
-      if ('allocations' in result) {
-        setAllocations(prev => [...prev, ...result.allocations]);
+    try {
+      let result: any = {};
 
-        // Handle new records that were created during import
-        if (result.newTeams && result.newTeams.length > 0) {
-          setTeams(prev => [...prev, ...result.newTeams]);
-        }
-        if (result.newCycles && result.newCycles.length > 0) {
-          setCycles(prev => [...prev, ...result.newCycles]);
-        }
-        if (result.newEpics && result.newEpics.length > 0) {
-          setEpics(prev => [...prev, ...result.newEpics]);
-        }
-        if (
-          result.newRunWorkCategories &&
-          result.newRunWorkCategories.length > 0
-        ) {
-          setRunWorkCategories(prev => [
-            ...prev,
-            ...result.newRunWorkCategories,
-          ]);
-        }
-        if (result.newProjects && result.newProjects.length > 0) {
-          setProjects(prev => [...prev, ...result.newProjects]);
-        }
+      switch (importType) {
+        case 'projects-epics':
+          result = await parseCombinedProjectEpicCSVWithMapping(
+            fileContent,
+            mapping,
+            valueMappings,
+            appData
+          );
+          if (result.projects) setProjects(result.projects);
+          if (result.epics) setEpics(result.epics);
+          break;
 
-        setStatus({
-          type: 'success',
-          message: `Successfully imported ${result.allocations.length} planning allocations.`,
-        });
+        case 'planning-allocations':
+          result = await parsePlanningAllocationCSVWithMapping(
+            fileContent,
+            mapping,
+            valueMappings,
+            appData
+          );
+          if (result.allocations) setAllocations(result.allocations);
+          break;
+
+        case 'actual-allocations':
+          result = await parseActualAllocationCSVWithMapping(
+            fileContent,
+            mapping,
+            valueMappings,
+            appData
+          );
+          if (result.actualAllocations)
+            setActualAllocations(result.actualAllocations);
+          break;
+
+        case 'iteration-reviews':
+          result = await parseIterationReviewCSVWithMapping(
+            fileContent,
+            mapping,
+            valueMappings,
+            appData
+          );
+          if (result.iterationReviews)
+            setIterationReviews(result.iterationReviews);
+          break;
+
+        case 'bulk-tracking':
+          result = await parseBulkTrackingCSVWithMapping(
+            fileContent,
+            mapping,
+            valueMappings,
+            appData
+          );
+          if (result.actualAllocations)
+            setActualAllocations(result.actualAllocations);
+          if (result.iterationReviews)
+            setIterationReviews(result.iterationReviews);
+          break;
+
+        default:
+          throw new Error(`Unknown import type: ${importType}`);
       }
-    } else if (importType === 'actual-allocations') {
-      const result = parseActualAllocationCSVWithMapping(
-        fileContent,
-        mapping,
-        teams,
-        cycles,
-        epics,
-        runWorkCategories,
-        valueMappings
-      );
-      if (result.errors.length > 0) {
-        setStatus({
-          type: 'error',
-          message: result.errors
-            .map(e => `Row ${e.row}: ${e.message}`)
-            .join(', '),
-        });
-        return;
-      }
-      if ('allocations' in result) {
-        setActualAllocations(prev => [...prev, ...result.allocations]);
-        setStatus({
-          type: 'success',
-          message: `Successfully imported ${result.allocations.length} actual allocations.`,
-        });
-      }
-    } else if (importType === 'iteration-reviews') {
-      const result = parseIterationReviewCSVWithMapping(
-        fileContent,
-        mapping,
-        cycles,
-        epics,
-        projects,
-        valueMappings
-      );
-      if (result.errors.length > 0) {
-        setStatus({ type: 'error', message: result.errors.join(', ') });
-        return;
-      }
-      if ('reviews' in result) {
-        setIterationReviews(prev => [...prev, ...result.reviews]);
-        setStatus({
-          type: 'success',
-          message: `Successfully imported ${result.reviews.length} iteration reviews.`,
-        });
-      }
-    } else if (importType === 'bulk-tracking') {
-      const result = parseBulkTrackingCSVWithMapping(
-        fileContent,
-        mapping,
-        teams,
-        cycles,
-        epics,
-        runWorkCategories,
-        projects,
-        valueMappings
-      );
-      if (result.errors.length > 0) {
-        setStatus({ type: 'error', message: result.errors.join(', ') });
-        return;
-      }
-      if ('allocations' in result && 'reviews' in result) {
-        setActualAllocations(prev => [...prev, ...result.allocations]);
-        setIterationReviews(prev => [...prev, ...result.reviews]);
-        setStatus({
-          type: 'success',
-          message: `Successfully imported ${result.allocations.length} allocations and ${result.reviews.length} reviews.`,
-        });
-      }
+
+      setStatus({
+        type: 'success',
+        message: `Successfully imported ${result.importedCount || 0} records.`,
+      });
+
+      // Reset form and go back to step 1
+      setTimeout(() => {
+        setStep(1);
+        setFile(null);
+        setFileContent('');
+        setHeaders([]);
+        setPreview([]);
+        setValidationErrors([]);
+        setValueMappings({});
+        reset({});
+      }, 2000);
+    } catch (e) {
+      setStatus({
+        type: 'error',
+        message: `Import failed: ${e instanceof Error ? e.message : 'Unknown error'}`,
+      });
     }
+  };
 
-    // Reset form
+  const resetForm = () => {
     setStep(1);
     setFile(null);
+    setFileContent('');
+    setHeaders([]);
+    setPreview([]);
+    setValidationErrors([]);
     setValueMappings({});
-    methods.reset();
+    setStatus({ type: null, message: '' });
+    reset({});
   };
 
   const config = IMPORT_TYPES[importType];
@@ -1369,37 +912,69 @@ const AdvancedDataImport = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <UploadCloud className="mr-2 h-5 w-5" />
+        <CardTitle className="flex items-center gap-2">
+          <UploadCloud className="h-5 w-5" />
           Advanced Data Import
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Progress indicator */}
+        <div className="flex items-center justify-center mb-6">
+          <div className="flex items-center space-x-2">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                step >= 1
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-500'
+              }`}
+            >
+              1
+            </div>
+            <div className="w-12 h-0.5 bg-gray-300"></div>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                step >= 2
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-500'
+              }`}
+            >
+              2
+            </div>
+            {hasUnmappedValues(methods.getValues()) && (
+              <>
+                <div className="w-12 h-0.5 bg-gray-300"></div>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step >= 3
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  3
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Status messages */}
         {status.type && (
           <Alert
-            className={`mb-4 ${status.type === 'error' ? 'border-red-500' : 'border-green-500'}`}
+            className={`mb-4 ${
+              status.type === 'success' ? 'border-green-500' : 'border-red-500'
+            }`}
           >
-            {status.type === 'error' ? (
-              <AlertCircle className="h-4 w-4 text-red-500" />
-            ) : (
+            {status.type === 'success' ? (
               <CheckCircle className="h-4 w-4 text-green-500" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-red-500" />
             )}
             <AlertDescription
               className={
-                status.type === 'error' ? 'text-red-700' : 'text-green-700'
+                status.type === 'success' ? 'text-green-700' : 'text-red-700'
               }
             >
-              {typeof status.message === 'string' ? (
-                status.message
-              ) : (
-                <ul>
-                  {status.message.map((e, i) => (
-                    <li key={i}>
-                      Row {e.row}: {e.message}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {status.message}
             </AlertDescription>
           </Alert>
         )}
@@ -1453,43 +1028,6 @@ const AdvancedDataImport = () => {
                 to the required application fields.
               </p>
 
-              {/* Show detected content information */}
-              {detectedContent && (
-                <Alert className="mb-4 border-blue-500">
-                  <Info className="h-4 w-4 text-blue-500" />
-                  <AlertDescription className="text-blue-700">
-                    <div className="space-y-2">
-                      <div className="font-medium">Detected Content:</div>
-                      <div className="flex flex-wrap gap-2">
-                        {detectedContent.hasProjects && (
-                          <Badge variant="secondary">Projects</Badge>
-                        )}
-                        {detectedContent.hasEpics && (
-                          <Badge variant="secondary">Epics</Badge>
-                        )}
-                        {detectedContent.hasMilestones && (
-                          <Badge variant="secondary">Milestones</Badge>
-                        )}
-                        {detectedContent.hasAllocations && (
-                          <Badge variant="secondary">Allocations</Badge>
-                        )}
-                        {detectedContent.hasIterationReviews && (
-                          <Badge variant="secondary">Reviews</Badge>
-                        )}
-                      </div>
-                      <div className="text-sm">
-                        <strong>Detected Type:</strong>{' '}
-                        {detectedContent.detectedType}
-                        <span className="ml-2 text-xs">
-                          (Confidence:{' '}
-                          {Math.round(detectedContent.confidence * 100)}%)
-                        </span>
-                      </div>
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              )}
-
               {/* Validation Errors */}
               {validationErrors.length > 0 && (
                 <Alert className="mb-4 border-yellow-500">
@@ -1508,199 +1046,144 @@ const AdvancedDataImport = () => {
               )}
 
               <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                {(dynamicFields.length > 0 ? dynamicFields : config.fields).map(
-                  field => {
-                    const hasOptions =
-                      field.type === 'select' &&
-                      field.options &&
-                      field.options.length > 0;
+                {config.fields.map(field => {
+                  const hasOptions =
+                    field.type === 'select' &&
+                    field.options &&
+                    field.options.length > 0;
 
-                    return (
-                      <div
-                        key={field.id}
-                        className="grid grid-cols-3 items-center gap-4"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Label>
-                            {field.label}{' '}
-                            {field.required && (
-                              <span className="text-red-500">*</span>
-                            )}
-                          </Label>
-                          {hasOptions && (
-                            <Badge variant="outline" className="text-xs">
-                              {field.options.length} options
-                            </Badge>
+                  return (
+                    <div
+                      key={field.id}
+                      className="grid grid-cols-3 items-center gap-4"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Label>
+                          {field.label}{' '}
+                          {field.required && (
+                            <span className="text-red-500">*</span>
                           )}
-                        </div>
-                        <div className="col-span-2">
-                          <Controller
-                            name={field.id}
-                            control={control}
-                            rules={{ required: field.required }}
-                            render={({ field: controllerField }) => (
-                              <Select
-                                onValueChange={(value: string) =>
-                                  controllerField.onChange(value)
-                                }
-                                defaultValue={controllerField.value}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select source column..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value={SKIP_MAPPING}>
-                                    -- Skip this field --
-                                  </SelectItem>
-                                  {headers.map(header => (
-                                    <SelectItem key={header} value={header}>
-                                      {header}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
-                          {formState.errors[field.id] && (
-                            <p className="text-xs text-red-500 mt-1">
-                              This field is required.
-                            </p>
-                          )}
-
-                          {/* Show available options for select fields */}
-                          {hasOptions && (
-                            <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                              <div className="flex items-center gap-1 mb-1">
-                                <Info className="h-3 w-3" />
-                                <span className="font-medium">
-                                  Available options ({field.options.length}):
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                                {field.options.map((option, index) => (
-                                  <Badge
-                                    key={index}
-                                    variant="secondary"
-                                    className="text-xs"
-                                  >
-                                    {option}
-                                  </Badge>
-                                ))}
-                              </div>
-                              {mappableFields.includes(field.id) && (
-                                <div className="mt-2 text-blue-600 text-xs">
-                                  💡 Unmapped values will be handled in the next
-                                  step
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        </Label>
+                        {hasOptions && (
+                          <Badge variant="outline" className="text-xs">
+                            {field.options.length} options
+                          </Badge>
+                        )}
                       </div>
-                    );
-                  }
-                )}
+                      <div className="col-span-2">
+                        <Controller
+                          name={field.id}
+                          control={control}
+                          rules={{ required: field.required }}
+                          render={({ field: controllerField }) => (
+                            <Select
+                              onValueChange={(value: string) =>
+                                controllerField.onChange(value)
+                              }
+                              defaultValue={controllerField.value}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select source column..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={SKIP_MAPPING}>
+                                  -- Skip this field --
+                                </SelectItem>
+                                {headers.map(header => (
+                                  <SelectItem key={header} value={header}>
+                                    {header}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {formState.errors[field.id] && (
+                          <p className="text-xs text-red-500 mt-1">
+                            This field is required.
+                          </p>
+                        )}
+
+                        {/* Show available options for select fields */}
+                        {hasOptions && (
+                          <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Info className="h-3 w-3" />
+                              <span className="font-medium">
+                                Available options ({field.options.length}):
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                              {field.options.map((option, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {option}
+                                </Badge>
+                              ))}
+                            </div>
+                            {mappableFields.includes(field.id) && (
+                              <div className="mt-2 text-blue-600 text-xs">
+                                💡 Unmapped values will be handled in the next
+                                step
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="mt-6">
-                <h4 className="font-semibold mb-2">Data Summary</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <Card>
-                    <CardContent className="p-3">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {parseTrackingCSV(fileContent).length - 1}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          Total Records
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-3">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          {headers.length}
-                        </div>
-                        <div className="text-sm text-gray-600">Columns</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-3">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">
-                          {parseTrackingCSV(fileContent).length > 100
-                            ? 'Large'
-                            : 'Standard'}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          Dataset Size
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-3">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">
-                          {preview.length}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          Preview Rows
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <h4 className="font-semibold mb-2">Data Preview</h4>
-                <div className="border rounded-md overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {headers.map(h => (
-                          <TableHead key={h}>{h}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {preview.map((row, i) => (
-                        <TableRow key={i}>
-                          {row.map((cell, j) => (
-                            <TableCell key={j}>{cell}</TableCell>
+              {/* Preview table */}
+              {preview.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="font-medium mb-2">Data Preview</h4>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {headers.map((header, index) => (
+                            <TableHead key={index} className="text-xs">
+                              {header}
+                            </TableHead>
                           ))}
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  {parseTrackingCSV(fileContent).length >
-                    preview.length + 1 && (
-                    <div className="p-3 bg-gray-50 text-center text-sm text-gray-600">
+                      </TableHeader>
+                      <TableBody>
+                        {preview.map((row, rowIndex) => (
+                          <TableRow key={rowIndex}>
+                            {row.map((cell, cellIndex) => (
+                              <TableCell key={cellIndex} className="text-xs">
+                                {cell}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {preview.length <
+                    parseTrackingCSV(fileContent).length - 1 && (
+                    <p className="text-xs text-gray-500 mt-2">
                       Showing {preview.length} of{' '}
-                      {parseTrackingCSV(fileContent).length - 1} records
-                    </div>
+                      {parseTrackingCSV(fileContent).length - 1} rows
+                    </p>
                   )}
                 </div>
-              </div>
+              )}
 
               <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => setStep(1)}>
-                  Back
+                <Button type="button" variant="outline" onClick={resetForm}>
+                  Start Over
                 </Button>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => saveMapping(importType, methods.getValues())}
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Mapping
-                  </Button>
-                  <Button type="submit" disabled={validationErrors.length > 0}>
-                    Continue <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
+                <Button type="submit" disabled={validationErrors.length > 0}>
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </form>
           </FormProvider>
@@ -1708,21 +1191,10 @@ const AdvancedDataImport = () => {
 
         {step === 3 && (
           <ValueMappingStep
+            fileContent={fileContent}
+            mapping={methods.getValues()}
             importType={importType}
-            fieldMappings={Object.fromEntries(
-              Object.entries(methods.getValues()).filter(([fieldId]) => {
-                // Exclude percentage fields from value mapping
-                const percentageFields = ['percentage', 'actual_percentage'];
-                return !percentageFields.includes(fieldId);
-              })
-            )}
-            csvData={parseTrackingCSV(fileContent)}
-            systemOptions={Object.fromEntries(
-              config.fields
-                .filter(field => field.type === 'select')
-                .map(field => [field.id, getFieldOptions(field.id)])
-            )}
-            onNext={handleValueMappingComplete}
+            onComplete={handleValueMappingComplete}
             onBack={() => setStep(2)}
           />
         )}
