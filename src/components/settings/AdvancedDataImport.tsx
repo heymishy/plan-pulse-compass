@@ -31,6 +31,7 @@ import {
   Info,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { Team, Cycle, Epic, Project } from '@/types';
 import {
   parseCSV,
   parseCombinedProjectEpicCSVWithMapping,
@@ -395,6 +396,384 @@ const IMPORT_TYPES = {
 
 const SKIP_MAPPING = '__SKIP_MAPPING__';
 
+// Smart CSV content detection
+interface DetectedContent {
+  hasProjects: boolean;
+  hasEpics: boolean;
+  hasMilestones: boolean;
+  hasAllocations: boolean;
+  hasIterationReviews: boolean;
+  detectedType: string;
+  confidence: number;
+}
+
+const detectCSVContent = (
+  headers: string[],
+  dataRows: string[][]
+): DetectedContent => {
+  const headerLower = headers.map(h => h.toLowerCase());
+  const allData = dataRows.flat().join(' ').toLowerCase();
+
+  // Project indicators
+  const projectIndicators = ['project', 'initiative', 'program'];
+  const hasProjectHeaders = projectIndicators.some(indicator =>
+    headerLower.some(h => h.includes(indicator))
+  );
+  const hasProjectData = projectIndicators.some(indicator =>
+    allData.includes(indicator)
+  );
+
+  // Epic indicators
+  const epicIndicators = ['epic', 'story', 'feature', 'task'];
+  const hasEpicHeaders = epicIndicators.some(indicator =>
+    headerLower.some(h => h.includes(indicator))
+  );
+  const hasEpicData = epicIndicators.some(indicator =>
+    allData.includes(indicator)
+  );
+
+  // Milestone indicators
+  const milestoneIndicators = ['milestone', 'deliverable', 'phase'];
+  const hasMilestoneHeaders = milestoneIndicators.some(indicator =>
+    headerLower.some(h => h.includes(indicator))
+  );
+  const hasMilestoneData = milestoneIndicators.some(indicator =>
+    allData.includes(indicator)
+  );
+
+  // Allocation indicators
+  const allocationIndicators = [
+    'allocation',
+    'percentage',
+    'capacity',
+    'effort',
+    'story points',
+  ];
+  const hasAllocationHeaders = allocationIndicators.some(indicator =>
+    headerLower.some(h => h.includes(indicator))
+  );
+  const hasAllocationData = allocationIndicators.some(indicator =>
+    allData.includes(indicator)
+  );
+
+  // Iteration review indicators
+  const reviewIndicators = ['review', 'retrospective', 'completed', 'status'];
+  const hasReviewHeaders = reviewIndicators.some(indicator =>
+    headerLower.some(h => h.includes(indicator))
+  );
+  const hasReviewData = reviewIndicators.some(indicator =>
+    allData.includes(indicator)
+  );
+
+  // Team/Quarter indicators (common across types)
+  const teamIndicators = ['team', 'squad', 'group'];
+  const quarterIndicators = ['quarter', 'sprint', 'iteration'];
+  const hasTeamHeaders = teamIndicators.some(indicator =>
+    headerLower.some(h => h.includes(indicator))
+  );
+  const hasQuarterHeaders = quarterIndicators.some(indicator =>
+    headerLower.some(h => h.includes(indicator))
+  );
+
+  // Determine content type with confidence
+  let detectedType = 'unknown';
+  let confidence = 0;
+
+  // Check for specific patterns
+  if (hasAllocationHeaders && hasTeamHeaders && hasQuarterHeaders) {
+    if (headerLower.some(h => h.includes('actual'))) {
+      detectedType = 'actual-allocations';
+      confidence = 0.9;
+    } else if (headerLower.some(h => h.includes('planning'))) {
+      detectedType = 'planning-allocations';
+      confidence = 0.9;
+    } else {
+      detectedType = 'planning-allocations';
+      confidence = 0.7;
+    }
+  } else if (hasReviewHeaders && hasTeamHeaders && hasQuarterHeaders) {
+    detectedType = 'iteration-reviews';
+    confidence = 0.8;
+  } else if (hasProjectHeaders && hasEpicHeaders && hasMilestoneHeaders) {
+    detectedType = 'projects-epics';
+    confidence = 0.95;
+  } else if (hasProjectHeaders && hasEpicHeaders) {
+    detectedType = 'projects-epics';
+    confidence = 0.8;
+  } else if (hasProjectHeaders && hasMilestoneHeaders) {
+    detectedType = 'projects-epics';
+    confidence = 0.7;
+  } else if (hasProjectHeaders) {
+    detectedType = 'projects-epics';
+    confidence = 0.6;
+  } else if (hasEpicHeaders) {
+    detectedType = 'projects-epics';
+    confidence = 0.5;
+  } else if (hasMilestoneHeaders) {
+    detectedType = 'projects-epics';
+    confidence = 0.4;
+  }
+
+  return {
+    hasProjects: hasProjectHeaders || hasProjectData,
+    hasEpics: hasEpicHeaders || hasEpicData,
+    hasMilestones: hasMilestoneHeaders || hasMilestoneData,
+    hasAllocations: hasAllocationHeaders || hasAllocationData,
+    hasIterationReviews: hasReviewHeaders || hasReviewData,
+    detectedType,
+    confidence,
+  };
+};
+
+// Dynamic field configuration based on detected content
+const getDynamicFieldConfig = (
+  detectedContent: DetectedContent,
+  teams: Team[],
+  cycles: Cycle[],
+  epics: Epic[],
+  projects: Project[]
+) => {
+  const fields: any[] = [];
+
+  if (detectedContent.hasProjects) {
+    fields.push(
+      {
+        id: 'project_name',
+        label: 'Project Name',
+        required: true,
+        type: 'text',
+      },
+      {
+        id: 'project_description',
+        label: 'Project Description',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'project_status',
+        label: 'Project Status',
+        required: false,
+        type: 'select',
+        options: ['planning', 'active', 'completed', 'cancelled'],
+      },
+      {
+        id: 'project_start_date',
+        label: 'Project Start Date',
+        required: false,
+        type: 'date',
+      },
+      {
+        id: 'project_end_date',
+        label: 'Project End Date',
+        required: false,
+        type: 'date',
+      },
+      {
+        id: 'project_budget',
+        label: 'Project Budget',
+        required: false,
+        type: 'number',
+      }
+    );
+  }
+
+  if (detectedContent.hasEpics) {
+    fields.push(
+      {
+        id: 'epic_name',
+        label: 'Epic Name',
+        required: detectedContent.hasProjects ? false : true,
+        type: 'text',
+      },
+      {
+        id: 'epic_description',
+        label: 'Epic Description',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'epic_effort',
+        label: 'Epic Effort',
+        required: false,
+        type: 'number',
+      },
+      {
+        id: 'epic_team',
+        label: 'Epic Team',
+        required: false,
+        type: 'select',
+        options: teams.map(t => t.name),
+      },
+      {
+        id: 'epic_target_date',
+        label: 'Epic Target Date',
+        required: false,
+        type: 'date',
+      },
+      {
+        id: 'epic_type',
+        label: 'Epic Type',
+        required: false,
+        type: 'select',
+        options: [
+          'Feature',
+          'Platform',
+          'Tech Debt',
+          'Critical Run',
+          'Project',
+        ],
+      }
+    );
+  }
+
+  if (detectedContent.hasMilestones) {
+    fields.push(
+      {
+        id: 'milestone_name',
+        label: 'Milestone Name',
+        required: true,
+        type: 'text',
+      },
+      {
+        id: 'milestone_due_date',
+        label: 'Milestone Due Date',
+        required: false,
+        type: 'date',
+      }
+    );
+  }
+
+  if (detectedContent.hasAllocations) {
+    fields.push(
+      {
+        id: 'team_name',
+        label: 'Team Name',
+        required: true,
+        type: 'select',
+        options: teams.map(t => t.name),
+      },
+      {
+        id: 'quarter',
+        label: 'Quarter',
+        required: true,
+        type: 'select',
+        options: cycles.map(c => c.name),
+      },
+      {
+        id: 'iteration_number',
+        label: 'Iteration Number',
+        required: true,
+        type: 'select',
+        options: [1, 2, 3, 4, 5, 6],
+      },
+      {
+        id: 'epic_name',
+        label: 'Epic/Work Name',
+        required: false,
+        type: 'select',
+        options: [...epics.map(e => e.name), ...projects.map(p => p.name)],
+      },
+      {
+        id: 'epic_type',
+        label: 'Epic Type',
+        required: false,
+        type: 'select',
+        options: [
+          'Feature',
+          'Platform',
+          'Tech Debt',
+          'Critical Run',
+          'Project',
+        ],
+      },
+      {
+        id: 'project_name',
+        label: 'Project Name',
+        required: false,
+        type: 'select',
+        options: projects.map(p => p.name),
+      }
+    );
+
+    // Add percentage field based on detected type
+    if (detectedContent.detectedType === 'actual-allocations') {
+      fields.push({
+        id: 'actual_percentage',
+        label: 'Actual Percentage',
+        required: true,
+        type: 'number',
+      });
+    } else {
+      fields.push({
+        id: 'percentage',
+        label: 'Allocation Percentage',
+        required: true,
+        type: 'number',
+      });
+    }
+
+    fields.push({
+      id: 'notes',
+      label: 'Notes',
+      required: false,
+      type: 'text',
+    });
+  }
+
+  if (detectedContent.hasIterationReviews) {
+    fields.push(
+      {
+        id: 'team_name',
+        label: 'Team Name',
+        required: true,
+        type: 'select',
+        options: teams.map(t => t.name),
+      },
+      {
+        id: 'quarter',
+        label: 'Quarter',
+        required: true,
+        type: 'select',
+        options: cycles.map(c => c.name),
+      },
+      {
+        id: 'iteration_number',
+        label: 'Iteration Number',
+        required: true,
+        type: 'select',
+        options: [1, 2, 3, 4, 5, 6],
+      },
+      {
+        id: 'status',
+        label: 'Status',
+        required: false,
+        type: 'select',
+        options: ['not-started', 'in-progress', 'completed'],
+      },
+      {
+        id: 'completed_epics',
+        label: 'Completed Epics',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'completed_milestones',
+        label: 'Completed Milestones',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'notes',
+        label: 'Notes',
+        required: false,
+        type: 'text',
+      }
+    );
+  }
+
+  return fields;
+};
+
 const AdvancedDataImport = () => {
   const {
     setProjects,
@@ -420,6 +799,9 @@ const AdvancedDataImport = () => {
   const [preview, setPreview] = useState<string[][]>([]);
   const [importType, setImportType] =
     useState<keyof typeof IMPORT_TYPES>('projects-epics');
+  const [detectedContent, setDetectedContent] =
+    useState<DetectedContent | null>(null);
+  const [dynamicFields, setDynamicFields] = useState<any[]>([]);
   const [status, setStatus] = useState<{
     type: 'success' | 'error' | null;
     message: string | { row: number; message: string }[];
@@ -434,6 +816,19 @@ const AdvancedDataImport = () => {
 
   // Watch form values for real-time validation
   const watchedValues = watch();
+
+  // Fields that can be mapped through value mapping (excluding percentage fields)
+  const mappableFields = [
+    'team_name',
+    'quarter',
+    'iteration_number',
+    'epic_name',
+    'epic_type',
+    'project_name',
+    'epic_team',
+    'completed_epics',
+    'completed_milestones',
+  ];
 
   // Get available options for select fields
   const getFieldOptions = useCallback(
@@ -500,7 +895,10 @@ const AdvancedDataImport = () => {
   const validateMapping = useCallback(
     (mapping: Record<string, string>) => {
       const errors: string[] = [];
-      const config = IMPORT_TYPES[importType];
+      const config =
+        dynamicFields.length > 0
+          ? { fields: dynamicFields }
+          : IMPORT_TYPES[importType];
 
       config.fields.forEach(field => {
         if (
@@ -513,14 +911,17 @@ const AdvancedDataImport = () => {
 
       return errors;
     },
-    [importType]
+    [importType, dynamicFields]
   );
 
   // Validate CSV data against mapping
   const validateCSVData = useCallback(
     (mapping: Record<string, string>) => {
       const errors: string[] = [];
-      const config = IMPORT_TYPES[importType];
+      const config =
+        dynamicFields.length > 0
+          ? { fields: dynamicFields }
+          : IMPORT_TYPES[importType];
 
       if (!fileContent || preview.length === 0) return errors;
 
@@ -547,41 +948,39 @@ const AdvancedDataImport = () => {
         if (!mappedHeader || mappedHeader === SKIP_MAPPING) return;
 
         const headerIndex = headers.findIndex(h => h === mappedHeader);
-        if (headerIndex === -1) {
-          errors.push(
-            `Mapped header "${mappedHeader}" for ${field.label} not found in CSV.`
-          );
-          return;
-        }
+        if (headerIndex === -1) return;
 
-        // Validate data in preview rows
-        preview.forEach((row, rowIndex) => {
+        // Check each data row
+        parsed.slice(1).forEach((row, rowIndex) => {
           const value = row[headerIndex];
-          if (field.required && (!value || value.trim() === '')) {
-            errors.push(
-              `Row ${rowIndex + 2}: ${field.label} is required but empty.`
-            );
-          }
-
-          if (field.type === 'number' && value && isNaN(parseFloat(value))) {
-            errors.push(
-              `Row ${rowIndex + 2}: ${field.label} must be a number, got "${value}".`
-            );
-          }
-
-          // Only validate select field options for non-mappable fields
-          if (
-            field.type === 'select' &&
-            value &&
-            !mappableFields.includes(field.id)
-          ) {
-            const options = getFieldOptions(field.id);
-            if (
-              options.length > 0 &&
-              !options.some(option => String(option) === value)
-            ) {
+          if (!value || value.trim() === '') {
+            if (field.required) {
               errors.push(
-                `Row ${rowIndex + 2}: ${field.label} value "${value}" not found in available options.`
+                `Row ${rowIndex + 2}: ${field.label} is required but empty.`
+              );
+            }
+            return;
+          }
+
+          // Type validation
+          if (field.type === 'number') {
+            const numValue = parseFloat(value);
+            if (isNaN(numValue)) {
+              errors.push(
+                `Row ${rowIndex + 2}: ${field.label} must be a number, got "${value}".`
+              );
+            }
+          } else if (field.type === 'date') {
+            const dateValue = new Date(value);
+            if (isNaN(dateValue.getTime())) {
+              errors.push(
+                `Row ${rowIndex + 2}: ${field.label} must be a valid date, got "${value}".`
+              );
+            }
+          } else if (field.type === 'select' && field.options) {
+            if (!field.options.some(option => String(option) === value)) {
+              errors.push(
+                `Row ${rowIndex + 2}: ${field.label} value "${value}" is not in the allowed options: ${field.options.join(', ')}.`
               );
             }
           }
@@ -590,7 +989,7 @@ const AdvancedDataImport = () => {
 
       return errors;
     },
-    [importType, fileContent, preview, getFieldOptions]
+    [importType, fileContent, preview, dynamicFields]
   );
 
   useEffect(() => {
@@ -629,9 +1028,31 @@ const AdvancedDataImport = () => {
         setFileContent(text);
         const parsed = parseTrackingCSV(text);
         if (parsed.length > 0) {
-          setHeaders(parsed[0]);
+          const headers = parsed[0];
+          const dataRows = parsed.slice(1);
+          setHeaders(headers);
+
+          // Smart content detection
+          const detected = detectCSVContent(headers, dataRows);
+          setDetectedContent(detected);
+
+          // Set import type based on detection
+          if (detected.confidence > 0.5) {
+            setImportType(detected.detectedType as keyof typeof IMPORT_TYPES);
+          }
+
+          // Generate dynamic field configuration
+          const dynamicConfig = getDynamicFieldConfig(
+            detected,
+            teams,
+            cycles,
+            epics,
+            projects
+          );
+          setDynamicFields(dynamicConfig);
+
           // For large datasets, show fewer preview rows to improve performance
-          const totalRows = parsed.length - 1;
+          const totalRows = dataRows.length;
           let previewRows;
           if (totalRows > 1000) {
             previewRows = 5; // Very large datasets: show only 5 rows
@@ -642,7 +1063,7 @@ const AdvancedDataImport = () => {
           } else {
             previewRows = Math.min(totalRows, 50); // Small datasets: show up to 50 rows
           }
-          setPreview(parsed.slice(1, previewRows + 1));
+          setPreview(dataRows.slice(0, previewRows));
           setStep(2);
         } else {
           setStatus({
@@ -669,7 +1090,10 @@ const AdvancedDataImport = () => {
 
     const headers = parsed[0];
     const dataRows = parsed.slice(1);
-    const config = IMPORT_TYPES[importType];
+    const config =
+      dynamicFields.length > 0
+        ? { fields: dynamicFields }
+        : IMPORT_TYPES[importType];
 
     // For allocation imports, always go to value mapping step to handle large datasets efficiently
     if (
@@ -714,11 +1138,9 @@ const AdvancedDataImport = () => {
       if (headerIndex === -1) continue;
 
       // For select fields, check if any values don't match the available options
-      if (field.type === 'select') {
-        const options = getFieldOptions(field.id);
-
+      if (field.type === 'select' && field.options) {
         // If no options defined, skip validation
-        if (options.length === 0) continue;
+        if (field.options.length === 0) continue;
 
         // Check if any CSV values don't match existing options
         for (const row of dataRows) {
@@ -726,7 +1148,7 @@ const AdvancedDataImport = () => {
           if (
             value &&
             value.trim() !== '' &&
-            !options.some(option => String(option) === value)
+            !field.options.some(option => String(option) === value)
           ) {
             return true; // Found an unmapped value
           }
@@ -943,17 +1365,6 @@ const AdvancedDataImport = () => {
 
   const config = IMPORT_TYPES[importType];
 
-  // Fields that can be mapped through value mapping (excluding percentage fields)
-  const mappableFields = [
-    'team_name',
-    'quarter',
-    'iteration_number',
-    'epic_name',
-    'epic_type',
-    'project_name',
-    'notes',
-  ];
-
   return (
     <Card>
       <CardHeader>
@@ -1041,6 +1452,43 @@ const AdvancedDataImport = () => {
                 to the required application fields.
               </p>
 
+              {/* Show detected content information */}
+              {detectedContent && (
+                <Alert className="mb-4 border-blue-500">
+                  <Info className="h-4 w-4 text-blue-500" />
+                  <AlertDescription className="text-blue-700">
+                    <div className="space-y-2">
+                      <div className="font-medium">Detected Content:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {detectedContent.hasProjects && (
+                          <Badge variant="secondary">Projects</Badge>
+                        )}
+                        {detectedContent.hasEpics && (
+                          <Badge variant="secondary">Epics</Badge>
+                        )}
+                        {detectedContent.hasMilestones && (
+                          <Badge variant="secondary">Milestones</Badge>
+                        )}
+                        {detectedContent.hasAllocations && (
+                          <Badge variant="secondary">Allocations</Badge>
+                        )}
+                        {detectedContent.hasIterationReviews && (
+                          <Badge variant="secondary">Reviews</Badge>
+                        )}
+                      </div>
+                      <div className="text-sm">
+                        <strong>Detected Type:</strong>{' '}
+                        {detectedContent.detectedType}
+                        <span className="ml-2 text-xs">
+                          (Confidence:{' '}
+                          {Math.round(detectedContent.confidence * 100)}%)
+                        </span>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Validation Errors */}
               {validationErrors.length > 0 && (
                 <Alert className="mb-4 border-yellow-500">
@@ -1059,94 +1507,98 @@ const AdvancedDataImport = () => {
               )}
 
               <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
-                {config.fields.map(field => {
-                  const options = getFieldOptions(field.id);
-                  const hasOptions = options.length > 0;
+                {(dynamicFields.length > 0 ? dynamicFields : config.fields).map(
+                  field => {
+                    const hasOptions =
+                      field.type === 'select' &&
+                      field.options &&
+                      field.options.length > 0;
 
-                  return (
-                    <div
-                      key={field.id}
-                      className="grid grid-cols-3 items-center gap-4"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Label>
-                          {field.label}{' '}
-                          {field.required && (
-                            <span className="text-red-500">*</span>
-                          )}
-                        </Label>
-                        {field.type === 'select' && hasOptions && (
-                          <Badge variant="outline" className="text-xs">
-                            {options.length} options
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="col-span-2">
-                        <Controller
-                          name={field.id}
-                          control={control}
-                          rules={{ required: field.required }}
-                          render={({ field: controllerField }) => (
-                            <Select
-                              onValueChange={(value: string) =>
-                                controllerField.onChange(value)
-                              }
-                              defaultValue={controllerField.value}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select source column..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={SKIP_MAPPING}>
-                                  -- Skip this field --
-                                </SelectItem>
-                                {headers.map(header => (
-                                  <SelectItem key={header} value={header}>
-                                    {header}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                        {formState.errors[field.id] && (
-                          <p className="text-xs text-red-500 mt-1">
-                            This field is required.
-                          </p>
-                        )}
-
-                        {/* Show available options for select fields */}
-                        {field.type === 'select' && hasOptions && (
-                          <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                            <div className="flex items-center gap-1 mb-1">
-                              <Info className="h-3 w-3" />
-                              <span className="font-medium">
-                                Available options ({options.length}):
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
-                              {options.map((option, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  {option}
-                                </Badge>
-                              ))}
-                            </div>
-                            {mappableFields.includes(field.id) && (
-                              <div className="mt-2 text-blue-600 text-xs">
-                                💡 Unmapped values will be handled in the next
-                                step
-                              </div>
+                    return (
+                      <div
+                        key={field.id}
+                        className="grid grid-cols-3 items-center gap-4"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Label>
+                            {field.label}{' '}
+                            {field.required && (
+                              <span className="text-red-500">*</span>
                             )}
-                          </div>
-                        )}
+                          </Label>
+                          {hasOptions && (
+                            <Badge variant="outline" className="text-xs">
+                              {field.options.length} options
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="col-span-2">
+                          <Controller
+                            name={field.id}
+                            control={control}
+                            rules={{ required: field.required }}
+                            render={({ field: controllerField }) => (
+                              <Select
+                                onValueChange={(value: string) =>
+                                  controllerField.onChange(value)
+                                }
+                                defaultValue={controllerField.value}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select source column..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={SKIP_MAPPING}>
+                                    -- Skip this field --
+                                  </SelectItem>
+                                  {headers.map(header => (
+                                    <SelectItem key={header} value={header}>
+                                      {header}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          {formState.errors[field.id] && (
+                            <p className="text-xs text-red-500 mt-1">
+                              This field is required.
+                            </p>
+                          )}
+
+                          {/* Show available options for select fields */}
+                          {hasOptions && (
+                            <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                              <div className="flex items-center gap-1 mb-1">
+                                <Info className="h-3 w-3" />
+                                <span className="font-medium">
+                                  Available options ({field.options.length}):
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                                {field.options.map((option, index) => (
+                                  <Badge
+                                    key={index}
+                                    variant="secondary"
+                                    className="text-xs"
+                                  >
+                                    {option}
+                                  </Badge>
+                                ))}
+                              </div>
+                              {mappableFields.includes(field.id) && (
+                                <div className="mt-2 text-blue-600 text-xs">
+                                  💡 Unmapped values will be handled in the next
+                                  step
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  }
+                )}
               </div>
 
               <div className="mt-6">
