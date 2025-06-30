@@ -605,8 +605,17 @@ const AdvancedDataImport = () => {
         if (parsed.length > 0) {
           setHeaders(parsed[0]);
           // For large datasets, show fewer preview rows to improve performance
-          const previewRows =
-            parsed.length > 100 ? 10 : Math.min(parsed.length - 1, 6);
+          const totalRows = parsed.length - 1;
+          let previewRows;
+          if (totalRows > 1000) {
+            previewRows = 5; // Very large datasets: show only 5 rows
+          } else if (totalRows > 500) {
+            previewRows = 10; // Large datasets: show 10 rows
+          } else if (totalRows > 100) {
+            previewRows = 20; // Medium datasets: show 20 rows
+          } else {
+            previewRows = Math.min(totalRows, 50); // Small datasets: show up to 50 rows
+          }
           setPreview(parsed.slice(1, previewRows + 1));
           setStep(2);
         } else {

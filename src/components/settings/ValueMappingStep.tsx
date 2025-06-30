@@ -26,6 +26,10 @@ import {
   Target,
   BarChart3,
   Settings,
+  Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useValueMappings } from '@/hooks/useValueMappings';
 
@@ -59,6 +63,9 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
     defaultEpicType: 'Project' as 'Project' | 'Run Work',
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50); // Show 50 items per page for better performance
 
   const { getValueMappingsForField, saveValueMappings } = useValueMappings();
 
@@ -86,6 +93,29 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
 
     return result;
   }, [fieldMappings, csvData]);
+
+  // Get paginated and filtered CSV values for a specific field
+  const getPaginatedCsvValues = (fieldId: string) => {
+    const csvValues = csvValuesByField[fieldId];
+    if (!csvValues) return { values: [], totalPages: 0, totalItems: 0 };
+
+    let filteredValues = Array.from(csvValues);
+
+    // Apply search filter
+    if (searchTerm) {
+      filteredValues = filteredValues.filter(value =>
+        value.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    const totalItems = filteredValues.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedValues = filteredValues.slice(startIndex, endIndex);
+
+    return { values: paginatedValues, totalPages, totalItems };
+  };
 
   // Smart suggestions for mapping
   const suggestMapping = (
@@ -420,12 +450,112 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
             </Button>
           </CardTitle>
         </CardHeader>
+        {!showAdvanced && (
+          <CardContent>
+            <div className="space-y-4">
+              {Object.entries(csvValuesByField).map(([fieldId, csvValues]) => {
+                const fieldMappings = valueMappings[fieldId] || {};
+                const unmappedCount = Array.from(csvValues).filter(
+                  csvValue => !fieldMappings[csvValue]
+                ).length;
+                const isLargeDataset = csvValues.size > 100;
+
+                return (
+                  <div
+                    key={fieldId}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div>
+                      <h4 className="font-medium">{getFieldLabel(fieldId)}</h4>
+                      <p className="text-sm text-gray-600">
+                        {csvValues.size} unique values • {unmappedCount}{' '}
+                        unmapped
+                      </p>
+                      {isLargeDataset && (
+                        <p className="text-xs text-orange-600 mt-1">
+                          💡 Large dataset detected. Use batch operations for
+                          efficiency.
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      {isLargeDataset && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              applyBatchOperation(fieldId, 'create-all-new')
+                            }
+                          >
+                            <Zap className="h-4 w-4 mr-1" />
+                            Create All New
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              applyBatchOperation(fieldId, 'map-to-existing')
+                            }
+                          >
+                            <Target className="h-4 w-4 mr-1" />
+                            Map to Existing
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAdvanced(true)}
+                      >
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        )}
         {showAdvanced && (
           <CardContent>
+            {/* Search and Pagination Controls */}
+            <div className="mb-4 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search CSV values..."
+                    value={searchTerm}
+                    onChange={e => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1); // Reset to first page when searching
+                    }}
+                    className="pl-10"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setCurrentPage(1);
+                  }}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+
             <div className="space-y-6">
               {Object.entries(csvValuesByField).map(([fieldId, csvValues]) => {
                 const fieldMappings = valueMappings[fieldId] || {};
                 const options = systemOptions[fieldId] || [];
+                const {
+                  values: paginatedValues,
+                  totalPages,
+                  totalItems,
+                } = getPaginatedCsvValues(fieldId);
                 const unmappedCount = Array.from(csvValues).filter(
                   csvValue => !fieldMappings[csvValue]
                 ).length;
@@ -452,12 +582,41 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
                           <Badge variant="outline">
                             {csvValues.size} unique values
                           </Badge>
+                          {searchTerm && (
+                            <Badge variant="secondary">
+                              {totalItems} filtered
+                            </Badge>
+                          )}
                         </div>
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
+                      {/* Batch Operations */}
+                      <div className="mb-4 flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            applyBatchOperation(fieldId, 'create-all-new')
+                          }
+                        >
+                          <Zap className="h-4 w-4 mr-1" />
+                          Create All New
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            applyBatchOperation(fieldId, 'map-to-existing')
+                          }
+                        >
+                          <Target className="h-4 w-4 mr-1" />
+                          Map to Existing
+                        </Button>
+                      </div>
+
                       <div className="space-y-3 max-h-64 overflow-y-auto">
-                        {Array.from(csvValues).map(csvValue => {
+                        {paginatedValues.map(csvValue => {
                           const currentMapping = fieldMappings[csvValue];
                           const isMapped = !!currentMapping;
                           const isNewRecord =
@@ -542,6 +701,46 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
                           );
                         })}
                       </div>
+
+                      {/* Pagination Controls */}
+                      {totalPages > 1 && (
+                        <div className="mt-4 flex items-center justify-between">
+                          <div className="text-sm text-gray-600">
+                            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+                            {Math.min(currentPage * itemsPerPage, totalItems)}{' '}
+                            of {totalItems} items
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setCurrentPage(prev => Math.max(1, prev - 1))
+                              }
+                              disabled={currentPage === 1}
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                              Previous
+                            </Button>
+                            <span className="text-sm">
+                              Page {currentPage} of {totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setCurrentPage(prev =>
+                                  Math.min(totalPages, prev + 1)
+                                )
+                              }
+                              disabled={currentPage === totalPages}
+                            >
+                              Next
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
 
                       {options.length > 0 && (
                         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
