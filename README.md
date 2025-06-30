@@ -50,23 +50,28 @@ This project uses GitHub Actions for continuous integration and deployment:
 
 ### Available Scripts
 
-```bash
+ok```bash
+
 # Development
-npm run dev              # Start development server
-npm run build            # Build for production
-npm run preview          # Preview production build
+
+npm run dev # Start development server
+npm run build # Build for production
+npm run preview # Preview production build
 
 # Testing
-npm run test             # Run tests in watch mode
-npm run test:run:fast    # Run fast tests
-npm run test:unit        # Run unit tests only
-npm run test:coverage    # Run tests with coverage
+
+npm run test # Run tests in watch mode
+npm run test:run:fast # Run fast tests
+npm run test:unit # Run unit tests only
+npm run test:coverage # Run tests with coverage
 
 # Code Quality
-npm run lint             # Run ESLint
-npm run lint:fix         # Fix ESLint issues
-npm run typecheck        # Run TypeScript type check
-npm run audit            # Run security audit
+
+npm run lint # Run ESLint
+npm run lint:fix # Fix ESLint issues
+npm run typecheck # Run TypeScript type check
+npm run audit # Run security audit
+
 ```
 
 ## Documentation
@@ -89,3 +94,4 @@ npm run audit            # Run security audit
 MIT License - see LICENSE file for details.
 
 # Test commit
+```

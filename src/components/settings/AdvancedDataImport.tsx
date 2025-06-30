@@ -591,12 +591,6 @@ const AdvancedDataImport = () => {
                 `Row ${rowIndex + 2}: ${field.label} must be a valid date, got "${value}".`
               );
             }
-          } else if (field.type === 'select' && field.options) {
-            if (!field.options.some(option => String(option) === value)) {
-              errors.push(
-                `Row ${rowIndex + 2}: ${field.label} value "${value}" is not in the allowed options.`
-              );
-            }
           }
         });
       });
@@ -815,8 +809,8 @@ const AdvancedDataImport = () => {
           result = await parseCombinedProjectEpicCSVWithMapping(
             fileContent,
             mapping,
-            valueMappings,
-            appData
+            projects,
+            epics
           );
           if (result.projects) setProjects(result.projects);
           if (result.epics) setEpics(result.epics);
@@ -826,8 +820,12 @@ const AdvancedDataImport = () => {
           result = await parsePlanningAllocationCSVWithMapping(
             fileContent,
             mapping,
-            valueMappings,
-            appData
+            teams,
+            cycles,
+            epics,
+            runWorkCategories,
+            projects,
+            valueMappings
           );
           if (result.allocations) setAllocations(result.allocations);
           break;
@@ -836,8 +834,11 @@ const AdvancedDataImport = () => {
           result = await parseActualAllocationCSVWithMapping(
             fileContent,
             mapping,
-            valueMappings,
-            appData
+            teams,
+            cycles,
+            epics,
+            runWorkCategories,
+            valueMappings
           );
           if (result.actualAllocations)
             setActualAllocations(result.actualAllocations);
@@ -847,8 +848,10 @@ const AdvancedDataImport = () => {
           result = await parseIterationReviewCSVWithMapping(
             fileContent,
             mapping,
-            valueMappings,
-            appData
+            cycles,
+            epics,
+            projects,
+            valueMappings
           );
           if (result.iterationReviews)
             setIterationReviews(result.iterationReviews);
@@ -858,8 +861,12 @@ const AdvancedDataImport = () => {
           result = await parseBulkTrackingCSVWithMapping(
             fileContent,
             mapping,
-            valueMappings,
-            appData
+            teams,
+            cycles,
+            epics,
+            runWorkCategories,
+            projects,
+            valueMappings
           );
           if (result.actualAllocations)
             setActualAllocations(result.actualAllocations);
@@ -1040,6 +1047,11 @@ const AdvancedDataImport = () => {
                           • {error}
                         </div>
                       ))}
+                      <div className="mt-2 text-sm font-medium text-blue-600">
+                        💡 Don't worry! Unmapped values will be handled in the
+                        next step where you can map them to existing data or
+                        create new entries.
+                      </div>
                     </div>
                   </AlertDescription>
                 </Alert>
@@ -1191,10 +1203,15 @@ const AdvancedDataImport = () => {
 
         {step === 3 && (
           <ValueMappingStep
-            fileContent={fileContent}
-            mapping={methods.getValues()}
             importType={importType}
-            onComplete={handleValueMappingComplete}
+            fieldMappings={methods.getValues()}
+            csvData={parseTrackingCSV(fileContent)}
+            systemOptions={Object.fromEntries(
+              config.fields
+                .filter(field => field.type === 'select')
+                .map(field => [field.id, getFieldOptions(field.id)])
+            )}
+            onNext={handleValueMappingComplete}
             onBack={() => setStep(2)}
           />
         )}
