@@ -595,7 +595,10 @@ const AdvancedDataImport = () => {
         const parsed = parseTrackingCSV(text);
         if (parsed.length > 0) {
           setHeaders(parsed[0]);
-          setPreview(parsed.slice(1, 6)); // show first 5 data rows
+          // For large datasets, show fewer preview rows to improve performance
+          const previewRows =
+            parsed.length > 100 ? 10 : Math.min(parsed.length - 1, 6);
+          setPreview(parsed.slice(1, previewRows + 1));
           setStep(2);
         } else {
           setStatus({
@@ -623,6 +626,26 @@ const AdvancedDataImport = () => {
     const headers = parsed[0];
     const dataRows = parsed.slice(1);
     const config = IMPORT_TYPES[importType];
+
+    // For allocation imports, always go to value mapping step to handle large datasets efficiently
+    if (
+      importType === 'planning-allocations' ||
+      importType === 'actual-allocations'
+    ) {
+      const hasMappableFields = config.fields.some(
+        field =>
+          ['team_name', 'quarter', 'iteration_number', 'epic_name'].includes(
+            field.id
+          ) &&
+          mapping[field.id] &&
+          mapping[field.id] !== SKIP_MAPPING
+      );
+
+      // If we have more than 50 records, always use value mapping for better UX
+      if (hasMappableFields && dataRows.length > 50) {
+        return true;
+      }
+    }
 
     // Fields that can be mapped through value mapping (excluding percentage fields)
     const mappableFields = [
@@ -694,27 +717,8 @@ const AdvancedDataImport = () => {
 
       saveMapping(importType, mapping);
 
-      // Check if we need value mapping step
-      const needsValueMapping =
-        hasUnmappedValues(mapping) || Object.keys(valueMappings).length > 0;
-
-      // For planning allocations, always go to value mapping step for mappable fields
-      // to allow mapping of all CSV values to existing data or creation of new records
-      if (importType === 'planning-allocations') {
-        const hasMappableFields = config.fields.some(
-          field =>
-            ['team_name', 'quarter', 'iteration_number', 'epic_name'].includes(
-              field.id
-            ) &&
-            mapping[field.id] &&
-            mapping[field.id] !== SKIP_MAPPING
-        );
-
-        if (hasMappableFields) {
-          setStep(3);
-          return;
-        }
-      }
+      // Check if we need value mapping
+      const needsValueMapping = hasUnmappedValues(mapping);
 
       if (needsValueMapping) {
         setStep(3);
@@ -1128,6 +1132,58 @@ const AdvancedDataImport = () => {
               </div>
 
               <div className="mt-6">
+                <h4 className="font-semibold mb-2">Data Summary</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <Card>
+                    <CardContent className="p-3">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {parseTrackingCSV(fileContent).length - 1}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Total Records
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {headers.length}
+                        </div>
+                        <div className="text-sm text-gray-600">Columns</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {parseTrackingCSV(fileContent).length > 100
+                            ? 'Large'
+                            : 'Standard'}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Dataset Size
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-3">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {preview.length}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Preview Rows
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 <h4 className="font-semibold mb-2">Data Preview</h4>
                 <div className="border rounded-md overflow-x-auto">
                   <Table>
@@ -1148,6 +1204,13 @@ const AdvancedDataImport = () => {
                       ))}
                     </TableBody>
                   </Table>
+                  {parseTrackingCSV(fileContent).length >
+                    preview.length + 1 && (
+                    <div className="p-3 bg-gray-50 text-center text-sm text-gray-600">
+                      Showing {preview.length} of{' '}
+                      {parseTrackingCSV(fileContent).length - 1} records
+                    </div>
+                  )}
                 </div>
               </div>
 

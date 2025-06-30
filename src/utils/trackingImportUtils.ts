@@ -191,11 +191,25 @@ export const parseActualAllocationCSVWithMapping = (
         'actual_percentage',
         actualPercentageStr
       );
-      const actualPercentage = parseFloat(translatedActualPercentageStr);
+      let actualPercentage = parseFloat(translatedActualPercentageStr);
       if (isNaN(actualPercentage)) {
         errors.push({
           row: rowNum,
           message: `Invalid actual percentage: "${translatedActualPercentageStr}". Must be a number.`,
+        });
+        return;
+      }
+
+      // Handle decimal percentages (e.g., 0.0047 should become 0.47%)
+      if (actualPercentage < 1 && actualPercentage > 0) {
+        actualPercentage = actualPercentage * 100;
+      }
+
+      // Validate percentage range
+      if (actualPercentage < 0 || actualPercentage > 100) {
+        errors.push({
+          row: rowNum,
+          message: `Invalid actual percentage: ${actualPercentage}%. Must be between 0 and 100.`,
         });
         return;
       }
@@ -564,11 +578,25 @@ export const parseBulkTrackingCSVWithMapping = (
           'actual_percentage',
           actualPercentageStr
         );
-        const actualPercentage = parseFloat(translatedActualPercentageStr);
+        let actualPercentage = parseFloat(translatedActualPercentageStr);
         if (isNaN(actualPercentage)) {
           errors.push({
             row: rowNum,
             message: `Invalid actual percentage: "${translatedActualPercentageStr}".`,
+          });
+          return;
+        }
+
+        // Handle decimal percentages (e.g., 0.0047 should become 0.47%)
+        if (actualPercentage < 1 && actualPercentage > 0) {
+          actualPercentage = actualPercentage * 100;
+        }
+
+        // Validate percentage range
+        if (actualPercentage < 0 || actualPercentage > 100) {
+          errors.push({
+            row: rowNum,
+            message: `Invalid actual percentage: ${actualPercentage}%. Must be between 0 and 100.`,
           });
           return;
         }
@@ -1382,11 +1410,25 @@ export const parsePlanningAllocationCSVWithMapping = (
         'percentage',
         percentageStr
       );
-      const percentage = parseFloat(translatedPercentageStr);
+      let percentage = parseFloat(translatedPercentageStr);
       if (isNaN(percentage)) {
         errors.push({
           row: rowNum,
           message: `Invalid allocation percentage: "${translatedPercentageStr}". Must be a number.`,
+        });
+        return;
+      }
+
+      // Handle decimal percentages (e.g., 0.0047 should become 0.47%)
+      if (percentage < 1 && percentage > 0) {
+        percentage = percentage * 100;
+      }
+
+      // Validate percentage range
+      if (percentage < 0 || percentage > 100) {
+        errors.push({
+          row: rowNum,
+          message: `Invalid allocation percentage: ${percentage}%. Must be between 0 and 100.`,
         });
         return;
       }
