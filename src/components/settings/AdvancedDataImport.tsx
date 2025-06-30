@@ -631,7 +631,7 @@ const getDynamicFieldConfig = (
       {
         id: 'milestone_name',
         label: 'Milestone Name',
-        required: true,
+        required: false,
         type: 'text',
       },
       {
@@ -670,8 +670,7 @@ const getDynamicFieldConfig = (
         id: 'epic_name',
         label: 'Epic/Work Name',
         required: false,
-        type: 'select',
-        options: [...epics.map(e => e.name), ...projects.map(p => p.name)],
+        type: 'text',
       },
       {
         id: 'epic_type',
@@ -690,8 +689,7 @@ const getDynamicFieldConfig = (
         id: 'project_name',
         label: 'Project Name',
         required: false,
-        type: 'select',
-        options: projects.map(p => p.name),
+        type: 'text',
       }
     );
 
@@ -828,6 +826,7 @@ const AdvancedDataImport = () => {
     'epic_team',
     'completed_epics',
     'completed_milestones',
+    'milestone_name',
   ];
 
   // Get available options for select fields
@@ -857,6 +856,7 @@ const AdvancedDataImport = () => {
             .filter(name => name && name.trim() !== '');
         }
         case 'epic_name': {
+          // For text fields, return existing values as suggestions but don't restrict
           return [
             ...epics.map(epic => epic.name),
             ...runWorkCategories.map(rw => rw.name),
@@ -880,8 +880,17 @@ const AdvancedDataImport = () => {
             .filter(name => name && name.trim() !== '');
         }
         case 'project_name': {
+          // For text fields, return existing values as suggestions but don't restrict
           return projects
             .map(project => project.name)
+            .filter(name => name && name.trim() !== '');
+        }
+        case 'milestone_name': {
+          // For text fields, return existing values as suggestions but don't restrict
+          return projects
+            .flatMap(project =>
+              project.milestones.map(milestone => milestone.name)
+            )
             .filter(name => name && name.trim() !== '');
         }
         default:
@@ -930,19 +939,6 @@ const AdvancedDataImport = () => {
 
       const headers = parsed[0];
 
-      // Fields that can be mapped through value mapping (excluding percentage fields)
-      const mappableFields = [
-        'team_name',
-        'quarter',
-        'iteration_number',
-        'epic_name',
-        'epic_type',
-        'project_name',
-        'epic_team',
-        'completed_epics',
-        'completed_milestones',
-      ];
-
       config.fields.forEach(field => {
         const mappedHeader = mapping[field.id];
         if (!mappedHeader || mappedHeader === SKIP_MAPPING) return;
@@ -978,7 +974,12 @@ const AdvancedDataImport = () => {
               );
             }
           } else if (field.type === 'select' && field.options) {
-            if (!field.options.some(option => String(option) === value)) {
+            // Case-insensitive validation for select fields
+            const normalizedValue = value.toLowerCase().trim();
+            const normalizedOptions = field.options.map(opt =>
+              String(opt).toLowerCase().trim()
+            );
+            if (!normalizedOptions.includes(normalizedValue)) {
               errors.push(
                 `Row ${rowIndex + 2}: ${field.label} value "${value}" is not in the allowed options: ${field.options.join(', ')}.`
               );
