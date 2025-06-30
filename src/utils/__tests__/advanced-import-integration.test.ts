@@ -55,12 +55,12 @@ team-4,QA Team,div-1,Engineering,60,500000,Engineering division`;
 
     // Step 5: Import actual allocations using the imported teams
     const allocationsCSV = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-Frontend Team,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional security requirements
-Frontend Team,Q1 2024,1,Production Support,Run Work,35,none,Regular support work
-Backend Team,Q1 2024,1,API Development,Epic,80,none,API development completed
-Backend Team,Q1 2024,1,Technical Debt,Run Work,20,priority-shift,Urgent tech debt items
-Design Team,Q1 2024,1,Dashboard UI,Epic,90,none,Design work completed
-QA Team,Q1 2024,1,Bug Fixes,Run Work,100,none,QA testing and bug fixes`;
+Frontend Team,Q1 2024,1,User Authentication,Feature,65,scope-change,Additional security requirements
+Frontend Team,Q1 2024,1,Production Support,Critical Run,35,none,Regular support work
+Backend Team,Q1 2024,1,API Development,Feature,80,none,API development completed
+Backend Team,Q1 2024,1,Technical Debt,Critical Run,20,priority-shift,Urgent tech debt items
+Design Team,Q1 2024,1,Dashboard UI,Feature,90,none,Design work completed
+QA Team,Q1 2024,1,Bug Fixes,Critical Run,100,none,QA testing and bug fixes`;
 
     const allocationsResult = parseActualAllocationCSV(
       allocationsCSV,
@@ -109,9 +109,9 @@ team-2,Design Team,div-2,Product,80,300000,Product division`;
 
     // Test with different case and whitespace variations
     const allocationsCSV = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-engineering team,Q1 2024,1,User Authentication,Epic,65,none,Lowercase
-  Engineering Team  ,Q1 2024,1,User Authentication,Epic,70,none,Extra spaces
-DESIGN TEAM,Q1 2024,1,User Authentication,Epic,80,none,Uppercase`;
+engineering team,Q1 2024,1,User Authentication,Feature,65,none,Lowercase
+  Engineering Team  ,Q1 2024,1,User Authentication,Feature,70,none,Extra spaces
+DESIGN TEAM,Q1 2024,1,User Authentication,Feature,80,none,Uppercase`;
 
     const allocationsResult = parseActualAllocationCSV(
       allocationsCSV,
@@ -139,8 +139,8 @@ team-1,Frontend Team,div-1,Engineering,100,500000,Engineering division`;
 
     // Try to import allocations with a non-existent team
     const allocationsCSV = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-NonExistentTeam,Q1 2024,1,User Authentication,Epic,65,none,This team doesn't exist
-Frontend Team,Q1 2024,1,User Authentication,Epic,65,none,This team exists`;
+NonExistentTeam,Q1 2024,1,User Authentication,Feature,65,none,This team doesn't exist
+Frontend Team,Q1 2024,1,User Authentication,Feature,65,none,This team exists`;
 
     const allocationsResult = parseActualAllocationCSV(
       allocationsCSV,
@@ -171,8 +171,8 @@ team-1,Engineering Team,div-1,Engineering,100,500000,Engineering division`;
 
     // Test mixed epic and run work allocations
     const allocationsCSV = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-Engineering Team,Q1 2024,1,User Authentication,Epic,60,none,Epic work
-Engineering Team,Q1 2024,1,Production Support,Run Work,40,none,Run work`;
+Engineering Team,Q1 2024,1,User Authentication,Feature,60,none,Epic work
+Engineering Team,Q1 2024,1,Production Support,Critical Run,40,none,Run work`;
 
     const allocationsResult = parseActualAllocationCSV(
       allocationsCSV,
@@ -210,8 +210,8 @@ team-1,Engineering Team,div-1,Engineering,100,500000,Engineering division`;
 
     // Test with missing epic names
     const allocationsCSV = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-Engineering Team,Q1 2024,1,,Epic,65,none,No epic specified
-Engineering Team,Q1 2024,1,,Run Work,35,none,No run work specified`;
+Engineering Team,Q1 2024,1,,Feature,65,none,No epic specified
+Engineering Team,Q1 2024,1,,Critical Run,35,none,No run work specified`;
 
     const allocationsResult = parseActualAllocationCSV(
       allocationsCSV,
@@ -246,9 +246,9 @@ team-2,Backend Team,div-1,Engineering,120,500000,Engineering division`;
 
     // This should reproduce the error you encountered
     const allocationsCSV = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-Frontend Team,Q1 2024,1,User Authentication,Epic,65,none,Valid team
-unassigned,Q1 2024,1,User Authentication,Epic,35,none,This should cause the error
-Backend Team,Q1 2024,1,User Authentication,Epic,80,none,Valid team`;
+Frontend Team,Q1 2024,1,User Authentication,Feature,65,none,Valid team
+unassigned,Q1 2024,1,User Authentication,Feature,35,none,This should cause the error
+Backend Team,Q1 2024,1,User Authentication,Feature,80,none,Valid team`;
 
     const allocationsResult = parseActualAllocationCSV(
       allocationsCSV,
@@ -293,29 +293,29 @@ Backend Team,Q1 2024,1,User Authentication,Epic,80,none,Valid team`;
 
     // Create a large CSV with many teams (simulating 100+ teams scenario)
     const largeAllocationsCSV = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Allocation Percentage,Notes
-Engineering Team,Q1 2024,1,User Authentication,Project,60,Existing team
-Design Team,Q1 2024,1,Dashboard UI,Project,40,Existing team
-Frontend Team,Q1 2024,1,User Authentication,Project,70,New team 1
-Backend Team,Q1 2024,1,API Development,Project,80,New team 2
-Mobile Team,Q1 2024,1,Mobile App,Project,65,New team 3
-QA Team,Q1 2024,1,Testing Suite,Project,50,New team 4
-DevOps Team,Q1 2024,1,Infrastructure,Project,45,New team 5
-Data Team,Q1 2024,1,Analytics Platform,Project,75,New team 6
-Security Team,Q1 2024,1,Security Audit,Project,55,New team 7
-Product Team,Q1 2024,1,Feature Development,Project,85,New team 8
-Marketing Team,Q1 2024,1,Marketing Tools,Project,30,New team 9
-Sales Team,Q1 2024,1,Sales Dashboard,Project,40,New team 10
-Support Team,Q1 2024,1,Customer Support,Project,35,New team 11
-Research Team,Q1 2024,1,Research Platform,Project,60,New team 12
-Architecture Team,Q1 2024,1,System Design,Project,70,New team 13
-Integration Team,Q1 2024,1,API Integration,Project,65,New team 14
-Performance Team,Q1 2024,1,Performance Optimization,Project,55,New team 15
-Accessibility Team,Q1 2024,1,Accessibility Features,Project,45,New team 16
-Internationalization Team,Q1 2024,1,Localization,Project,50,New team 17
-Documentation Team,Q1 2024,1,Documentation System,Project,40,New team 18
-Monitoring Team,Q1 2024,1,Monitoring Tools,Project,60,New team 19
-Compliance Team,Q1 2024,1,Compliance Features,Project,70,New team 20
-Innovation Team,Q1 2024,1,Innovation Platform,Project,80,New team 21`;
+Engineering Team,Q1 2024,1,User Authentication,Feature,60,Existing team
+Design Team,Q1 2024,1,Dashboard UI,Feature,40,Existing team
+Frontend Team,Q1 2024,1,User Authentication,Feature,70,New team 1
+Backend Team,Q1 2024,1,API Development,Feature,80,New team 2
+Mobile Team,Q1 2024,1,Mobile App,Feature,65,New team 3
+QA Team,Q1 2024,1,Testing Suite,Feature,50,New team 4
+DevOps Team,Q1 2024,1,Infrastructure,Feature,45,New team 5
+Data Team,Q1 2024,1,Analytics Platform,Feature,75,New team 6
+Security Team,Q1 2024,1,Security Audit,Feature,55,New team 7
+Product Team,Q1 2024,1,Feature Development,Feature,85,New team 8
+Marketing Team,Q1 2024,1,Marketing Tools,Feature,30,New team 9
+Sales Team,Q1 2024,1,Sales Dashboard,Feature,40,New team 10
+Support Team,Q1 2024,1,Customer Support,Feature,35,New team 11
+Research Team,Q1 2024,1,Research Platform,Feature,60,New team 12
+Architecture Team,Q1 2024,1,System Design,Feature,70,New team 13
+Integration Team,Q1 2024,1,API Integration,Feature,65,New team 14
+Performance Team,Q1 2024,1,Performance Optimization,Feature,55,New team 15
+Accessibility Team,Q1 2024,1,Accessibility Features,Feature,45,New team 16
+Internationalization Team,Q1 2024,1,Localization,Feature,50,New team 17
+Documentation Team,Q1 2024,1,Documentation System,Feature,40,New team 18
+Monitoring Team,Q1 2024,1,Monitoring Tools,Feature,60,New team 19
+Compliance Team,Q1 2024,1,Compliance Features,Feature,70,New team 20
+Innovation Team,Q1 2024,1,Innovation Platform,Feature,80,New team 21`;
 
     // Test the planning allocation import with mapping functionality
     const mapping = {
@@ -475,11 +475,11 @@ Innovation Team,Q1 2024,1,Innovation Platform,Project,80,New team 21`;
     ];
 
     const mixedAllocationsCSV = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Allocation Percentage,Notes
-Engineering Team,Q1 2024,1,User Authentication,Project,60,Existing team and epic
-Frontend Team,Q1 2024,1,API Development,Project,70,Existing team and epic
-Backend Team,Q1 2024,1,New Epic,Project,80,New team and epic
-Mobile Team,Q1 2024,1,User Authentication,Project,65,New team, existing epic
-Design Team,Q1 2024,1,New Epic 2,Project,55,Existing team, new epic`;
+Engineering Team,Q1 2024,1,User Authentication,Feature,60,Existing team and epic
+Frontend Team,Q1 2024,1,API Development,Feature,70,Existing team and epic
+Backend Team,Q1 2024,1,New Epic,Feature,80,New team and epic
+Mobile Team,Q1 2024,1,User Authentication,Feature,65,New team, existing epic
+Design Team,Q1 2024,1,New Epic 2,Feature,55,Existing team, new epic`;
 
     const mapping = {
       team_name: 'Team Name',
