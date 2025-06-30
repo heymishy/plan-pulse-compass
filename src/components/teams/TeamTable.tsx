@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext';
-import { Team } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -12,6 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,8 +23,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Users, Clock } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { Team } from '@/types';
+import {
+  getProductOwnerName,
+  getTeamMembers,
+  getDivisionName,
+} from '@/utils/teamUtils';
 
 interface TeamTableProps {
   teams: Team[];
@@ -35,40 +43,6 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
   const { toast } = useToast();
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const getTeamMembers = (teamId: string) => {
-    return people.filter(person => person.teamId === teamId && person.isActive);
-  };
-
-  const getDivisionName = (divisionId?: string) => {
-    if (!divisionId) return 'No Division';
-    const division = divisions.find(d => d.id === divisionId);
-    return division?.name || 'Unknown Division';
-  };
-
-  const getProductOwnerName = (team: Team) => {
-    if (!team.productOwnerId) return 'No Product Owner';
-    
-    const selectedPerson = people.find(p => p.id === team.productOwnerId);
-    if (!selectedPerson) return 'Unknown Product Owner';
-    
-    // Find Product Owner role
-    const productOwnerRole = roles.find(role => 
-      role.name.toLowerCase().includes('product owner') || role.name.toLowerCase().includes('po')
-    );
-    
-    // Get team members
-    const teamMembers = getTeamMembers(team.id);
-    
-    // Find natural PO in team
-    const teamProductOwner = productOwnerRole ? 
-      teamMembers.find(person => person.roleId === productOwnerRole.id) : null;
-    
-    // Check if selected person is acting PO
-    const isActing = teamProductOwner?.id !== selectedPerson.id;
-    
-    return `${selectedPerson.name}${isActing ? ' (Acting)' : ''}`;
-  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -88,38 +62,46 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
     setSelectedTeams(newSelected);
   };
 
-  const handleBulkDelete = () => {
-    // Remove selected teams
-    setTeams(prevTeams => prevTeams.filter(team => !selectedTeams.has(team.id)));
-    
-    // Update people to remove team assignments for deleted teams
-    setPeople(prevPeople => 
-      prevPeople.map(person => 
-        selectedTeams.has(person.teamId || '') 
+  const handleDeleteTeams = () => {
+    const teamsToDelete = Array.from(selectedTeams);
+
+    // Remove people from deleted teams
+    setPeople(prev =>
+      prev.map(person =>
+        teamsToDelete.includes(person.teamId || '')
           ? { ...person, teamId: undefined }
           : person
       )
     );
 
-    toast({
-      title: "Teams Deleted",
-      description: `Successfully deleted ${selectedTeams.size} team${selectedTeams.size !== 1 ? 's' : ''}`,
-    });
+    // Remove teams
+    setTeams(prev => prev.filter(team => !teamsToDelete.includes(team.id)));
 
     setSelectedTeams(new Set());
     setShowDeleteDialog(false);
-  };
 
-  const isAllSelected = teams.length > 0 && selectedTeams.size === teams.length;
-  const isIndeterminate = selectedTeams.size > 0 && selectedTeams.size < teams.length;
+    toast({
+      title: 'Success',
+      description: `Deleted ${teamsToDelete.length} team${teamsToDelete.length !== 1 ? 's' : ''}`,
+    });
+  };
 
   return (
     <div className="space-y-4">
-      {selectedTeams.size > 0 && (
-        <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
-          <span className="text-sm text-blue-700">
-            {selectedTeams.size} team{selectedTeams.size !== 1 ? 's' : ''} selected
+      {/* Header Actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Checkbox
+            checked={selectedTeams.size === teams.length && teams.length > 0}
+            onCheckedChange={handleSelectAll}
+            aria-label="Select all teams"
+          />
+          <span className="text-sm text-gray-600">
+            {selectedTeams.size} of {teams.length} selected
           </span>
+        </div>
+
+        {selectedTeams.size > 0 && (
           <Button
             variant="destructive"
             size="sm"
@@ -128,98 +110,130 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
             <Trash2 className="h-4 w-4 mr-2" />
             Delete Selected
           </Button>
-        </div>
-      )}
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={isAllSelected}
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all teams"
-                />
-              </TableHead>
-              <TableHead>Team Name</TableHead>
-              <TableHead>Division</TableHead>
-              <TableHead>Product Owner</TableHead>
-              <TableHead>Members</TableHead>
-              <TableHead>Capacity</TableHead>
-              <TableHead>Utilization</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teams.map((team) => {
-              const members = getTeamMembers(team.id);
-              const utilizationPercentage = members.length > 0 ? 
-                Math.round((members.length * 40 / team.capacity) * 100) : 0;
-              
-              return (
-                <TableRow key={team.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedTeams.has(team.id)}
-                      onCheckedChange={(checked) => handleSelectTeam(team.id, checked as boolean)}
-                      aria-label={`Select ${team.name}`}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{team.name}</TableCell>
-                  <TableCell>{getDivisionName(team.divisionId)}</TableCell>
-                  <TableCell>{getProductOwnerName(team)}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {members.length} member{members.length !== 1 ? 's' : ''}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{team.capacity}h/week</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            utilizationPercentage > 100 ? 'bg-red-500' :
-                            utilizationPercentage > 80 ? 'bg-yellow-500' :
-                            'bg-green-500'
-                          }`}
-                          style={{ width: `${Math.min(utilizationPercentage, 100)}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600">
-                        {utilizationPercentage}%
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEditTeam(team.id)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        )}
       </div>
 
+      {/* Teams Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Teams</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Team Name</TableHead>
+                  <TableHead>Division</TableHead>
+                  <TableHead>Product Owner</TableHead>
+                  <TableHead>Members</TableHead>
+                  <TableHead>Capacity</TableHead>
+                  <TableHead>Utilization</TableHead>
+                  <TableHead className="w-12">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {teams.map(team => {
+                  const members = getTeamMembers(team.id, people);
+                  const utilizationPercentage =
+                    members.length > 0
+                      ? Math.round(
+                          ((members.length * 40) / team.capacity) * 100
+                        )
+                      : 0;
+
+                  return (
+                    <TableRow key={team.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedTeams.has(team.id)}
+                          onCheckedChange={checked =>
+                            handleSelectTeam(team.id, checked as boolean)
+                          }
+                          aria-label={`Select ${team.name}`}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{team.name}</TableCell>
+                      <TableCell>
+                        {getDivisionName(team.divisionId, divisions)}
+                      </TableCell>
+                      <TableCell>
+                        {getProductOwnerName(team, people, roles)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {members.length} member
+                          {members.length !== 1 ? 's' : ''}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{team.capacity}h/week</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-16 bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full ${
+                                utilizationPercentage > 100
+                                  ? 'bg-red-500'
+                                  : utilizationPercentage > 80
+                                    ? 'bg-yellow-500'
+                                    : 'bg-green-500'
+                              }`}
+                              style={{
+                                width: `${Math.min(utilizationPercentage, 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600">
+                            {utilizationPercentage}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEditTeam(team.id)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {teams.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="text-center py-8 text-gray-500"
+                    >
+                      No teams found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Teams</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedTeams.size} team{selectedTeams.size !== 1 ? 's' : ''}? 
-              This action cannot be undone. Team members will be unassigned from their teams.
+              Are you sure you want to delete {selectedTeams.size} team
+              {selectedTeams.size !== 1 ? 's' : ''}? This action cannot be
+              undone. Team members will be unassigned from their teams.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDeleteTeams}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
