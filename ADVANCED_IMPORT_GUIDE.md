@@ -25,6 +25,37 @@ The Advanced Data Import feature has been enhanced to provide better field mappi
 - **Validation Warnings**: Shows validation issues before import
 - **Import Blocking**: Prevents import when validation errors exist
 
+### 4. Epic Type Mapping
+
+The system supports detailed Epic Type categories that automatically map to either Change Work (Epics) or Run Work (Run Work Categories):
+
+#### Default Epic Type Mapping
+
+- **Feature** → Change Work (Epics)
+- **Platform** → Change Work (Epics)
+- **Tech Debt** → Change Work (Epics)
+- **Critical Run** → Run Work (Run Work Categories)
+
+#### Customizing Epic Type Mapping
+
+You can customize how Epic Types are mapped using the Value Mapping step:
+
+1. **During Import**: When you reach the Value Mapping step, you'll see all unique Epic Type values from your CSV
+2. **Map Each Type**: For each Epic Type value, you can choose to:
+   - Map to an existing Epic Type (Feature, Platform, Tech Debt, Critical Run)
+   - Create a new Epic Type (which will follow the default mapping rules)
+3. **Save Mappings**: Your Epic Type mappings are saved and can be reused for future imports
+
+#### Example Epic Type Mapping
+
+If your CSV contains Epic Types like "Bug Fix", "Enhancement", "Maintenance", you can map them:
+
+- "Bug Fix" → "Tech Debt" (becomes Change Work)
+- "Enhancement" → "Feature" (becomes Change Work)
+- "Maintenance" → "Critical Run" (becomes Run Work)
+
+This allows you to maintain your existing Epic Type terminology while the system automatically categorizes them as Change Work or Run Work.
+
 ## Supported Import Types
 
 ### 1. Projects, Epics & Milestones
@@ -53,7 +84,9 @@ The Advanced Data Import feature has been enhanced to provide better field mappi
 - Quarter (required) - Auto-populated from existing quarters
 - Iteration Number (required) - Options: 1, 2, 3, 4, 5, 6
 - Epic/Work Name - Auto-populated from existing epics and run work categories
-- Epic Type - Options: Project, Run Work
+- Epic Type - Options: Feature, Platform, Tech Debt, Critical Run
+  - **Feature, Platform, Tech Debt** → Treated as Change Work (Epics)
+  - **Critical Run** → Treated as Run Work (Run Work Categories)
 - Allocation Percentage (required)
 - Notes
 
@@ -65,7 +98,9 @@ The Advanced Data Import feature has been enhanced to provide better field mappi
 - Quarter (required) - Auto-populated from existing quarters
 - Iteration Number (required) - Options: 1, 2, 3, 4, 5, 6
 - Epic/Work Name - Auto-populated from existing epics and run work categories
-- Epic Type - Options: Project, Run Work
+- Epic Type - Options: Feature, Platform, Tech Debt, Critical Run
+  - **Feature, Platform, Tech Debt** → Treated as Change Work (Epics)
+  - **Critical Run** → Treated as Run Work (Run Work Categories)
 - Actual Percentage (required)
 - Variance Reason - Options: none, production-support, scope-change, resource-unavailable, technical-blocker, priority-shift, other
 - Notes

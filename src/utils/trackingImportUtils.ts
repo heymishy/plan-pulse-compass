@@ -76,6 +76,18 @@ export const parseCSV = (csvContent: string): string[][] => {
   });
 };
 
+// Helper function to determine if an Epic Type should be treated as Run Work
+export const isRunWorkEpicType = (epicType: string): boolean => {
+  const runWorkTypes = ['Critical Run'];
+  return runWorkTypes.includes(epicType);
+};
+
+// Helper function to determine if an Epic Type should be treated as Change Work
+export const isChangeWorkEpicType = (epicType: string): boolean => {
+  const changeWorkTypes = ['Feature', 'Platform', 'Tech Debt'];
+  return changeWorkTypes.includes(epicType);
+};
+
 // Enhanced parsing function with field mapping support
 export const parseActualAllocationCSVWithMapping = (
   csvContent: string,
@@ -220,8 +232,11 @@ export const parseActualAllocationCSVWithMapping = (
       if (epicName) {
         const translatedEpicName = translateValue('epic_name', epicName);
         const epicType = getValue('epic_type');
+        const translatedEpicType = epicType
+          ? translateValue('epic_type', epicType)
+          : epicType;
 
-        if (epicType && epicType.toLowerCase() === 'run work') {
+        if (epicType && isRunWorkEpicType(translatedEpicType)) {
           const runWork = runWorkCategories.find(
             r => r.name.toLowerCase() === translatedEpicName.toLowerCase()
           );
@@ -607,8 +622,11 @@ export const parseBulkTrackingCSVWithMapping = (
         if (epicName) {
           const translatedEpicName = translateValue('epic_name', epicName);
           const epicType = getValue('epic_type');
+          const translatedEpicType = epicType
+            ? translateValue('epic_type', epicType)
+            : epicType;
 
-          if (epicType && epicType.toLowerCase() === 'run work') {
+          if (epicType && isRunWorkEpicType(translatedEpicType)) {
             const runWork = runWorkCategories.find(
               r => r.name.toLowerCase() === translatedEpicName.toLowerCase()
             );
@@ -913,7 +931,7 @@ export const downloadActualAllocationSampleCSV = () => {
       'Q1 2024',
       '1',
       'User Authentication',
-      'Epic',
+      'Feature',
       '65',
       'scope-change',
       'Additional security requirements',
@@ -923,7 +941,7 @@ export const downloadActualAllocationSampleCSV = () => {
       'Q1 2024',
       '1',
       'Production Support',
-      'Run Work',
+      'Critical Run',
       '35',
       'none',
       '',
@@ -933,7 +951,7 @@ export const downloadActualAllocationSampleCSV = () => {
       'Q1 2024',
       '1',
       'API Development',
-      'Epic',
+      'Platform',
       '80',
       'none',
       '',
@@ -942,8 +960,8 @@ export const downloadActualAllocationSampleCSV = () => {
       'Backend Team',
       'Q1 2024',
       '1',
-      'Technical Debt',
-      'Run Work',
+      'Code Refactoring',
+      'Tech Debt',
       '20',
       'priority-shift',
       'Urgent tech debt items',
@@ -1439,8 +1457,11 @@ export const parsePlanningAllocationCSVWithMapping = (
       if (epicName) {
         const translatedEpicName = translateValue('epic_name', epicName);
         const epicType = getValue('epic_type');
+        const translatedEpicType = epicType
+          ? translateValue('epic_type', epicType)
+          : epicType;
 
-        if (epicType && epicType.toLowerCase() === 'run work') {
+        if (epicType && isRunWorkEpicType(translatedEpicType)) {
           const runWork = getOrCreateRunWorkCategory(translatedEpicName);
           runWorkCategoryId = runWork.id;
         } else {
@@ -1503,7 +1524,7 @@ export const downloadPlanningAllocationSampleCSV = () => {
       'Q1 2024',
       '1',
       'User Authentication',
-      'Project',
+      'Feature',
       '60',
       'Core authentication system',
     ],
@@ -1512,7 +1533,7 @@ export const downloadPlanningAllocationSampleCSV = () => {
       'Q1 2024',
       '1',
       'Support Tickets',
-      'Run Work',
+      'Critical Run',
       '40',
       'Ongoing support work',
     ],
@@ -1521,7 +1542,7 @@ export const downloadPlanningAllocationSampleCSV = () => {
       'Q1 2024',
       '1',
       'Payments Integration',
-      'Project',
+      'Platform',
       '80',
       'Payment gateway integration',
     ],
@@ -1529,10 +1550,10 @@ export const downloadPlanningAllocationSampleCSV = () => {
       'Personal Loans Platform',
       'Q1 2024',
       '1',
-      'Support Tickets',
-      'Run Work',
+      'Code Refactoring',
+      'Tech Debt',
       '20',
-      'Regular support activities',
+      'Technical debt reduction',
     ],
   ];
 
