@@ -78,13 +78,13 @@ export const parseCSV = (csvContent: string): string[][] => {
 
 // Helper function to determine if an Epic Type should be treated as Run Work
 export const isRunWorkEpicType = (epicType: string): boolean => {
-  const runWorkTypes = ['Critical Run'];
+  const runWorkTypes = ['Critical Run', 'Run Work'];
   return runWorkTypes.includes(epicType);
 };
 
 // Helper function to determine if an Epic Type should be treated as Change Work
 export const isChangeWorkEpicType = (epicType: string): boolean => {
-  const changeWorkTypes = ['Feature', 'Platform', 'Tech Debt'];
+  const changeWorkTypes = ['Feature', 'Platform', 'Tech Debt', 'Project'];
   return changeWorkTypes.includes(epicType);
 };
 
@@ -1218,6 +1218,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   cycles: any[],
   epics: any[],
   runWorkCategories: any[],
+  projects: any[],
   valueMappings?: Record<string, Record<string, string | number>>
 ): {
   allocations: Allocation[];
@@ -1226,6 +1227,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   newCycles?: any[];
   newEpics?: any[];
   newRunWorkCategories?: any[];
+  newProjects?: any[];
 } => {
   const lines = parseCSV(csvContent);
   const headers = lines[0];
@@ -1239,6 +1241,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   const newCycles: any[] = [];
   const newEpics: any[] = [];
   const newRunWorkCategories: any[] = [];
+  const newProjects: any[] = [];
 
   // Create reverse mapping from field ID to header index
   const fieldToIndex: Record<string, number> = {};
@@ -1330,8 +1333,33 @@ export const parsePlanningAllocationCSVWithMapping = (
     return cycle;
   };
 
+  // Helper function to get or create project
+  const getOrCreateProject = (projectName: string): any => {
+    let project = projects.find(
+      p => p.name.toLowerCase() === projectName.toLowerCase()
+    );
+    if (!project) {
+      // Check if we already created this project in this import
+      project = newProjects.find(
+        p => p.name.toLowerCase() === projectName.toLowerCase()
+      );
+      if (!project) {
+        project = {
+          id: `project-${projectName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+          name: projectName,
+          description: `Imported project: ${projectName}`,
+          status: 'planning',
+          startDate: new Date().toISOString().split('T')[0],
+          milestones: [],
+        };
+        newProjects.push(project);
+      }
+    }
+    return project;
+  };
+
   // Helper function to get or create epic
-  const getOrCreateEpic = (epicName: string): any => {
+  const getOrCreateEpic = (epicName: string, projectName?: string): any => {
     let epic = epics.find(e => e.name.toLowerCase() === epicName.toLowerCase());
     if (!epic) {
       // Check if we already created this epic in this import
@@ -1339,11 +1367,19 @@ export const parsePlanningAllocationCSVWithMapping = (
         e => e.name.toLowerCase() === epicName.toLowerCase()
       );
       if (!epic) {
+        // Determine project ID if project name is provided
+        let projectId: string | undefined;
+        if (projectName) {
+          const project = getOrCreateProject(projectName);
+          projectId = project.id;
+        }
+
         epic = {
           id: `epic-${epicName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
           name: epicName,
           description: `Imported epic: ${epicName}`,
           effort: 0,
+          projectId,
         };
         newEpics.push(epic);
       }
@@ -1371,6 +1407,41 @@ export const parsePlanningAllocationCSVWithMapping = (
       }
     }
     return category;
+  };
+
+  // Helper function to determine if an epic belongs to a project
+  const isEpicPartOfProject = (epic: any): boolean => {
+    // Check if epic has a projectId (either from existing data or newly created)
+    if (epic.projectId) {
+      return true;
+    }
+
+    // Check if epic exists in existing epics and has a projectId
+    const existingEpic = epics.find(e => e.id === epic.id);
+    if (existingEpic && existingEpic.projectId) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Helper function to determine Epic Type based on project association
+  const determineEpicType = (epic: any, explicitEpicType?: string): string => {
+    // If explicit Epic Type is provided and it's a recognized type, use it
+    if (
+      explicitEpicType &&
+      (isRunWorkEpicType(explicitEpicType) ||
+        isChangeWorkEpicType(explicitEpicType))
+    ) {
+      return explicitEpicType;
+    }
+
+    // Determine based on project association
+    if (isEpicPartOfProject(epic)) {
+      return 'Project'; // This will be treated as Change Work
+    } else {
+      return 'Run Work'; // This will be treated as Run Work
+    }
   };
 
   dataRows.forEach((row, index) => {
@@ -1454,6 +1525,8 @@ export const parsePlanningAllocationCSVWithMapping = (
       let epicId: string | undefined;
       let runWorkCategoryId: string | undefined;
       const epicName = getValue('epic_name');
+      const projectName = getValue('project_name'); // New field for direct project reference
+
       if (epicName) {
         const translatedEpicName = translateValue('epic_name', epicName);
         const epicType = getValue('epic_type');
@@ -1461,13 +1534,25 @@ export const parsePlanningAllocationCSVWithMapping = (
           ? translateValue('epic_type', epicType)
           : epicType;
 
-        if (epicType && isRunWorkEpicType(translatedEpicType)) {
+        // Create or get epic with project association
+        const epic = getOrCreateEpic(translatedEpicName, projectName);
+
+        // Determine the actual Epic Type based on project association and explicit type
+        const determinedEpicType = determineEpicType(epic, translatedEpicType);
+
+        if (isRunWorkEpicType(determinedEpicType)) {
           const runWork = getOrCreateRunWorkCategory(translatedEpicName);
           runWorkCategoryId = runWork.id;
         } else {
-          const epic = getOrCreateEpic(translatedEpicName);
           epicId = epic.id;
         }
+      } else if (projectName) {
+        // If no epic name but project name is provided, treat as project work
+        const project = getOrCreateProject(projectName);
+        // Create a generic epic for the project
+        const genericEpicName = `${projectName} - General Work`;
+        const epic = getOrCreateEpic(genericEpicName, projectName);
+        epicId = epic.id;
       }
 
       const notes = getValue('notes');
@@ -1505,6 +1590,7 @@ export const parsePlanningAllocationCSVWithMapping = (
     newCycles,
     newEpics,
     newRunWorkCategories,
+    newProjects,
   };
 };
 
@@ -1516,6 +1602,7 @@ export const downloadPlanningAllocationSampleCSV = () => {
       'Iteration Number',
       'Epic Name',
       'Epic Type',
+      'Project Name',
       'Allocation Percentage',
       'Notes',
     ],
@@ -1525,6 +1612,7 @@ export const downloadPlanningAllocationSampleCSV = () => {
       '1',
       'User Authentication',
       'Feature',
+      'Digital Mortgage Platform',
       '60',
       'Core authentication system',
     ],
@@ -1534,6 +1622,7 @@ export const downloadPlanningAllocationSampleCSV = () => {
       '1',
       'Support Tickets',
       'Critical Run',
+      '',
       '40',
       'Ongoing support work',
     ],
@@ -1543,6 +1632,7 @@ export const downloadPlanningAllocationSampleCSV = () => {
       '1',
       'Payments Integration',
       'Platform',
+      'Personal Loans Platform',
       '80',
       'Payment gateway integration',
     ],
@@ -1552,8 +1642,19 @@ export const downloadPlanningAllocationSampleCSV = () => {
       '1',
       'Code Refactoring',
       'Tech Debt',
+      'Personal Loans Platform',
       '20',
       'Technical debt reduction',
+    ],
+    [
+      'Data Analytics Team',
+      'Q1 2024',
+      '1',
+      '',
+      '',
+      'Business Intelligence Project',
+      '100',
+      'Direct project allocation without specific epic',
     ],
   ];
 

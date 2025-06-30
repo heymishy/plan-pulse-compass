@@ -163,7 +163,20 @@ const IMPORT_TYPES = {
         label: 'Epic Type',
         required: false,
         type: 'select',
-        options: ['Feature', 'Platform', 'Tech Debt', 'Critical Run'],
+        options: [
+          'Feature',
+          'Platform',
+          'Tech Debt',
+          'Critical Run',
+          'Project',
+        ],
+      },
+      {
+        id: 'project_name',
+        label: 'Project Name',
+        required: false,
+        type: 'select',
+        options: [],
       },
       {
         id: 'percentage',
@@ -210,7 +223,13 @@ const IMPORT_TYPES = {
         label: 'Epic Type',
         required: false,
         type: 'select',
-        options: ['Feature', 'Platform', 'Tech Debt', 'Critical Run'],
+        options: [
+          'Feature',
+          'Platform',
+          'Tech Debt',
+          'Critical Run',
+          'Project',
+        ],
       },
       {
         id: 'actual_percentage',
@@ -463,6 +482,11 @@ const AdvancedDataImport = () => {
         case 'epic_team': {
           return teams
             .map(team => team.name)
+            .filter(name => name && name.trim() !== '');
+        }
+        case 'project_name': {
+          return projects
+            .map(project => project.name)
             .filter(name => name && name.trim() !== '');
         }
         default:
@@ -799,19 +823,17 @@ const AdvancedDataImport = () => {
         cycles,
         epics,
         runWorkCategories,
+        projects,
         valueMappings
       );
       if (result.errors.length > 0) {
-        setStatus({
-          type: 'error',
-          message: result.errors
-            .map(e => `Row ${e.row}: ${e.message}`)
-            .join(', '),
-        });
+        setStatus({ type: 'error', message: result.errors });
         return;
       }
       if ('allocations' in result) {
-        // Add new records to the system
+        setAllocations(prev => [...prev, ...result.allocations]);
+
+        // Handle new records that were created during import
         if (result.newTeams && result.newTeams.length > 0) {
           setTeams(prev => [...prev, ...result.newTeams]);
         }
@@ -830,39 +852,13 @@ const AdvancedDataImport = () => {
             ...result.newRunWorkCategories,
           ]);
         }
-
-        // Add allocations
-        setAllocations(prev => [...prev, ...result.allocations]);
-
-        // Create success message with details about new records
-        const newRecordsMessage = [];
-        if (result.newTeams && result.newTeams.length > 0) {
-          newRecordsMessage.push(`${result.newTeams.length} new teams`);
+        if (result.newProjects && result.newProjects.length > 0) {
+          setProjects(prev => [...prev, ...result.newProjects]);
         }
-        if (result.newCycles && result.newCycles.length > 0) {
-          newRecordsMessage.push(`${result.newCycles.length} new quarters`);
-        }
-        if (result.newEpics && result.newEpics.length > 0) {
-          newRecordsMessage.push(`${result.newEpics.length} new epics`);
-        }
-        if (
-          result.newRunWorkCategories &&
-          result.newRunWorkCategories.length > 0
-        ) {
-          newRecordsMessage.push(
-            `${result.newRunWorkCategories.length} new run work categories`
-          );
-        }
-
-        const successMessage =
-          `Successfully imported ${result.allocations.length} planning allocations.` +
-          (newRecordsMessage.length > 0
-            ? ` Created: ${newRecordsMessage.join(', ')}.`
-            : '');
 
         setStatus({
           type: 'success',
-          message: successMessage,
+          message: `Successfully imported ${result.allocations.length} planning allocations.`,
         });
       }
     } else if (importType === 'actual-allocations') {
@@ -952,9 +948,8 @@ const AdvancedDataImport = () => {
     'iteration_number',
     'epic_name',
     'epic_type',
-    'epic_team',
-    'completed_epics',
-    'completed_milestones',
+    'project_name',
+    'notes',
   ];
 
   return (
