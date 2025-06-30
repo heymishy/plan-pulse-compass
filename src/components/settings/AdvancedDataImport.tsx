@@ -40,6 +40,7 @@ import {
   parseIterationReviewCSVWithMapping,
   parseBulkTrackingCSVWithMapping,
   parsePlanningAllocationCSVWithMapping,
+  parseCSV as parseTrackingCSV,
 } from '@/utils/trackingImportUtils';
 import { useImportMappings } from '@/hooks/useImportMappings';
 import { useValueMappings } from '@/hooks/useValueMappings';
@@ -490,7 +491,7 @@ const AdvancedDataImport = () => {
 
       if (!fileContent || preview.length === 0) return errors;
 
-      const parsed = parseCSV(fileContent);
+      const parsed = parseTrackingCSV(fileContent);
       if (parsed.length === 0) return errors;
 
       const headers = parsed[0];
@@ -584,7 +585,7 @@ const AdvancedDataImport = () => {
       try {
         const text = await selectedFile.text();
         setFileContent(text);
-        const parsed = parseCSV(text);
+        const parsed = parseTrackingCSV(text);
         if (parsed.length > 0) {
           setHeaders(parsed[0]);
           setPreview(parsed.slice(1, 6)); // show first 5 data rows
@@ -609,7 +610,7 @@ const AdvancedDataImport = () => {
   const hasUnmappedValues = (mapping: Record<string, string>): boolean => {
     if (!fileContent || !importType) return false;
 
-    const parsed = parseCSV(fileContent);
+    const parsed = parseTrackingCSV(fileContent);
     if (parsed.length < 2) return false; // Need headers + at least one data row
 
     const headers = parsed[0];
@@ -1174,7 +1175,7 @@ const AdvancedDataImport = () => {
                 return !percentageFields.includes(fieldId);
               })
             )}
-            csvData={[headers, ...preview]}
+            csvData={parseTrackingCSV(fileContent)}
             systemOptions={Object.fromEntries(
               config.fields
                 .filter(field => field.type === 'select')
