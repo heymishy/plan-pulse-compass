@@ -54,7 +54,7 @@ const IMPORT_TYPES = {
       {
         id: 'project_name',
         label: 'Project Name',
-        required: true,
+        required: false,
         type: 'text',
       },
       {
@@ -149,15 +149,13 @@ const IMPORT_TYPES = {
         id: 'iteration_number',
         label: 'Iteration Number',
         required: true,
-        type: 'select',
-        options: [1, 2, 3, 4, 5, 6],
+        type: 'number',
       },
       {
         id: 'epic_name',
         label: 'Epic/Work Name',
         required: false,
-        type: 'select',
-        options: [],
+        type: 'text',
       },
       {
         id: 'epic_type',
@@ -209,15 +207,13 @@ const IMPORT_TYPES = {
         id: 'iteration_number',
         label: 'Iteration Number',
         required: true,
-        type: 'select',
-        options: [1, 2, 3, 4, 5, 6],
+        type: 'number',
       },
       {
         id: 'epic_name',
         label: 'Epic/Work Name',
         required: false,
-        type: 'select',
-        options: [],
+        type: 'text',
       },
       {
         id: 'epic_type',
@@ -277,8 +273,7 @@ const IMPORT_TYPES = {
         id: 'iteration_number',
         label: 'Iteration Number',
         required: true,
-        type: 'select',
-        options: [1, 2, 3, 4, 5, 6],
+        type: 'number',
       },
       {
         id: 'review_date',
@@ -338,15 +333,13 @@ const IMPORT_TYPES = {
         id: 'iteration_number',
         label: 'Iteration Number',
         required: true,
-        type: 'select',
-        options: [1, 2, 3, 4, 5, 6],
+        type: 'number',
       },
       {
         id: 'epic_name',
         label: 'Epic/Work Name',
         required: false,
-        type: 'select',
-        options: [],
+        type: 'text',
       },
       {
         id: 'actual_percentage',
@@ -447,14 +440,16 @@ const AdvancedDataImport = () => {
   const mappableFields = [
     'team_name',
     'quarter',
-    'iteration_number',
     'epic_name',
     'epic_type',
-    'project_name',
     'epic_team',
     'completed_epics',
     'completed_milestones',
     'milestone_name',
+    'variance_reason',
+    'status',
+    'data_type',
+    'project_status',
   ];
 
   // Get available options for select fields
@@ -507,12 +502,6 @@ const AdvancedDataImport = () => {
             .map(team => team.name)
             .filter(name => name && name.trim() !== '');
         }
-        case 'project_name': {
-          // For text fields, return existing values as suggestions but don't restrict
-          return projects
-            .map(project => project.name)
-            .filter(name => name && name.trim() !== '');
-        }
         case 'milestone_name': {
           // For text fields, return existing values as suggestions but don't restrict
           return projects
@@ -520,6 +509,40 @@ const AdvancedDataImport = () => {
               project.milestones.map(milestone => milestone.name)
             )
             .filter(name => name && name.trim() !== '');
+        }
+        case 'epic_type': {
+          // Return predefined epic type options
+          return [
+            'Feature',
+            'Platform',
+            'Tech Debt',
+            'Critical Run',
+            'Project',
+          ];
+        }
+        case 'variance_reason': {
+          // Return predefined variance reason options
+          return [
+            'none',
+            'production-support',
+            'scope-change',
+            'resource-unavailable',
+            'technical-blocker',
+            'priority-shift',
+            'other',
+          ];
+        }
+        case 'status': {
+          // Return predefined status options
+          return ['not-started', 'in-progress', 'completed'];
+        }
+        case 'data_type': {
+          // Return predefined data type options
+          return ['allocation', 'review'];
+        }
+        case 'project_status': {
+          // Return predefined project status options
+          return ['planning', 'active', 'completed', 'cancelled'];
         }
         default:
           return [];
@@ -688,9 +711,7 @@ const AdvancedDataImport = () => {
     ) {
       const hasMappableFields = config.fields.some(
         field =>
-          ['team_name', 'quarter', 'iteration_number', 'epic_name'].includes(
-            field.id
-          ) &&
+          ['team_name', 'quarter', 'epic_name'].includes(field.id) &&
           mapping[field.id] &&
           mapping[field.id] !== SKIP_MAPPING
       );
@@ -705,13 +726,16 @@ const AdvancedDataImport = () => {
     const mappableFields = [
       'team_name',
       'quarter',
-      'iteration_number',
       'epic_name',
       'epic_type',
-      'project_name',
       'epic_team',
       'completed_epics',
       'completed_milestones',
+      'milestone_name',
+      'variance_reason',
+      'status',
+      'data_type',
+      'project_status',
     ];
 
     for (const field of config.fields) {

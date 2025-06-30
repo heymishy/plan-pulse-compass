@@ -50,7 +50,7 @@ This project uses GitHub Actions for continuous integration and deployment:
 
 ### Available Scripts
 
-ok```bash
+```bash
 
 # Development
 
@@ -94,4 +94,7 @@ npm run audit # Run security audit
 MIT License - see LICENSE file for details.
 
 # Test commit
+
+```
+
 ```
