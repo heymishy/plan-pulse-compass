@@ -100,6 +100,9 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
           const suggestion = suggestMapping(csvValue, options);
           if (suggestion) {
             fieldMappings[csvValue] = suggestion;
+          } else {
+            // Default to "Create new" for unmapped values
+            fieldMappings[csvValue] = `NEW:${csvValue}`;
           }
         }
       });
@@ -153,7 +156,7 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
 
       if (unmappedValues.length > 0) {
         validationErrors.push(
-          `Field "${fieldId}" has unmapped values: ${unmappedValues.join(', ')}`
+          `Field "${getFieldLabel(fieldId)}" has unmapped values: ${unmappedValues.join(', ')}`
         );
       }
     });

@@ -574,6 +574,13 @@ const AdvancedDataImport = () => {
     }
   }, [watchedValues, step, validateMapping, validateCSVData]);
 
+  // Clear validation errors when value mappings change (user is fixing issues)
+  useEffect(() => {
+    if (step === 3 && Object.keys(valueMappings).length > 0) {
+      setValidationErrors([]);
+    }
+  }, [valueMappings, step]);
+
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
