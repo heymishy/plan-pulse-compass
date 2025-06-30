@@ -426,35 +426,44 @@ const AdvancedDataImport = () => {
 
       // Return predefined options or dynamic options based on field type
       if (field.options && field.options.length > 0) {
-        return field.options;
+        return field.options.filter(option => String(option).trim() !== '');
       }
 
       // Dynamic options based on field type
       switch (fieldId) {
         case 'team_name': {
-          return teams.map(team => team.name);
+          return teams
+            .map(team => team.name)
+            .filter(name => name && name.trim() !== '');
         }
         case 'quarter': {
           return cycles
             .filter(cycle => cycle.type === 'quarterly')
-            .map(cycle => cycle.name);
+            .map(cycle => cycle.name)
+            .filter(name => name && name.trim() !== '');
         }
         case 'epic_name': {
           return [
             ...epics.map(epic => epic.name),
             ...runWorkCategories.map(rw => rw.name),
-          ];
+          ].filter(name => name && name.trim() !== '');
         }
         case 'completed_epics': {
-          return epics.map(epic => epic.name);
+          return epics
+            .map(epic => epic.name)
+            .filter(name => name && name.trim() !== '');
         }
         case 'completed_milestones': {
-          return projects.flatMap(project =>
-            project.milestones.map(milestone => milestone.name)
-          );
+          return projects
+            .flatMap(project =>
+              project.milestones.map(milestone => milestone.name)
+            )
+            .filter(name => name && name.trim() !== '');
         }
         case 'epic_team': {
-          return teams.map(team => team.name);
+          return teams
+            .map(team => team.name)
+            .filter(name => name && name.trim() !== '');
         }
         default:
           return [];

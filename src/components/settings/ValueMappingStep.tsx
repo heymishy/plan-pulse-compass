@@ -73,7 +73,10 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
           const uniqueValues = new Set<string>();
           csvData.slice(1).forEach(row => {
             if (row[columnIndex]) {
-              uniqueValues.add(row[columnIndex].trim());
+              const trimmedValue = row[columnIndex].trim();
+              if (trimmedValue !== '') {
+                uniqueValues.add(trimmedValue);
+              }
             }
           });
           result[fieldId] = uniqueValues;
@@ -524,12 +527,14 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
                                           {option}
                                         </SelectItem>
                                       ))}
-                                    <SelectItem
-                                      value={`CREATE_NEW:${csvValue}`}
-                                      className="text-blue-600 font-medium"
-                                    >
-                                      ✨ Create new: "{csvValue}"
-                                    </SelectItem>
+                                    {csvValue && csvValue.trim() !== '' && (
+                                      <SelectItem
+                                        value={`CREATE_NEW:${csvValue}`}
+                                        className="text-blue-600 font-medium"
+                                      >
+                                        ✨ Create new: "{csvValue}"
+                                      </SelectItem>
+                                    )}
                                   </SelectContent>
                                 </Select>
                               </div>
