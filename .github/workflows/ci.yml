@@ -146,12 +146,87 @@ jobs:
             test-results/
           retention-days: 7
 
+  # Import/Export Tests
+  import-tests:
+    name: Import/Export Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run import/export tests
+        run: npm run test:import
+        env:
+          CI: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: import-test-results
+          path: |
+            coverage/
+            test-results/
+          retention-days: 7
+
+  # E2E Tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npm run test:e2e:install
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
   # Full Test Suite (with coverage)
   full-tests:
     name: Full Test Suite
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: [unit-tests, integration-tests, ui-tests]
+    needs: [unit-tests, integration-tests, ui-tests, import-tests]
 
     steps:
       - name: Checkout code
@@ -193,7 +268,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [lint-and-typecheck, full-tests]
+    needs: [lint-and-typecheck, full-tests, e2e-tests]
 
     steps:
       - name: Checkout code
@@ -398,6 +473,8 @@ jobs:
         unit-tests,
         ui-tests,
         integration-tests,
+        import-tests,
+        e2e-tests,
         full-tests,
         build,
         security-audit,

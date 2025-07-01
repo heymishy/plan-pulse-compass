@@ -11,9 +11,24 @@ import { Team, Person, Role } from '@/types';
 
 describe('teamUtils', () => {
   const mockRoles: Role[] = [
-    { id: 'role-po', name: 'Product Owner' },
-    { id: 'role-se', name: 'Software Engineer' },
-    { id: 'role-qe', name: 'Quality Engineer' },
+    {
+      id: 'role-po',
+      name: 'Product Owner',
+      rateType: 'annual',
+      defaultRate: 120000,
+    },
+    {
+      id: 'role-se',
+      name: 'Software Engineer',
+      rateType: 'annual',
+      defaultRate: 100000,
+    },
+    {
+      id: 'role-qe',
+      name: 'Quality Engineer',
+      rateType: 'annual',
+      defaultRate: 95000,
+    },
   ];
 
   const mockPeople: Person[] = [
@@ -147,8 +162,18 @@ describe('teamUtils', () => {
 
     it('should return just the name when no PO role exists', () => {
       const rolesWithoutPO: Role[] = [
-        { id: 'role-se', name: 'Software Engineer' },
-        { id: 'role-qe', name: 'Quality Engineer' },
+        {
+          id: 'role-se',
+          name: 'Software Engineer',
+          rateType: 'annual',
+          defaultRate: 100000,
+        },
+        {
+          id: 'role-qe',
+          name: 'Quality Engineer',
+          rateType: 'annual',
+          defaultRate: 95000,
+        },
       ];
       const result = getProductOwnerName(
         mockTeams[0],
@@ -186,8 +211,18 @@ describe('teamUtils', () => {
 
     it('should return null when no PO role exists', () => {
       const rolesWithoutPO: Role[] = [
-        { id: 'role-se', name: 'Software Engineer' },
-        { id: 'role-qe', name: 'Quality Engineer' },
+        {
+          id: 'role-se',
+          name: 'Software Engineer',
+          rateType: 'annual',
+          defaultRate: 100000,
+        },
+        {
+          id: 'role-qe',
+          name: 'Quality Engineer',
+          rateType: 'annual',
+          defaultRate: 95000,
+        },
       ];
       const result = getNaturalProductOwner(
         'team-1',
@@ -227,7 +262,7 @@ describe('teamUtils', () => {
       const personWithoutTeam: Person = {
         ...mockPeople[0],
         id: 'person-no-team',
-        teamId: undefined,
+        teamId: '',
       };
       const peopleWithPersonWithoutTeam = [...mockPeople, personWithoutTeam];
       const result = isNaturalProductOwner(
