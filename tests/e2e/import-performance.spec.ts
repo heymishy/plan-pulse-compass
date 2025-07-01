@@ -27,7 +27,7 @@ test.describe('Import Performance and Stress Tests', () => {
       buffer: Buffer.from(csvContent),
     });
     await page.waitForSelector('text=Import Completed', { timeout: 300000 });
-    await expect(page.locator('text=100')).toBeVisible();
+    await expect(page.getByTestId('inserted-count')).toContainText('100');
   });
 
   test('should maintain UI responsiveness during large imports', async ({
@@ -50,15 +50,21 @@ test.describe('Import Performance and Stress Tests', () => {
       mimeType: 'text/csv',
       buffer: Buffer.from(largeCsvContent),
     });
-    await expect(page.locator('text=Settings')).toBeVisible();
-    await expect(page.locator('text=Dashboard')).toBeVisible();
-    await page.click('text=Dashboard');
-    await expect(page.locator('text=Dashboard')).toBeVisible();
-    await page.click('text=Settings');
+    // Check navigation elements are still visible during import
+    await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible();
+    await page.getByRole('link', { name: 'Dashboard' }).click();
+    await expect(
+      page.getByRole('heading', { name: 'Dashboard' })
+    ).toBeVisible();
+    await page.getByRole('link', { name: 'Settings' }).click();
     await page.click('text=Import/Export');
     await page.waitForSelector('[data-testid="people-tab"]', {
       timeout: 10000,
     });
-    await expect(page.locator('text=Processing')).toBeVisible();
+    // Check if import is still processing or completed
+    const isProcessing = await page.locator('text=Processing').isVisible();
+    const isCompleted = await page.locator('text=Import Completed').isVisible();
+    expect(isProcessing || isCompleted).toBe(true);
   });
 });

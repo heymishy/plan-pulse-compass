@@ -44,9 +44,12 @@ test.describe('Import/Export Functionality', () => {
     await expect(page.locator('text=Allow partial imports')).toBeVisible();
     await expect(page.locator('text=Strict validation')).toBeVisible();
     await expect(page.locator('text=Skip empty rows')).toBeVisible();
-    // Test toggling options
-    await page.locator('input[type="checkbox"]').first().click();
-    await expect(page.locator('input[type="checkbox"]').first()).toBeChecked();
+    // Test toggling the strict validation checkbox specifically
+    const strictValidationCheckbox = page.getByTestId(
+      'strict-validation-checkbox'
+    );
+    await strictValidationCheckbox.click();
+    await expect(strictValidationCheckbox).toBeChecked();
   });
 
   test('should provide file upload interface', async ({ page }) => {
@@ -56,7 +59,8 @@ test.describe('Import/Export Functionality', () => {
       timeout: 10000,
     });
     await expect(page.locator('text=Select CSV File')).toBeVisible();
-    await expect(page.locator('input[type="file"]').first()).toBeVisible();
+    // File input is hidden by design, but should exist
+    await expect(page.locator('input[type="file"]').first()).toBeAttached();
     await expect(page.locator('text=Enhanced Data Import')).toBeVisible();
   });
 
@@ -91,8 +95,8 @@ test.describe('Import/Export Functionality', () => {
     });
     await page.waitForSelector('text=Import Completed', { timeout: 30000 });
     await expect(page.locator('text=Total Rows')).toBeVisible();
-    await expect(page.locator('text=Successful')).toBeVisible();
-    await expect(page.locator('text=2')).toBeVisible();
+    await expect(page.getByTestId('inserted-count')).toBeVisible();
+    await expect(page.getByTestId('inserted-count')).toContainText('2');
   });
 
   test('should handle invalid CSV with errors', async ({ page }) => {
@@ -108,8 +112,8 @@ test.describe('Import/Export Functionality', () => {
       mimeType: 'text/csv',
       buffer: Buffer.from(csvContent),
     });
-    await page.waitForSelector('text=Validation failed', { timeout: 30000 });
-    await expect(page.locator('text=Error')).toBeVisible();
+    await page.waitForSelector('text=Import Failed', { timeout: 30000 });
+    await expect(page.getByTestId('error-message')).toBeVisible();
   });
 
   test('should show progress during import', async ({ page }) => {
