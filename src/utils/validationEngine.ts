@@ -41,6 +41,7 @@ export interface ValidationContext {
     runWorkCategories: RunWorkCategory[];
     skills: Skill[];
     solutions: Solution[];
+    allocations: Allocation[];
   };
   options: {
     strictValidation: boolean;

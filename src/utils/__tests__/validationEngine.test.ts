@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ValidationEngine, ValidationContext } from '../validationEngine';
-import { Person, Team, Allocation } from '@/types';
+import { Person, Team, Allocation, Role, Cycle } from '@/types';
 
 describe('ValidationEngine', () => {
   let mockContext: ValidationContext;
@@ -9,15 +9,38 @@ describe('ValidationEngine', () => {
     mockContext = {
       existingData: {
         people: [],
-        teams: [],
+        teams: [
+          {
+            id: 'team-1',
+            name: 'Test Team',
+            capacity: 40,
+          },
+        ],
         divisions: [],
-        roles: [],
+        roles: [
+          {
+            id: 'role-1',
+            name: 'Software Engineer',
+            rateType: 'annual',
+            defaultRate: 100000,
+          },
+        ],
         projects: [],
         epics: [],
-        cycles: [],
+        cycles: [
+          {
+            id: 'cycle-1',
+            type: 'quarterly',
+            name: 'Q1 2024',
+            startDate: '2024-01-01',
+            endDate: '2024-03-31',
+            status: 'active',
+          },
+        ],
         runWorkCategories: [],
         skills: [],
         solutions: [],
+        allocations: [],
       },
       options: {
         strictValidation: false,
