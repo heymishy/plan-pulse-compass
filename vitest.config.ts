@@ -24,6 +24,16 @@ export default defineConfig({
     coverage: {
       enabled: false,
     },
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
+      '**/tests/e2e/**', // Exclude Playwright E2E tests
+      '**/playwright/**',
+      '**/*.e2e.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+    ],
     environmentOptions: {
       jsdom: {
         resources: 'usable',
