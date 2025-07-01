@@ -281,7 +281,7 @@ Design Team,Q1 2024,1,UI Redesign,feature,Platform Development,20,Complete redes
   const currentMode = getImportModeInfo(importMode);
 
   return (
-    <div className="space-y-6" data-testid="app-container">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

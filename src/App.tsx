@@ -38,7 +38,10 @@ function App() {
       <AppProvider>
         <Router>
           <SidebarProvider>
-            <div className="flex min-h-screen bg-background">
+            <div
+              className="flex min-h-screen bg-background"
+              data-testid="app-container"
+            >
               <Sidebar>
                 <Navigation />
               </Sidebar>
