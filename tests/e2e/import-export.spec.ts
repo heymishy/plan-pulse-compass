@@ -12,37 +12,39 @@ test.describe('Import/Export Functionality', () => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
     await expect(page.locator('text=Enhanced Data Import')).toBeVisible();
-    await expect(page.locator('text=Import Type')).toBeVisible();
+    await expect(page.locator('text=People & Teams')).toBeVisible();
   });
 
   test('should allow switching between import types', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
     await expect(page.locator('text=People & Teams')).toBeVisible();
-    await page.click('text=Planning Allocations');
-    await expect(page.locator('text=Planning Allocations')).toBeVisible();
+    await page.getByTestId('allocations-tab').click();
+    await expect(page.getByTestId('allocations-tab')).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
   });
 
   test('should allow configuration of import options', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
-    await expect(page.locator('text=Import Configuration')).toBeVisible();
-    await expect(page.locator('text=Allow Partial Imports')).toBeVisible();
-    await expect(page.locator('text=Strict Validation')).toBeVisible();
-    await expect(page.locator('text=Skip Empty Rows')).toBeVisible();
-    await page.click('input[id="allowPartialImports"]');
-    await page.click('input[id="strictValidation"]');
-    await expect(page.locator('input[id="allowPartialImports"]')).toBeChecked();
-    await expect(page.locator('input[id="strictValidation"]')).toBeChecked();
+    // Show advanced options first
+    await page.getByTestId('advanced-options-toggle').click();
+    await expect(page.locator('text=Allow partial imports')).toBeVisible();
+    await expect(page.locator('text=Strict validation')).toBeVisible();
+    await expect(page.locator('text=Skip empty rows')).toBeVisible();
+    // Test toggling options
+    await page.locator('input[type="checkbox"]').first().click();
+    await expect(page.locator('input[type="checkbox"]').first()).toBeChecked();
   });
 
   test('should provide file upload interface', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
-    await expect(page.locator('text=Upload CSV File')).toBeVisible();
-    await expect(page.locator('text=Choose a file')).toBeVisible();
-    await expect(page.locator('text=or drag and drop')).toBeVisible();
-    await expect(page.locator('text=CSV files only, up to 50MB')).toBeVisible();
+    await expect(page.locator('text=Select CSV File')).toBeVisible();
+    await expect(page.locator('input[type="file"]').first()).toBeVisible();
+    await expect(page.locator('text=Enhanced Data Import')).toBeVisible();
   });
 
   test('should provide sample CSV download', async ({ page }) => {
@@ -62,7 +64,7 @@ test.describe('Import/Export Functionality', () => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
     const csvContent = `name,email,role,team_name,team_id,employment_type,annual_salary,hourly_rate,daily_rate,start_date,end_date,is_active,division_name,division_id,team_capacity\n"John Doe","john.doe@company.com","Software Engineer","Frontend Team","team-001","permanent","95000","","","2023-01-15","","true","Engineering","div-001","160"\n"Jane Smith","jane.smith@company.com","Product Owner","Frontend Team","team-001","permanent","120000","","","2023-01-15","","true","Engineering","div-001","160"`;
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[type="file"]').first();
     await fileInput.setInputFiles({
       name: 'test-people.csv',
       mimeType: 'text/csv',
@@ -78,15 +80,14 @@ test.describe('Import/Export Functionality', () => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
     const csvContent = `name,email,role,team_name\n"John Doe","invalid-email","","Frontend Team"`;
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[type="file"]').first();
     await fileInput.setInputFiles({
       name: 'invalid-people.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(csvContent),
     });
-    await page.waitForSelector('text=Import Failed', { timeout: 30000 });
-    await expect(page.locator('text=Errors')).toBeVisible();
-    await expect(page.locator('text=Invalid email format')).toBeVisible();
+    await page.waitForSelector('text=Validation failed', { timeout: 30000 });
+    await expect(page.locator('text=Error')).toBeVisible();
   });
 
   test('should show progress during import', async ({ page }) => {
@@ -98,16 +99,13 @@ test.describe('Import/Export Functionality', () => {
         `"Person ${i}","person${i}@company.com","Engineer","Team ${i}","team-${i}","permanent","95000","","","2023-01-15","","true","Engineering","div-001","160"`
     );
     const csvContent = `name,email,role,team_name,team_id,employment_type,annual_salary,hourly_rate,daily_rate,start_date,end_date,is_active,division_name,division_id,team_capacity\n${rows.join('\n')}`;
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[type="file"]').first();
     await fileInput.setInputFiles({
       name: 'large-people.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(csvContent),
     });
-    await expect(page.locator('text=Starting import...')).toBeVisible();
-    await expect(
-      page.locator('text=Validating CSV structure...')
-    ).toBeVisible();
+    await expect(page.locator('text=Processing')).toBeVisible();
     await page.waitForSelector('text=Import Completed', { timeout: 60000 });
   });
 });

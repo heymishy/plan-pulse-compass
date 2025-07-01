@@ -17,7 +17,7 @@ test.describe('Import Performance and Stress Tests', () => {
         `"Team ${i}","team-${i}@company.com","Engineer","Team ${i}","team-${i}","permanent","80000","","","2023-01-15","","true","Engineering","div-${Math.floor(i / 10)}","160"`
     );
     const csvContent = `name,email,role,team_name,team_id,employment_type,annual_salary,hourly_rate,daily_rate,start_date,end_date,is_active,division_name,division_id,team_capacity\n${teams.join('\n')}`;
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[type="file"]').first();
     await fileInput.setInputFiles({
       name: 'max-scale.csv',
       mimeType: 'text/csv',
@@ -38,7 +38,7 @@ test.describe('Import Performance and Stress Tests', () => {
         { length: 5000 },
         (_, i) => `"User ${i}","user${i}@company.com","Engineer"`
       ).join('\n');
-    const fileInput = page.locator('input[type="file"]');
+    const fileInput = page.locator('input[type="file"]').first();
     await fileInput.setInputFiles({
       name: 'large-import.csv',
       mimeType: 'text/csv',
@@ -50,6 +50,6 @@ test.describe('Import Performance and Stress Tests', () => {
     await expect(page.locator('text=Dashboard')).toBeVisible();
     await page.click('text=Settings');
     await page.click('text=Import/Export');
-    await expect(page.locator('text=Import in progress')).toBeVisible();
+    await expect(page.locator('text=Processing')).toBeVisible();
   });
 });
