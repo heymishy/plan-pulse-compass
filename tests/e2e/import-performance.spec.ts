@@ -10,6 +10,7 @@ test.describe('Import Performance and Stress Tests', () => {
 
   test('should handle maximum scale data (100 teams)', async ({ page }) => {
     await page.click('text=Settings');
+    await page.click('text=Import/Export');
     const teams = Array.from(
       { length: 100 },
       (_, i) =>
@@ -30,6 +31,7 @@ test.describe('Import Performance and Stress Tests', () => {
     page,
   }) => {
     await page.click('text=Settings');
+    await page.click('text=Import/Export');
     const largeCsvContent =
       'name,email,role\n' +
       Array.from(
@@ -47,6 +49,7 @@ test.describe('Import Performance and Stress Tests', () => {
     await page.click('text=Dashboard');
     await expect(page.locator('text=Dashboard')).toBeVisible();
     await page.click('text=Settings');
+    await page.click('text=Import/Export');
     await expect(page.locator('text=Import in progress')).toBeVisible();
   });
 });

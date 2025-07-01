@@ -30,12 +30,28 @@ public/
 *.tsbuildinfo
 tsconfig.tsbuildinfo
 
+# Temporary development files
+vite.config.ts.timestamp-*
+*.sample.csv
+test-*.csv
+test-*.js
+*-combined.csv
+*-sample.csv
+bfg.jar
+replacements.txt
+..bfg-report/
+
 # Testing
 coverage/
 *.lcov
 .nyc_output
 vitest-profile.log
 vitest.config.ts.timestamp-*
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.auth/
 
 # Logs
 logs

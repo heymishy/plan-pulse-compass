@@ -1,5 +1,0 @@
-name,email,role,team_name,employment_type,annual_salary,hourly_rate,daily_rate,start_date,end_date,is_active,division_name,team_capacity
-John Doe,john.doe@company.com,Software Engineer,Engineering Team,permanent,80000,,,2024-01-15,,true,Technology,40
-Jane Smith,jane.smith@company.com,Product Manager,Product Team,permanent,90000,,,2024-02-01,,true,Product,40
-Bob Johnson,bob.johnson@company.com,UX Designer,Design Team,contractor,,75,600,2024-01-20,2024-12-31,true,Design,40
-Alice Brown,alice.brown@company.com,Data Scientist,Data Team,permanent,95000,,,2024-03-01,,true,Analytics,40

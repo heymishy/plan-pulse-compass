@@ -1,4 +1,0 @@
-Type,Name,Description,Domain,Group,Status,Start Date,End Date,Priority,Budget,Owner,Epic Key,JIRA Link,Epic Title,Epic Type,Epic Status,T-Shirt Size,Epic Size (Sprints),Story Points,Project Name,Team Name,Milestone Name,Target Date
-Project,Digital Mortgage Platform,Comprehensive digital platform for mortgage origination and management,Product,Engineering Excellence,Active,2024-01-01,2024-12-31,High,2500000,Product Manager,,,,,,,,,,,
-Epic,User Authentication System,EPIC-101,https://blah.com/browse/EPIC-101,Q4 2024 - User Authentication System,Feature,In Progress,Large,3,21,Digital Mortgage Platform,Frontend Team,,,,,
-Milestone,Q4 2024 S3,,,,,,,,,,,,,,,Q4 2024 S3,2024-12-31 
