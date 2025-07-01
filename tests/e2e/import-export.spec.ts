@@ -11,6 +11,10 @@ test.describe('Import/Export Functionality', () => {
   test('should display enhanced import component', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
+    // Wait for the Import/Export page to load
+    await page.waitForSelector('[data-testid="people-tab"]', {
+      timeout: 10000,
+    });
     await expect(page.locator('text=Enhanced Data Import')).toBeVisible();
     await expect(page.locator('text=People & Teams')).toBeVisible();
   });
@@ -18,6 +22,9 @@ test.describe('Import/Export Functionality', () => {
   test('should allow switching between import types', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
+    await page.waitForSelector('[data-testid="people-tab"]', {
+      timeout: 10000,
+    });
     await expect(page.locator('text=People & Teams')).toBeVisible();
     await page.getByTestId('allocations-tab').click();
     await expect(page.getByTestId('allocations-tab')).toHaveAttribute(
@@ -29,6 +36,9 @@ test.describe('Import/Export Functionality', () => {
   test('should allow configuration of import options', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
+    await page.waitForSelector('[data-testid="people-tab"]', {
+      timeout: 10000,
+    });
     // Show advanced options first
     await page.getByTestId('advanced-options-toggle').click();
     await expect(page.locator('text=Allow partial imports')).toBeVisible();
@@ -42,6 +52,9 @@ test.describe('Import/Export Functionality', () => {
   test('should provide file upload interface', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
+    await page.waitForSelector('[data-testid="people-tab"]', {
+      timeout: 10000,
+    });
     await expect(page.locator('text=Select CSV File')).toBeVisible();
     await expect(page.locator('input[type="file"]').first()).toBeVisible();
     await expect(page.locator('text=Enhanced Data Import')).toBeVisible();
@@ -50,6 +63,9 @@ test.describe('Import/Export Functionality', () => {
   test('should provide sample CSV download', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
+    await page.waitForSelector('[data-testid="people-tab"]', {
+      timeout: 10000,
+    });
     const downloadButton = page.locator(
       'button:has-text("Download Sample CSV")'
     );
@@ -63,6 +79,9 @@ test.describe('Import/Export Functionality', () => {
   test('should import valid people and teams CSV', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
+    await page.waitForSelector('[data-testid="people-tab"]', {
+      timeout: 10000,
+    });
     const csvContent = `name,email,role,team_name,team_id,employment_type,annual_salary,hourly_rate,daily_rate,start_date,end_date,is_active,division_name,division_id,team_capacity\n"John Doe","john.doe@company.com","Software Engineer","Frontend Team","team-001","permanent","95000","","","2023-01-15","","true","Engineering","div-001","160"\n"Jane Smith","jane.smith@company.com","Product Owner","Frontend Team","team-001","permanent","120000","","","2023-01-15","","true","Engineering","div-001","160"`;
     const fileInput = page.locator('input[type="file"]').first();
     await fileInput.setInputFiles({
@@ -79,6 +98,9 @@ test.describe('Import/Export Functionality', () => {
   test('should handle invalid CSV with errors', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
+    await page.waitForSelector('[data-testid="people-tab"]', {
+      timeout: 10000,
+    });
     const csvContent = `name,email,role,team_name\n"John Doe","invalid-email","","Frontend Team"`;
     const fileInput = page.locator('input[type="file"]').first();
     await fileInput.setInputFiles({
@@ -93,6 +115,9 @@ test.describe('Import/Export Functionality', () => {
   test('should show progress during import', async ({ page }) => {
     await page.click('text=Settings');
     await page.click('text=Import/Export');
+    await page.waitForSelector('[data-testid="people-tab"]', {
+      timeout: 10000,
+    });
     const rows = Array.from(
       { length: 100 },
       (_, i) =>
