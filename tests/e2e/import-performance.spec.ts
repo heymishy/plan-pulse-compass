@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Import Performance and Stress Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForSelector('[data-testid="app-container"]', {
+    await page.waitForSelector('text=Settings', {
       timeout: 10000,
     });
   });
