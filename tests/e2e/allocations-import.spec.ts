@@ -18,12 +18,9 @@ test.describe('Allocations Import E2E Tests', () => {
       page.getByRole('heading', { name: 'Advanced Data Import' })
     ).toBeVisible();
 
-    // Select Planning Allocations import type
-    const importTypeSelect = page.locator('#import-type');
-    await expect(importTypeSelect).toBeVisible();
-
-    await importTypeSelect.click();
-    await page.click('text=Planning Allocations');
+    // Select Planning Allocations import type using Radix UI Select
+    await page.click('[id="import-type"]');
+    await page.click('[role="option"]:has-text("Planning Allocations")');
 
     // Create test CSV data for planning allocations
     const csvContent = `person_name,team_name,project_name,allocation_percentage,quarter,year,start_date,end_date
@@ -72,12 +69,9 @@ test.describe('Allocations Import E2E Tests', () => {
       page.getByRole('heading', { name: 'Advanced Data Import' })
     ).toBeVisible();
 
-    // Select Actual Allocations import type
-    const importTypeSelect = page.locator('#import-type');
-    await expect(importTypeSelect).toBeVisible();
-
-    await importTypeSelect.click();
-    await page.click('text=Actual Allocations');
+    // Select Actual Allocations import type using Radix UI Select
+    await page.click('[id="import-type"]');
+    await page.click('[role="option"]:has-text("Actual Allocations")');
 
     // Create test CSV data for actual allocations
     const csvContent = `person_name,team_name,project_name,hours_worked,date,iteration,sprint
@@ -123,10 +117,9 @@ test.describe('Allocations Import E2E Tests', () => {
       page.getByRole('heading', { name: 'Advanced Data Import' })
     ).toBeVisible();
 
-    // Select Planning Allocations import type
-    const importTypeSelect = page.locator('#import-type');
-    await importTypeSelect.click();
-    await page.click('text=Planning Allocations');
+    // Select Planning Allocations import type using Radix UI Select
+    await page.click('[id="import-type"]');
+    await page.click('[role="option"]:has-text("Planning Allocations")');
 
     // Create invalid CSV (missing required fields, invalid data)
     const invalidCsv = `person_name,team_name
