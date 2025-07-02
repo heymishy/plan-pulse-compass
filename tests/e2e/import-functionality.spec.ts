@@ -14,11 +14,9 @@ test.describe('Import Functionality', () => {
     // Check that we're on the settings page by looking for the specific settings h1
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
 
-    // Should show at least one import component
+    // Should show the Enhanced Import & Export component
     await expect(
-      page
-        .locator('text=Enhanced Import & Export')
-        .or(page.locator('text=Bulk Data Removal'))
+      page.getByRole('heading', { name: 'Enhanced Import & Export' })
     ).toBeVisible();
   });
 
