@@ -148,7 +148,7 @@ Frontend Team,Q1 2024,1,User Authentication,Epic,65,none,This team exists`;
     );
 
     expect(allocationsResult.errors).toHaveLength(1);
-    expect(allocationsResult.errors[0]).toContain(
+    expect(allocationsResult.errors[0].message).toContain(
       'Team "NonExistentTeam" not found'
     );
     expect(allocationsResult.allocations).toHaveLength(1); // Only the valid one should be imported
@@ -257,7 +257,7 @@ Backend Team,Q1 2024,1,User Authentication,Epic,80,none,Valid team`;
 
     // Should have one error for the "unassigned" team
     expect(allocationsResult.errors).toHaveLength(1);
-    expect(allocationsResult.errors[0]).toContain(
+    expect(allocationsResult.errors[0].message).toContain(
       'Team "unassigned" not found'
     );
 

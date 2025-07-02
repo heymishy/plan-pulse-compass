@@ -2,6 +2,7 @@ import React, { ReactElement } from 'react';
 import { render, RenderOptions, cleanup } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi, afterEach } from 'vitest';
+import * as SidebarModule from '@/components/ui/sidebar';
 
 // Mock the Toaster component to avoid issues in tests
 vi.mock('@/components/ui/toaster', () => ({
@@ -15,7 +16,11 @@ afterEach(() => {
 
 // Lightweight wrapper without AppProvider for simple component tests
 const LightweightProviders = ({ children }: { children: React.ReactNode }) => {
-  return <BrowserRouter>{children}</BrowserRouter>;
+  return (
+    <BrowserRouter>
+      <SidebarModule.SidebarProvider>{children}</SidebarModule.SidebarProvider>
+    </BrowserRouter>
+  );
 };
 
 // Wrapper for components that already have a router (like App component)
