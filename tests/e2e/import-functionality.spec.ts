@@ -11,14 +11,13 @@ test.describe('Import Functionality', () => {
   });
 
   test('should display import/export settings page', async ({ page }) => {
-    // Check that we're on the import/export settings
-    await expect(page.locator('h1')).toContainText('Settings');
+    // Check that we're on the settings page by looking for the specific settings h1
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
 
     // Should show at least one import component
     await expect(
       page
         .locator('text=Enhanced Import & Export')
-        .or(page.locator('text=Advanced Data Import'))
         .or(page.locator('text=Bulk Data Removal'))
     ).toBeVisible();
   });
@@ -30,7 +29,7 @@ test.describe('Import Functionality', () => {
   });
 
   test('should show download sample buttons', async ({ page }) => {
-    // Look for sample download buttons with exact text
-    await expect(page.locator('text=Download Sample')).toBeVisible();
+    // Look for sample download buttons - use first() to avoid strict mode violation
+    await expect(page.locator('text=Download Sample').first()).toBeVisible();
   });
 });

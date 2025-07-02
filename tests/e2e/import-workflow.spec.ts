@@ -16,8 +16,10 @@ test.describe('Import Workflow E2E Tests', () => {
   });
 
   test('should show Advanced Data Import section', async ({ page }) => {
-    // Look for Advanced Data Import section
-    await expect(page.locator('text=Advanced Data Import')).toBeVisible();
+    // Look for Advanced Data Import heading specifically
+    await expect(
+      page.getByRole('heading', { name: 'Advanced Data Import' })
+    ).toBeVisible();
   });
 
   test('should have file inputs for CSV upload', async ({ page }) => {
