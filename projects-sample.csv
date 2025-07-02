@@ -1,0 +1,21 @@
+Project Name,Description,Domain,Group,Status,Start Date,End Date,Priority,Budget,Owner
+Digital Mortgage Platform,Comprehensive digital platform for mortgage origination and management,Product,Engineering Excellence,Active,2024-01-01,2024-12-31,High,2500000,Product Manager
+Payment Integration Platform,Modern payment processing and integration system,Infrastructure,Business & Specialised Lending,Active,2024-01-01,2024-12-31,High,1800000,Platform Manager
+API Gateway Optimization,Performance and security improvements for API gateway,Infrastructure,Engineering Excellence,Active,2024-01-01,2024-12-31,Medium,1200000,Architecture Lead
+Database Performance Monitoring,Real-time monitoring and alerting for database performance,Data,Engineering Excellence,Active,2024-01-01,2024-12-31,High,800000,Data Engineer
+Push Notification System,Cross-platform push notification infrastructure,Product,Product Experience,Active,2024-01-01,2024-12-31,Medium,600000,Product Manager
+Security Framework Enhancement,Enhanced security framework and compliance tools,Infrastructure,Data Insights,Active,2024-01-01,2024-12-31,High,1500000,Security Lead
+Load Balancer Configuration,Advanced load balancing and traffic management,Infrastructure,Engineering Excellence,Active,2024-01-01,2024-12-31,Medium,900000,Platform Engineer
+Code Refactoring Initiative,Legacy code modernization and technical debt reduction,Product,Business & Specialised Lending,Active,2024-01-01,2024-12-31,Medium,700000,Engineering Lead
+Analytics Dashboard,Comprehensive analytics and reporting dashboard,Data,Product Experience,Active,2024-01-01,2024-12-31,High,1100000,Data Analyst
+Microservices Architecture,Modern microservices architecture implementation,Infrastructure,Engineering Excellence,Active,2024-01-01,2024-12-31,High,2000000,Architecture Lead
+Monitoring System Setup,Comprehensive monitoring and observability platform,Infrastructure,Business & Specialised Lending,Active,2024-01-01,2024-12-31,High,1300000,DevOps Lead
+Mobile App Redesign,Complete mobile application redesign and modernization,Product,Business & Specialised Lending,Active,2024-01-01,2024-12-31,High,1600000,UX Lead
+Data Pipeline Optimization,Optimized data processing and ETL pipelines,Data,Product Experience,Active,2024-01-01,2024-12-31,Medium,1000000,Data Engineer
+Legacy System Migration,Migration from legacy systems to modern architecture,Infrastructure,Product Experience,Active,2024-01-01,2024-12-31,High,2200000,Platform Manager
+E-commerce Platform,Complete e-commerce solution for business customers,Product,Business & Specialised Lending,Active,2024-01-01,2024-12-31,High,2800000,Product Manager
+Cloud Infrastructure Migration,Migration to cloud-native infrastructure,Infrastructure,Data Insights,Active,2024-01-01,2024-12-31,High,2500000,Cloud Architect
+Backup System Enhancement,Enhanced backup and disaster recovery systems,Infrastructure,Data Insights,Active,2024-01-01,2024-12-31,Medium,800000,Infrastructure Lead
+Customer Portal,Self-service customer portal and account management,Product,Data Insights,Active,2024-01-01,2024-12-31,High,1400000,Product Manager
+API Versioning System,Comprehensive API versioning and management system,Infrastructure,Data Insights,Active,2024-01-01,2024-12-31,Medium,900000,API Manager
+Performance Optimization,Cross-platform performance optimization initiative,Product,Engineering Excellence,Active,2024-01-01,2024-12-31,Medium,600000,Performance Engineer 

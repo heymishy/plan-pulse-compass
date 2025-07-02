@@ -1,18 +1,18 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@/test/utils/test-utils';
+import { renderWithSidebar, screen } from '@/test/utils/test-utils';
 import Navigation from '../Navigation';
 
 describe('Navigation', () => {
   it('renders navigation component with proper structure', () => {
-    render(<Navigation />);
+    renderWithSidebar(<Navigation />);
 
     // Check for main navigation elements
     expect(screen.getByText('Resource Planner')).toBeInTheDocument();
   });
 
   it('contains all navigation links', () => {
-    render(<Navigation />);
+    renderWithSidebar(<Navigation />);
 
     // Check for common navigation items
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
@@ -23,14 +23,14 @@ describe('Navigation', () => {
   });
 
   it('renders version info component', () => {
-    render(<Navigation />);
+    renderWithSidebar(<Navigation />);
 
-    // Check that version info is rendered (look for the button with version text)
-    expect(screen.getByText(/v\s*0\.0\.20/)).toBeInTheDocument();
+    // Check that version info is rendered (look for any version pattern)
+    expect(screen.getByText(/v\s*\d+\.\d+\.\d+/)).toBeInTheDocument();
   });
 
   it('renders all navigation items', () => {
-    render(<Navigation />);
+    renderWithSidebar(<Navigation />);
 
     const expectedItems = [
       'Dashboard',
@@ -58,7 +58,7 @@ describe('Navigation', () => {
   });
 
   it('has proper link structure for navigation items', () => {
-    render(<Navigation />);
+    renderWithSidebar(<Navigation />);
 
     // Check that links have proper structure
     const links = screen.getAllByRole('link');

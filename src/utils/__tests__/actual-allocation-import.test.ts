@@ -26,8 +26,8 @@ describe('Actual Allocation Import', () => {
 
   it('should successfully parse valid CSV data', () => {
     const csvContent = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-Engineering Team,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional security requirements
-Design Team,Q1 2024,1,Dashboard UI,Epic,80,none,`;
+Engineering Team,Q1 2024,1,User Authentication,Feature,65,scope-change,Additional security requirements
+Design Team,Q1 2024,1,Dashboard UI,Feature,80,none,`;
 
     const result = parseActualAllocationCSV(
       csvContent,
@@ -45,7 +45,7 @@ Design Team,Q1 2024,1,Dashboard UI,Epic,80,none,`;
 
   it('should handle team name case insensitivity', () => {
     const csvContent = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-engineering team,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional security requirements`;
+engineering team,Q1 2024,1,User Authentication,Feature,65,scope-change,Additional security requirements`;
 
     const result = parseActualAllocationCSV(
       csvContent,
@@ -62,7 +62,7 @@ engineering team,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional s
 
   it('should handle team name with extra spaces', () => {
     const csvContent = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-  Engineering Team  ,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional security requirements`;
+  Engineering Team  ,Q1 2024,1,User Authentication,Feature,65,scope-change,Additional security requirements`;
 
     const result = parseActualAllocationCSV(
       csvContent,
@@ -79,7 +79,7 @@ engineering team,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional s
 
   it('should error for non-existent team', () => {
     const csvContent = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-NonExistentTeam,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional security requirements`;
+NonExistentTeam,Q1 2024,1,User Authentication,Feature,65,scope-change,Additional security requirements`;
 
     const result = parseActualAllocationCSV(
       csvContent,
@@ -98,7 +98,7 @@ NonExistentTeam,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional se
 
   it('should handle "unassigned" team name correctly', () => {
     const csvContent = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-unassigned,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional security requirements`;
+unassigned,Q1 2024,1,User Authentication,Feature,65,scope-change,Additional security requirements`;
 
     const result = parseActualAllocationCSV(
       csvContent,
@@ -115,7 +115,7 @@ unassigned,Q1 2024,1,User Authentication,Epic,65,scope-change,Additional securit
 
   it('should handle run work categories', () => {
     const csvContent = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-Engineering Team,Q1 2024,1,Production Support,Run Work,35,none,`;
+Engineering Team,Q1 2024,1,Production Support,Critical Run,35,none,`;
 
     const result = parseActualAllocationCSV(
       csvContent,
@@ -133,7 +133,7 @@ Engineering Team,Q1 2024,1,Production Support,Run Work,35,none,`;
 
   it('should handle missing epic name', () => {
     const csvContent = `Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Actual Percentage,Variance Reason,Notes
-Engineering Team,Q1 2024,1,,Epic,65,none,`;
+Engineering Team,Q1 2024,1,,Feature,65,none,`;
 
     const result = parseActualAllocationCSV(
       csvContent,

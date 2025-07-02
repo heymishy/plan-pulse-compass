@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext';
-import { Team } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,8 +13,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Edit, Users, Clock, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Users, Clock } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { Team } from '@/types';
+import {
+  getProductOwnerName,
+  getTeamMembers,
+  getDivisionName,
+} from '@/utils/teamUtils';
 
 interface TeamCardsProps {
   teams: Team[];
@@ -29,40 +34,6 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const getTeamMembers = (teamId: string) => {
-    return people.filter(person => person.teamId === teamId && person.isActive);
-  };
-
-  const getDivisionName = (divisionId?: string) => {
-    if (!divisionId) return 'No Division';
-    const division = divisions.find(d => d.id === divisionId);
-    return division?.name || 'Unknown Division';
-  };
-
-  const getProductOwnerName = (team: Team) => {
-    if (!team.productOwnerId) return 'No Product Owner';
-    
-    const selectedPerson = people.find(p => p.id === team.productOwnerId);
-    if (!selectedPerson) return 'Unknown Product Owner';
-    
-    // Find Product Owner role
-    const productOwnerRole = roles.find(role => 
-      role.name.toLowerCase().includes('product owner') || role.name.toLowerCase().includes('po')
-    );
-    
-    // Get team members
-    const teamMembers = getTeamMembers(team.id);
-    
-    // Find natural PO in team
-    const teamProductOwner = productOwnerRole ? 
-      teamMembers.find(person => person.roleId === productOwnerRole.id) : null;
-    
-    // Check if selected person is acting PO
-    const isActing = teamProductOwner?.id !== selectedPerson.id;
-    
-    return `${selectedPerson.name}${isActing ? ' (Acting)' : ''}`;
-  };
-
   const handleSelectTeam = (teamId: string, checked: boolean) => {
     const newSelected = new Set(selectedTeams);
     if (checked) {
@@ -73,35 +44,52 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
     setSelectedTeams(newSelected);
   };
 
-  const handleBulkDelete = () => {
-    // Remove selected teams
-    setTeams(prevTeams => prevTeams.filter(team => !selectedTeams.has(team.id)));
-    
-    // Update people to remove team assignments for deleted teams
-    setPeople(prevPeople => 
-      prevPeople.map(person => 
-        selectedTeams.has(person.teamId || '') 
+  const handleDeleteTeams = () => {
+    const teamsToDelete = Array.from(selectedTeams);
+
+    // Remove people from deleted teams
+    setPeople(prev =>
+      prev.map(person =>
+        teamsToDelete.includes(person.teamId || '')
           ? { ...person, teamId: undefined }
           : person
       )
     );
 
-    toast({
-      title: "Teams Deleted",
-      description: `Successfully deleted ${selectedTeams.size} team${selectedTeams.size !== 1 ? 's' : ''}`,
-    });
+    // Remove teams
+    setTeams(prev => prev.filter(team => !teamsToDelete.includes(team.id)));
 
     setSelectedTeams(new Set());
     setShowDeleteDialog(false);
+
+    toast({
+      title: 'Success',
+      description: `Deleted ${teamsToDelete.length} team${teamsToDelete.length !== 1 ? 's' : ''}`,
+    });
   };
 
   return (
     <div className="space-y-4">
-      {selectedTeams.size > 0 && (
-        <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
-          <span className="text-sm text-blue-700">
-            {selectedTeams.size} team{selectedTeams.size !== 1 ? 's' : ''} selected
+      {/* Header Actions */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Checkbox
+            checked={selectedTeams.size === teams.length && teams.length > 0}
+            onCheckedChange={checked => {
+              if (checked) {
+                setSelectedTeams(new Set(teams.map(team => team.id)));
+              } else {
+                setSelectedTeams(new Set());
+              }
+            }}
+            aria-label="Select all teams"
+          />
+          <span className="text-sm text-gray-600">
+            {selectedTeams.size} of {teams.length} selected
           </span>
+        </div>
+
+        {selectedTeams.size > 0 && (
           <Button
             variant="destructive"
             size="sm"
@@ -110,43 +98,51 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
             <Trash2 className="h-4 w-4 mr-2" />
             Delete Selected
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
+      {/* Teams Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {teams.map((team) => {
-          const members = getTeamMembers(team.id);
-          const utilizationPercentage = members.length > 0 ? 
-            Math.round((members.length * 40 / team.capacity) * 100) : 0;
-          
+        {teams.map(team => {
+          const members = getTeamMembers(team.id, people);
+          const utilizationPercentage =
+            members.length > 0
+              ? Math.round(((members.length * 40) / team.capacity) * 100)
+              : 0;
+
           return (
-            <Card key={team.id} className="hover:shadow-md transition-shadow relative">
-              <div className="absolute top-3 left-3">
-                <Checkbox
-                  checked={selectedTeams.has(team.id)}
-                  onCheckedChange={(checked) => handleSelectTeam(team.id, checked as boolean)}
-                  aria-label={`Select ${team.name}`}
-                />
-              </div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pl-12">
-                <CardTitle className="text-lg font-semibold">{team.name}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEditTeam(team.id)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
+            <Card key={team.id} className="relative">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={selectedTeams.has(team.id)}
+                      onCheckedChange={checked =>
+                        handleSelectTeam(team.id, checked as boolean)
+                      }
+                      aria-label={`Select ${team.name}`}
+                    />
+                    <CardTitle className="text-lg">{team.name}</CardTitle>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEditTeam(team.id)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardHeader>
+
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Division:</span>
-                    <span>{getDivisionName(team.divisionId)}</span>
+                    <span>{getDivisionName(team.divisionId, divisions)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Product Owner:</span>
-                    <span>{getProductOwnerName(team)}</span>
+                    <span>{getProductOwnerName(team, people, roles)}</span>
                   </div>
                 </div>
 
@@ -166,61 +162,55 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Utilization:</span>
-                    <span className={`font-medium ${
-                      utilizationPercentage > 100 ? 'text-red-600' :
-                      utilizationPercentage > 80 ? 'text-yellow-600' :
-                      'text-green-600'
-                    }`}>
+                    <span className="font-medium">
                       {utilizationPercentage}%
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full ${
-                        utilizationPercentage > 100 ? 'bg-red-500' :
-                        utilizationPercentage > 80 ? 'bg-yellow-500' :
-                        'bg-green-500'
+                        utilizationPercentage > 100
+                          ? 'bg-red-500'
+                          : utilizationPercentage > 80
+                            ? 'bg-yellow-500'
+                            : 'bg-green-500'
                       }`}
-                      style={{ width: `${Math.min(utilizationPercentage, 100)}%` }}
+                      style={{
+                        width: `${Math.min(utilizationPercentage, 100)}%`,
+                      }}
                     />
                   </div>
                 </div>
-
-                {members.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-sm text-gray-600">Team Members:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {members.slice(0, 3).map(member => (
-                        <Badge key={member.id} variant="outline" className="text-xs">
-                          {member.name}
-                        </Badge>
-                      ))}
-                      {members.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{members.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           );
         })}
+
+        {teams.length === 0 && (
+          <div className="col-span-full text-center py-12 text-gray-500">
+            <Users className="mx-auto h-12 w-12 mb-4 opacity-50" />
+            <p>No teams found</p>
+          </div>
+        )}
       </div>
 
+      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Teams</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedTeams.size} team{selectedTeams.size !== 1 ? 's' : ''}? 
-              This action cannot be undone. Team members will be unassigned from their teams.
+              Are you sure you want to delete {selectedTeams.size} team
+              {selectedTeams.size !== 1 ? 's' : ''}? This action cannot be
+              undone. Team members will be unassigned from their teams.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleDeleteTeams}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -3,31 +3,70 @@ import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, Users, Target, Grid3X3, List, Zap } from 'lucide-react';
+import {
+  Plus,
+  Calendar,
+  Users,
+  Target,
+  Grid3X3,
+  List,
+  Zap,
+  BarChart3,
+  Clock,
+} from 'lucide-react';
 import PlanningMatrix from '@/components/planning/PlanningMatrix';
 import BulkAllocationGrid from '@/components/planning/BulkAllocationGrid';
 import AllocationDialog from '@/components/planning/AllocationDialog';
 import CycleDialog from '@/components/planning/CycleDialog';
 import AdvancedPlanningDashboard from '@/components/planning/AdvancedPlanningDashboard';
+import QuarterAnalysisDashboard from '@/components/planning/QuarterAnalysisDashboard';
+import IterationSequenceView from '@/components/planning/IterationSequenceView';
 import { Allocation, Cycle } from '@/types';
 
 const Planning = () => {
-  const { teams, cycles, setCycles, allocations, config, projects, epics, runWorkCategories, divisions } = useApp();
+  const {
+    teams,
+    cycles,
+    setCycles,
+    allocations,
+    config,
+    projects,
+    epics,
+    runWorkCategories,
+    divisions,
+    people,
+  } = useApp();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('all');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [viewMode, setViewMode] = useState<'matrix' | 'bulk'>('matrix');
-  const [activeTab, setActiveTab] = useState<'planning' | 'advanced'>('planning');
+  const [activeTab, setActiveTab] = useState<
+    'planning' | 'analysis' | 'advanced'
+  >('planning');
   const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
   const [isCycleDialogOpen, setIsCycleDialogOpen] = useState(false);
-  const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
-  const [prefilledData, setPrefilledData] = useState<{teamId?: string, iterationNumber?: number, suggestedEpicId?: string} | null>(null);
+  const [selectedAllocation, setSelectedAllocation] =
+    useState<Allocation | null>(null);
+  const [prefilledData, setPrefilledData] = useState<{
+    teamId?: string;
+    iterationNumber?: number;
+    suggestedEpicId?: string;
+  } | null>(null);
 
   // Get current quarter cycles
-  const quarterCycles = cycles.filter(c => c.type === 'quarterly' && c.status !== 'completed');
-  const currentQuarter = quarterCycles.find(c => c.status === 'active') || quarterCycles[0];
+  const quarterCycles = cycles.filter(
+    c => c.type === 'quarterly' && c.status !== 'completed'
+  );
+  const currentQuarter =
+    quarterCycles.find(c => c.status === 'active') || quarterCycles[0];
 
   React.useEffect(() => {
     if (currentQuarter && !selectedCycleId) {
@@ -36,10 +75,12 @@ const Planning = () => {
   }, [currentQuarter, selectedCycleId]);
 
   // Get iterations for selected quarter
-  const iterations = cycles.filter(c => 
-    c.type === 'iteration' && 
-    c.parentCycleId === selectedCycleId
-  ).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+  const iterations = cycles
+    .filter(c => c.type === 'iteration' && c.parentCycleId === selectedCycleId)
+    .sort(
+      (a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
 
   // Filter teams based on division
   const teamsInDivision = React.useMemo(() => {
@@ -51,11 +92,14 @@ const Planning = () => {
 
   // When division changes, if selected team is not in the new division, reset it
   React.useEffect(() => {
-    if (selectedTeamId !== 'all' && !teamsInDivision.find(t => t.id === selectedTeamId)) {
+    if (
+      selectedTeamId !== 'all' &&
+      !teamsInDivision.find(t => t.id === selectedTeamId)
+    ) {
       setSelectedTeamId('all');
     }
   }, [selectedDivisionId, teamsInDivision, selectedTeamId]);
-  
+
   // Filter teams for display
   const filteredTeams = React.useMemo(() => {
     if (selectedTeamId === 'all') {
@@ -70,29 +114,33 @@ const Planning = () => {
     setIsAllocationDialogOpen(true);
   };
 
-  const handleCreateAllocationFromMatrix = (teamId: string, iterationNumber: number) => {
+  const handleCreateAllocationFromMatrix = (
+    teamId: string,
+    iterationNumber: number
+  ) => {
     setSelectedAllocation(null);
-    
+
     // Find suggested epic from previous iteration
     let suggestedEpicId = '';
     if (iterationNumber > 1) {
-      const previousIterationAllocations = allocations.filter(a => 
-        a.teamId === teamId && 
-        a.cycleId === selectedCycleId && 
-        a.iterationNumber === iterationNumber - 1 &&
-        a.epicId
+      const previousIterationAllocations = allocations.filter(
+        a =>
+          a.teamId === teamId &&
+          a.cycleId === selectedCycleId &&
+          a.iterationNumber === iterationNumber - 1 &&
+          a.epicId
       );
-      
+
       if (previousIterationAllocations.length > 0) {
         // Use the first epic from the previous iteration
         suggestedEpicId = previousIterationAllocations[0].epicId || '';
       }
     }
-    
+
     setPrefilledData({
       teamId,
       iterationNumber,
-      suggestedEpicId
+      suggestedEpicId,
     });
     setIsAllocationDialogOpen(true);
   };
@@ -109,11 +157,14 @@ const Planning = () => {
   };
 
   const getQuarterStats = () => {
-    if (!currentQuarter) return { totalTeams: 0, allocatedTeams: 0, totalIterations: 0 };
-    
-    const quarterAllocations = allocations.filter(a => a.cycleId === currentQuarter.id);
+    if (!currentQuarter)
+      return { totalTeams: 0, allocatedTeams: 0, totalIterations: 0 };
+
+    const quarterAllocations = allocations.filter(
+      a => a.cycleId === currentQuarter.id
+    );
     const allocatedTeams = new Set(quarterAllocations.map(a => a.teamId)).size;
-    
+
     return {
       totalTeams: teams.length,
       allocatedTeams,
@@ -128,8 +179,12 @@ const Planning = () => {
       <div className="p-6">
         <div className="text-center py-12">
           <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Setup Required</h2>
-          <p className="text-gray-600">Please complete the setup to start planning.</p>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Setup Required
+          </h2>
+          <p className="text-gray-600">
+            Please complete the setup to start planning.
+          </p>
         </div>
       </div>
     );
@@ -140,7 +195,9 @@ const Planning = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Planning</h1>
-          <p className="text-gray-600">Plan team allocations and analyze project feasibility</p>
+          <p className="text-gray-600">
+            Plan team allocations and analyze project feasibility
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={() => setIsCycleDialogOpen(true)}>
@@ -155,9 +212,17 @@ const Planning = () => {
       </div>
 
       {/* Main Planning Tabs */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={value => setActiveTab(value as any)}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="planning">Quarterly Planning</TabsTrigger>
+          <TabsTrigger value="analysis">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Plan Analysis
+          </TabsTrigger>
           <TabsTrigger value="advanced">
             <Zap className="h-4 w-4 mr-2" />
             Advanced Planning
@@ -170,7 +235,10 @@ const Planning = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium">Quarter:</label>
-                <Select value={selectedCycleId} onValueChange={setSelectedCycleId}>
+                <Select
+                  value={selectedCycleId}
+                  onValueChange={setSelectedCycleId}
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Select quarter" />
                   </SelectTrigger>
@@ -185,7 +253,10 @@ const Planning = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium">Division:</label>
-                <Select value={selectedDivisionId} onValueChange={setSelectedDivisionId}>
+                <Select
+                  value={selectedDivisionId}
+                  onValueChange={setSelectedDivisionId}
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Select division" />
                   </SelectTrigger>
@@ -201,7 +272,10 @@ const Planning = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium">Team:</label>
-                <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+                <Select
+                  value={selectedTeamId}
+                  onValueChange={setSelectedTeamId}
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
@@ -266,7 +340,9 @@ const Planning = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.totalIterations}</div>
+                <div className="text-2xl font-bold">
+                  {stats.totalIterations}
+                </div>
                 <p className="text-sm text-gray-600">Total iterations</p>
               </CardContent>
             </Card>
@@ -291,7 +367,9 @@ const Planning = () => {
                 <PlanningMatrix
                   teams={filteredTeams}
                   iterations={iterations}
-                  allocations={allocations.filter(a => a.cycleId === selectedCycleId)}
+                  allocations={allocations.filter(
+                    a => a.cycleId === selectedCycleId
+                  )}
                   onEditAllocation={handleEditAllocation}
                   onCreateAllocation={handleCreateAllocationFromMatrix}
                   projects={projects}
@@ -317,13 +395,83 @@ const Planning = () => {
             <Card>
               <CardContent className="text-center py-12">
                 <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Planning Data</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No Planning Data
+                </h3>
                 <p className="text-gray-600 mb-4">
-                  {!selectedCycleId 
-                    ? "Select a quarter to start planning" 
-                    : "No iterations found for this quarter. Create iterations first."}
+                  {!selectedCycleId
+                    ? 'Select a quarter to start planning'
+                    : 'No iterations found for this quarter. Create iterations first.'}
                 </p>
-                <Button variant="outline" onClick={() => setIsCycleDialogOpen(true)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCycleDialogOpen(true)}
+                >
+                  Manage Cycles
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="analysis" className="space-y-6">
+          {selectedCycleId && iterations.length > 0 ? (
+            <Tabs defaultValue="quarter-analysis" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="quarter-analysis">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Quarter Analysis
+                </TabsTrigger>
+                <TabsTrigger value="iteration-sequence">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Iteration Sequence
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="quarter-analysis">
+                <QuarterAnalysisDashboard
+                  cycleId={selectedCycleId}
+                  teams={teams}
+                  iterations={iterations}
+                  allocations={allocations}
+                  projects={projects}
+                  epics={epics}
+                  milestones={projects.flatMap(p => p.milestones)}
+                  runWorkCategories={runWorkCategories}
+                  divisions={divisions}
+                  people={people}
+                />
+              </TabsContent>
+
+              <TabsContent value="iteration-sequence">
+                <IterationSequenceView
+                  cycleId={selectedCycleId}
+                  teams={teams}
+                  iterations={iterations}
+                  allocations={allocations}
+                  projects={projects}
+                  epics={epics}
+                  milestones={projects.flatMap(p => p.milestones)}
+                  runWorkCategories={runWorkCategories}
+                  divisions={divisions}
+                  people={people}
+                />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No Analysis Data
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Select a quarter with iterations to view analysis
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCycleDialogOpen(true)}
+                >
                   Manage Cycles
                 </Button>
               </CardContent>
@@ -349,7 +497,7 @@ const Planning = () => {
         runWorkCategories={runWorkCategories}
         prefilledData={prefilledData}
       />
-      
+
       <CycleDialog
         isOpen={isCycleDialogOpen}
         onClose={() => setIsCycleDialogOpen(false)}

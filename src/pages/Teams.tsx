@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,12 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Users, Search, Settings, Star } from 'lucide-react';
+import {
+  Plus,
+  Users,
+  Search,
+  Settings,
+  Star,
+  BarChart3,
+  Target,
+  Activity,
+} from 'lucide-react';
 import TeamTable from '@/components/teams/TeamTable';
 import TeamCards from '@/components/teams/TeamCards';
 import TeamDialog from '@/components/teams/TeamDialog';
 import CapacityOverview from '@/components/teams/CapacityOverview';
 import TeamSkillsSummary from '@/components/scenarios/TeamSkillsSummary';
+import TeamPortfolioOverview from '@/components/teams/TeamPortfolioOverview';
+import RunWorkAllocationView from '@/components/teams/RunWorkAllocationView';
+import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtilizationMatrix';
 
 const Teams = () => {
   const { teams, people, divisions, isSetupComplete } = useApp();
@@ -20,14 +31,17 @@ const Teams = () => {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
-  const [selectedTeamForSkills, setSelectedTeamForSkills] = useState<string>('');
+  const [selectedTeamForSkills, setSelectedTeamForSkills] =
+    useState<string>('');
 
   if (!isSetupComplete) {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="text-center py-12">
           <Users className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Setup Required</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Setup Required
+          </h2>
           <p className="text-gray-600 mb-6">
             Please complete the initial setup to manage teams.
           </p>
@@ -37,13 +51,16 @@ const Teams = () => {
   }
 
   const filteredTeams = teams.filter(team => {
-    const matchesSearch = team.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDivision = selectedDivision === 'all' || team.divisionId === selectedDivision;
+    const matchesSearch = team.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesDivision =
+      selectedDivision === 'all' || team.divisionId === selectedDivision;
     return matchesSearch && matchesDivision;
   });
 
   const totalCapacity = teams.reduce((sum, team) => sum + team.capacity, 0);
-  const activeTeams = teams.filter(team => 
+  const activeTeams = teams.filter(team =>
     people.some(person => person.teamId === team.id && person.isActive)
   );
 
@@ -83,7 +100,7 @@ const Teams = () => {
             <div className="text-2xl font-bold">{teams.length}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Teams</CardTitle>
@@ -93,10 +110,12 @@ const Teams = () => {
             <div className="text-2xl font-bold">{activeTeams.length}</div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Capacity</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Capacity
+            </CardTitle>
             <Settings className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
@@ -104,7 +123,7 @@ const Teams = () => {
             <p className="text-xs text-gray-500">per week</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Divisions</CardTitle>
@@ -116,12 +135,43 @@ const Teams = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="teams" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="teams">Teams</TabsTrigger>
-          <TabsTrigger value="capacity">Capacity Overview</TabsTrigger>
-          <TabsTrigger value="skills">Skills Analysis</TabsTrigger>
+      <Tabs defaultValue="portfolio" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger
+            value="portfolio"
+            className="flex items-center space-x-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span>Portfolio</span>
+          </TabsTrigger>
+          <TabsTrigger value="teams" className="flex items-center space-x-2">
+            <Users className="h-4 w-4" />
+            <span>Teams</span>
+          </TabsTrigger>
+          <TabsTrigger value="run-work" className="flex items-center space-x-2">
+            <Target className="h-4 w-4" />
+            <span>Run Work</span>
+          </TabsTrigger>
+          <TabsTrigger value="capacity" className="flex items-center space-x-2">
+            <Activity className="h-4 w-4" />
+            <span>Capacity</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="utilization"
+            className="flex items-center space-x-2"
+          >
+            <Settings className="h-4 w-4" />
+            <span>Utilization</span>
+          </TabsTrigger>
+          <TabsTrigger value="skills" className="flex items-center space-x-2">
+            <Star className="h-4 w-4" />
+            <span>Skills</span>
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="portfolio">
+          <TeamPortfolioOverview />
+        </TabsContent>
 
         <TabsContent value="teams" className="space-y-6">
           {/* Filters */}
@@ -131,13 +181,13 @@ const Teams = () => {
               <Input
                 placeholder="Search teams..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
             <select
               value={selectedDivision}
-              onChange={(e) => setSelectedDivision(e.target.value)}
+              onChange={e => setSelectedDivision(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Divisions</option>
@@ -175,8 +225,16 @@ const Teams = () => {
           )}
         </TabsContent>
 
+        <TabsContent value="run-work">
+          <RunWorkAllocationView />
+        </TabsContent>
+
         <TabsContent value="capacity">
           <CapacityOverview />
+        </TabsContent>
+
+        <TabsContent value="utilization">
+          <TeamCapacityUtilizationMatrix />
         </TabsContent>
 
         <TabsContent value="skills" className="space-y-6">
@@ -191,10 +249,12 @@ const Teams = () => {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Select Team to Analyze:</label>
+                  <label className="text-sm font-medium">
+                    Select Team to Analyze:
+                  </label>
                   <select
                     value={selectedTeamForSkills}
-                    onChange={(e) => setSelectedTeamForSkills(e.target.value)}
+                    onChange={e => setSelectedTeamForSkills(e.target.value)}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Choose a team...</option>

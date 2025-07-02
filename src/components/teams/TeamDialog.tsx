@@ -1,7 +1,4 @@
-
 import React, { useState, useEffect } from 'react';
-import { useApp } from '@/context/AppContext';
-import { Team } from '@/types';
 import {
   Dialog,
   DialogContent,
@@ -19,12 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { Team } from '@/types';
+import {
+  getTeamMembers,
+  getNaturalProductOwner,
+  getProductOwnerCandidates,
+} from '@/utils/teamUtils';
 
 interface TeamDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  teamId?: string | null;
+  teamId: string | null;
 }
 
 const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
@@ -40,26 +44,26 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
   const isEditing = Boolean(teamId);
 
   // Get current team members
-  const currentTeamMembers = isEditing && teamId ? 
-    people.filter(person => person.teamId === teamId && person.isActive) : 
-    [];
+  const currentTeamMembers =
+    isEditing && teamId ? getTeamMembers(teamId, people) : [];
 
-  // Find Product Owner role
-  const productOwnerRole = roles.find(role => 
-    role.name.toLowerCase().includes('product owner') || role.name.toLowerCase().includes('po')
-  );
+  // Get natural PO for the team
+  const naturalPO =
+    isEditing && teamId ? getNaturalProductOwner(teamId, people, roles) : null;
 
-  // Find team member with Product Owner role
-  const teamProductOwner = productOwnerRole ? 
-    currentTeamMembers.find(person => person.roleId === productOwnerRole.id) : null;
+  // Get PO candidates (prioritizing natural PO)
+  const poCandidates =
+    isEditing && teamId ? getProductOwnerCandidates(teamId, people, roles) : [];
 
   useEffect(() => {
     if (isEditing && teamId) {
       const team = teams.find(t => t.id === teamId);
       if (team) {
         // Auto-populate with team's natural Product Owner if one exists
-        const autoProductOwnerId = teamProductOwner ? teamProductOwner.id : (team.productOwnerId || '');
-        
+        const autoProductOwnerId = naturalPO
+          ? naturalPO.id
+          : team.productOwnerId || '';
+
         setFormData({
           name: team.name,
           divisionId: team.divisionId || '',
@@ -75,16 +79,16 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
         capacity: '40',
       });
     }
-  }, [isEditing, teamId, teams, teamProductOwner]);
+  }, [isEditing, teamId, teams, naturalPO]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Team name is required",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Team name is required',
+        variant: 'destructive',
       });
       return;
     }
@@ -92,73 +96,88 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
     const capacity = parseInt(formData.capacity);
     if (isNaN(capacity) || capacity <= 0) {
       toast({
-        title: "Error",
-        description: "Capacity must be a positive number",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Capacity must be a positive number',
+        variant: 'destructive',
       });
       return;
     }
 
     if (isEditing && teamId) {
       // Update existing team
-      setTeams(prev => prev.map(team => 
-        team.id === teamId 
-          ? {
-              ...team,
-              name: formData.name.trim(),
-              divisionId: formData.divisionId === 'none' ? undefined : formData.divisionId,
-              productOwnerId: formData.productOwnerId === 'none' ? undefined : formData.productOwnerId,
-              capacity,
-            }
-          : team
-      ));
-      
+      setTeams(prev =>
+        prev.map(team =>
+          team.id === teamId
+            ? {
+                ...team,
+                name: formData.name.trim(),
+                divisionId:
+                  formData.divisionId === 'none'
+                    ? undefined
+                    : formData.divisionId,
+                productOwnerId:
+                  formData.productOwnerId === 'none'
+                    ? undefined
+                    : formData.productOwnerId,
+                capacity,
+              }
+            : team
+        )
+      );
+
       toast({
-        title: "Success",
-        description: "Team updated successfully",
+        title: 'Success',
+        description: 'Team updated successfully',
       });
     } else {
       // Create new team
       const newTeam: Team = {
         id: crypto.randomUUID(),
         name: formData.name.trim(),
-        divisionId: formData.divisionId === 'none' ? undefined : formData.divisionId,
-        productOwnerId: formData.productOwnerId === 'none' ? undefined : formData.productOwnerId,
+        divisionId:
+          formData.divisionId === 'none' ? undefined : formData.divisionId,
+        productOwnerId:
+          formData.productOwnerId === 'none'
+            ? undefined
+            : formData.productOwnerId,
         capacity,
       };
-      
+
       setTeams(prev => [...prev, newTeam]);
-      
+
       toast({
-        title: "Success",
-        description: "Team created successfully",
+        title: 'Success',
+        description: 'Team created successfully',
       });
     }
-    
+
     onClose();
   };
 
   // Determine if the selected person is acting (not the natural PO from the team)
-  const selectedPerson = formData.productOwnerId ? 
-    people.find(p => p.id === formData.productOwnerId) : null;
-  const isActingProductOwner = selectedPerson && selectedPerson.id !== teamProductOwner?.id;
+  const selectedPerson = formData.productOwnerId
+    ? people.find(p => p.id === formData.productOwnerId)
+    : null;
+  const isActingProductOwner =
+    selectedPerson && naturalPO && selectedPerson.id !== naturalPO.id;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? 'Edit Team' : 'Create New Team'}
           </DialogTitle>
         </DialogHeader>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Team Name *</Label>
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, name: e.target.value }))
+              }
               placeholder="Enter team name"
               required
             />
@@ -168,7 +187,9 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
             <Label htmlFor="division">Division</Label>
             <Select
               value={formData.divisionId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, divisionId: value }))}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, divisionId: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select division" />
@@ -186,21 +207,26 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
 
           <div className="space-y-2">
             <Label htmlFor="productOwner">
-              Product Owner {isActingProductOwner && <span className="text-orange-600">(Acting)</span>}
+              Product Owner{' '}
+              {isActingProductOwner && (
+                <span className="text-orange-600">(Acting)</span>
+              )}
             </Label>
             <Select
               value={formData.productOwnerId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, productOwnerId: value }))}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, productOwnerId: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select product owner" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No Product Owner</SelectItem>
-                {currentTeamMembers.map(person => (
+                {poCandidates.map(person => (
                   <SelectItem key={person.id} value={person.id}>
                     {person.name}
-                    {person.id === teamProductOwner?.id ? ' (Team PO)' : ''}
+                    {person.id === naturalPO?.id ? ' (Team PO)' : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -213,7 +239,9 @@ const TeamDialog: React.FC<TeamDialogProps> = ({ isOpen, onClose, teamId }) => {
               id="capacity"
               type="number"
               value={formData.capacity}
-              onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))}
+              onChange={e =>
+                setFormData(prev => ({ ...prev, capacity: e.target.value }))
+              }
               placeholder="40"
               min="1"
               required

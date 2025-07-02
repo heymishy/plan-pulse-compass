@@ -1,0 +1,143 @@
+Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Project Name,Allocation Percentage,Notes
+Frontend Team,Q4 2024,1,User Authentication System,Feature,Digital Mortgage Platform,60,Core authentication system development
+Frontend Team,Q4 2024,1,Support Tickets,Critical Run,,40,Ongoing support and maintenance
+Backend Team,Q4 2024,1,Payment Integration Platform,Platform,Payment Integration Platform,70,Payment processing integration
+Backend Team,Q4 2024,1,API Maintenance,Critical Run,,30,API support and bug fixes
+Platform Team,Q4 2024,1,API Gateway Optimization,Tech Debt,API Gateway Optimization,80,Performance improvements
+Platform Team,Q4 2024,1,Infrastructure Monitoring,Critical Run,,20,Infrastructure support
+Data Team,Q4 2024,1,Database Performance Monitoring,Critical Run,Database Performance Monitoring,65,Database monitoring setup
+Data Team,Q4 2024,1,Data Pipeline Maintenance,Critical Run,,35,Data pipeline support
+Frontend Team,Q4 2024,2,Push Notification System,Feature,Push Notification System,55,Cross-platform notifications
+Frontend Team,Q4 2024,2,UI Bug Fixes,Critical Run,,45,UI maintenance and fixes
+Backend Team,Q4 2024,2,Security Framework Enhancement,Platform,Security Framework Enhancement,75,Security improvements
+Backend Team,Q4 2024,2,Backend Support,Critical Run,,25,Backend maintenance
+Platform Team,Q4 2024,2,Load Balancer Configuration,Critical Run,Load Balancer Configuration,60,Load balancer setup
+Platform Team,Q4 2024,2,Platform Maintenance,Critical Run,,40,Platform support
+Frontend Team,Q4 2024,3,Code Refactoring Initiative,Tech Debt,Code Refactoring Initiative,50,Code modernization
+Frontend Team,Q4 2024,3,Frontend Support,Critical Run,,50,Frontend maintenance
+Data Team,Q4 2024,3,Analytics Dashboard,Feature,Analytics Dashboard,70,Analytics platform development
+Data Team,Q4 2024,3,Data Support,Critical Run,,30,Data team support work
+Backend Team,Q4 2024,3,Microservices Architecture,Platform,Microservices Architecture,80,Microservices implementation
+Backend Team,Q4 2024,3,Backend Maintenance,Critical Run,,20,Backend support
+Platform Team,Q4 2024,4,Monitoring System Setup,Critical Run,Monitoring System Setup,65,Monitoring implementation
+Platform Team,Q4 2024,4,Infrastructure Support,Critical Run,,35,Infrastructure maintenance
+Frontend Team,Q4 2024,4,Mobile App Redesign,Feature,Mobile App Redesign,60,Mobile app modernization
+Frontend Team,Q4 2024,4,Mobile Support,Critical Run,,40,Mobile app support
+Data Team,Q4 2024,4,Data Pipeline Optimization,Platform,Data Pipeline Optimization,75,Data pipeline improvements
+Data Team,Q4 2024,4,Data Maintenance,Critical Run,,25,Data maintenance
+Backend Team,Q4 2024,5,Legacy System Migration,Tech Debt,Legacy System Migration,70,Legacy system migration
+Backend Team,Q4 2024,5,Backend Support,Critical Run,,30,Backend maintenance
+Frontend Team,Q4 2024,5,E-commerce Platform,Feature,E-commerce Platform,65,E-commerce development
+Frontend Team,Q4 2024,5,Frontend Maintenance,Critical Run,,35,Frontend support
+Platform Team,Q4 2024,6,Cloud Infrastructure Migration,Platform,Cloud Infrastructure Migration,80,Cloud migration
+Platform Team,Q4 2024,6,Platform Support,Critical Run,,20,Platform maintenance
+Data Team,Q4 2024,6,Backup System Enhancement,Critical Run,Backup System Enhancement,55,Backup system improvements
+Data Team,Q4 2024,6,Data Support,Critical Run,,45,Data team support
+Frontend Team,Q4 2024,6,Customer Portal,Feature,Customer Portal,70,Customer portal development
+Frontend Team,Q4 2024,6,Portal Support,Critical Run,,30,Portal maintenance
+Backend Team,Q4 2024,6,API Versioning System,Platform,API Versioning System,60,API versioning implementation
+Backend Team,Q4 2024,6,API Support,Critical Run,,40,API maintenance
+Platform Team,Q4 2024,6,Performance Optimization,Tech Debt,Performance Optimization,50,Performance improvements
+Platform Team,Q4 2024,6,Performance Monitoring,Critical Run,,50,Performance monitoring
+Data Team,Q4 2024,6,Advanced Analytics,Feature,Analytics Dashboard,75,Advanced analytics development
+Data Team,Q4 2024,6,Analytics Support,Critical Run,,25,Analytics support
+Backend Team,Q4 2024,6,Kubernetes Migration,Platform,Cloud Infrastructure Migration,70,Kubernetes implementation
+Backend Team,Q4 2024,6,Container Support,Critical Run,,30,Container maintenance
+Platform Team,Q4 2024,6,Security Audit Implementation,Critical Run,Security Framework Enhancement,65,Security audit
+Platform Team,Q4 2024,6,Security Monitoring,Critical Run,,35,Security monitoring
+Data Team,Q4 2024,6,Machine Learning Pipeline,Feature,Analytics Dashboard,80,ML pipeline development
+Data Team,Q4 2024,6,ML Support,Critical Run,,20,ML support work
+Frontend Team,Q4 2024,6,CI/CD Pipeline Enhancement,Platform,Microservices Architecture,45,CI/CD improvements
+Frontend Team,Q4 2024,6,Deployment Support,Critical Run,,55,Deployment support
+Backend Team,Q4 2024,6,Database Schema Optimization,Tech Debt,Data Pipeline Optimization,60,Database optimization
+Backend Team,Q4 2024,6,Database Support,Critical Run,,40,Database maintenance
+Data Team,Q4 2024,6,Real-time Notifications,Feature,Push Notification System,50,Real-time notifications
+Data Team,Q4 2024,6,Notification Support,Critical Run,,50,Notification support
+Platform Team,Q4 2024,6,Service Mesh Implementation,Platform,Microservices Architecture,70,Service mesh setup
+Platform Team,Q4 2024,6,Mesh Support,Critical Run,,30,Service mesh support
+Backend Team,Q4 2024,6,Disaster Recovery Setup,Critical Run,Backup System Enhancement,55,Disaster recovery
+Backend Team,Q4 2024,6,Recovery Support,Critical Run,,45,Recovery support
+Data Team,Q4 2024,6,Business Intelligence Dashboard,Feature,Analytics Dashboard,75,BI dashboard development
+Data Team,Q4 2024,6,BI Support,Critical Run,,25,BI support work
+Frontend Team,Q4 2024,6,Multi-region Deployment,Platform,Cloud Infrastructure Migration,40,Multi-region setup
+Frontend Team,Q4 2024,6,Regional Support,Critical Run,,60,Regional support
+Backend Team,Q4 2024,6,Legacy Code Cleanup,Tech Debt,Code Refactoring Initiative,50,Legacy cleanup
+Backend Team,Q4 2024,6,Code Support,Critical Run,,50,Code maintenance
+Platform Team,Q4 2024,6,Mobile App Enhancement,Feature,Mobile App Redesign,45,Mobile enhancements
+Platform Team,Q4 2024,6,Mobile Support,Critical Run,,55,Mobile support
+Data Team,Q4 2024,6,GraphQL API Implementation,Platform,API Gateway Optimization,60,GraphQL implementation
+Data Team,Q4 2024,6,API Support,Critical Run,,40,API support
+Frontend Team,Q4 2024,6,Performance Monitoring,Critical Run,Monitoring System Setup,50,Performance monitoring
+Frontend Team,Q4 2024,6,Monitoring Support,Critical Run,,50,Monitoring support
+Backend Team,Q4 2024,6,Data Warehouse Migration,Feature,Data Pipeline Optimization,70,Data warehouse migration
+Backend Team,Q4 2024,6,Warehouse Support,Critical Run,,30,Warehouse support
+Platform Team,Q4 2024,6,Container Orchestration,Platform,Cloud Infrastructure Migration,75,Container orchestration
+Platform Team,Q4 2024,6,Orchestration Support,Critical Run,,25,Orchestration support
+Data Team,Q4 2024,6,Security Framework Update,Tech Debt,Security Framework Enhancement,55,Security updates
+Data Team,Q4 2024,6,Security Support,Critical Run,,45,Security support
+Frontend Team,Q4 2024,6,Customer Analytics Platform,Feature,Analytics Dashboard,65,Customer analytics
+Frontend Team,Q4 2024,6,Analytics Support,Critical Run,,35,Analytics support
+Backend Team,Q4 2024,6,Microservices Communication,Platform,Microservices Architecture,60,Microservices communication
+Backend Team,Q4 2024,6,Communication Support,Critical Run,,40,Communication support
+Platform Team,Q4 2024,6,Load Testing Infrastructure,Critical Run,Monitoring System Setup,50,Load testing setup
+Platform Team,Q4 2024,6,Testing Support,Critical Run,,50,Testing support
+Data Team,Q4 2024,6,Advanced Search Engine,Feature,Customer Portal,70,Search engine development
+Data Team,Q4 2024,6,Search Support,Critical Run,,30,Search support
+Frontend Team,Q4 2024,6,Event Streaming Platform,Platform,Data Pipeline Optimization,45,Event streaming
+Frontend Team,Q4 2024,6,Streaming Support,Critical Run,,55,Streaming support
+Backend Team,Q4 2024,6,Code Quality Improvement,Tech Debt,Code Refactoring Initiative,50,Code quality
+Backend Team,Q4 2024,6,Quality Support,Critical Run,,50,Quality support
+Platform Team,Q4 2024,6,Automated Testing Framework,Feature,Code Refactoring Initiative,60,Testing framework
+Platform Team,Q4 2024,6,Testing Support,Critical Run,,40,Testing support
+Data Team,Q4 2024,6,Database Sharding Implementation,Platform,Data Pipeline Optimization,70,Database sharding
+Data Team,Q4 2024,6,Sharding Support,Critical Run,,30,Sharding support
+Frontend Team,Q4 2024,6,Backup Verification System,Critical Run,Backup System Enhancement,50,Backup verification
+Frontend Team,Q4 2024,6,Verification Support,Critical Run,,50,Verification support
+Backend Team,Q4 2024,6,User Experience Enhancement,Feature,Customer Portal,65,UX improvements
+Backend Team,Q4 2024,6,UX Support,Critical Run,,35,UX support
+Platform Team,Q4 2024,6,API Rate Limiting,Platform,API Gateway Optimization,55,Rate limiting
+Platform Team,Q4 2024,6,Limiting Support,Critical Run,,45,Limiting support
+Data Team,Q4 2024,6,Performance Optimization,Tech Debt,Performance Optimization,50,Performance optimization
+Data Team,Q4 2024,6,Optimization Support,Critical Run,,50,Optimization support
+Frontend Team,Q4 2024,6,Machine Learning Models,Feature,Analytics Dashboard,75,ML models development
+Frontend Team,Q4 2024,6,ML Support,Critical Run,,25,ML support
+Backend Team,Q4 2024,6,Serverless Architecture,Platform,Cloud Infrastructure Migration,70,Serverless implementation
+Backend Team,Q4 2024,6,Serverless Support,Critical Run,,30,Serverless support
+Platform Team,Q4 2024,6,Security Monitoring,Critical Run,Security Framework Enhancement,60,Security monitoring
+Platform Team,Q4 2024,6,Monitoring Support,Critical Run,,40,Monitoring support
+Data Team,Q4 2024,6,Real-time Analytics,Feature,Analytics Dashboard,80,Real-time analytics
+Data Team,Q4 2024,6,Analytics Support,Critical Run,,20,Analytics support
+Frontend Team,Q4 2024,6,Database Migration,Platform,Data Pipeline Optimization,55,Database migration
+Frontend Team,Q4 2024,6,Migration Support,Critical Run,,45,Migration support
+Backend Team,Q4 2024,6,Code Refactoring,Tech Debt,Code Refactoring Initiative,50,Code refactoring
+Backend Team,Q4 2024,6,Refactoring Support,Critical Run,,50,Refactoring support
+Platform Team,Q4 2024,6,Mobile App Optimization,Feature,Mobile App Redesign,60,Mobile optimization
+Platform Team,Q4 2024,6,Mobile Support,Critical Run,,40,Mobile support
+Data Team,Q4 2024,6,Cloud Native Migration,Platform,Cloud Infrastructure Migration,75,Cloud native migration
+Data Team,Q4 2024,6,Cloud Support,Critical Run,,25,Cloud support
+Frontend Team,Q4 2024,6,Disaster Recovery Testing,Critical Run,Backup System Enhancement,50,Disaster recovery testing
+Frontend Team,Q4 2024,6,Recovery Support,Critical Run,,50,Recovery support
+Backend Team,Q4 2024,6,Business Intelligence Enhancement,Feature,Analytics Dashboard,70,BI enhancement
+Backend Team,Q4 2024,6,BI Support,Critical Run,,30,BI support
+Platform Team,Q4 2024,6,API Gateway Enhancement,Platform,API Gateway Optimization,65,API gateway enhancement
+Platform Team,Q4 2024,6,Gateway Support,Critical Run,,35,Gateway support
+Data Team,Q4 2024,6,Legacy System Integration,Tech Debt,Legacy System Migration,55,Legacy integration
+Data Team,Q4 2024,6,Integration Support,Critical Run,,45,Integration support
+Frontend Team,Q4 2024,6,Customer Portal Enhancement,Feature,Customer Portal,60,Portal enhancement
+Frontend Team,Q4 2024,6,Portal Support,Critical Run,,40,Portal support
+Backend Team,Q4 2024,6,Monitoring System Upgrade,Platform,Monitoring System Setup,70,Monitoring upgrade
+Backend Team,Q4 2024,6,Upgrade Support,Critical Run,,30,Upgrade support
+Platform Team,Q4 2024,6,Performance Optimization,Critical Run,Performance Optimization,50,Performance optimization
+Platform Team,Q4 2024,6,Optimization Support,Critical Run,,50,Optimization support
+Data Team,Q4 2024,6,Data Pipeline Enhancement,Feature,Data Pipeline Optimization,75,Data pipeline enhancement
+Data Team,Q4 2024,6,Pipeline Support,Critical Run,,25,Pipeline support
+Frontend Team,Q4 2024,6,Container Security,Platform,Cloud Infrastructure Migration,55,Container security
+Frontend Team,Q4 2024,6,Security Support,Critical Run,,45,Security support
+Backend Team,Q4 2024,6,Code Quality Metrics,Tech Debt,Code Refactoring Initiative,50,Code quality metrics
+Backend Team,Q4 2024,6,Metrics Support,Critical Run,,50,Metrics support
+Platform Team,Q4 2024,6,User Interface Modernization,Feature,Customer Portal,65,UI modernization
+Platform Team,Q4 2024,6,UI Support,Critical Run,,35,UI support
+Data Team,Q4 2024,6,Load Balancing Enhancement,Platform,Load Balancer Configuration,60,Load balancing enhancement
+Data Team,Q4 2024,6,Balancing Support,Critical Run,,40,Balancing support
+QA Team,Q4 2024,6,Testing Support,Critical Run,,100,QA testing and validation
+Design Team,Q4 2024,6,Design Support,Critical Run,,100,Design and UX support
