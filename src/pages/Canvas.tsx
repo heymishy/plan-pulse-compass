@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   ReactFlow,
@@ -20,6 +19,8 @@ import { CanvasHeader } from '@/components/canvas/CanvasHeader';
 import { CanvasControls } from '@/components/canvas/CanvasControls';
 import { CanvasStats } from '@/components/canvas/CanvasStats';
 import { CanvasLegend } from '@/components/canvas/CanvasLegend';
+import TeamCostVisualization from '@/components/canvas/TeamCostVisualization';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Canvas = () => {
   const { teams, projects, divisions } = useApp();
@@ -29,7 +30,11 @@ const Canvas = () => {
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [selectedProject, setSelectedProject] = useState<string>('all');
 
-  const { nodes: initialNodes, edges: initialEdges, stats } = useCanvasData({
+  const {
+    nodes: initialNodes,
+    edges: initialEdges,
+    stats,
+  } = useCanvasData({
     viewType,
     selectedDivision,
     selectedTeam,
@@ -40,8 +45,8 @@ const Canvas = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
+    (params: Connection) => setEdges(eds => addEdge(params, eds)),
+    [setEdges]
   );
 
   useEffect(() => {
@@ -52,54 +57,67 @@ const Canvas = () => {
   return (
     <div className="p-6 space-y-6">
       <CanvasHeader showMiniMap={showMiniMap} setShowMiniMap={setShowMiniMap} />
-      
-      <CanvasControls
-        viewType={viewType}
-        setViewType={setViewType}
-        selectedDivision={selectedDivision}
-        setSelectedDivision={setSelectedDivision}
-        divisions={divisions}
-        selectedTeam={selectedTeam}
-        setSelectedTeam={setSelectedTeam}
-        teams={teams}
-        selectedProject={selectedProject}
-        setSelectedProject={setSelectedProject}
-        projects={projects}
-      />
 
-      <CanvasStats stats={stats} />
+      <Tabs defaultValue="relationships" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="relationships">Project Relationships</TabsTrigger>
+          <TabsTrigger value="team-cost">Team Cost Analysis</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardContent className="p-0">
-          <div style={{ width: '100%', height: '600px' }}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              fitView
-              style={{ backgroundColor: '#f8fafc' }}
-            >
-              <Controls />
-              <Background color="#e2e8f0" gap={16} />
-              {showMiniMap && (
-                <MiniMap 
-                  zoomable 
-                  pannable 
-                  style={{
-                    height: 120,
-                    width: 200,
-                    backgroundColor: '#f1f5f9',
-                  }}
-                />
-              )}
-            </ReactFlow>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="relationships" className="space-y-6">
+          <CanvasControls
+            viewType={viewType}
+            setViewType={setViewType}
+            selectedDivision={selectedDivision}
+            setSelectedDivision={setSelectedDivision}
+            divisions={divisions}
+            selectedTeam={selectedTeam}
+            setSelectedTeam={setSelectedTeam}
+            teams={teams}
+            selectedProject={selectedProject}
+            setSelectedProject={setSelectedProject}
+            projects={projects}
+          />
 
-      <CanvasLegend />
+          <CanvasStats stats={stats} />
+
+          <Card>
+            <CardContent className="p-0">
+              <div style={{ width: '100%', height: '600px' }}>
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onConnect={onConnect}
+                  fitView
+                  style={{ backgroundColor: '#f8fafc' }}
+                >
+                  <Controls />
+                  <Background color="#e2e8f0" gap={16} />
+                  {showMiniMap && (
+                    <MiniMap
+                      zoomable
+                      pannable
+                      style={{
+                        height: 120,
+                        width: 200,
+                        backgroundColor: '#f1f5f9',
+                      }}
+                    />
+                  )}
+                </ReactFlow>
+              </div>
+            </CardContent>
+          </Card>
+
+          <CanvasLegend />
+        </TabsContent>
+
+        <TabsContent value="team-cost">
+          <TeamCostVisualization />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

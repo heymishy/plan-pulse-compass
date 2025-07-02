@@ -16,7 +16,11 @@ afterEach(() => {
 
 // Lightweight wrapper without AppProvider for simple component tests
 const LightweightProviders = ({ children }: { children: React.ReactNode }) => {
-  return <BrowserRouter>{children}</BrowserRouter>;
+  return (
+    <BrowserRouter>
+      <SidebarProvider>{children}</SidebarProvider>
+    </BrowserRouter>
+  );
 };
 
 // Wrapper for components that need sidebar context (like Navigation component)

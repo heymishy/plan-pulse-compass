@@ -23,6 +23,7 @@ import TeamSkillsSummary from '@/components/scenarios/TeamSkillsSummary';
 import TeamPortfolioOverview from '@/components/teams/TeamPortfolioOverview';
 import RunWorkAllocationView from '@/components/teams/RunWorkAllocationView';
 import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtilizationMatrix';
+import EnterpriseTeamAnalytics from '@/components/teams/EnterpriseTeamAnalytics';
 
 const Teams = () => {
   const { teams, people, divisions, isSetupComplete } = useApp();
@@ -136,13 +137,20 @@ const Teams = () => {
       </div>
 
       <Tabs defaultValue="portfolio" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger
             value="portfolio"
             className="flex items-center space-x-2"
           >
             <BarChart3 className="h-4 w-4" />
             <span>Portfolio</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="analytics"
+            className="flex items-center space-x-2"
+          >
+            <Activity className="h-4 w-4" />
+            <span>Analytics</span>
           </TabsTrigger>
           <TabsTrigger value="teams" className="flex items-center space-x-2">
             <Users className="h-4 w-4" />
@@ -171,6 +179,10 @@ const Teams = () => {
 
         <TabsContent value="portfolio">
           <TeamPortfolioOverview />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <EnterpriseTeamAnalytics />
         </TabsContent>
 
         <TabsContent value="teams" className="space-y-6">
