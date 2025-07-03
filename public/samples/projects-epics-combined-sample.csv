@@ -1,12 +1,36 @@
-
 project_name,project_description,project_status,project_start_date,project_end_date,project_budget,epic_name,epic_description,epic_effort,epic_team,epic_target_date,milestone_name,milestone_due_date
-E-commerce Platform,Build new e-commerce platform,active,2024-01-01,2024-12-31,500000,User Management,User registration and authentication,21,team-1,2024-03-01,MVP Launch,2024-06-30
-E-commerce Platform,,,,,Product Catalog,Product listing and search functionality,34,team-2,2024-04-15,Beta Release,2024-09-30
-E-commerce Platform,,,,,Shopping Cart,Cart and checkout functionality,25,team-1,2024-05-30,Production Release,2024-12-31
-E-commerce Platform,,,,,Order Processing,Order management and fulfillment,42,team-3,2024-07-15,,
-Mobile App Redesign,Complete mobile application overhaul,active,2024-01-15,2024-06-30,150000,Authentication,User login and registration,13,team-1,2024-02-15,Design Complete,2024-03-01
-Mobile App Redesign,,,,,Payment System,Payment processing integration,21,team-2,2024-03-30,Development Complete,2024-05-15
-Mobile App Redesign,,,,,Push Notifications,Real-time notification system,8,team-3,2024-04-15,Testing Complete,2024-06-15
-Data Analytics,Business intelligence dashboard,planning,2024-03-01,2024-08-31,120000,Data Pipeline,ETL data processing pipeline,34,team-4,2024-05-01,Data Model Ready,2024-04-15
-Data Analytics,,,,,Reporting Engine,Interactive reporting and charts,25,team-2,2024-06-30,Dashboard Beta,2024-06-30
-Data Analytics,,,,,User Interface,Dashboard UI and user experience,18,team-3,2024-07-15,Production Ready,2024-08-31
+Digital Lending Platform,Modern loan origination and servicing platform,active,2024-01-01,2024-12-31,2500000,Loan Application Portal,Customer-facing loan application system,34,Mortgage Origination,2024-03-31,MVP Launch,2024-06-30
+Digital Lending Platform,,,,,Credit Decision Engine,AI-powered credit decision automation,38,Credit Assessment Engine,2024-05-31,Beta Release,2024-09-30
+Digital Lending Platform,,,,,Document Processing,Automated document verification and processing,42,Personal Loans Platform,2024-04-30,Production Release,2024-12-31
+Digital Lending Platform,,,,,Loan Servicing Dashboard,Loan management and customer service tools,29,Loan Servicing,2024-06-30,,
+Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2024-10-31,1800000,Mobile Authentication,Biometric and multi-factor authentication,21,Digital Banking Platform,2024-03-15,Security Audit,2024-04-30
+Mobile Banking 2.0,,,,,Account Management,Enhanced account overview and management,25,Mobile Banking App,2024-04-15,User Testing,2024-06-15
+Mobile Banking 2.0,,,,,Payment Integration,Seamless payment and transfer experience,33,Payment Processing Engine,2024-05-30,Performance Testing,2024-08-31
+Mobile Banking 2.0,,,,,Personal Finance Tools,Budgeting and financial insights,18,Customer Analytics,2024-06-30,,
+Payment Processing Hub,Unified payment processing platform,planning,2024-02-01,2024-11-30,3200000,Real-time Processing,High-performance transaction processing,45,Payment Processing Engine,2024-05-31,Core Platform,2024-08-31
+Payment Processing Hub,,,,,Fraud Prevention,Real-time fraud detection and prevention,38,Payment Security,2024-06-30,Security Certification,2024-10-31
+Payment Processing Hub,,,,,Settlement Engine,Automated clearing and settlement,35,Merchant Services,2024-07-31,Compliance Review,2024-11-30
+Payment Processing Hub,,,,,Reporting Dashboard,Payment analytics and reporting,22,Payment Analytics,2024-08-31,,
+Credit Risk Engine,AI-powered credit risk assessment platform,active,2024-01-01,2024-09-30,2100000,Risk Model Development,Machine learning risk assessment models,50,Consumer Risk Analytics,2024-04-30,Model Validation,2024-07-31
+Credit Risk Engine,,,,,Data Integration Layer,Customer and financial data aggregation,32,Business Risk Management,2024-03-31,Data Quality Audit,2024-06-30
+Credit Risk Engine,,,,,Decision API,Real-time credit decision API,28,Credit Assessment Engine,2024-05-31,API Testing,2024-08-31
+Customer Onboarding,Digital customer onboarding experience,planning,2024-03-01,2024-08-31,1200000,Identity Verification,Digital identity verification system,35,Digital Identity,2024-05-31,Security Review,2024-06-30
+Customer Onboarding,,,,,Account Opening,Streamlined account opening process,28,Customer Onboarding,2024-06-30,User Experience Testing,2024-07-31
+Customer Onboarding,,,,,Document Upload,Secure document upload and processing,20,Branch Technology,2024-07-31,Compliance Audit,2024-08-31
+Trade Finance Platform,International trade finance solutions,active,2024-01-15,2024-12-15,2800000,Letter of Credit System,Digital letter of credit processing,42,Trade Finance,2024-05-31,Regulatory Approval,2024-08-31
+Trade Finance Platform,,,,,Trade Documentation,Electronic trade document management,35,Supply Chain Finance,2024-06-30,Integration Testing,2024-10-31
+Trade Finance Platform,,,,,Risk Assessment,Trade finance risk evaluation,30,Business Risk Management,2024-07-31,Risk Model Validation,2024-11-30
+Trade Finance Platform,,,,,Compliance Engine,Trade finance regulatory compliance,25,Business Compliance,2024-08-31,,
+Fraud Detection System,Real-time fraud prevention platform,active,2024-02-01,2024-10-31,1900000,Transaction Monitoring,Real-time transaction analysis,40,Card Fraud Detection,2024-05-31,Model Deployment,2024-08-31
+Fraud Detection System,,,,,Machine Learning Models,Adaptive fraud detection algorithms,45,Payment Security,2024-06-30,Performance Validation,2024-09-30
+Fraud Detection System,,,,,Alert Management,Fraud alert processing and case management,25,Customer Service Platform,2024-07-31,User Training,2024-10-31
+Open Banking APIs,Third-party integration platform,planning,2024-03-01,2024-11-30,1600000,API Gateway,Secure API gateway and management,38,Digital Banking Platform,2024-06-30,Security Certification,2024-09-30
+Open Banking APIs,,,,,Account Information API,Account data sharing APIs,30,Account Management,2024-07-31,Compliance Review,2024-10-31
+Open Banking APIs,,,,,Payment Initiation API,Third-party payment initiation,32,Payment Processing Engine,2024-08-31,Integration Testing,2024-11-30
+Regulatory Reporting,Automated compliance reporting platform,active,2024-01-01,2024-08-31,1400000,Data Aggregation,Regulatory data collection and aggregation,35,Consumer Compliance,2024-04-30,Data Validation,2024-06-30
+Regulatory Reporting,,,,,Report Generation,Automated regulatory report creation,28,Business Compliance,2024-05-31,Regulatory Review,2024-07-31
+Regulatory Reporting,,,,,Audit Trail,Comprehensive audit and compliance tracking,22,Retail Compliance,2024-06-30,Audit Certification,2024-08-31
+Data Analytics Platform,Enterprise business intelligence platform,planning,2024-02-15,2024-12-31,2200000,Data Warehouse,Centralized data storage and management,48,Customer Analytics,2024-06-30,Data Architecture Review,2024-08-31
+Data Analytics Platform,,,,,Analytics Engine,Advanced analytics and machine learning,40,Business Analytics Platform,2024-07-31,Model Validation,2024-10-31
+Data Analytics Platform,,,,,Visualization Dashboard,Self-service business intelligence,30,Business Analytics Platform,2024-08-31,User Acceptance Testing,2024-11-30
+Data Analytics Platform,,,,,Data Governance,Data quality and governance framework,25,Banking Operations,2024-09-30,,

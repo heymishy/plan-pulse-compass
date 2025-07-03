@@ -1,6 +1,11 @@
-
-name,description,status,start date,end date,budget
-Customer Portal,New customer-facing web portal,planning,2024-01-15,2024-06-30,150000
-Mobile App Redesign,Complete redesign of mobile application,active,2024-02-01,2024-08-15,200000
-API Integration,Third-party API integration project,planning,2024-03-01,2024-05-30,75000
-Data Migration,Legacy system data migration,completed,2023-10-01,2023-12-15,100000
+name,description,status,start_date,end_date,budget
+Digital Lending Platform,Modern loan origination and servicing platform,active,2024-01-01,2024-12-31,2500000
+Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2024-10-31,1800000
+Payment Processing Hub,Unified payment processing platform,planning,2024-02-01,2024-11-30,3200000
+Credit Risk Engine,AI-powered credit risk assessment platform,active,2024-01-01,2024-09-30,2100000
+Customer Onboarding,Digital customer onboarding experience,planning,2024-03-01,2024-08-31,1200000
+Trade Finance Platform,International trade finance solutions,active,2024-01-15,2024-12-15,2800000
+Fraud Detection System,Real-time fraud prevention platform,active,2024-02-01,2024-10-31,1900000
+Open Banking APIs,Third-party integration platform,planning,2024-03-01,2024-11-30,1600000
+Regulatory Reporting,Automated compliance reporting platform,active,2024-01-01,2024-08-31,1400000
+Data Analytics Platform,Enterprise business intelligence platform,planning,2024-02-15,2024-12-31,2200000

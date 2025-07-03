@@ -1,25 +1,90 @@
-Team Name,Quarter,Iteration Number,Epic Name,Epic Type,Allocation Percentage,Notes
-"Mortgage Origination","Q1 2024",1,"User Authentication","Project",60,"Core authentication system"
-"Mortgage Origination","Q1 2024",1,"Support Tickets","Run Work",40,"Ongoing support work"
-"Mortgage Origination","Q1 2024",2,"Loan Application","Project",70,"Loan application development"
-"Mortgage Origination","Q1 2024",2,"Support Tickets","Run Work",30,"Regular support activities"
-"Personal Loans Platform","Q1 2024",1,"Payments Integration","Project",80,"Payment gateway integration"
-"Personal Loans Platform","Q1 2024",1,"Support Tickets","Run Work",20,"Regular support activities"
-"Personal Loans Platform","Q1 2024",2,"Payments Integration","Project",75,"Continued payment work"
-"Personal Loans Platform","Q1 2024",2,"Support Tickets","Run Work",25,"Ongoing support"
-"Credit Assessment Engine","Q1 2024",1,"Credit Scoring","Project",80,"Credit scoring algorithm"
-"Credit Assessment Engine","Q1 2024",1,"Support Tickets","Run Work",20,"Support and maintenance"
-"Credit Assessment Engine","Q1 2024",2,"Credit Scoring","Project",85,"Advanced scoring features"
-"Credit Assessment Engine","Q1 2024",2,"Support Tickets","Run Work",15,"Minimal support needed"
-"Commercial Lending Platform","Q1 2024",1,"Commercial API","Project",70,"API development"
-"Commercial Lending Platform","Q1 2024",1,"Support Tickets","Run Work",30,"Commercial support"
-"Commercial Lending Platform","Q1 2024",2,"Commercial API","Project",75,"API enhancements"
-"Commercial Lending Platform","Q1 2024",2,"Support Tickets","Run Work",25,"Ongoing support"
-"Credit Card Platform","Q1 2024",1,"Rewards Engine","Project",75,"Rewards system development"
-"Credit Card Platform","Q1 2024",1,"Support Tickets","Run Work",25,"Card support activities"
-"Credit Card Platform","Q1 2024",2,"Rewards Engine","Project",80,"Advanced rewards features"
-"Credit Card Platform","Q1 2024",2,"Support Tickets","Run Work",20,"Support work"
-"Digital Banking Platform","Q1 2024",1,"Mobile Payments","Project",65,"Mobile payment integration"
-"Digital Banking Platform","Q1 2024",1,"Support Tickets","Run Work",35,"Digital banking support"
-"Digital Banking Platform","Q1 2024",2,"Mobile Payments","Project",70,"Enhanced mobile features"
-"Digital Banking Platform","Q1 2024",2,"Support Tickets","Run Work",30,"Ongoing support" 
+team_name,quarter,iteration_number,epic_name,project_name,percentage,notes
+Mortgage Origination,Q1 2024,1,Loan Application Portal,Digital Lending Platform,45,Core lending functionality development
+Mortgage Origination,Q1 2024,1,Critical Run,,35,BAU support and maintenance
+Mortgage Origination,Q1 2024,1,Bug Fixes,,20,Production issue resolution
+Mortgage Origination,Q1 2024,2,Loan Application Portal,Digital Lending Platform,40,Continued portal development
+Mortgage Origination,Q1 2024,2,Mobile Authentication,Mobile Banking 2.0,30,Authentication integration
+Mortgage Origination,Q1 2024,2,Critical Run,,30,BAU support and maintenance
+Personal Loans Platform,Q1 2024,1,Document Processing,Digital Lending Platform,55,Document automation development
+Personal Loans Platform,Q1 2024,1,Production Support,,25,System monitoring and support
+Personal Loans Platform,Q1 2024,1,Performance Optimization,,20,System improvements
+Personal Loans Platform,Q1 2024,2,Document Processing,Digital Lending Platform,50,Continued development
+Personal Loans Platform,Q1 2024,2,Identity Verification,Customer Onboarding,30,Integration work
+Personal Loans Platform,Q1 2024,2,Critical Run,,20,BAU activities
+Credit Assessment Engine,Q1 2024,1,Credit Decision Engine,Digital Lending Platform,40,AI development
+Credit Assessment Engine,Q1 2024,1,Risk Model Development,Credit Risk Engine,35,Risk modeling
+Credit Assessment Engine,Q1 2024,1,Compliance & Security,,25,Security reviews
+Credit Assessment Engine,Q1 2024,2,Credit Decision Engine,Digital Lending Platform,35,AI refinement
+Credit Assessment Engine,Q1 2024,2,Decision API,Credit Risk Engine,35,API development
+Credit Assessment Engine,Q1 2024,2,Critical Run,,30,BAU support
+Loan Servicing,Q1 2024,1,Loan Servicing Dashboard,Digital Lending Platform,50,Dashboard development
+Loan Servicing,Q1 2024,1,Production Support,,30,System support
+Loan Servicing,Q1 2024,1,Performance Optimization,,20,System improvements
+Loan Servicing,Q1 2024,2,Loan Servicing Dashboard,Digital Lending Platform,45,Dashboard completion
+Loan Servicing,Q1 2024,2,Alert Management,Fraud Detection System,25,Integration work
+Loan Servicing,Q1 2024,2,Critical Run,,30,BAU activities
+Commercial Lending Platform,Q1 2024,1,Data Integration Layer,Credit Risk Engine,45,Commercial risk data
+Commercial Lending Platform,Q1 2024,1,Production Support,,30,Platform maintenance
+Commercial Lending Platform,Q1 2024,1,Compliance & Security,,25,Security compliance
+Commercial Lending Platform,Q1 2024,2,Data Integration Layer,Credit Risk Engine,40,Data completion
+Commercial Lending Platform,Q1 2024,2,API Gateway,Open Banking APIs,35,API platform development
+Commercial Lending Platform,Q1 2024,2,Critical Run,,25,BAU support
+Trade Finance,Q1 2024,1,Letter of Credit System,Trade Finance Platform,60,LC processing development
+Trade Finance,Q1 2024,1,Critical Run,,40,Trade finance support
+Trade Finance,Q1 2024,2,Letter of Credit System,Trade Finance Platform,55,LC system completion
+Trade Finance,Q1 2024,2,Trade Documentation,Trade Finance Platform,25,Documentation system
+Trade Finance,Q1 2024,2,Production Support,,20,Trade support
+Business Risk Management,Q1 2024,1,Risk Assessment,Trade Finance Platform,45,Trade risk assessment
+Business Risk Management,Q1 2024,1,Data Integration Layer,Credit Risk Engine,30,Risk data integration
+Business Risk Management,Q1 2024,1,Critical Run,,25,Risk management BAU
+Business Risk Management,Q1 2024,2,Risk Assessment,Trade Finance Platform,40,Risk refinement
+Business Risk Management,Q1 2024,2,Data Integration Layer,Credit Risk Engine,35,Data completion
+Business Risk Management,Q1 2024,2,Compliance & Security,,25,Risk compliance
+Credit Card Platform,Q1 2024,1,Real-time Processing,Payment Processing Hub,50,Card processing
+Credit Card Platform,Q1 2024,1,Production Support,,30,Card support
+Credit Card Platform,Q1 2024,1,Performance Optimization,,20,System optimization
+Credit Card Platform,Q1 2024,2,Real-time Processing,Payment Processing Hub,45,Processing optimization
+Credit Card Platform,Q1 2024,2,Fraud Prevention,Payment Processing Hub,30,Fraud integration
+Credit Card Platform,Q1 2024,2,Critical Run,,25,BAU activities
+Payment Processing Engine,Q1 2024,1,Real-time Processing,Payment Processing Hub,50,Core processing development
+Payment Processing Engine,Q1 2024,1,Payment Integration,Mobile Banking 2.0,25,Mobile payments
+Payment Processing Engine,Q1 2024,1,Critical Run,,25,Payment support
+Payment Processing Engine,Q1 2024,2,Real-time Processing,Payment Processing Hub,45,Processing optimization
+Payment Processing Engine,Q1 2024,2,Payment Initiation API,Open Banking APIs,30,API development
+Payment Processing Engine,Q1 2024,2,Production Support,,25,System monitoring
+Payment Security,Q1 2024,1,Fraud Prevention,Payment Processing Hub,40,Fraud detection
+Payment Security,Q1 2024,1,Machine Learning Models,Fraud Detection System,35,ML development
+Payment Security,Q1 2024,1,Compliance & Security,,25,Security compliance
+Payment Security,Q1 2024,2,Fraud Prevention,Payment Processing Hub,35,Fraud refinement
+Payment Security,Q1 2024,2,Machine Learning Models,Fraud Detection System,40,Model training
+Payment Security,Q1 2024,2,Critical Run,,25,Security monitoring
+Card Fraud Detection,Q1 2024,1,Transaction Monitoring,Fraud Detection System,55,Real-time monitoring
+Card Fraud Detection,Q1 2024,1,Production Support,,25,Fraud support
+Card Fraud Detection,Q1 2024,1,Performance Optimization,,20,System tuning
+Card Fraud Detection,Q1 2024,2,Transaction Monitoring,Fraud Detection System,50,Monitor enhancement
+Card Fraud Detection,Q1 2024,2,Machine Learning Models,Fraud Detection System,30,ML integration
+Card Fraud Detection,Q1 2024,2,Critical Run,,20,BAU fraud work
+Digital Banking Platform,Q1 2024,1,Mobile Authentication,Mobile Banking 2.0,35,Biometric authentication
+Digital Banking Platform,Q1 2024,1,API Gateway,Open Banking APIs,35,API platform
+Digital Banking Platform,Q1 2024,1,Critical Run,,30,Platform maintenance
+Digital Banking Platform,Q1 2024,2,Mobile Authentication,Mobile Banking 2.0,30,Auth completion
+Digital Banking Platform,Q1 2024,2,API Gateway,Open Banking APIs,40,Gateway development
+Digital Banking Platform,Q1 2024,2,Production Support,,30,System support
+Mobile Banking App,Q1 2024,1,Account Management,Mobile Banking 2.0,45,Mobile UI development
+Mobile Banking App,Q1 2024,1,Personal Finance Tools,Mobile Banking 2.0,30,Finance features
+Mobile Banking App,Q1 2024,1,Bug Fixes,,25,Mobile bug fixes
+Mobile Banking App,Q1 2024,2,Account Management,Mobile Banking 2.0,40,UI refinement
+Mobile Banking App,Q1 2024,2,Personal Finance Tools,Mobile Banking 2.0,35,Feature completion
+Mobile Banking App,Q1 2024,2,Critical Run,,25,App maintenance
+Customer Onboarding,Q1 2024,1,Identity Verification,Customer Onboarding,50,ID verification development
+Customer Onboarding,Q1 2024,1,Account Opening,Customer Onboarding,30,Account process
+Customer Onboarding,Q1 2024,1,Critical Run,,20,Onboarding support
+Customer Onboarding,Q1 2024,2,Identity Verification,Customer Onboarding,45,ID completion
+Customer Onboarding,Q1 2024,2,Account Opening,Customer Onboarding,35,Process refinement
+Customer Onboarding,Q1 2024,2,Production Support,,20,Support activities
+Customer Analytics,Q1 2024,1,Personal Finance Tools,Mobile Banking 2.0,30,Analytics features
+Customer Analytics,Q1 2024,1,Data Warehouse,Data Analytics Platform,45,Data platform
+Customer Analytics,Q1 2024,1,Business as Usual,,25,Analytics support
+Customer Analytics,Q1 2024,2,Personal Finance Tools,Mobile Banking 2.0,25,Feature completion
+Customer Analytics,Q1 2024,2,Data Warehouse,Data Analytics Platform,50,Platform development
+Customer Analytics,Q1 2024,2,Critical Run,,25,Analytics maintenance

@@ -1,73 +1,90 @@
 Team Name,Epic Name,Epic Type,Sprint Number,Percentage,Quarter
-"Mortgage Origination","User Authentication","Project",1,60,"Q1 2024"
-"Mortgage Origination","Support Tickets","Run Work",1,40,"Q1 2024"
-"Mortgage Origination","Loan Application","Project",2,70,"Q1 2024"
-"Mortgage Origination","Support Tickets","Run Work",2,30,"Q1 2024"
-"Mortgage Origination","Loan Application","Project",3,70,"Q1 2024"
-"Mortgage Origination","Support Tickets","Run Work",3,30,"Q1 2024"
-"Mortgage Origination","Loan Application","Project",4,70,"Q1 2024"
-"Mortgage Origination","Support Tickets","Run Work",4,30,"Q1 2024"
-"Mortgage Origination","Loan Application","Project",5,70,"Q1 2024"
-"Mortgage Origination","Support Tickets","Run Work",5,30,"Q1 2024"
-"Mortgage Origination","Loan Application","Project",6,70,"Q1 2024"
-"Mortgage Origination","Support Tickets","Run Work",6,30,"Q1 2024"
-"Personal Loans Platform","Payments Integration","Project",1,60,"Q1 2024"
-"Personal Loans Platform","Support Tickets","Run Work",1,40,"Q1 2024"
-"Personal Loans Platform","Payments Integration","Project",2,60,"Q1 2024"
-"Personal Loans Platform","Support Tickets","Run Work",2,40,"Q1 2024"
-"Personal Loans Platform","Payments Integration","Project",3,60,"Q1 2024"
-"Personal Loans Platform","Support Tickets","Run Work",3,40,"Q1 2024"
-"Personal Loans Platform","Payments Integration","Project",4,60,"Q1 2024"
-"Personal Loans Platform","Support Tickets","Run Work",4,40,"Q1 2024"
-"Personal Loans Platform","Payments Integration","Project",5,60,"Q1 2024"
-"Personal Loans Platform","Support Tickets","Run Work",5,40,"Q1 2024"
-"Personal Loans Platform","Payments Integration","Project",6,60,"Q1 2024"
-"Personal Loans Platform","Support Tickets","Run Work",6,40,"Q1 2024"
-"Credit Assessment Engine","Credit Scoring","Project",1,80,"Q1 2024"
-"Credit Assessment Engine","Support Tickets","Run Work",1,20,"Q1 2024"
-"Credit Assessment Engine","Credit Scoring","Project",2,80,"Q1 2024"
-"Credit Assessment Engine","Support Tickets","Run Work",2,20,"Q1 2024"
-"Credit Assessment Engine","Credit Scoring","Project",3,80,"Q1 2024"
-"Credit Assessment Engine","Support Tickets","Run Work",3,20,"Q1 2024"
-"Credit Assessment Engine","Credit Scoring","Project",4,80,"Q1 2024"
-"Credit Assessment Engine","Support Tickets","Run Work",4,20,"Q1 2024"
-"Credit Assessment Engine","Credit Scoring","Project",5,80,"Q1 2024"
-"Credit Assessment Engine","Support Tickets","Run Work",5,20,"Q1 2024"
-"Credit Assessment Engine","Credit Scoring","Project",6,80,"Q1 2024"
-"Credit Assessment Engine","Support Tickets","Run Work",6,20,"Q1 2024"
-"Commercial Lending Platform","Commercial API","Project",1,70,"Q1 2024"
-"Commercial Lending Platform","Support Tickets","Run Work",1,30,"Q1 2024"
-"Commercial Lending Platform","Commercial API","Project",2,70,"Q1 2024"
-"Commercial Lending Platform","Support Tickets","Run Work",2,30,"Q1 2024"
-"Commercial Lending Platform","Commercial API","Project",3,70,"Q1 2024"
-"Commercial Lending Platform","Support Tickets","Run Work",3,30,"Q1 2024"
-"Commercial Lending Platform","Commercial API","Project",4,70,"Q1 2024"
-"Commercial Lending Platform","Support Tickets","Run Work",4,30,"Q1 2024"
-"Commercial Lending Platform","Commercial API","Project",5,70,"Q1 2024"
-"Commercial Lending Platform","Support Tickets","Run Work",5,30,"Q1 2024"
-"Commercial Lending Platform","Commercial API","Project",6,70,"Q1 2024"
-"Commercial Lending Platform","Support Tickets","Run Work",6,30,"Q1 2024"
-"Credit Card Platform","Rewards Engine","Project",1,75,"Q1 2024"
-"Credit Card Platform","Support Tickets","Run Work",1,25,"Q1 2024"
-"Credit Card Platform","Rewards Engine","Project",2,75,"Q1 2024"
-"Credit Card Platform","Support Tickets","Run Work",2,25,"Q1 2024"
-"Credit Card Platform","Rewards Engine","Project",3,75,"Q1 2024"
-"Credit Card Platform","Support Tickets","Run Work",3,25,"Q1 2024"
-"Credit Card Platform","Rewards Engine","Project",4,75,"Q1 2024"
-"Credit Card Platform","Support Tickets","Run Work",4,25,"Q1 2024"
-"Credit Card Platform","Rewards Engine","Project",5,75,"Q1 2024"
-"Credit Card Platform","Support Tickets","Run Work",5,25,"Q1 2024"
-"Credit Card Platform","Rewards Engine","Project",6,75,"Q1 2024"
-"Credit Card Platform","Support Tickets","Run Work",6,25,"Q1 2024"
-"Digital Banking Platform","Mobile Payments","Project",1,65,"Q1 2024"
-"Digital Banking Platform","Support Tickets","Run Work",1,35,"Q1 2024"
-"Digital Banking Platform","Mobile Payments","Project",2,65,"Q1 2024"
-"Digital Banking Platform","Support Tickets","Run Work",2,35,"Q1 2024"
-"Digital Banking Platform","Mobile Payments","Project",3,65,"Q1 2024"
-"Digital Banking Platform","Support Tickets","Run Work",3,35,"Q1 2024"
-"Digital Banking Platform","Mobile Payments","Project",4,65,"Q1 2024"
-"Digital Banking Platform","Support Tickets","Run Work",4,35,"Q1 2024"
-"Digital Banking Platform","Mobile Payments","Project",5,65,"Q1 2024"
-"Digital Banking Platform","Support Tickets","Run Work",5,35,"Q1 2024"
-"Digital Banking Platform","Mobile Payments","Project",6,65,"Q1 2024"
-"Digital Banking Platform","Support Tickets","Run Work",6,35,"Q1 2024" 
+Mortgage Origination,Loan Application Portal,project,1,42,Q1 2024
+Mortgage Origination,Critical Run,run,1,38,Q1 2024
+Mortgage Origination,Bug Fixes,run,1,20,Q1 2024
+Mortgage Origination,Loan Application Portal,project,2,38,Q1 2024
+Mortgage Origination,Mobile Authentication,project,2,32,Q1 2024
+Mortgage Origination,Critical Run,run,2,30,Q1 2024
+Personal Loans Platform,Document Processing,project,1,58,Q1 2024
+Personal Loans Platform,Production Support,run,1,22,Q1 2024
+Personal Loans Platform,Performance Optimization,run,1,20,Q1 2024
+Personal Loans Platform,Document Processing,project,2,52,Q1 2024
+Personal Loans Platform,Identity Verification,project,2,28,Q1 2024
+Personal Loans Platform,Critical Run,run,2,20,Q1 2024
+Credit Assessment Engine,Credit Decision Engine,project,1,38,Q1 2024
+Credit Assessment Engine,Risk Model Development,project,1,37,Q1 2024
+Credit Assessment Engine,Compliance & Security,run,1,25,Q1 2024
+Credit Assessment Engine,Credit Decision Engine,project,2,33,Q1 2024
+Credit Assessment Engine,Decision API,project,2,37,Q1 2024
+Credit Assessment Engine,Critical Run,run,2,30,Q1 2024
+Loan Servicing,Loan Servicing Dashboard,project,1,48,Q1 2024
+Loan Servicing,Production Support,run,1,32,Q1 2024
+Loan Servicing,Performance Optimization,run,1,20,Q1 2024
+Loan Servicing,Loan Servicing Dashboard,project,2,43,Q1 2024
+Loan Servicing,Alert Management,project,2,27,Q1 2024
+Loan Servicing,Critical Run,run,2,30,Q1 2024
+Commercial Lending Platform,Data Integration Layer,project,1,43,Q1 2024
+Commercial Lending Platform,Production Support,run,1,32,Q1 2024
+Commercial Lending Platform,Compliance & Security,run,1,25,Q1 2024
+Commercial Lending Platform,Data Integration Layer,project,2,38,Q1 2024
+Commercial Lending Platform,API Gateway,project,2,37,Q1 2024
+Commercial Lending Platform,Critical Run,run,2,25,Q1 2024
+Trade Finance,Letter of Credit System,project,1,62,Q1 2024
+Trade Finance,Critical Run,run,1,38,Q1 2024
+Trade Finance,Letter of Credit System,project,2,53,Q1 2024
+Trade Finance,Trade Documentation,project,2,27,Q1 2024
+Trade Finance,Production Support,run,2,20,Q1 2024
+Business Risk Management,Risk Assessment,project,1,47,Q1 2024
+Business Risk Management,Data Integration Layer,project,1,28,Q1 2024
+Business Risk Management,Critical Run,run,1,25,Q1 2024
+Business Risk Management,Risk Assessment,project,2,42,Q1 2024
+Business Risk Management,Data Integration Layer,project,2,33,Q1 2024
+Business Risk Management,Compliance & Security,run,2,25,Q1 2024
+Credit Card Platform,Real-time Processing,project,1,52,Q1 2024
+Credit Card Platform,Production Support,run,1,28,Q1 2024
+Credit Card Platform,Performance Optimization,run,1,20,Q1 2024
+Credit Card Platform,Real-time Processing,project,2,47,Q1 2024
+Credit Card Platform,Fraud Prevention,project,2,28,Q1 2024
+Credit Card Platform,Critical Run,run,2,25,Q1 2024
+Payment Processing Engine,Real-time Processing,project,1,48,Q1 2024
+Payment Processing Engine,Payment Integration,project,1,27,Q1 2024
+Payment Processing Engine,Critical Run,run,1,25,Q1 2024
+Payment Processing Engine,Real-time Processing,project,2,43,Q1 2024
+Payment Processing Engine,Payment Initiation API,project,2,32,Q1 2024
+Payment Processing Engine,Production Support,run,2,25,Q1 2024
+Payment Security,Fraud Prevention,project,1,42,Q1 2024
+Payment Security,Machine Learning Models,project,1,33,Q1 2024
+Payment Security,Compliance & Security,run,1,25,Q1 2024
+Payment Security,Fraud Prevention,project,2,37,Q1 2024
+Payment Security,Machine Learning Models,project,2,38,Q1 2024
+Payment Security,Critical Run,run,2,25,Q1 2024
+Card Fraud Detection,Transaction Monitoring,project,1,53,Q1 2024
+Card Fraud Detection,Production Support,run,1,27,Q1 2024
+Card Fraud Detection,Performance Optimization,run,1,20,Q1 2024
+Card Fraud Detection,Transaction Monitoring,project,2,48,Q1 2024
+Card Fraud Detection,Machine Learning Models,project,2,32,Q1 2024
+Card Fraud Detection,Critical Run,run,2,20,Q1 2024
+Digital Banking Platform,Mobile Authentication,project,1,37,Q1 2024
+Digital Banking Platform,API Gateway,project,1,33,Q1 2024
+Digital Banking Platform,Critical Run,run,1,30,Q1 2024
+Digital Banking Platform,Mobile Authentication,project,2,32,Q1 2024
+Digital Banking Platform,API Gateway,project,2,38,Q1 2024
+Digital Banking Platform,Production Support,run,2,30,Q1 2024
+Mobile Banking App,Account Management,project,1,43,Q1 2024
+Mobile Banking App,Personal Finance Tools,project,1,32,Q1 2024
+Mobile Banking App,Bug Fixes,run,1,25,Q1 2024
+Mobile Banking App,Account Management,project,2,38,Q1 2024
+Mobile Banking App,Personal Finance Tools,project,2,37,Q1 2024
+Mobile Banking App,Critical Run,run,2,25,Q1 2024
+Customer Onboarding,Identity Verification,project,1,52,Q1 2024
+Customer Onboarding,Account Opening,project,1,28,Q1 2024
+Customer Onboarding,Critical Run,run,1,20,Q1 2024
+Customer Onboarding,Identity Verification,project,2,47,Q1 2024
+Customer Onboarding,Account Opening,project,2,33,Q1 2024
+Customer Onboarding,Production Support,run,2,20,Q1 2024
+Customer Analytics,Personal Finance Tools,project,1,32,Q1 2024
+Customer Analytics,Data Warehouse,project,1,43,Q1 2024
+Customer Analytics,Business as Usual,run,1,25,Q1 2024
+Customer Analytics,Personal Finance Tools,project,2,27,Q1 2024
+Customer Analytics,Data Warehouse,project,2,48,Q1 2024
+Customer Analytics,Critical Run,run,2,25,Q1 2024

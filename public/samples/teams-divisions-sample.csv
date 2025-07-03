@@ -1,9 +1,51 @@
-
-team_id,team_name,division_id,division_name,capacity,division_budget,division_description
-team-1,Frontend Team,div-eng,Engineering,40,500000,Software development and engineering
-team-2,Backend Team,div-eng,Engineering,40,500000,Software development and engineering
-team-3,Platform Team,div-eng,Engineering,38,500000,Software development and engineering
-team-4,Design Team,div-design,Design,32,200000,User experience and visual design
-team-5,Product Team,div-product,Product,35,300000,Product management and strategy
-team-6,QA Team,div-eng,Engineering,35,500000,Quality assurance and testing
-team-7,Data Team,div-data,Data & Analytics,30,400000,Data science and analytics
+team_id,team_name,division_id,division_name,capacity
+team-001,Mortgage Origination,div-001,Consumer Lending,160
+team-002,Personal Loans Platform,div-001,Consumer Lending,160
+team-003,Credit Assessment Engine,div-001,Consumer Lending,160
+team-004,Loan Servicing,div-001,Consumer Lending,160
+team-005,Collections & Recovery,div-001,Consumer Lending,160
+team-006,Mortgage Underwriting,div-001,Consumer Lending,160
+team-007,Consumer Risk Analytics,div-001,Consumer Lending,160
+team-008,Loan Origination Platform,div-001,Consumer Lending,160
+team-009,Mortgage Processing,div-001,Consumer Lending,160
+team-010,Consumer Compliance,div-001,Consumer Lending,160
+team-011,Loan Pricing Engine,div-001,Consumer Lending,160
+team-012,Mortgage Analytics,div-001,Consumer Lending,160
+team-013,Commercial Lending Platform,div-002,Business Lending,160
+team-014,SME Lending Engine,div-002,Business Lending,160
+team-015,Corporate Finance Platform,div-002,Business Lending,160
+team-016,Business Risk Management,div-002,Business Lending,160
+team-017,Trade Finance,div-002,Business Lending,160
+team-018,Asset Finance Platform,div-002,Business Lending,160
+team-019,Commercial Risk Analytics,div-002,Business Lending,160
+team-020,Business Lending Operations,div-002,Business Lending,160
+team-021,Commercial Underwriting,div-002,Business Lending,160
+team-022,Business Compliance,div-002,Business Lending,160
+team-023,Corporate Banking Platform,div-002,Business Lending,160
+team-024,Supply Chain Finance,div-002,Business Lending,160
+team-025,Business Credit Engine,div-002,Business Lending,160
+team-026,Credit Card Platform,div-003,Cards & Payments,160
+team-027,Debit Card Services,div-003,Cards & Payments,160
+team-028,Payment Processing Engine,div-003,Cards & Payments,160
+team-029,Payment Analytics,div-003,Cards & Payments,160
+team-030,Card Fraud Detection,div-003,Cards & Payments,160
+team-031,Payment Security,div-003,Cards & Payments,160
+team-032,Merchant Services,div-003,Cards & Payments,160
+team-033,Digital Wallet Platform,div-003,Cards & Payments,160
+team-034,Payment Gateway,div-003,Cards & Payments,160
+team-035,Card Rewards Platform,div-003,Cards & Payments,160
+team-036,Payment Compliance,div-003,Cards & Payments,160
+team-037,Cards Data Analytics,div-003,Cards & Payments,160
+team-038,Digital Banking Platform,div-004,Everyday Banking,160
+team-039,Mobile Banking App,div-004,Everyday Banking,160
+team-040,Customer Onboarding,div-004,Everyday Banking,160
+team-041,Account Management,div-004,Everyday Banking,160
+team-042,Digital Identity,div-004,Everyday Banking,160
+team-043,Customer Analytics,div-004,Everyday Banking,160
+team-044,Customer Service Platform,div-004,Everyday Banking,160
+team-045,Branch Technology,div-004,Everyday Banking,160
+team-046,ATM & Self Service,div-004,Everyday Banking,160
+team-047,Banking Operations,div-004,Everyday Banking,160
+team-048,Customer Experience,div-004,Everyday Banking,160
+team-049,Retail Compliance,div-004,Everyday Banking,160
+team-050,Business Analytics Platform,div-004,Everyday Banking,160

@@ -1,10 +1,9 @@
-
-role name,default rate
-Senior Developer,120
-Developer,90
-Junior Developer,65
-Product Manager,110
-Designer,85
-QA Engineer,75
-DevOps Engineer,105
-Technical Lead,140
+id,name,rate_type,default_annual_salary,description
+role-po,Product Owner,annual,120000,Product strategy and backlog management
+role-se,Software Engineer,annual,95000,Full-stack development and software delivery
+role-qe,Quality Engineer,annual,90000,Testing automation and quality assurance
+role-pe,Platform Engineer,annual,110000,Infrastructure DevOps and platform services
+role-ba,Business Analyst,annual,85000,Requirements analysis and business process design
+role-ux,UX Designer,annual,80000,User experience design and research
+role-sa,Solution Architect,annual,140000,Technical architecture and solution design
+role-dm,Delivery Manager,annual,110000,Project delivery and team coordination

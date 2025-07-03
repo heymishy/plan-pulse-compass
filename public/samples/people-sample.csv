@@ -1,6 +1,33 @@
-
-name,email,role,team name,team id
-John Smith,john.smith@company.com,Senior Developer,Frontend Team,team-1
-Jane Doe,jane.doe@company.com,Product Manager,Product Team,team-2
-Mike Johnson,mike.johnson@company.com,Designer,Design Team,team-3
-Sarah Wilson,sarah.wilson@company.com,Developer,Backend Team,team-4
+name,email,role,team_name,team_id
+Sarah Johnson,sarah.johnson@bank.com,Product Owner,Mortgage Origination,team-001
+Michael Chen,michael.chen@bank.com,Software Engineer,Mortgage Origination,team-001
+Emily Rodriguez,emily.rodriguez@bank.com,Quality Engineer,Mortgage Origination,team-001
+David Kim,david.kim@bank.com,Platform Engineer,Mortgage Origination,team-001
+Lisa Thompson,lisa.thompson@bank.com,Product Owner,Personal Loans Platform,team-002
+James Wilson,james.wilson@bank.com,Software Engineer,Personal Loans Platform,team-002
+Maria Garcia,maria.garcia@bank.com,Quality Engineer,Personal Loans Platform,team-002
+Robert Lee,robert.lee@bank.com,Platform Engineer,Personal Loans Platform,team-002
+Anna Kowalski,anna.kowalski@bank.com,Product Owner,Credit Assessment Engine,team-003
+Thomas Anderson,thomas.anderson@bank.com,Software Engineer,Credit Assessment Engine,team-003
+Jennifer Brown,jennifer.brown@bank.com,Quality Engineer,Credit Assessment Engine,team-003
+Kevin O'Connor,kevin.oconnor@bank.com,Platform Engineer,Credit Assessment Engine,team-003
+Rachel Green,rachel.green@bank.com,Product Owner,Loan Servicing,team-004
+Daniel Martinez,daniel.martinez@bank.com,Software Engineer,Loan Servicing,team-004
+Sophie Wang,sophie.wang@bank.com,Quality Engineer,Loan Servicing,team-004
+Alex Turner,alex.turner@bank.com,Platform Engineer,Loan Servicing,team-004
+Grace Liu,grace.liu@bank.com,Product Owner,Commercial Lending Platform,team-013
+Marcus Johnson,marcus.johnson@bank.com,Software Engineer,Commercial Lending Platform,team-013
+Olivia Chen,olivia.chen@bank.com,Quality Engineer,Commercial Lending Platform,team-013
+Noah Williams,noah.williams@bank.com,Platform Engineer,Commercial Lending Platform,team-013
+Emma Davis,emma.davis@bank.com,Product Owner,Credit Card Platform,team-026
+Ryan Taylor,ryan.taylor@bank.com,Software Engineer,Credit Card Platform,team-026
+Chloe Miller,chloe.miller@bank.com,Quality Engineer,Credit Card Platform,team-026
+Ethan Moore,ethan.moore@bank.com,Platform Engineer,Credit Card Platform,team-026
+Ava Wilson,ava.wilson@bank.com,Product Owner,Digital Banking Platform,team-038
+Liam Jackson,liam.jackson@bank.com,Software Engineer,Digital Banking Platform,team-038
+Mia Thompson,mia.thompson@bank.com,Quality Engineer,Digital Banking Platform,team-038
+Owen Garcia,owen.garcia@bank.com,Platform Engineer,Digital Banking Platform,team-038
+Isabella Rodriguez,isabella.rodriguez@bank.com,Product Owner,Mobile Banking App,team-039
+Lucas Martinez,lucas.martinez@bank.com,Software Engineer,Mobile Banking App,team-039
+Zoe Anderson,zoe.anderson@bank.com,Quality Engineer,Mobile Banking App,team-039
+Mason Lee,mason.lee@bank.com,Platform Engineer,Mobile Banking App,team-039
