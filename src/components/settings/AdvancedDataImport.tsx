@@ -902,9 +902,36 @@ const AdvancedDataImport = () => {
           throw new Error(`Unknown import type: ${importType}`);
       }
 
+      // Calculate actual imported record count based on import type
+      let importedCount = 0;
+      switch (importType) {
+        case 'projects-epics':
+          importedCount =
+            (result.projects?.length || 0) +
+            (result.epics?.length || 0) +
+            (result.milestones?.length || 0);
+          break;
+        case 'planning-allocations':
+          importedCount = result.allocations?.length || 0;
+          break;
+        case 'actual-allocations':
+          importedCount = result.actualAllocations?.length || 0;
+          break;
+        case 'iteration-reviews':
+          importedCount = result.iterationReviews?.length || 0;
+          break;
+        case 'bulk-tracking':
+          importedCount =
+            (result.actualAllocations?.length || 0) +
+            (result.iterationReviews?.length || 0);
+          break;
+        default:
+          importedCount = 0;
+      }
+
       setStatus({
         type: 'success',
-        message: `Successfully imported ${result.importedCount || 0} records.`,
+        message: `Successfully imported ${importedCount} records.`,
       });
 
       // Reset form and go back to step 1
