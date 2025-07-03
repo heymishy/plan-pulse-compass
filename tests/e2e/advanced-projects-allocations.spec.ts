@@ -1,0 +1,278 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('Advanced Data Import - Projects with Epics & Planning Allocations', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/settings');
+    await page.waitForLoadState('networkidle');
+
+    // Navigate to Import/Export tab
+    await page.click('[role="tab"]:has-text("Import/Export")');
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('should complete full banking portfolio import workflow', async ({
+    page,
+  }) => {
+    // Step 1: Import 10 banking projects with epics
+    await expect(
+      page.getByRole('heading', { name: 'Advanced Data Import' })
+    ).toBeVisible();
+
+    // Select Projects, Epics & Milestones import type
+    await page.click('[id="import-type"]');
+    await page.click(
+      '[role="option"]:has-text("Projects, Epics & Milestones")'
+    );
+
+    // Create comprehensive banking projects CSV data
+    const projectsEpicsCSV = `project_name,project_description,project_status,project_start_date,project_end_date,project_budget,epic_name,epic_description,epic_effort,epic_team,epic_target_date,milestone_name,milestone_due_date
+Digital Lending Platform,Modern loan origination and servicing platform,active,2024-01-01,2024-12-31,2500000,Loan Application Portal,Customer-facing loan application system,34,Mortgage Origination,2024-03-31,MVP Launch,2024-06-30
+Digital Lending Platform,,,,,Digital Document Processing,Automated document verification and processing,42,Personal Loans Platform,2024-04-30,Beta Release,2024-09-30
+Digital Lending Platform,,,,,Credit Decision Engine,AI-powered credit decision automation,38,Credit Assessment Engine,2024-05-31,Production Release,2024-12-31
+Digital Lending Platform,,,,,Loan Servicing Dashboard,Loan management and customer service tools,29,Loan Servicing,2024-06-30,,
+Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2024-10-31,1800000,Mobile Authentication,Biometric and multi-factor authentication,21,Digital Banking Platform,2024-03-15,Security Audit,2024-04-30
+Mobile Banking 2.0,,,,,Account Management,Enhanced account overview and management,25,Mobile Banking App,2024-04-15,User Testing,2024-06-15
+Mobile Banking 2.0,,,,,Payment Integration,Seamless payment and transfer experience,33,Payment Processing Engine,2024-05-30,Performance Testing,2024-08-31
+Mobile Banking 2.0,,,,,Personal Finance Tools,Budgeting and financial insights,18,Customer Analytics,2024-06-30,,
+Payment Processing Hub,Unified payment processing platform,planning,2024-02-01,2024-11-30,3200000,Real-time Processing,High-performance transaction processing,45,Payment Processing Engine,2024-05-31,Core Platform,2024-08-31
+Payment Processing Hub,,,,,Fraud Prevention,Real-time fraud detection and prevention,38,Payment Security,2024-06-30,Security Certification,2024-10-31
+Payment Processing Hub,,,,,Settlement Engine,Automated clearing and settlement,35,Merchant Services,2024-07-31,Compliance Review,2024-11-30
+Payment Processing Hub,,,,,Reporting Dashboard,Payment analytics and reporting,22,Payment Analytics,2024-08-31,,
+Credit Risk Engine,AI-powered credit risk assessment platform,active,2024-01-01,2024-09-30,2100000,Risk Model Development,Machine learning risk assessment models,50,Consumer Risk Analytics,2024-04-30,Model Validation,2024-07-31
+Credit Risk Engine,,,,,Data Integration Layer,Customer and financial data aggregation,32,Business Risk Management,2024-03-31,Data Quality Audit,2024-06-30
+Credit Risk Engine,,,,,Decision API,Real-time credit decision API,28,Credit Assessment Engine,2024-05-31,API Testing,2024-08-31
+Customer Onboarding,Digital customer onboarding experience,planning,2024-03-01,2024-08-31,1200000,Identity Verification,Digital identity verification system,35,Digital Identity,2024-05-31,Security Review,2024-06-30
+Customer Onboarding,,,,,Account Opening,Streamlined account opening process,28,Customer Onboarding,2024-06-30,User Experience Testing,2024-07-31
+Customer Onboarding,,,,,Document Upload,Secure document upload and processing,20,Branch Technology,2024-07-31,Compliance Audit,2024-08-31
+Trade Finance Platform,International trade finance solutions,active,2024-01-15,2024-12-15,2800000,Letter of Credit System,Digital letter of credit processing,42,Trade Finance,2024-05-31,Regulatory Approval,2024-08-31
+Trade Finance Platform,,,,,Trade Documentation,Electronic trade document management,35,Supply Chain Finance,2024-06-30,Integration Testing,2024-10-31
+Trade Finance Platform,,,,,Risk Assessment,Trade finance risk evaluation,30,Business Risk Management,2024-07-31,Risk Model Validation,2024-11-30
+Trade Finance Platform,,,,,Compliance Engine,Trade finance regulatory compliance,25,Business Compliance,2024-08-31,,
+Fraud Detection System,Real-time fraud prevention platform,active,2024-02-01,2024-10-31,1900000,Transaction Monitoring,Real-time transaction analysis,40,Card Fraud Detection,2024-05-31,Model Deployment,2024-08-31
+Fraud Detection System,,,,,Machine Learning Models,Adaptive fraud detection algorithms,45,Payment Security,2024-06-30,Performance Validation,2024-09-30
+Fraud Detection System,,,,,Alert Management,Fraud alert processing and case management,25,Customer Service Platform,2024-07-31,User Training,2024-10-31
+Open Banking APIs,Third-party integration platform,planning,2024-03-01,2024-11-30,1600000,API Gateway,Secure API gateway and management,38,Digital Banking Platform,2024-06-30,Security Certification,2024-09-30
+Open Banking APIs,,,,,Account Information API,Account data sharing APIs,30,Account Management,2024-07-31,Compliance Review,2024-10-31
+Open Banking APIs,,,,,Payment Initiation API,Third-party payment initiation,32,Payment Processing Engine,2024-08-31,Integration Testing,2024-11-30
+Regulatory Reporting,Automated compliance reporting platform,active,2024-01-01,2024-08-31,1400000,Data Aggregation,Regulatory data collection and aggregation,35,Consumer Compliance,2024-04-30,Data Validation,2024-06-30
+Regulatory Reporting,,,,,Report Generation,Automated regulatory report creation,28,Business Compliance,2024-05-31,Regulatory Review,2024-07-31
+Regulatory Reporting,,,,,Audit Trail,Comprehensive audit and compliance tracking,22,Retail Compliance,2024-06-30,Audit Certification,2024-08-31
+Data Analytics Platform,Enterprise business intelligence platform,planning,2024-02-15,2024-12-31,2200000,Data Warehouse,Centralized data storage and management,48,Customer Analytics,2024-06-30,Data Architecture Review,2024-08-31
+Data Analytics Platform,,,,,Analytics Engine,Advanced analytics and machine learning,40,Business Analytics Platform,2024-07-31,Model Validation,2024-10-31
+Data Analytics Platform,,,,,Visualization Dashboard,Self-service business intelligence,30,Commercial Analytics,2024-08-31,User Acceptance Testing,2024-11-30
+Data Analytics Platform,,,,,Data Governance,Data quality and governance framework,25,Banking Operations,2024-09-30,,`;
+
+    // Upload the projects and epics CSV
+    const fileInput = page.locator('#advanced-csv-file');
+    await expect(fileInput).toBeVisible();
+
+    await fileInput.setInputFiles({
+      name: 'banking-projects-epics.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(projectsEpicsCSV),
+    });
+
+    // Wait for file processing and handle field mapping if needed
+    await page.waitForTimeout(5000);
+
+    // Look for and handle continue button if field mapping appears
+    const continueButton = page.locator('button:has-text("Continue")');
+    if (await continueButton.isVisible({ timeout: 5000 })) {
+      await continueButton.click();
+      await page.waitForTimeout(3000);
+    }
+
+    // Verify projects import success
+    const projectsSuccess = page
+      .locator('text=success')
+      .or(page.locator('text=imported'))
+      .or(page.locator('text=completed'))
+      .or(page.locator('text=processed'))
+      .or(page.locator('[class*="success"]'));
+
+    await expect(projectsSuccess.first()).toBeVisible({ timeout: 20000 });
+
+    // Step 2: Import planning allocations for Q1 2024
+    // Reset the form for next import
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await page.click('[role="tab"]:has-text("Import/Export")');
+    await page.waitForLoadState('networkidle');
+
+    // Select Planning Allocations import type
+    await page.click('[id="import-type"]');
+    await page.click('[role="option"]:has-text("Planning Allocations")');
+
+    // Create comprehensive planning allocations CSV for Q1 2024
+    // Mix of project epics (70%) and run work (30%) to achieve 100% allocation per team
+    const planningAllocationsCSV = `team_name,quarter,iteration_number,epic_name,project_name,percentage,notes
+Mortgage Origination,Q1 2024,1,Loan Application Portal,Digital Lending Platform,50,Core lending functionality
+Mortgage Origination,Q1 2024,1,Critical Run,,30,BAU support and maintenance
+Mortgage Origination,Q1 2024,1,Bug Fixes,,20,Production issue resolution
+Mortgage Origination,Q1 2024,2,Loan Application Portal,Digital Lending Platform,45,Continued development
+Mortgage Origination,Q1 2024,2,Mobile Authentication,Mobile Banking 2.0,25,Authentication integration
+Mortgage Origination,Q1 2024,2,Critical Run,,30,BAU support and maintenance
+Personal Loans Platform,Q1 2024,1,Digital Document Processing,Digital Lending Platform,60,Document automation
+Personal Loans Platform,Q1 2024,1,Production Support,,25,System monitoring
+Personal Loans Platform,Q1 2024,1,Performance Optimization,,15,System improvements
+Personal Loans Platform,Q1 2024,2,Digital Document Processing,Digital Lending Platform,55,Continued development
+Personal Loans Platform,Q1 2024,2,Customer Onboarding Epic,Customer Onboarding,25,Integration work
+Personal Loans Platform,Q1 2024,2,Critical Run,,20,BAU activities
+Credit Assessment Engine,Q1 2024,1,Credit Decision Engine,Digital Lending Platform,45,AI development
+Credit Assessment Engine,Q1 2024,1,Risk Model Development,Credit Risk Engine,35,Risk modeling
+Credit Assessment Engine,Q1 2024,1,Compliance & Security,,20,Security reviews
+Credit Assessment Engine,Q1 2024,2,Credit Decision Engine,Digital Lending Platform,40,AI refinement
+Credit Assessment Engine,Q1 2024,2,Decision API,Credit Risk Engine,30,API development
+Credit Assessment Engine,Q1 2024,2,Critical Run,,30,BAU support
+Digital Banking Platform,Q1 2024,1,Mobile Authentication,Mobile Banking 2.0,40,Biometric auth
+Digital Banking Platform,Q1 2024,1,API Gateway,Open Banking APIs,30,API platform
+Digital Banking Platform,Q1 2024,1,Critical Run,,30,Platform maintenance
+Digital Banking Platform,Q1 2024,2,Mobile Authentication,Mobile Banking 2.0,35,Auth completion
+Digital Banking Platform,Q1 2024,2,API Gateway,Open Banking APIs,35,Gateway development
+Digital Banking Platform,Q1 2024,2,Production Support,,30,System support
+Mobile Banking App,Q1 2024,1,Account Management,Mobile Banking 2.0,50,Mobile UI
+Mobile Banking App,Q1 2024,1,Personal Finance Tools,Mobile Banking 2.0,25,Finance features
+Mobile Banking App,Q1 2024,1,Bug Fixes,,25,Mobile bug fixes
+Mobile Banking App,Q1 2024,2,Account Management,Mobile Banking 2.0,45,UI refinement
+Mobile Banking App,Q1 2024,2,Personal Finance Tools,Mobile Banking 2.0,30,Feature completion
+Mobile Banking App,Q1 2024,2,Critical Run,,25,App maintenance
+Payment Processing Engine,Q1 2024,1,Real-time Processing,Payment Processing Hub,55,Core processing
+Payment Processing Engine,Q1 2024,1,Payment Integration,Mobile Banking 2.0,25,Mobile payments
+Payment Processing Engine,Q1 2024,1,Critical Run,,20,Payment support
+Payment Processing Engine,Q1 2024,2,Real-time Processing,Payment Processing Hub,50,Processing optimization
+Payment Processing Engine,Q1 2024,2,Payment Initiation API,Open Banking APIs,30,API development
+Payment Processing Engine,Q1 2024,2,Production Support,,20,System monitoring
+Payment Security,Q1 2024,1,Fraud Prevention,Payment Processing Hub,45,Fraud detection
+Payment Security,Q1 2024,1,Machine Learning Models,Fraud Detection System,35,ML development
+Payment Security,Q1 2024,1,Compliance & Security,,20,Security compliance
+Payment Security,Q1 2024,2,Fraud Prevention,Payment Processing Hub,40,Fraud refinement
+Payment Security,Q1 2024,2,Machine Learning Models,Fraud Detection System,40,Model training
+Payment Security,Q1 2024,2,Critical Run,,20,Security monitoring
+Card Fraud Detection,Q1 2024,1,Transaction Monitoring,Fraud Detection System,60,Real-time monitoring
+Card Fraud Detection,Q1 2024,1,Production Support,,25,Fraud support
+Card Fraud Detection,Q1 2024,1,Performance Optimization,,15,System tuning
+Card Fraud Detection,Q1 2024,2,Transaction Monitoring,Fraud Detection System,55,Monitor enhancement
+Card Fraud Detection,Q1 2024,2,Machine Learning Models,Fraud Detection System,25,ML integration
+Card Fraud Detection,Q1 2024,2,Critical Run,,20,BAU fraud work
+Customer Analytics,Q1 2024,1,Personal Finance Tools,Mobile Banking 2.0,35,Analytics features
+Customer Analytics,Q1 2024,1,Data Warehouse,Data Analytics Platform,40,Data platform
+Customer Analytics,Q1 2024,1,Business as Usual,,25,Analytics support
+Customer Analytics,Q1 2024,2,Personal Finance Tools,Mobile Banking 2.0,30,Feature completion
+Customer Analytics,Q1 2024,2,Data Warehouse,Data Analytics Platform,45,Platform development
+Customer Analytics,Q1 2024,2,Critical Run,,25,Analytics maintenance
+Trade Finance,Q1 2024,1,Letter of Credit System,Trade Finance Platform,65,LC processing
+Trade Finance,Q1 2024,1,Critical Run,,35,Trade finance support
+Trade Finance,Q1 2024,2,Letter of Credit System,Trade Finance Platform,60,LC completion
+Trade Finance,Q1 2024,2,Trade Documentation,Trade Finance Platform,25,Documentation system
+Trade Finance,Q1 2024,2,Production Support,,15,Trade support
+Business Risk Management,Q1 2024,1,Data Integration Layer,Credit Risk Engine,50,Risk data
+Business Risk Management,Q1 2024,1,Risk Assessment,Trade Finance Platform,30,Trade risk
+Business Risk Management,Q1 2024,1,Critical Run,,20,Risk management BAU
+Business Risk Management,Q1 2024,2,Data Integration Layer,Credit Risk Engine,45,Data completion
+Business Risk Management,Q1 2024,2,Risk Assessment,Trade Finance Platform,35,Risk refinement
+Business Risk Management,Q1 2024,2,Compliance & Security,,20,Risk compliance
+Customer Onboarding,Q1 2024,1,Identity Verification,Customer Onboarding,55,ID verification
+Customer Onboarding,Q1 2024,1,Account Opening,Customer Onboarding,25,Account process
+Customer Onboarding,Q1 2024,1,Critical Run,,20,Onboarding support
+Customer Onboarding,Q1 2024,2,Identity Verification,Customer Onboarding,50,ID completion
+Customer Onboarding,Q1 2024,2,Account Opening,Customer Onboarding,30,Process refinement
+Customer Onboarding,Q1 2024,2,Production Support,,20,Support activities
+Digital Identity,Q1 2024,1,Identity Verification,Customer Onboarding,70,Digital ID platform
+Digital Identity,Q1 2024,1,Compliance & Security,,30,Identity compliance
+Digital Identity,Q1 2024,2,Identity Verification,Customer Onboarding,65,Platform completion
+Digital Identity,Q1 2024,2,Mobile Authentication,Mobile Banking 2.0,20,Auth integration
+Digital Identity,Q1 2024,2,Critical Run,,15,Identity maintenance
+Business Analytics Platform,Q1 2024,1,Analytics Engine,Data Analytics Platform,60,Analytics core
+Business Analytics Platform,Q1 2024,1,Business as Usual,,40,Analytics support
+Business Analytics Platform,Q1 2024,2,Analytics Engine,Data Analytics Platform,55,Engine completion
+Business Analytics Platform,Q1 2024,2,Visualization Dashboard,Data Analytics Platform,25,Dashboard development
+Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
+
+    // Upload the planning allocations CSV
+    const allocationsFileInput = page.locator('#advanced-csv-file');
+    await expect(allocationsFileInput).toBeVisible();
+
+    await allocationsFileInput.setInputFiles({
+      name: 'q1-2024-planning-allocations.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(planningAllocationsCSV),
+    });
+
+    // Wait for file processing and handle field mapping
+    await page.waitForTimeout(5000);
+
+    // Handle continue button for allocations import
+    const allocationsContinueButton = page.locator(
+      'button:has-text("Continue")'
+    );
+    if (await allocationsContinueButton.isVisible({ timeout: 5000 })) {
+      await allocationsContinueButton.click();
+      await page.waitForTimeout(3000);
+    }
+
+    // Verify allocations import success
+    const allocationsSuccess = page
+      .locator('text=success')
+      .or(page.locator('text=imported'))
+      .or(page.locator('text=completed'))
+      .or(page.locator('text=processed'))
+      .or(page.locator('[class*="success"]'));
+
+    await expect(allocationsSuccess.first()).toBeVisible({ timeout: 20000 });
+
+    // Step 3: Verify the imported data integrity
+    // Navigate to Planning page to verify allocations
+    await page.click('a[href="/planning"]');
+    await page.waitForLoadState('networkidle');
+
+    // Verify planning page loads with imported data
+    await expect(page.locator('h1')).toContainText('Planning');
+
+    // Look for evidence of imported projects and allocations
+    await expect(
+      page
+        .locator('text=Digital Lending Platform')
+        .or(page.locator('text=Mobile Banking 2.0'))
+        .or(page.locator('text=Q1 2024'))
+        .or(page.locator('text=Mortgage Origination'))
+    ).toBeVisible();
+  });
+
+  test('should handle validation errors for invalid allocation data', async ({
+    page,
+  }) => {
+    // Test error handling with invalid allocation data
+    await expect(
+      page.getByRole('heading', { name: 'Advanced Data Import' })
+    ).toBeVisible();
+
+    await page.click('[id="import-type"]');
+    await page.click('[role="option"]:has-text("Planning Allocations")');
+
+    // Create invalid CSV with allocation > 100% for a team
+    const invalidAllocationsCSV = `team_name,quarter,iteration_number,epic_name,project_name,percentage,notes
+Mortgage Origination,Q1 2024,1,Invalid Epic,Invalid Project,150,Over 100% allocation
+Nonexistent Team,Q1 2024,1,Some Epic,Some Project,50,Invalid team name
+Valid Team,Invalid Quarter,1,Some Epic,Some Project,50,Invalid quarter`;
+
+    const fileInput = page.locator('#advanced-csv-file');
+    await fileInput.setInputFiles({
+      name: 'invalid-allocations.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(invalidAllocationsCSV),
+    });
+
+    await page.waitForTimeout(3000);
+
+    // Look for validation errors
+    const errorIndicators = page
+      .locator('text=error')
+      .or(page.locator('text=invalid'))
+      .or(page.locator('text=failed'))
+      .or(page.locator('text=validation'))
+      .or(page.locator('[class*="error"]'))
+      .or(page.locator('[class*="danger"]'));
+
+    await expect(errorIndicators.first()).toBeVisible({ timeout: 10000 });
+  });
+});
