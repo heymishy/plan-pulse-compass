@@ -225,8 +225,8 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
     await page.click('a[href="/planning"]');
     await page.waitForLoadState('networkidle');
 
-    // Verify planning page loads with imported data
-    await expect(page.locator('h1')).toContainText('Planning');
+    // Verify planning page loads with imported data - use specific heading selector
+    await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible();
 
     // Look for evidence of imported projects and allocations
     await expect(
