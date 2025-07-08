@@ -151,6 +151,14 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      pull-requests: write
+    concurrency:
+      group: pages-${{ github.ref }}
+      cancel-in-progress: false
 
     steps:
       - name: Checkout code

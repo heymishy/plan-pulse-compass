@@ -1,24 +1,30 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { parsePeopleCSV, parseProjectsCSV, parseRolesCSV } from '@/utils/csvUtils';
+import {
+  parsePeopleCSV,
+  parseProjectsCSV,
+  parseRolesCSV,
+} from '@/utils/csvUtils';
 
 export const useSetupForm = () => {
-  const { 
-    setConfig, 
-    setIsSetupComplete, 
+  const {
+    setConfig,
+    setIsSetupComplete,
     setRunWorkCategories,
     setPeople,
     setTeams,
     setProjects,
-    setRoles
+    setRoles,
   } = useApp();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Initialize with default financial year start as April 1st of current year
   const currentYear = new Date().getFullYear();
   const defaultStartDate = `${currentYear}-04-01`;
-  
+
   const [formData, setFormData] = useState({
     financialYearStart: defaultStartDate,
     financialYearEnd: `${currentYear + 1}-03-31`, // Auto-calculated
@@ -27,14 +33,17 @@ export const useSetupForm = () => {
 
   const [roleRates, setRoleRates] = useState<{ [roleId: string]: number }>({});
 
-  const handleCSVUpload = (event: React.ChangeEvent<HTMLInputElement>, type: string) => {
+  const handleCSVUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: string
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       const text = e.target?.result as string;
-      
+
       try {
         switch (type) {
           case 'People': {
@@ -42,7 +51,7 @@ export const useSetupForm = () => {
             setPeople(people);
             setTeams(teams);
             toast({
-              title: "Import Successful",
+              title: 'Import Successful',
               description: `Imported ${people.length} people and ${teams.length} teams`,
             });
             break;
@@ -51,7 +60,7 @@ export const useSetupForm = () => {
             const projects = parseProjectsCSV(text);
             setProjects(projects);
             toast({
-              title: "Import Successful",
+              title: 'Import Successful',
               description: `Imported ${projects.length} projects`,
             });
             break;
@@ -60,7 +69,7 @@ export const useSetupForm = () => {
             const roles = parseRolesCSV(text);
             setRoles(roles);
             toast({
-              title: "Import Successful",
+              title: 'Import Successful',
               description: `Imported ${roles.length} roles`,
             });
             break;
@@ -69,9 +78,9 @@ export const useSetupForm = () => {
       } catch (error) {
         console.error('CSV parsing error:', error);
         toast({
-          title: "Import Error",
+          title: 'Import Error',
           description: `Failed to parse ${type} CSV. Please check the format.`,
-          variant: "destructive",
+          variant: 'destructive',
         });
       }
     };
@@ -86,9 +95,10 @@ export const useSetupForm = () => {
     // Validate required fields
     if (!formData.financialYearStart || !formData.financialYearEnd) {
       toast({
-        title: "Configuration Required",
-        description: "Please set the financial year dates before completing setup.",
-        variant: "destructive",
+        title: 'Configuration Required',
+        description:
+          'Please set the financial year dates before completing setup.',
+        variant: 'destructive',
       });
       return;
     }
@@ -96,10 +106,30 @@ export const useSetupForm = () => {
     try {
       // Create default run work categories
       const defaultRunWorkCategories = [
-        { id: 'run-1', name: 'Production Support', description: 'Ongoing production support work', color: '#ef4444' },
-        { id: 'run-2', name: 'Certificate Management', description: 'SSL/TLS certificate management', color: '#f97316' },
-        { id: 'run-3', name: 'Compliance', description: 'Regulatory compliance work', color: '#eab308' },
-        { id: 'run-4', name: 'Technical Debt', description: 'Technical debt reduction', color: '#22c55e' },
+        {
+          id: 'run-1',
+          name: 'Production Support',
+          description: 'Ongoing production support work',
+          color: '#ef4444',
+        },
+        {
+          id: 'run-2',
+          name: 'Certificate Management',
+          description: 'SSL/TLS certificate management',
+          color: '#f97316',
+        },
+        {
+          id: 'run-3',
+          name: 'Compliance',
+          description: 'Regulatory compliance work',
+          color: '#eab308',
+        },
+        {
+          id: 'run-4',
+          name: 'Technical Debt',
+          description: 'Technical debt reduction',
+          color: '#22c55e',
+        },
       ];
 
       // Create basic configuration with proper structure
@@ -121,28 +151,29 @@ export const useSetupForm = () => {
       // Set all the data in the context
       setConfig(config);
       setRunWorkCategories(defaultRunWorkCategories);
-      
+
       // Mark setup as complete
       setIsSetupComplete(true);
-      
+
       console.log('Setup completion successful');
-      
+
       toast({
-        title: "Setup Complete",
-        description: "Your planning app is now ready to use!",
+        title: 'Setup Complete',
+        description: 'Your planning app is now ready to use!',
       });
 
-      // Small delay to ensure state is persisted before potential navigation
+      // Small delay to ensure state is persisted before navigation
       setTimeout(() => {
-        console.log('Setup process finished');
+        console.log('Setup process finished, navigating to dashboard');
+        navigate('/dashboard');
       }, 100);
-      
     } catch (error) {
       console.error('Setup completion error:', error);
       toast({
-        title: "Setup Error",
-        description: "There was an error completing the setup. Please try again.",
-        variant: "destructive",
+        title: 'Setup Error',
+        description:
+          'There was an error completing the setup. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -153,6 +184,6 @@ export const useSetupForm = () => {
     roleRates,
     setRoleRates,
     handleCSVUpload,
-    completeSetup
+    completeSetup,
   };
 };
