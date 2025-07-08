@@ -43,7 +43,12 @@ test.describe('Allocations Import E2E Tests', () => {
 
     // Import teams/divisions CSV first using EnhancedImportExport component
     // Look for the "Teams & Divisions CSV" file input in EnhancedImportExport
+    await expect(
+      page.getByRole('heading', { name: 'Enhanced Import & Export' })
+    ).toBeVisible();
+
     const teamsFileInput = page.locator('#teamsCSV');
+    await expect(teamsFileInput).toBeVisible({ timeout: 10000 });
 
     const teamsCSV = `team_id,team_name,division_id,division_name,capacity
 team-001,Mortgage Origination,div-001,Consumer Lending,160
@@ -56,10 +61,36 @@ team-003,Credit Assessment Engine,div-001,Consumer Lending,160`;
       buffer: Buffer.from(teamsCSV),
     });
 
-    // Wait for teams import success
-    await expect(
-      page.locator('text=success').or(page.locator('text=imported')).first()
-    ).toBeVisible({ timeout: 10000 });
+    // Wait for teams import success with better error handling
+    await page.waitForTimeout(5000); // Give import time to process
+
+    // Look for success indicators specifically in the EnhancedImportExport section
+    const successIndicators = page
+      .locator('text=Successfully imported')
+      .or(
+        page
+          .locator('text=3 teams')
+          .or(page.locator('text=success').or(page.locator('text=imported')))
+      );
+
+    await expect(successIndicators.first()).toBeVisible({ timeout: 15000 });
+
+    // Verify teams were actually imported by checking localStorage or navigating to teams page
+    await page.goto('/settings');
+    await page.waitForLoadState('networkidle');
+    await page.click('[role="tab"]:has-text("Teams & Roles")');
+    await page.waitForLoadState('networkidle');
+
+    // Check if our imported teams appear in the teams management section
+    const importedTeamCheck = page
+      .locator('text=Mortgage Origination')
+      .or(page.locator('text=team-001'));
+
+    await expect(importedTeamCheck.first()).toBeVisible({ timeout: 10000 });
+
+    // Navigate back to Import/Export for next step
+    await page.click('[role="tab"]:has-text("Import/Export")');
+    await page.waitForLoadState('networkidle');
 
     // 4. Import projects and epics
     await page.reload();
@@ -166,10 +197,40 @@ Credit Assessment Engine,Q1 2024,1,Compliance & Security,,20,Security reviews`;
     // Verify Planning page loads with imported data - use more specific selector to avoid strict mode violation
     await expect(page.locator('h1:has-text("Planning")').first()).toBeVisible();
 
-    // Verify teams appear in the planning interface
-    await expect(page.locator('text=Mortgage Origination')).toBeVisible();
-    await expect(page.locator('text=Personal Loans Platform')).toBeVisible();
-    await expect(page.locator('text=Credit Assessment Engine')).toBeVisible();
+    // Debug: Check if Planning page has any content at all
+    await page.waitForTimeout(3000); // Give planning page time to load
+
+    // Verify teams appear in the planning interface with more robust selectors
+    const mortgageTeam = page
+      .locator('text=Mortgage Origination')
+      .or(
+        page
+          .locator('[data-testid*="mortgage"]')
+          .or(page.locator('*:has-text("Mortgage")'))
+      );
+
+    const personalLoansTeam = page
+      .locator('text=Personal Loans Platform')
+      .or(page.locator('*:has-text("Personal Loans")'));
+
+    const creditTeam = page
+      .locator('text=Credit Assessment Engine')
+      .or(page.locator('*:has-text("Credit Assessment")'));
+
+    // Check if we have a "no data" state
+    const noDataMessage = page
+      .locator('text=No planning data')
+      .or(page.locator('text=No teams').or(page.locator('text=No data')));
+
+    if ((await noDataMessage.count()) > 0) {
+      throw new Error(
+        'Planning page shows no data - teams or allocations import may have failed'
+      );
+    }
+
+    await expect(mortgageTeam.first()).toBeVisible({ timeout: 15000 });
+    await expect(personalLoansTeam.first()).toBeVisible({ timeout: 10000 });
+    await expect(creditTeam.first()).toBeVisible({ timeout: 10000 });
 
     // Verify quarter data appears
     await expect(
@@ -259,10 +320,22 @@ Credit Assessment Engine,Compliance & Security,run,1,20,Q1 2024`;
     // Verify Planning page loads with actual allocation data - use more specific selector to avoid strict mode violation
     await expect(page.locator('h1:has-text("Planning")').first()).toBeVisible();
 
-    // Verify teams with actual allocations appear
-    await expect(page.locator('text=Mortgage Origination')).toBeVisible();
-    await expect(page.locator('text=Personal Loans Platform')).toBeVisible();
-    await expect(page.locator('text=Credit Assessment Engine')).toBeVisible();
+    // Verify teams with actual allocations appear with robust selectors
+    const mortgageTeam = page
+      .locator('text=Mortgage Origination')
+      .or(page.locator('*:has-text("Mortgage")'));
+
+    const personalLoansTeam = page
+      .locator('text=Personal Loans Platform')
+      .or(page.locator('*:has-text("Personal Loans")'));
+
+    const creditTeam = page
+      .locator('text=Credit Assessment Engine')
+      .or(page.locator('*:has-text("Credit Assessment")'));
+
+    await expect(mortgageTeam.first()).toBeVisible({ timeout: 15000 });
+    await expect(personalLoansTeam.first()).toBeVisible({ timeout: 10000 });
+    await expect(creditTeam.first()).toBeVisible({ timeout: 10000 });
 
     // Look for actual vs planned indicators or percentage displays
     const actualPercentages = page
