@@ -2,10 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: true,
+  fullyParallel: false, // Disable parallel execution to ensure setup runs first
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 3 : undefined,
+  workers: 1, // Use single worker to ensure test order
   reporter: 'html',
   timeout: 60000, // 60 seconds per test to handle setup wizard and imports
   use: {
