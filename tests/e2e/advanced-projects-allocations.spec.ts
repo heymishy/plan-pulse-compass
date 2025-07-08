@@ -53,20 +53,18 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
       await page.waitForTimeout(5000); // Give more time for quarters to be created
 
       // Verify quarters were created
-      await expect(page.locator('text=Q1 2024')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('text=Q1 2024')).toBeVisible({ timeout: 5000 });
 
       // Generate iterations for Q1 (needed for allocation import)
       const q1QuarterRow = page.locator('tr:has(td:text("Q1 2024"))');
-      await expect(q1QuarterRow).toBeVisible({ timeout: 10000 });
+      await expect(q1QuarterRow).toBeVisible({ timeout: 5000 });
 
       const generateIterationsButton = q1QuarterRow.locator(
         'button:has-text("Generate Iterations")'
       );
-      await expect(generateIterationsButton).toBeVisible({ timeout: 10000 });
+      await expect(generateIterationsButton).toBeVisible({ timeout: 5000 });
       await generateIterationsButton.click();
-      await page.waitForTimeout(5000); // Give more time for iterations to be created
+      await page.waitForTimeout(2000);
 
       // Verify iterations were created by checking for success message
       const iterationSuccess = page
@@ -74,7 +72,7 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
         .or(page.locator('text=iterations').or(page.locator('text=success')));
 
       try {
-        await expect(iterationSuccess.first()).toBeVisible({ timeout: 10000 });
+        await expect(iterationSuccess.first()).toBeVisible({ timeout: 5000 });
         console.log('Iterations generated successfully');
       } catch (error) {
         console.log('No explicit iteration success message, but proceeding');
@@ -384,10 +382,10 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
       .locator('text=Digital Banking Platform')
       .or(page.locator('*:has-text("Digital Banking")'));
 
-    await expect(mortgageTeam.first()).toBeVisible({ timeout: 15000 });
-    await expect(personalLoansTeam.first()).toBeVisible({ timeout: 10000 });
-    await expect(creditTeam.first()).toBeVisible({ timeout: 10000 });
-    await expect(digitalBankingTeam.first()).toBeVisible({ timeout: 10000 });
+    await expect(mortgageTeam.first()).toBeVisible({ timeout: 5000 });
+    await expect(personalLoansTeam.first()).toBeVisible({ timeout: 5000 });
+    await expect(creditTeam.first()).toBeVisible({ timeout: 5000 });
+    await expect(digitalBankingTeam.first()).toBeVisible({ timeout: 5000 });
 
     // Verify Q1 2024 quarter data appears
     await expect(

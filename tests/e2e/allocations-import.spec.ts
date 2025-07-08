@@ -53,20 +53,18 @@ test.describe('Allocations Import E2E Tests', () => {
       await page.waitForTimeout(5000); // Give more time for quarters to be created
 
       // Verify quarters were created
-      await expect(page.locator('text=Q1 2024')).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.locator('text=Q1 2024')).toBeVisible({ timeout: 5000 });
 
       // Generate iterations for Q1 (needed for allocation import)
       const q1QuarterRow = page.locator('tr:has(td:text("Q1 2024"))');
-      await expect(q1QuarterRow).toBeVisible({ timeout: 10000 });
+      await expect(q1QuarterRow).toBeVisible({ timeout: 5000 });
 
       const generateIterationsButton = q1QuarterRow.locator(
         'button:has-text("Generate Iterations")'
       );
-      await expect(generateIterationsButton).toBeVisible({ timeout: 10000 });
+      await expect(generateIterationsButton).toBeVisible({ timeout: 5000 });
       await generateIterationsButton.click();
-      await page.waitForTimeout(5000); // Give more time for iterations to be created
+      await page.waitForTimeout(2000);
 
       // Verify iterations were created by checking for success message
       const iterationSuccess = page
@@ -74,7 +72,7 @@ test.describe('Allocations Import E2E Tests', () => {
         .or(page.locator('text=iterations').or(page.locator('text=success')));
 
       try {
-        await expect(iterationSuccess.first()).toBeVisible({ timeout: 10000 });
+        await expect(iterationSuccess.first()).toBeVisible({ timeout: 5000 });
         console.log('Iterations generated successfully');
       } catch (error) {
         console.log('No explicit iteration success message, but proceeding');
@@ -272,9 +270,9 @@ Credit Assessment Engine,Q1 2024,1,Compliance & Security,,20,Security reviews`;
       );
     }
 
-    await expect(mortgageTeam.first()).toBeVisible({ timeout: 15000 });
-    await expect(personalLoansTeam.first()).toBeVisible({ timeout: 10000 });
-    await expect(creditTeam.first()).toBeVisible({ timeout: 10000 });
+    await expect(mortgageTeam.first()).toBeVisible({ timeout: 5000 });
+    await expect(personalLoansTeam.first()).toBeVisible({ timeout: 5000 });
+    await expect(creditTeam.first()).toBeVisible({ timeout: 5000 });
 
     // Verify quarter data appears
     await expect(
@@ -377,9 +375,9 @@ Credit Assessment Engine,Compliance & Security,run,1,20,Q1 2024`;
       .locator('text=Credit Assessment Engine')
       .or(page.locator('*:has-text("Credit Assessment")'));
 
-    await expect(mortgageTeam.first()).toBeVisible({ timeout: 15000 });
-    await expect(personalLoansTeam.first()).toBeVisible({ timeout: 10000 });
-    await expect(creditTeam.first()).toBeVisible({ timeout: 10000 });
+    await expect(mortgageTeam.first()).toBeVisible({ timeout: 5000 });
+    await expect(personalLoansTeam.first()).toBeVisible({ timeout: 5000 });
+    await expect(creditTeam.first()).toBeVisible({ timeout: 5000 });
 
     // Look for actual vs planned indicators or percentage displays
     const actualPercentages = page
