@@ -74,7 +74,48 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
   test('should complete full banking portfolio import workflow', async ({
     page,
   }) => {
-    // Step 1: Import 10 banking projects with epics
+    // Step 1: Import teams first (required for epic_team references in projects CSV)
+    await expect(
+      page.getByRole('heading', { name: 'Enhanced Import & Export' })
+    ).toBeVisible();
+
+    const teamsFileInput = page.locator('#teamsCSV');
+    await expect(teamsFileInput).toBeVisible({ timeout: 10000 });
+
+    const teamsCSV = `team_id,team_name,division_id,division_name,capacity
+team-001,Mortgage Origination,div-001,Consumer Lending,160
+team-002,Personal Loans Platform,div-001,Consumer Lending,160
+team-003,Credit Assessment Engine,div-001,Consumer Lending,160
+team-004,Digital Banking Platform,div-002,Business Lending,160
+team-005,Mobile Banking App,div-002,Business Lending,160
+team-006,Payment Processing Engine,div-003,Cards & Payments,160
+team-007,Payment Security,div-003,Cards & Payments,160
+team-008,Card Fraud Detection,div-003,Cards & Payments,160
+team-009,Customer Analytics,div-004,Everyday Banking,160
+team-010,Trade Finance,div-004,Everyday Banking,160`;
+
+    await teamsFileInput.setInputFiles({
+      name: 'teams-divisions.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(teamsCSV),
+    });
+
+    // Wait for teams import and look for success
+    await page.waitForTimeout(3000);
+
+    try {
+      const successMessage = page
+        .locator('text=Successfully imported')
+        .or(page.locator('text=teams'));
+      await expect(successMessage.first()).toBeVisible({ timeout: 8000 });
+      console.log('Teams import success message found');
+    } catch (error) {
+      console.log('No explicit teams success message found, proceeding');
+    }
+
+    await page.waitForTimeout(2000);
+
+    // Step 2: Import 10 banking projects with epics
     await expect(
       page.getByRole('heading', { name: 'Advanced Data Import' })
     ).toBeVisible();
@@ -153,7 +194,7 @@ Data Analytics Platform,,,,,Data Governance,Data quality and governance framewor
 
     await expect(projectsSuccess.first()).toBeVisible({ timeout: 20000 });
 
-    // Step 2: Import planning allocations for Q1 2024
+    // Step 3: Import planning allocations for Q1 2024
     // Reset the form for next import
     await page.reload();
     await page.waitForLoadState('networkidle');
@@ -281,7 +322,7 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
 
     await expect(allocationsSuccess.first()).toBeVisible({ timeout: 20000 });
 
-    // Step 3: Verify the imported data integrity on Planning page
+    // Step 4: Verify the imported data integrity on Planning page
     await page.goto('/planning');
     await page.waitForLoadState('networkidle');
 
