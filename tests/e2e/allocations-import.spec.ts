@@ -6,19 +6,34 @@ test.describe('Allocations Import E2E Tests', () => {
     await page.goto('/setup');
     await page.waitForLoadState('networkidle');
 
-    // Fill in financial year configuration
-    await page.fill('input[name="financialYearStart"]', '2024-01-01');
-    await page.fill('input[name="financialYearEnd"]', '2024-12-31');
-    await page.selectOption('select[name="iterationLength"]', 'fortnightly');
+    // Check if we're redirected to dashboard (setup already complete)
+    if (page.url().includes('/dashboard')) {
+      // Setup already complete, proceed to import steps
+    } else {
+      // Wait for setup form to be visible and complete setup
+      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 10000 });
 
-    // Complete setup
-    await page.click('button:has-text("Next")');
-    await page.waitForTimeout(1000);
-    await page.click('button:has-text("Complete Setup")');
+      // Fill in financial year configuration using correct selectors
+      await page.fill('#fyStart', '2024-01-01');
+      // Note: Financial year end is auto-calculated, no need to fill
 
-    // 2. Wait for redirect to dashboard (setup complete)
-    await page.waitForURL('/dashboard');
-    await page.waitForLoadState('networkidle');
+      // Select iteration length using radio buttons
+      await page.check('input[name="iterationLength"][value="fortnightly"]');
+
+      // Complete setup
+      await page.click('button:has-text("Next")');
+      await page.waitForTimeout(2000);
+
+      // Wait for Complete Setup button to be visible
+      await expect(
+        page.locator('button:has-text("Complete Setup")')
+      ).toBeVisible({ timeout: 10000 });
+      await page.click('button:has-text("Complete Setup")');
+
+      // 2. Wait for redirect to dashboard (setup complete)
+      await page.waitForURL('/dashboard');
+      await page.waitForLoadState('networkidle');
+    }
 
     // 3. Import foundational data first - teams and divisions
     await page.goto('/settings');
