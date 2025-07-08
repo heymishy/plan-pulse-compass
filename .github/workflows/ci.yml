@@ -185,6 +185,49 @@ jobs:
             playwright-report/
           retention-days: 7
 
+      - name: Deploy Playwright Report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./playwright-report
+          destination_dir: e2e-reports/${{ github.run_number }}
+          keep_files: true
+
+      - name: Comment PR with Playwright Report Link
+        uses: actions/github-script@v7
+        if: always() && github.event_name == 'pull_request'
+        with:
+          script: |
+            const reportUrl = `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/e2e-reports/${{ github.run_number }}/`;
+            const comment = `## 🎭 Playwright E2E Test Report
+
+            **Test Results**: [View Interactive Report](${reportUrl})
+
+            The report includes:
+            - 📊 Test summary with pass/fail statistics
+            - 🖼️ Screenshots for failed tests
+            - 🎥 Video recordings of test runs
+            - 🔍 Interactive trace viewer for debugging
+
+            *Report generated for commit: ${{ github.sha }}*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Add GitHub Actions Summary
+        if: always()
+        run: |
+          echo "## 🎭 Playwright E2E Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Interactive Test Report**: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/e2e-reports/${{ github.run_number }}/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The report includes screenshots, videos, and traces for easy debugging of test failures." >> $GITHUB_STEP_SUMMARY
+
   # Full Test Suite (with coverage)
   full-tests:
     name: Full Test Suite

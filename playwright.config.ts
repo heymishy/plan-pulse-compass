@@ -10,9 +10,9 @@ export default defineConfig({
   timeout: 60000, // 60 seconds per test to handle setup wizard and imports
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
+    screenshot: process.env.CI ? 'only-on-failure' : 'only-on-failure',
+    video: process.env.CI ? 'retain-on-failure' : 'retain-on-failure',
     actionTimeout: 15000, // 15 seconds for individual actions
   },
 
