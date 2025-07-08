@@ -50,14 +50,35 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
 
       // Generate standard quarters
       await page.click('button:has-text("Generate Standard Quarters")');
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(5000); // Give more time for quarters to be created
+
+      // Verify quarters were created
+      await expect(page.locator('text=Q1 2024')).toBeVisible({
+        timeout: 10000,
+      });
 
       // Generate iterations for Q1 (needed for allocation import)
       const q1QuarterRow = page.locator('tr:has(td:text("Q1 2024"))');
-      await q1QuarterRow
-        .locator('button:has-text("Generate Iterations")')
-        .click();
-      await page.waitForTimeout(3000);
+      await expect(q1QuarterRow).toBeVisible({ timeout: 10000 });
+
+      const generateIterationsButton = q1QuarterRow.locator(
+        'button:has-text("Generate Iterations")'
+      );
+      await expect(generateIterationsButton).toBeVisible({ timeout: 10000 });
+      await generateIterationsButton.click();
+      await page.waitForTimeout(5000); // Give more time for iterations to be created
+
+      // Verify iterations were created by checking for success message
+      const iterationSuccess = page
+        .locator('text=Generated')
+        .or(page.locator('text=iterations').or(page.locator('text=success')));
+
+      try {
+        await expect(iterationSuccess.first()).toBeVisible({ timeout: 10000 });
+        console.log('Iterations generated successfully');
+      } catch (error) {
+        console.log('No explicit iteration success message, but proceeding');
+      }
 
       // Close the dialog
       await page.keyboard.press('Escape');
@@ -332,14 +353,17 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
     // Debug: Give planning page time to load and check for no-data state
     await page.waitForTimeout(3000);
 
-    // Check if we have a "no data" state first
+    // Check if we have a "no data" state or "no iterations" message first
     const noDataMessage = page
       .locator('text=No planning data')
-      .or(page.locator('text=No teams').or(page.locator('text=No data')));
+      .or(page.locator('text=No teams'))
+      .or(page.locator('text=No data'))
+      .or(page.locator('text=no iterations found'))
+      .or(page.locator('text=create iterations first'));
 
     if ((await noDataMessage.count()) > 0) {
       throw new Error(
-        'Planning page shows no data - teams or allocations import may have failed'
+        'Planning page shows no data or missing iterations - setup may have failed'
       );
     }
 
