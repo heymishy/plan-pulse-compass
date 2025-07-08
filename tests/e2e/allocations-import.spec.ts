@@ -2,15 +2,101 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Allocations Import E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/settings');
+    // 1. Complete required setup wizard first
+    await page.goto('/setup');
     await page.waitForLoadState('networkidle');
 
-    // Navigate to Import/Export tab
+    // Fill in financial year configuration
+    await page.fill('input[name="financialYearStart"]', '2024-01-01');
+    await page.fill('input[name="financialYearEnd"]', '2024-12-31');
+    await page.selectOption('select[name="iterationLength"]', 'fortnightly');
+
+    // Complete setup
+    await page.click('button:has-text("Next")');
+    await page.waitForTimeout(1000);
+    await page.click('button:has-text("Complete Setup")');
+
+    // 2. Wait for redirect to dashboard (setup complete)
+    await page.waitForURL('/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    // 3. Import foundational data first - teams and divisions
+    await page.goto('/settings');
+    await page.waitForLoadState('networkidle');
+    await page.click('[role="tab"]:has-text("Import/Export")');
+    await page.waitForLoadState('networkidle');
+
+    // Import teams/divisions CSV first
+    await page.click('[id="import-type"]');
+    await page.click('[role="option"]:has-text("Teams & Divisions")');
+
+    const teamsCSV = `team_id,team_name,division_id,division_name,capacity
+team-001,Mortgage Origination,div-001,Consumer Lending,160
+team-002,Personal Loans Platform,div-001,Consumer Lending,160
+team-003,Credit Assessment Engine,div-001,Consumer Lending,160`;
+
+    const teamsFileInput = page.locator('#advanced-csv-file');
+    await teamsFileInput.setInputFiles({
+      name: 'teams-divisions.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(teamsCSV),
+    });
+
+    await page.waitForTimeout(3000);
+    const teamsContinueButton = page.locator('button:has-text("Continue")');
+    if (await teamsContinueButton.isVisible({ timeout: 5000 })) {
+      await teamsContinueButton.click();
+      await page.waitForTimeout(2000);
+    }
+
+    // Wait for teams import success
+    await expect(
+      page.locator('text=success').or(page.locator('text=imported')).first()
+    ).toBeVisible({ timeout: 10000 });
+
+    // 4. Import projects and epics
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await page.click('[role="tab"]:has-text("Import/Export")');
+    await page.waitForLoadState('networkidle');
+
+    await page.click('[id="import-type"]');
+    await page.click(
+      '[role="option"]:has-text("Projects, Epics & Milestones")'
+    );
+
+    const projectsCSV = `project_name,project_description,project_status,project_start_date,project_end_date,project_budget,epic_name,epic_description,epic_effort,epic_team,epic_target_date,milestone_name,milestone_due_date
+Digital Lending Platform,Modern loan origination and servicing platform,active,2024-01-01,2024-12-31,2500000,Loan Application Portal,Customer-facing loan application system,34,Mortgage Origination,2024-03-31,MVP Launch,2024-06-30
+Digital Lending Platform,,,,,Document Processing,Automated document verification and processing,42,Personal Loans Platform,2024-04-30,,
+Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2024-10-31,1800000,Mobile Authentication,Biometric and multi-factor authentication,21,Credit Assessment Engine,2024-03-15,,`;
+
+    const projectsFileInput = page.locator('#advanced-csv-file');
+    await projectsFileInput.setInputFiles({
+      name: 'projects-epics.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(projectsCSV),
+    });
+
+    await page.waitForTimeout(3000);
+    const projectsContinueButton = page.locator('button:has-text("Continue")');
+    if (await projectsContinueButton.isVisible({ timeout: 5000 })) {
+      await projectsContinueButton.click();
+      await page.waitForTimeout(2000);
+    }
+
+    // Wait for projects import success
+    await expect(
+      page.locator('text=success').or(page.locator('text=imported')).first()
+    ).toBeVisible({ timeout: 10000 });
+
+    // 5. Now ready for allocation import tests
+    await page.reload();
+    await page.waitForLoadState('networkidle');
     await page.click('[role="tab"]:has-text("Import/Export")');
     await page.waitForLoadState('networkidle');
   });
 
-  test('should import planning allocations CSV successfully', async ({
+  test('should import planning allocations CSV successfully and verify on Planning page', async ({
     page,
   }) => {
     // Look for Advanced Data Import section
@@ -22,11 +108,17 @@ test.describe('Allocations Import E2E Tests', () => {
     await page.click('[id="import-type"]');
     await page.click('[role="option"]:has-text("Planning Allocations")');
 
-    // Create test CSV data for planning allocations
-    const csvContent = `person_name,team_name,project_name,allocation_percentage,quarter,year,start_date,end_date
-"John Doe","Frontend Team","Project Alpha","80","Q1","2024","2024-01-01","2024-03-31"
-"Jane Smith","Product Team","Project Beta","100","Q1","2024","2024-01-01","2024-03-31"
-"Bob Wilson","Design Team","Project Gamma","60","Q1","2024","2024-01-01","2024-03-31"`;
+    // Create test CSV data for planning allocations using consistent team and epic names
+    const csvContent = `team_name,quarter,iteration_number,epic_name,project_name,percentage,notes
+Mortgage Origination,Q1 2024,1,Loan Application Portal,Digital Lending Platform,50,Core lending functionality
+Mortgage Origination,Q1 2024,1,Critical Run,,30,BAU support and maintenance
+Mortgage Origination,Q1 2024,1,Bug Fixes,,20,Production issue resolution
+Personal Loans Platform,Q1 2024,1,Document Processing,Digital Lending Platform,60,Document automation
+Personal Loans Platform,Q1 2024,1,Production Support,,25,System monitoring
+Personal Loans Platform,Q1 2024,1,Performance Optimization,,15,System improvements
+Credit Assessment Engine,Q1 2024,1,Mobile Authentication,Mobile Banking 2.0,45,Authentication development
+Credit Assessment Engine,Q1 2024,1,Critical Run,,35,BAU activities
+Credit Assessment Engine,Q1 2024,1,Compliance & Security,,20,Security reviews`;
 
     // Find the Advanced CSV file input
     const fileInput = page.locator('#advanced-csv-file');
@@ -34,7 +126,7 @@ test.describe('Allocations Import E2E Tests', () => {
 
     // Upload the test file
     await fileInput.setInputFiles({
-      name: 'allocations-import.csv',
+      name: 'planning-allocations-import.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(csvContent),
     });
@@ -55,13 +147,49 @@ test.describe('Allocations Import E2E Tests', () => {
       .or(page.locator('text=imported'))
       .or(page.locator('text=completed'))
       .or(page.locator('text=processed'))
-      .or(page.locator('text=3')) // Number of rows processed
+      .or(page.locator('text=9')) // Number of rows processed
       .or(page.locator('[class*="success"]'));
 
     await expect(successIndicators.first()).toBeVisible({ timeout: 15000 });
+
+    // Navigate to Planning page to verify imported data
+    await page.goto('/planning');
+    await page.waitForLoadState('networkidle');
+
+    // Verify Planning page loads with imported data
+    await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible();
+
+    // Verify teams appear in the planning interface
+    await expect(page.locator('text=Mortgage Origination')).toBeVisible();
+    await expect(page.locator('text=Personal Loans Platform')).toBeVisible();
+    await expect(page.locator('text=Credit Assessment Engine')).toBeVisible();
+
+    // Verify quarter data appears
+    await expect(
+      page.locator('text=Q1 2024').or(page.locator('text=Q1')).first()
+    ).toBeVisible();
+
+    // Verify specific allocation percentages for Mortgage Origination team
+    // Look for allocation indicators - these might be in planning matrix or allocation cards
+    const allocationIndicators = page
+      .locator('text=50%')
+      .or(page.locator('text=30%'))
+      .or(page.locator('text=20%'))
+      .or(page.locator('text=100%')); // Total allocation
+
+    await expect(allocationIndicators.first()).toBeVisible({ timeout: 10000 });
+
+    // Verify epic/project names appear in planning
+    await expect(
+      page
+        .locator('text=Loan Application Portal')
+        .or(page.locator('text=Document Processing'))
+        .or(page.locator('text=Mobile Authentication'))
+        .first()
+    ).toBeVisible();
   });
 
-  test('should import actual allocations CSV successfully', async ({
+  test('should import actual allocations CSV successfully and verify data integrity', async ({
     page,
   }) => {
     // Look for Advanced Data Import section
@@ -73,11 +201,17 @@ test.describe('Allocations Import E2E Tests', () => {
     await page.click('[id="import-type"]');
     await page.click('[role="option"]:has-text("Actual Allocations")');
 
-    // Create test CSV data for actual allocations
-    const csvContent = `person_name,team_name,project_name,hours_worked,date,iteration,sprint
-"John Doe","Frontend Team","Project Alpha","8","2024-01-15","Iteration 1","Sprint 1"
-"Jane Smith","Product Team","Project Beta","7.5","2024-01-15","Iteration 1","Sprint 1"
-"Bob Wilson","Design Team","Project Gamma","6","2024-01-15","Iteration 1","Sprint 1"`;
+    // Create test CSV data for actual allocations using consistent team and epic names
+    const csvContent = `team_name,epic_name,epic_type,sprint_number,percentage,quarter
+Mortgage Origination,Loan Application Portal,project,1,48,Q1 2024
+Mortgage Origination,Critical Run,run,1,32,Q1 2024
+Mortgage Origination,Bug Fixes,run,1,20,Q1 2024
+Personal Loans Platform,Document Processing,project,1,55,Q1 2024
+Personal Loans Platform,Production Support,run,1,25,Q1 2024
+Personal Loans Platform,Performance Optimization,run,1,20,Q1 2024
+Credit Assessment Engine,Mobile Authentication,project,1,50,Q1 2024
+Credit Assessment Engine,Critical Run,run,1,30,Q1 2024
+Credit Assessment Engine,Compliance & Security,run,1,20,Q1 2024`;
 
     // Find the Advanced CSV file input
     const fileInput = page.locator('#advanced-csv-file');
@@ -106,9 +240,31 @@ test.describe('Allocations Import E2E Tests', () => {
       .or(page.locator('text=imported'))
       .or(page.locator('text=completed'))
       .or(page.locator('text=processed'))
+      .or(page.locator('text=9')) // Number of rows processed
       .or(page.locator('[class*="success"]'));
 
     await expect(successIndicators.first()).toBeVisible({ timeout: 15000 });
+
+    // Navigate to Planning page to verify actual vs planned comparison
+    await page.goto('/planning');
+    await page.waitForLoadState('networkidle');
+
+    // Verify Planning page loads with actual allocation data
+    await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible();
+
+    // Verify teams with actual allocations appear
+    await expect(page.locator('text=Mortgage Origination')).toBeVisible();
+    await expect(page.locator('text=Personal Loans Platform')).toBeVisible();
+    await expect(page.locator('text=Credit Assessment Engine')).toBeVisible();
+
+    // Look for actual vs planned indicators or percentage displays
+    const actualPercentages = page
+      .locator('text=48%')
+      .or(page.locator('text=55%'))
+      .or(page.locator('text=50%'))
+      .or(page.locator('text=100%'));
+
+    await expect(actualPercentages.first()).toBeVisible({ timeout: 10000 });
   });
 
   test('should handle invalid allocations CSV gracefully', async ({ page }) => {
@@ -121,10 +277,11 @@ test.describe('Allocations Import E2E Tests', () => {
     await page.click('[id="import-type"]');
     await page.click('[role="option"]:has-text("Planning Allocations")');
 
-    // Create invalid CSV (missing required fields, invalid data)
-    const invalidCsv = `person_name,team_name
-"John Doe","Frontend Team"
-"Invalid Person"`; // Missing team_name and other required fields
+    // Create invalid CSV with allocation > 100% for a team and nonexistent teams
+    const invalidCsv = `team_name,quarter,iteration_number,epic_name,project_name,percentage,notes
+Mortgage Origination,Q1 2024,1,Invalid Epic,Invalid Project,150,Over 100% allocation
+Nonexistent Team,Q1 2024,1,Some Epic,Some Project,50,Invalid team name
+Valid Team,Invalid Quarter,1,Some Epic,Some Project,50,Invalid quarter format`;
 
     const fileInput = page.locator('#advanced-csv-file');
     await fileInput.setInputFiles({
@@ -141,7 +298,7 @@ test.describe('Allocations Import E2E Tests', () => {
       .locator('text=error')
       .or(page.locator('text=invalid'))
       .or(page.locator('text=failed'))
-      .or(page.locator('text=required'))
+      .or(page.locator('text=validation'))
       .or(page.locator('[class*="error"]'))
       .or(page.locator('[class*="danger"]'));
 

@@ -2,10 +2,27 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Advanced Data Import - Projects with Epics & Planning Allocations', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/settings');
+    // 1. Complete required setup wizard first
+    await page.goto('/setup');
     await page.waitForLoadState('networkidle');
 
-    // Navigate to Import/Export tab
+    // Fill in financial year configuration
+    await page.fill('input[name="financialYearStart"]', '2024-01-01');
+    await page.fill('input[name="financialYearEnd"]', '2024-12-31');
+    await page.selectOption('select[name="iterationLength"]', 'fortnightly');
+
+    // Complete setup
+    await page.click('button:has-text("Next")');
+    await page.waitForTimeout(1000);
+    await page.click('button:has-text("Complete Setup")');
+
+    // 2. Wait for redirect to dashboard (setup complete)
+    await page.waitForURL('/dashboard');
+    await page.waitForLoadState('networkidle');
+
+    // 3. Navigate to Import/Export for comprehensive testing
+    await page.goto('/settings');
+    await page.waitForLoadState('networkidle');
     await page.click('[role="tab"]:has-text("Import/Export")');
     await page.waitForLoadState('networkidle');
   });
@@ -220,9 +237,52 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
 
     await expect(allocationsSuccess.first()).toBeVisible({ timeout: 20000 });
 
-    // Step 3: Verify the imported data integrity
-    // Import completed successfully - comprehensive test of banking portfolio complete
-    // Both projects/epics and planning allocations have been imported and processed
+    // Step 3: Verify the imported data integrity on Planning page
+    await page.goto('/planning');
+    await page.waitForLoadState('networkidle');
+
+    // Verify Planning page loads with imported data
+    await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible();
+
+    // Verify specific teams appear in planning interface
+    await expect(page.locator('text=Mortgage Origination')).toBeVisible();
+    await expect(page.locator('text=Personal Loans Platform')).toBeVisible();
+    await expect(page.locator('text=Credit Assessment Engine')).toBeVisible();
+    await expect(page.locator('text=Digital Banking Platform')).toBeVisible();
+
+    // Verify Q1 2024 quarter data appears
+    await expect(
+      page.locator('text=Q1 2024').or(page.locator('text=Q1')).first()
+    ).toBeVisible();
+
+    // Verify imported projects appear in planning
+    await expect(
+      page
+        .locator('text=Digital Lending Platform')
+        .or(page.locator('text=Mobile Banking 2.0'))
+        .or(page.locator('text=Payment Processing Hub'))
+        .first()
+    ).toBeVisible();
+
+    // Verify specific epic names from imports appear
+    await expect(
+      page
+        .locator('text=Loan Application Portal')
+        .or(page.locator('text=Mobile Authentication'))
+        .or(page.locator('text=Real-time Processing'))
+        .first()
+    ).toBeVisible();
+
+    // Verify allocation percentages are displayed correctly
+    const allocationPercentages = page
+      .locator('text=45%')
+      .or(page.locator('text=50%'))
+      .or(page.locator('text=35%'))
+      .or(page.locator('text=100%')); // Total allocation indicators
+
+    await expect(allocationPercentages.first()).toBeVisible({ timeout: 10000 });
+
+    // Comprehensive banking portfolio import test completed successfully
   });
 
   test('should handle validation errors for invalid allocation data', async ({
