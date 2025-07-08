@@ -41,28 +41,20 @@ test.describe('Allocations Import E2E Tests', () => {
     await page.click('[role="tab"]:has-text("Import/Export")');
     await page.waitForLoadState('networkidle');
 
-    // Import teams/divisions CSV first
-    await page.click('[id="import-type"]');
-    await page.click('[role="option"]:has-text("Teams & Divisions")');
+    // Import teams/divisions CSV first using EnhancedImportExport component
+    // Look for the "Teams & Divisions CSV" file input in EnhancedImportExport
+    const teamsFileInput = page.locator('#teamsCSV');
 
     const teamsCSV = `team_id,team_name,division_id,division_name,capacity
 team-001,Mortgage Origination,div-001,Consumer Lending,160
 team-002,Personal Loans Platform,div-001,Consumer Lending,160
 team-003,Credit Assessment Engine,div-001,Consumer Lending,160`;
 
-    const teamsFileInput = page.locator('#advanced-csv-file');
     await teamsFileInput.setInputFiles({
       name: 'teams-divisions.csv',
       mimeType: 'text/csv',
       buffer: Buffer.from(teamsCSV),
     });
-
-    await page.waitForTimeout(3000);
-    const teamsContinueButton = page.locator('button:has-text("Continue")');
-    if (await teamsContinueButton.isVisible({ timeout: 5000 })) {
-      await teamsContinueButton.click();
-      await page.waitForTimeout(2000);
-    }
 
     // Wait for teams import success
     await expect(
@@ -171,8 +163,8 @@ Credit Assessment Engine,Q1 2024,1,Compliance & Security,,20,Security reviews`;
     await page.goto('/planning');
     await page.waitForLoadState('networkidle');
 
-    // Verify Planning page loads with imported data
-    await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible();
+    // Verify Planning page loads with imported data - use more specific selector to avoid strict mode violation
+    await expect(page.locator('h1:has-text("Planning")').first()).toBeVisible();
 
     // Verify teams appear in the planning interface
     await expect(page.locator('text=Mortgage Origination')).toBeVisible();
@@ -264,8 +256,8 @@ Credit Assessment Engine,Compliance & Security,run,1,20,Q1 2024`;
     await page.goto('/planning');
     await page.waitForLoadState('networkidle');
 
-    // Verify Planning page loads with actual allocation data
-    await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible();
+    // Verify Planning page loads with actual allocation data - use more specific selector to avoid strict mode violation
+    await expect(page.locator('h1:has-text("Planning")').first()).toBeVisible();
 
     // Verify teams with actual allocations appear
     await expect(page.locator('text=Mortgage Origination')).toBeVisible();

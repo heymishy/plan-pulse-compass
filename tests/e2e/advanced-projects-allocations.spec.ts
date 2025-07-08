@@ -256,8 +256,8 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
     await page.goto('/planning');
     await page.waitForLoadState('networkidle');
 
-    // Verify Planning page loads with imported data
-    await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible();
+    // Verify Planning page loads with imported data - use more specific selector to avoid strict mode violation
+    await expect(page.locator('h1:has-text("Planning")').first()).toBeVisible();
 
     // Verify specific teams appear in planning interface
     await expect(page.locator('text=Mortgage Origination')).toBeVisible();

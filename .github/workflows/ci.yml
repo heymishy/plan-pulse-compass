@@ -156,6 +156,7 @@ jobs:
       pages: write
       id-token: write
       pull-requests: write
+      actions: write
     concurrency:
       group: pages-${{ github.ref }}
       cancel-in-progress: false
