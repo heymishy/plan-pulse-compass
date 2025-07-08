@@ -35,6 +35,35 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
       await page.waitForLoadState('networkidle');
     }
 
+    // CRITICAL: Create quarters and iterations after setup
+    // Without this, planning allocations cannot be imported because there are no cycles
+    await page.goto('/planning');
+    await page.waitForLoadState('networkidle');
+
+    // Check if quarters already exist (in case of retry)
+    const existingQuarters = await page.locator('text=Q1 2024').count();
+
+    if (existingQuarters === 0) {
+      // Open cycle management dialog
+      await page.click('button:has-text("Manage Cycles")');
+      await page.waitForTimeout(2000);
+
+      // Generate standard quarters
+      await page.click('button:has-text("Generate Standard Quarters")');
+      await page.waitForTimeout(3000);
+
+      // Generate iterations for Q1 (needed for allocation import)
+      const q1QuarterRow = page.locator('tr:has(td:text("Q1 2024"))');
+      await q1QuarterRow
+        .locator('button:has-text("Generate Iterations")')
+        .click();
+      await page.waitForTimeout(3000);
+
+      // Close the dialog
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1000);
+    }
+
     // 3. Navigate to Import/Export for comprehensive testing
     await page.goto('/settings');
     await page.waitForLoadState('networkidle');

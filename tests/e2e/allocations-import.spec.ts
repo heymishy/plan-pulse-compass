@@ -35,7 +35,36 @@ test.describe('Allocations Import E2E Tests', () => {
       await page.waitForLoadState('networkidle');
     }
 
-    // 3. Import foundational data first - teams and divisions
+    // CRITICAL: Create quarters and iterations after setup
+    // Without this, planning allocations cannot be imported because there are no cycles
+    await page.goto('/planning');
+    await page.waitForLoadState('networkidle');
+
+    // Check if quarters already exist (in case of retry)
+    const existingQuarters = await page.locator('text=Q1 2024').count();
+
+    if (existingQuarters === 0) {
+      // Open cycle management dialog
+      await page.click('button:has-text("Manage Cycles")');
+      await page.waitForTimeout(2000);
+
+      // Generate standard quarters
+      await page.click('button:has-text("Generate Standard Quarters")');
+      await page.waitForTimeout(3000);
+
+      // Generate iterations for Q1 (needed for allocation import)
+      const q1QuarterRow = page.locator('tr:has(td:text("Q1 2024"))');
+      await q1QuarterRow
+        .locator('button:has-text("Generate Iterations")')
+        .click();
+      await page.waitForTimeout(3000);
+
+      // Close the dialog
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1000);
+    }
+
+    // 3. Now proceed with import foundational data - teams and divisions
     await page.goto('/settings');
     await page.waitForLoadState('networkidle');
     await page.click('[role="tab"]:has-text("Import/Export")');
