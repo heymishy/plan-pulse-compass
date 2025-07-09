@@ -62,9 +62,23 @@ test.describe('Setup Cycles E2E Tests', () => {
       const generateQuartersButton = page.locator(
         'button:has-text("Generate Standard Quarters")'
       );
-      await expect(generateQuartersButton).toBeVisible({ timeout: 5000 });
-      await generateQuartersButton.click();
-      await page.waitForTimeout(5000);
+
+      // Check if quarters already exist
+      const existingQuarters = await page.locator('text=Q1 2024').count();
+      if (existingQuarters === 0) {
+        try {
+          await expect(generateQuartersButton).toBeVisible({ timeout: 5000 });
+          await generateQuartersButton.click();
+          await page.waitForTimeout(5000);
+          console.log('✅ Quarters generated successfully');
+        } catch (error) {
+          console.log(
+            '⚠️ Generate Standard Quarters button not found - quarters may already exist'
+          );
+        }
+      } else {
+        console.log('✅ Quarters already exist, skipping generation');
+      }
 
       // Verify quarters were created
       await expect(page.locator('text=Q1 2024')).toBeVisible({
