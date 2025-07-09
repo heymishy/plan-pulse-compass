@@ -391,7 +391,49 @@ const Planning = () => {
             </>
           )}
 
-          {(!selectedCycleId || iterations.length === 0) && (
+          {selectedCycleId && iterations.length === 0 && (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No Iterations Found
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  This quarter exists but has no iterations. Generate iterations
+                  to start planning.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCycleDialogOpen(true)}
+                >
+                  Manage Cycles
+                </Button>
+                {/* Show teams even without iterations for debugging */}
+                {teams.length > 0 && (
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      Available Teams:
+                    </h4>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      {teams.slice(0, 5).map(team => (
+                        <div key={team.id} className="flex justify-between">
+                          <span>{team.name}</span>
+                          <span className="text-gray-400">{team.division}</span>
+                        </div>
+                      ))}
+                      {teams.length > 5 && (
+                        <div className="text-gray-400">
+                          ...and {teams.length - 5} more teams
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {!selectedCycleId && (
             <Card>
               <CardContent className="text-center py-12">
                 <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />

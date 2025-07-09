@@ -3,6 +3,7 @@ import {
   useEncryptedLocalStorage,
   useLocalStorage,
 } from '@/hooks/useLocalStorage';
+import { addWeeks, addMonths } from 'date-fns';
 import {
   Person,
   Role,
@@ -400,6 +401,57 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [isDataLoading, teams.length, divisions.length, setTeams, teams]);
 
+  // Function to generate iterations for a quarterly cycle
+  const generateIterationsForQuarter = (
+    quarterCycle: Cycle,
+    iterationLength: string
+  ): Cycle[] => {
+    const startDate = new Date(quarterCycle.startDate);
+    const endDate = new Date(quarterCycle.endDate);
+    const newIterations: Cycle[] = [];
+
+    let currentStart = startDate;
+    let iterationNumber = 1;
+
+    while (currentStart < endDate) {
+      let currentEnd: Date;
+
+      switch (iterationLength) {
+        case 'fortnightly':
+          currentEnd = addWeeks(currentStart, 2);
+          break;
+        case 'monthly':
+          currentEnd = addMonths(currentStart, 1);
+          break;
+        case '6-weekly':
+          currentEnd = addWeeks(currentStart, 6);
+          break;
+        default:
+          currentEnd = addWeeks(currentStart, 2);
+      }
+
+      if (currentEnd > endDate) {
+        currentEnd = endDate;
+      }
+
+      newIterations.push({
+        id: crypto.randomUUID(),
+        type: 'iteration',
+        name: `${quarterCycle.name} - Iteration ${iterationNumber}`,
+        startDate: currentStart.toISOString().split('T')[0],
+        endDate: currentEnd.toISOString().split('T')[0],
+        parentCycleId: quarterCycle.id,
+        status: 'planning',
+      });
+
+      currentStart = new Date(currentEnd);
+      currentStart.setDate(currentStart.getDate() + 1);
+      iterationNumber++;
+    }
+
+    return newIterations;
+  };
+
   useEffect(() => {
     if (!isDataLoading && cycles.length === 0) {
       console.log('Initializing default cycles');
@@ -439,6 +491,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       ]);
     }
   }, [isDataLoading, cycles.length, setCycles]);
+
+  // Generate iterations for default quarters when config is available
+  useEffect(() => {
+    if (!isDataLoading && config?.iterationLength && cycles.length > 0) {
+      // Check if we have quarters but no iterations
+      const quarters = cycles.filter(c => c.type === 'quarterly');
+      const iterations = cycles.filter(c => c.type === 'iteration');
+
+      if (quarters.length > 0 && iterations.length === 0) {
+        console.log(
+          'Generating iterations for default quarters with iteration length:',
+          config.iterationLength
+        );
+
+        let allIterations: Cycle[] = [];
+        quarters.forEach(quarter => {
+          const quarterIterations = generateIterationsForQuarter(
+            quarter,
+            config.iterationLength
+          );
+          allIterations = [...allIterations, ...quarterIterations];
+        });
+
+        if (allIterations.length > 0) {
+          setCycles(prev => [...prev, ...allIterations]);
+          console.log(
+            `Generated ${allIterations.length} iterations for ${quarters.length} quarters`
+          );
+        }
+      }
+    }
+  }, [isDataLoading, config?.iterationLength, cycles.length, setCycles]);
 
   // Debug logging for context state changes
   useEffect(() => {

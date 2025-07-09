@@ -349,7 +349,7 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
     await expect(page.locator('h1:has-text("Planning")').first()).toBeVisible();
 
     // Debug: Give planning page time to load and check for no-data state
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Check if we have a "no data" state or "no iterations" message first
     const noDataMessage = page
@@ -359,11 +359,16 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
       .or(page.locator('text=no iterations found'))
       .or(page.locator('text=create iterations first'));
 
-    if ((await noDataMessage.count()) > 0) {
-      console.log(
-        '⚠️ Planning page shows no data or missing iterations - may need to recreate cycles'
-      );
-      // Don't fail immediately - log and continue verification
+    try {
+      const noDataCount = await noDataMessage.count();
+      if (noDataCount > 0) {
+        console.log(
+          '⚠️ Planning page shows no data or missing iterations - may need to recreate cycles'
+        );
+        // Don't fail immediately - log and continue verification
+      }
+    } catch (error) {
+      console.log('⚠️ Could not check for no data message - continuing');
     }
 
     // Verify specific teams appear in planning interface with robust selectors
