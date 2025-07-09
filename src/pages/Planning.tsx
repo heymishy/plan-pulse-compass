@@ -74,6 +74,40 @@ const Planning = () => {
     }
   }, [currentQuarter, selectedCycleId]);
 
+  // Retry logic for iteration loading
+  const [iterationRetryCount, setIterationRetryCount] = useState(0);
+  const [isWaitingForIterations, setIsWaitingForIterations] = useState(false);
+
+  React.useEffect(() => {
+    if (
+      selectedCycleId &&
+      iterations.length === 0 &&
+      iterationRetryCount < 3 &&
+      config?.iterationLength
+    ) {
+      setIsWaitingForIterations(true);
+      const timer = setTimeout(
+        () => {
+          console.log(
+            `Planning: Retrying iteration loading (attempt ${iterationRetryCount + 1})`
+          );
+          setIterationRetryCount(prev => prev + 1);
+          setIsWaitingForIterations(false);
+        },
+        1000 * (iterationRetryCount + 1)
+      ); // Exponential backoff
+      return () => clearTimeout(timer);
+    } else if (iterations.length > 0) {
+      setIterationRetryCount(0);
+      setIsWaitingForIterations(false);
+    }
+  }, [
+    selectedCycleId,
+    iterations.length,
+    iterationRetryCount,
+    config?.iterationLength,
+  ]);
+
   // Get iterations for selected quarter
   const iterations = cycles
     .filter(c => c.type === 'iteration' && c.parentCycleId === selectedCycleId)
@@ -194,17 +228,29 @@ const Planning = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Planning</h1>
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            data-testid="planning-title"
+          >
+            Planning
+          </h1>
           <p className="text-gray-600">
             Plan team allocations and analyze project feasibility
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => setIsCycleDialogOpen(true)}>
+          <Button
+            variant="outline"
+            onClick={() => setIsCycleDialogOpen(true)}
+            data-testid="manage-cycles-header-button"
+          >
             <Calendar className="h-4 w-4 mr-2" />
             Manage Cycles
           </Button>
-          <Button onClick={handleCreateAllocation}>
+          <Button
+            onClick={handleCreateAllocation}
+            data-testid="new-allocation-button"
+          >
             <Plus className="h-4 w-4 mr-2" />
             New Allocation
           </Button>
@@ -393,21 +439,69 @@ const Planning = () => {
 
           {selectedCycleId && iterations.length === 0 && (
             <Card>
-              <CardContent className="text-center py-12">
+              <CardContent
+                className="text-center py-12"
+                data-testid="planning-no-iterations"
+              >
                 <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No Iterations Found
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  This quarter exists but has no iterations. Generate iterations
-                  to start planning.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCycleDialogOpen(true)}
-                >
-                  Manage Cycles
-                </Button>
+                {isWaitingForIterations ? (
+                  <>
+                    <h3
+                      className="text-lg font-semibold text-gray-900 mb-2"
+                      data-testid="generating-iterations-title"
+                    >
+                      Generating Iterations...
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Please wait while iterations are being generated for this
+                      quarter.
+                    </p>
+                    <div className="flex justify-center">
+                      <div
+                        className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+                        data-testid="generating-spinner"
+                      ></div>
+                    </div>
+                  </>
+                ) : iterationRetryCount >= 3 ? (
+                  <>
+                    <h3
+                      className="text-lg font-semibold text-gray-900 mb-2"
+                      data-testid="no-iterations-title"
+                    >
+                      No Iterations Found
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      This quarter exists but has no iterations. Generate
+                      iterations to start planning.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsCycleDialogOpen(true)}
+                      data-testid="manage-cycles-button"
+                    >
+                      Manage Cycles
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <h3
+                      className="text-lg font-semibold text-gray-900 mb-2"
+                      data-testid="loading-iterations-title"
+                    >
+                      Loading Iterations...
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Waiting for iterations to be generated automatically...
+                    </p>
+                    <div className="flex justify-center">
+                      <div
+                        className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+                        data-testid="loading-spinner"
+                      ></div>
+                    </div>
+                  </>
+                )}
                 {/* Show teams even without iterations for debugging */}
                 {teams.length > 0 && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg">

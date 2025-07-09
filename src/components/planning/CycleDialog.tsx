@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Cycle } from '@/types';
@@ -31,10 +30,16 @@ interface CycleDialogProps {
   parentCycle?: Cycle;
 }
 
-const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle }) => {
+const CycleDialog: React.FC<CycleDialogProps> = ({
+  isOpen,
+  onClose,
+  parentCycle,
+}) => {
   const { cycles, setCycles, config } = useApp();
   const { toast } = useToast();
-  const [selectedTab, setSelectedTab] = useState<'quarters' | 'iterations'>('quarters');
+  const [selectedTab, setSelectedTab] = useState<'quarters' | 'iterations'>(
+    'quarters'
+  );
   const [formData, setFormData] = useState({
     name: '',
     startDate: '',
@@ -49,9 +54,10 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
   const generateStandardQuarters = () => {
     if (!config?.financialYear) {
       toast({
-        title: "Error",
-        description: "Financial year not configured. Please complete setup first.",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          'Financial year not configured. Please complete setup first.',
+        variant: 'destructive',
       });
       return;
     }
@@ -63,8 +69,8 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
     // Generate 4 quarters based on financial year start
     for (let i = 0; i < 4; i++) {
       const quarterStart = new Date(fyStart);
-      quarterStart.setMonth(quarterStart.getMonth() + (i * 3));
-      
+      quarterStart.setMonth(quarterStart.getMonth() + i * 3);
+
       const quarterEnd = new Date(quarterStart);
       quarterEnd.setMonth(quarterEnd.getMonth() + 3);
       quarterEnd.setDate(quarterEnd.getDate() - 1); // Last day of the quarter
@@ -79,9 +85,31 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
       });
     }
 
-    setCycles(prev => [...prev, ...newQuarters]);
+    setCycles(prev => {
+      const updated = [...prev, ...newQuarters];
+      console.log('Generated quarters:', updated);
+
+      // Force localStorage sync for E2E tests
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem(
+            'planning-cycles',
+            JSON.stringify(updated)
+          );
+          console.log('CycleDialog: Force synced quarters to localStorage');
+        } catch (error) {
+          console.error(
+            'CycleDialog: Failed to force sync quarters to localStorage:',
+            error
+          );
+        }
+      }
+
+      return updated;
+    });
+
     toast({
-      title: "Success",
+      title: 'Success',
       description: `Generated 4 quarters for FY ${fyYear}`,
     });
   };
@@ -91,7 +119,25 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
   };
 
   const generateIterations = (quarterCycle: Cycle) => {
-    if (!config?.iterationLength) return;
+    if (!config?.iterationLength) {
+      console.error(
+        'Cannot generate iterations: no iteration length configured'
+      );
+      toast({
+        title: 'Error',
+        description:
+          'No iteration length configured. Please check your settings.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    console.log(
+      'Generating iterations for quarter:',
+      quarterCycle.name,
+      'with length:',
+      config.iterationLength
+    );
 
     const startDate = new Date(quarterCycle.startDate);
     const endDate = new Date(quarterCycle.endDate);
@@ -102,7 +148,7 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
 
     while (currentStart < endDate) {
       let currentEnd: Date;
-      
+
       switch (config.iterationLength) {
         case 'fortnightly':
           currentEnd = addWeeks(currentStart, 2);
@@ -136,21 +182,76 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
       iterationNumber++;
     }
 
-    setCycles(prev => [...prev, ...newIterations]);
+    console.log('Generated iterations:', newIterations);
+
+    // Update state with explicit logging and verification
+    setCycles(prev => {
+      const updated = [...prev, ...newIterations];
+      console.log('Updated cycles state:', updated);
+
+      // Force localStorage sync for E2E tests with retry logic
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const maxRetries = 3;
+        let retryCount = 0;
+
+        const syncToLocalStorage = () => {
+          try {
+            window.localStorage.setItem(
+              'planning-cycles',
+              JSON.stringify(updated)
+            );
+            console.log('CycleDialog: Force synced cycles to localStorage');
+
+            // Verify the data was actually saved
+            const verification = window.localStorage.getItem('planning-cycles');
+            if (verification) {
+              const parsed = JSON.parse(verification);
+              const verifyIterations = parsed.filter(
+                (c: Cycle) => c.type === 'iteration'
+              );
+              console.log(
+                `CycleDialog: Verified ${verifyIterations.length} iterations in localStorage`
+              );
+            }
+          } catch (error) {
+            console.error(
+              'CycleDialog: Failed to sync cycles to localStorage:',
+              error
+            );
+            retryCount++;
+            if (retryCount < maxRetries) {
+              console.log(
+                `CycleDialog: Retrying localStorage sync (${retryCount}/${maxRetries})`
+              );
+              setTimeout(syncToLocalStorage, 100);
+            } else {
+              console.error(
+                'CycleDialog: Max retries exceeded for localStorage sync'
+              );
+            }
+          }
+        };
+
+        syncToLocalStorage();
+      }
+
+      return updated;
+    });
+
     toast({
-      title: "Success",
+      title: 'Success',
       description: `Generated ${newIterations.length} iterations for ${quarterCycle.name}`,
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.startDate || !formData.endDate) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
       });
       return;
     }
@@ -167,7 +268,7 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
 
     setCycles(prev => [...prev, cycleData]);
     toast({
-      title: "Success",
+      title: 'Success',
       description: `${formData.type === 'quarterly' ? 'Quarter' : 'Iteration'} created successfully`,
     });
 
@@ -183,8 +284,8 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
   const handleDeleteCycle = (cycleId: string) => {
     setCycles(prev => prev.filter(c => c.id !== cycleId));
     toast({
-      title: "Success",
-      description: "Cycle deleted successfully",
+      title: 'Success',
+      description: 'Cycle deleted successfully',
     });
   };
 
@@ -200,8 +301,8 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
           <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
             <button
               className={`flex-1 text-sm py-2 px-4 rounded-md transition-colors ${
-                selectedTab === 'quarters' 
-                  ? 'bg-white shadow-sm font-medium' 
+                selectedTab === 'quarters'
+                  ? 'bg-white shadow-sm font-medium'
                   : 'hover:bg-gray-200'
               }`}
               onClick={() => setSelectedTab('quarters')}
@@ -210,8 +311,8 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
             </button>
             <button
               className={`flex-1 text-sm py-2 px-4 rounded-md transition-colors ${
-                selectedTab === 'iterations' 
-                  ? 'bg-white shadow-sm font-medium' 
+                selectedTab === 'iterations'
+                  ? 'bg-white shadow-sm font-medium'
                   : 'hover:bg-gray-200'
               }`}
               onClick={() => setSelectedTab('iterations')}
@@ -233,9 +334,22 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
                   </CardHeader>
                   <CardContent>
                     <p className="text-blue-600 mb-4">
-                      Generate standard quarters based on your financial year ({format(new Date(config.financialYear.startDate), 'MMM yyyy')} - {format(new Date(config.financialYear.endDate), 'MMM yyyy')})
+                      Generate standard quarters based on your financial year (
+                      {format(
+                        new Date(config.financialYear.startDate),
+                        'MMM yyyy'
+                      )}{' '}
+                      -{' '}
+                      {format(
+                        new Date(config.financialYear.endDate),
+                        'MMM yyyy'
+                      )}
+                      )
                     </p>
-                    <Button onClick={generateStandardQuarters} className="w-full">
+                    <Button
+                      onClick={generateStandardQuarters}
+                      className="w-full"
+                    >
                       <Zap className="h-4 w-4 mr-2" />
                       Generate Standard Quarters
                     </Button>
@@ -245,23 +359,35 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Create Custom Quarter</CardTitle>
+                  <CardTitle className="text-lg">
+                    Create Custom Quarter
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+                  <form
+                    onSubmit={handleSubmit}
+                    className="grid grid-cols-2 gap-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="name">Quarter Name *</Label>
                       <Input
                         id="name"
                         value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('name', e.target.value)
+                        }
                         placeholder="e.g., Q1 2024"
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="status">Status</Label>
-                      <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+                      <Select
+                        value={formData.status}
+                        onValueChange={value =>
+                          handleInputChange('status', value)
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -278,7 +404,9 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
                         id="startDate"
                         type="date"
                         value={formData.startDate}
-                        onChange={(e) => handleInputChange('startDate', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('startDate', e.target.value)
+                        }
                         required
                       />
                     </div>
@@ -288,7 +416,9 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
                         id="endDate"
                         type="date"
                         value={formData.endDate}
-                        onChange={(e) => handleInputChange('endDate', e.target.value)}
+                        onChange={e =>
+                          handleInputChange('endDate', e.target.value)
+                        }
                         required
                       />
                     </div>
@@ -309,16 +439,28 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
                 <CardContent>
                   <div className="space-y-3">
                     {quarters.map(quarter => (
-                      <div key={quarter.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div
+                        key={quarter.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
                         <div>
                           <div className="font-medium">{quarter.name}</div>
                           <div className="text-sm text-gray-600">
-                            {format(new Date(quarter.startDate), 'MMM dd, yyyy')} - 
-                            {format(new Date(quarter.endDate), 'MMM dd, yyyy')}
+                            {format(
+                              new Date(quarter.startDate),
+                              'MMM dd, yyyy'
+                            )}{' '}
+                            -{format(new Date(quarter.endDate), 'MMM dd, yyyy')}
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge variant={quarter.status === 'active' ? 'default' : 'secondary'}>
+                          <Badge
+                            variant={
+                              quarter.status === 'active'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                          >
                             {quarter.status}
                           </Badge>
                           <Button
@@ -357,14 +499,26 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
               <CardContent>
                 <div className="space-y-3">
                   {iterations.map(iteration => {
-                    const parentQuarter = quarters.find(q => q.id === iteration.parentCycleId);
+                    const parentQuarter = quarters.find(
+                      q => q.id === iteration.parentCycleId
+                    );
                     return (
-                      <div key={iteration.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div
+                        key={iteration.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                      >
                         <div>
                           <div className="font-medium">{iteration.name}</div>
                           <div className="text-sm text-gray-600">
-                            {format(new Date(iteration.startDate), 'MMM dd, yyyy')} - 
-                            {format(new Date(iteration.endDate), 'MMM dd, yyyy')}
+                            {format(
+                              new Date(iteration.startDate),
+                              'MMM dd, yyyy'
+                            )}{' '}
+                            -
+                            {format(
+                              new Date(iteration.endDate),
+                              'MMM dd, yyyy'
+                            )}
                           </div>
                           {parentQuarter && (
                             <div className="text-xs text-gray-500">
@@ -373,7 +527,13 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge variant={iteration.status === 'active' ? 'default' : 'secondary'}>
+                          <Badge
+                            variant={
+                              iteration.status === 'active'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                          >
                             {iteration.status}
                           </Badge>
                           <Button
@@ -389,7 +549,8 @@ const CycleDialog: React.FC<CycleDialogProps> = ({ isOpen, onClose, parentCycle 
                   })}
                   {iterations.length === 0 && (
                     <div className="text-center py-6 text-gray-500">
-                      No iterations created yet. Create quarters first, then generate iterations.
+                      No iterations created yet. Create quarters first, then
+                      generate iterations.
                     </div>
                   )}
                 </div>

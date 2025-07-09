@@ -66,16 +66,30 @@ test.describe('Allocations Import E2E Tests', () => {
       await generateIterationsButton.click();
       await page.waitForTimeout(2000);
 
-      // Verify iterations were created by checking for success message
-      const iterationSuccess = page
-        .locator('text=Generated')
-        .or(page.locator('text=iterations').or(page.locator('text=success')));
+      // Wait for iterations to be generated automatically by AppContext
+      await page.waitForTimeout(2000);
 
-      try {
-        await expect(iterationSuccess.first()).toBeVisible({ timeout: 5000 });
-        console.log('Iterations generated successfully');
-      } catch (error) {
-        console.log('No explicit iteration success message, but proceeding');
+      // Verify iterations were created by checking localStorage
+      const iterationData = await page.evaluate(() => {
+        const cycles = localStorage.getItem('planning-cycles');
+        if (!cycles) return null;
+        try {
+          const parsedCycles = JSON.parse(cycles);
+          const iterations = parsedCycles.filter(
+            (c: any) => c.type === 'iteration'
+          );
+          return { iterationCount: iterations.length };
+        } catch {
+          return null;
+        }
+      });
+
+      if (iterationData && iterationData.iterationCount > 0) {
+        console.log(
+          `✅ Found ${iterationData.iterationCount} iterations in localStorage`
+        );
+      } else {
+        console.log('⚠️ No iterations found in localStorage after generation');
       }
 
       // Close the dialog

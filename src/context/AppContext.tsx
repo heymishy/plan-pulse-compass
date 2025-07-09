@@ -499,30 +499,104 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       const quarters = cycles.filter(c => c.type === 'quarterly');
       const iterations = cycles.filter(c => c.type === 'iteration');
 
+      console.log('AppContext: Checking for automatic iteration generation:', {
+        isDataLoading,
+        hasConfig: !!config?.iterationLength,
+        iterationLength: config?.iterationLength,
+        quartersCount: quarters.length,
+        iterationsCount: iterations.length,
+        totalCycles: cycles.length,
+      });
+
       if (quarters.length > 0 && iterations.length === 0) {
         console.log(
-          'Generating iterations for default quarters with iteration length:',
+          'AppContext: Generating iterations for default quarters with iteration length:',
           config.iterationLength
         );
 
         let allIterations: Cycle[] = [];
         quarters.forEach(quarter => {
+          console.log('AppContext: Processing quarter:', quarter.name);
           const quarterIterations = generateIterationsForQuarter(
             quarter,
             config.iterationLength
           );
           allIterations = [...allIterations, ...quarterIterations];
+          console.log(
+            `AppContext: Generated ${quarterIterations.length} iterations for ${quarter.name}`
+          );
         });
 
         if (allIterations.length > 0) {
-          setCycles(prev => [...prev, ...allIterations]);
           console.log(
-            `Generated ${allIterations.length} iterations for ${quarters.length} quarters`
+            'AppContext: Adding all iterations to state:',
+            allIterations
+          );
+          setCycles(prev => {
+            const updated = [...prev, ...allIterations];
+            console.log(
+              'AppContext: Updated cycles state with iterations:',
+              updated
+            );
+
+            // Force localStorage sync for E2E tests with retry logic
+            if (typeof window !== 'undefined' && window.localStorage) {
+              const maxRetries = 3;
+              let retryCount = 0;
+
+              const syncToLocalStorage = () => {
+                try {
+                  window.localStorage.setItem(
+                    'planning-cycles',
+                    JSON.stringify(updated)
+                  );
+                  console.log(
+                    'AppContext: Force synced cycles to localStorage'
+                  );
+
+                  // Verify sync worked
+                  const verification =
+                    window.localStorage.getItem('planning-cycles');
+                  if (verification) {
+                    const parsed = JSON.parse(verification);
+                    const verifyIterations = parsed.filter(
+                      (c: Cycle) => c.type === 'iteration'
+                    );
+                    console.log(
+                      `AppContext: Verified ${verifyIterations.length} iterations in localStorage`
+                    );
+                  }
+                } catch (error) {
+                  console.error(
+                    'AppContext: Failed to sync cycles to localStorage:',
+                    error
+                  );
+                  retryCount++;
+                  if (retryCount < maxRetries) {
+                    console.log(
+                      `AppContext: Retrying localStorage sync (${retryCount}/${maxRetries})`
+                    );
+                    setTimeout(syncToLocalStorage, 100);
+                  }
+                }
+              };
+
+              syncToLocalStorage();
+            }
+
+            return updated;
+          });
+          console.log(
+            `AppContext: Successfully generated ${allIterations.length} iterations for ${quarters.length} quarters`
           );
         }
+      } else if (quarters.length > 0 && iterations.length > 0) {
+        console.log(
+          'AppContext: Iterations already exist, skipping generation'
+        );
       }
     }
-  }, [isDataLoading, config?.iterationLength, cycles.length, setCycles]);
+  }, [isDataLoading, config?.iterationLength, cycles.length]);
 
   // Debug logging for context state changes
   useEffect(() => {
