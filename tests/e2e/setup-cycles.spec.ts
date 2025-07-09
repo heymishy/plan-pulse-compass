@@ -11,14 +11,14 @@ test.describe('Setup Cycles E2E Tests', () => {
       // Setup already complete, proceed
     } else {
       // Complete setup wizard
-      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 5000 });
       await page.fill('#fyStart', '2024-01-01');
       await page.check('input[name="iterationLength"][value="fortnightly"]');
       await page.click('button:has-text("Next")');
       await page.waitForTimeout(2000);
       await expect(
         page.locator('button:has-text("Complete Setup")')
-      ).toBeVisible({ timeout: 10000 });
+      ).toBeVisible({ timeout: 5000 });
       await page.click('button:has-text("Complete Setup")');
       await page.waitForURL('/dashboard');
       await page.waitForLoadState('networkidle');
@@ -53,41 +53,41 @@ test.describe('Setup Cycles E2E Tests', () => {
 
       // Wait for cycle dialog to open
       await expect(page.locator('text=Manage Cycles')).toBeVisible({
-        timeout: 10000,
+        timeout: 5000,
       });
 
       // Generate standard quarters
       const generateQuartersButton = page.locator(
         'button:has-text("Generate Standard Quarters")'
       );
-      await expect(generateQuartersButton).toBeVisible({ timeout: 10000 });
+      await expect(generateQuartersButton).toBeVisible({ timeout: 5000 });
       await generateQuartersButton.click();
       await page.waitForTimeout(5000);
 
       // Verify quarters were created
       await expect(page.locator('text=Q1 2024')).toBeVisible({
-        timeout: 15000,
+        timeout: 5000,
       });
       await expect(page.locator('text=Q2 2024')).toBeVisible({
-        timeout: 10000,
+        timeout: 5000,
       });
       await expect(page.locator('text=Q3 2024')).toBeVisible({
-        timeout: 10000,
+        timeout: 5000,
       });
       await expect(page.locator('text=Q4 2024')).toBeVisible({
-        timeout: 10000,
+        timeout: 5000,
       });
 
       console.log('✅ Quarters created successfully');
 
       // Generate iterations for Q1
       const q1Row = page.locator('tr:has(td:text("Q1 2024"))');
-      await expect(q1Row).toBeVisible({ timeout: 10000 });
+      await expect(q1Row).toBeVisible({ timeout: 5000 });
 
       const generateIterationsButton = q1Row.locator(
         'button:has-text("Generate Iterations")'
       );
-      await expect(generateIterationsButton).toBeVisible({ timeout: 10000 });
+      await expect(generateIterationsButton).toBeVisible({ timeout: 5000 });
       await generateIterationsButton.click();
       await page.waitForTimeout(5000);
 
@@ -97,7 +97,7 @@ test.describe('Setup Cycles E2E Tests', () => {
         .or(page.locator('text=iterations').or(page.locator('text=success')));
 
       try {
-        await expect(successMessage.first()).toBeVisible({ timeout: 15000 });
+        await expect(successMessage.first()).toBeVisible({ timeout: 5000 });
         console.log('✅ Q1 iterations created successfully');
       } catch (error) {
         console.log(
@@ -108,7 +108,7 @@ test.describe('Setup Cycles E2E Tests', () => {
         const iterationElements = page
           .locator('text=Iteration 1')
           .or(page.locator('text=Q1 2024 - Iteration'));
-        await expect(iterationElements.first()).toBeVisible({ timeout: 10000 });
+        await expect(iterationElements.first()).toBeVisible({ timeout: 5000 });
         console.log('✅ Iterations verified by presence in dialog');
       }
 
@@ -174,7 +174,7 @@ test.describe('Setup Cycles E2E Tests', () => {
     await page.waitForTimeout(2000);
 
     // Verify quarters still exist
-    await expect(page.locator('text=Q1 2024')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Q1 2024')).toBeVisible({ timeout: 5000 });
 
     // Close dialog
     await page.keyboard.press('Escape');

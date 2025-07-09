@@ -11,7 +11,7 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
       // Setup already complete, proceed to import steps
     } else {
       // Wait for setup form to be visible and complete setup
-      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 5000 });
 
       // Fill in financial year configuration using correct selectors
       await page.fill('#fyStart', '2024-01-01');
@@ -27,7 +27,7 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
       // Wait for Complete Setup button to be visible
       await expect(
         page.locator('button:has-text("Complete Setup")')
-      ).toBeVisible({ timeout: 10000 });
+      ).toBeVisible({ timeout: 5000 });
       await page.click('button:has-text("Complete Setup")');
 
       // 2. Wait for redirect to dashboard (setup complete)
@@ -99,7 +99,7 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
     ).toBeVisible();
 
     const teamsFileInput = page.locator('#teamsCSV');
-    await expect(teamsFileInput).toBeVisible({ timeout: 10000 });
+    await expect(teamsFileInput).toBeVisible({ timeout: 5000 });
 
     const teamsCSV = `team_id,team_name,division_id,division_name,capacity
 team-001,Mortgage Origination,div-001,Consumer Lending,160
@@ -126,7 +126,7 @@ team-010,Trade Finance,div-004,Everyday Banking,160`;
       const successMessage = page
         .locator('text=Successfully imported')
         .or(page.locator('text=teams'));
-      await expect(successMessage.first()).toBeVisible({ timeout: 8000 });
+      await expect(successMessage.first()).toBeVisible({ timeout: 5000 });
       console.log('Teams import success message found');
     } catch (error) {
       console.log('No explicit teams success message found, proceeding');
@@ -211,7 +211,7 @@ Data Analytics Platform,,,,,Data Governance,Data quality and governance framewor
       .or(page.locator('text=processed'))
       .or(page.locator('[class*="success"]'));
 
-    await expect(projectsSuccess.first()).toBeVisible({ timeout: 20000 });
+    await expect(projectsSuccess.first()).toBeVisible({ timeout: 5000 });
 
     // Step 3: Import planning allocations for Q1 2024
     // Reset the form for next import
@@ -339,7 +339,7 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
       .or(page.locator('text=processed'))
       .or(page.locator('[class*="success"]'));
 
-    await expect(allocationsSuccess.first()).toBeVisible({ timeout: 20000 });
+    await expect(allocationsSuccess.first()).toBeVisible({ timeout: 5000 });
 
     // Step 4: Verify the imported data integrity on Planning page
     await page.goto('/planning');
@@ -417,7 +417,7 @@ Business Analytics Platform,Q1 2024,2,Critical Run,,20,Platform maintenance`;
       .or(page.locator('text=35%'))
       .or(page.locator('text=100%')); // Total allocation indicators
 
-    await expect(allocationPercentages.first()).toBeVisible({ timeout: 10000 });
+    await expect(allocationPercentages.first()).toBeVisible({ timeout: 5000 });
 
     // Comprehensive banking portfolio import test completed successfully
   });
@@ -457,6 +457,6 @@ Valid Team,Invalid Quarter,1,Some Epic,Some Project,50,Invalid quarter`;
       .or(page.locator('[class*="error"]'))
       .or(page.locator('[class*="danger"]'));
 
-    await expect(errorIndicators.first()).toBeVisible({ timeout: 10000 });
+    await expect(errorIndicators.first()).toBeVisible({ timeout: 5000 });
   });
 });

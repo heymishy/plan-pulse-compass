@@ -11,7 +11,7 @@ test.describe('Allocations Import E2E Tests', () => {
       // Setup already complete, proceed to import steps
     } else {
       // Wait for setup form to be visible and complete setup
-      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 5000 });
 
       // Fill in financial year configuration using correct selectors
       await page.fill('#fyStart', '2024-01-01');
@@ -27,7 +27,7 @@ test.describe('Allocations Import E2E Tests', () => {
       // Wait for Complete Setup button to be visible
       await expect(
         page.locator('button:has-text("Complete Setup")')
-      ).toBeVisible({ timeout: 10000 });
+      ).toBeVisible({ timeout: 5000 });
       await page.click('button:has-text("Complete Setup")');
 
       // 2. Wait for redirect to dashboard (setup complete)
@@ -96,7 +96,7 @@ test.describe('Allocations Import E2E Tests', () => {
     ).toBeVisible();
 
     const teamsFileInput = page.locator('#teamsCSV');
-    await expect(teamsFileInput).toBeVisible({ timeout: 10000 });
+    await expect(teamsFileInput).toBeVisible({ timeout: 5000 });
 
     const teamsCSV = `team_id,team_name,division_id,division_name,capacity
 team-001,Mortgage Origination,div-001,Consumer Lending,160
@@ -120,7 +120,7 @@ team-003,Credit Assessment Engine,div-001,Consumer Lending,160`;
 
     // Try to find success indicator but don't fail the test if not found
     try {
-      await expect(successIndicators.first()).toBeVisible({ timeout: 8000 });
+      await expect(successIndicators.first()).toBeVisible({ timeout: 5000 });
       console.log('Team import success message found');
     } catch (error) {
       console.log(
@@ -164,7 +164,7 @@ Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2
     // Wait for projects import success
     await expect(
       page.locator('text=success').or(page.locator('text=imported')).first()
-    ).toBeVisible({ timeout: 10000 });
+    ).toBeVisible({ timeout: 5000 });
 
     // 5. Now ready for allocation import tests
     await page.reload();
@@ -227,7 +227,7 @@ Credit Assessment Engine,Q1 2024,1,Compliance & Security,,20,Security reviews`;
       .or(page.locator('text=9')) // Number of rows processed
       .or(page.locator('[class*="success"]'));
 
-    await expect(successIndicators.first()).toBeVisible({ timeout: 15000 });
+    await expect(successIndicators.first()).toBeVisible({ timeout: 5000 });
 
     // Navigate to Planning page to verify imported data
     await page.goto('/planning');
@@ -287,7 +287,7 @@ Credit Assessment Engine,Q1 2024,1,Compliance & Security,,20,Security reviews`;
       .or(page.locator('text=20%'))
       .or(page.locator('text=100%')); // Total allocation
 
-    await expect(allocationIndicators.first()).toBeVisible({ timeout: 10000 });
+    await expect(allocationIndicators.first()).toBeVisible({ timeout: 5000 });
 
     // Verify epic/project names appear in planning
     await expect(
@@ -353,7 +353,7 @@ Credit Assessment Engine,Compliance & Security,run,1,20,Q1 2024`;
       .or(page.locator('text=9')) // Number of rows processed
       .or(page.locator('[class*="success"]'));
 
-    await expect(successIndicators.first()).toBeVisible({ timeout: 15000 });
+    await expect(successIndicators.first()).toBeVisible({ timeout: 5000 });
 
     // Navigate to Planning page to verify actual vs planned comparison
     await page.goto('/planning');
@@ -386,7 +386,7 @@ Credit Assessment Engine,Compliance & Security,run,1,20,Q1 2024`;
       .or(page.locator('text=50%'))
       .or(page.locator('text=100%'));
 
-    await expect(actualPercentages.first()).toBeVisible({ timeout: 10000 });
+    await expect(actualPercentages.first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should handle invalid allocations CSV gracefully', async ({ page }) => {
@@ -424,6 +424,6 @@ Valid Team,Invalid Quarter,1,Some Epic,Some Project,50,Invalid quarter format`;
       .or(page.locator('[class*="error"]'))
       .or(page.locator('[class*="danger"]'));
 
-    await expect(errorIndicators.first()).toBeVisible({ timeout: 10000 });
+    await expect(errorIndicators.first()).toBeVisible({ timeout: 5000 });
   });
 });

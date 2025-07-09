@@ -41,7 +41,7 @@ test.describe('People Import E2E Tests', () => {
       .or(page.locator('[class*="success"]'))
       .or(page.locator('[class*="complete"]'));
 
-    await expect(successIndicators.first()).toBeVisible({ timeout: 10000 });
+    await expect(successIndicators.first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should show validation error for invalid people CSV', async ({
@@ -73,7 +73,7 @@ test.describe('People Import E2E Tests', () => {
       .or(page.locator('[class*="danger"]'))
       .or(page.locator('[class*="destructive"]'));
 
-    await expect(errorIndicators.first()).toBeVisible({ timeout: 10000 });
+    await expect(errorIndicators.first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should download people sample CSV', async ({ page }) => {
@@ -87,7 +87,7 @@ test.describe('People Import E2E Tests', () => {
     await expect(downloadButton).toBeVisible();
 
     // Test download functionality
-    const downloadPromise = page.waitForEvent('download', { timeout: 10000 });
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
     await downloadButton.click();
     const download = await downloadPromise;
 

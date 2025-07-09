@@ -9,7 +9,7 @@ test.describe('Settings Page', () => {
     if (page.url().includes('/dashboard')) {
       // Setup already complete
     } else {
-      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 10000 });
+      await expect(page.locator('#fyStart')).toBeVisible({ timeout: 5000 });
       await page.fill('#fyStart', '2024-01-01');
       await page.check('input[name="iterationLength"][value="fortnightly"]');
       await page.click('button:has-text("Next")');
@@ -49,7 +49,7 @@ test.describe('Settings Page', () => {
 
       // Verify quarters created
       await expect(page.locator('text=Q1 2024')).toBeVisible({
-        timeout: 15000,
+        timeout: 5000,
       });
 
       // Create iterations for Q1
