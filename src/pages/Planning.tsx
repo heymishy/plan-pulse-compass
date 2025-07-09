@@ -74,6 +74,14 @@ const Planning = () => {
     }
   }, [currentQuarter, selectedCycleId]);
 
+  // Get iterations for selected quarter
+  const iterations = cycles
+    .filter(c => c.type === 'iteration' && c.parentCycleId === selectedCycleId)
+    .sort(
+      (a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
+
   // Retry logic for iteration loading
   const [iterationRetryCount, setIterationRetryCount] = useState(0);
   const [isWaitingForIterations, setIsWaitingForIterations] = useState(false);
@@ -107,14 +115,6 @@ const Planning = () => {
     iterationRetryCount,
     config?.iterationLength,
   ]);
-
-  // Get iterations for selected quarter
-  const iterations = cycles
-    .filter(c => c.type === 'iteration' && c.parentCycleId === selectedCycleId)
-    .sort(
-      (a, b) =>
-        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-    );
 
   // Filter teams based on division
   const teamsInDivision = React.useMemo(() => {

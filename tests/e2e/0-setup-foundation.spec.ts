@@ -134,6 +134,16 @@ test.describe('Foundation Setup (runs first)', () => {
   test('should complete setup wizard and create quarters with iterations', async ({
     page,
   }) => {
+    // Log console messages and errors
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log('❌ Console error:', msg.text());
+      }
+    });
+
+    page.on('pageerror', error => {
+      console.log('❌ Page error:', error.message);
+    });
     // 1. Complete setup wizard
     await page.goto('/setup');
     await page.waitForLoadState('networkidle');
@@ -152,14 +162,26 @@ test.describe('Foundation Setup (runs first)', () => {
       console.log('✅ Setup wizard completed');
     }
 
-    // 2. Navigate to Planning and create cycles
+    // 2. Debug what's happening after setup
+    console.log('Current URL after setup:', page.url());
+
+    // 2.1 Check if we're still on setup page
+    if (page.url().includes('/setup')) {
+      console.log('⚠️ Still on setup page, waiting for redirect...');
+      await page.waitForTimeout(3000);
+      console.log('URL after waiting:', page.url());
+    }
+
+    // 2.2 Navigate to Planning and create cycles
     await page.goto('/planning');
     await page.waitForLoadState('networkidle');
+    console.log('Navigated to Planning page, URL:', page.url());
 
-    // 2.1 Wait for setup to complete and app to be ready
-    await page.waitForTimeout(3000);
+    // 2.3 Check for any errors on the page
+    const errorMessages = await page.locator('[class*="error"]').count();
+    console.log('Error messages on page:', errorMessages);
 
-    // 2.2 Check if we need to wait for setup completion
+    // 2.4 Check if we need to wait for setup completion
     const setupRequired = await page.locator('text=Setup Required').count();
     if (setupRequired > 0) {
       console.log('⚠️ Setup still required, waiting longer...');
@@ -168,7 +190,15 @@ test.describe('Foundation Setup (runs first)', () => {
       await page.waitForLoadState('networkidle');
     }
 
-    // 2.3 Verify Planning page loaded
+    // 2.5 Check what's actually on the page
+    const pageContent = await page.locator('body').textContent();
+    console.log('Page content preview:', pageContent?.substring(0, 200));
+
+    // 2.6 Try to find the planning title with different strategies
+    const planningTitle = await page.locator('h1').count();
+    console.log('Number of h1 elements:', planningTitle);
+
+    // 2.7 Verify Planning page loaded
     await expect(page.locator('[data-testid="planning-title"]')).toBeVisible({
       timeout: 15000,
     });
