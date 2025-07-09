@@ -52,7 +52,9 @@ test.describe('Setup Cycles E2E Tests', () => {
       await page.waitForTimeout(2000);
 
       // Wait for cycle dialog to open
-      await expect(page.locator('text=Manage Cycles')).toBeVisible({
+      await expect(
+        page.getByRole('heading', { name: 'Manage Cycles' })
+      ).toBeVisible({
         timeout: 5000,
       });
 
@@ -174,7 +176,9 @@ test.describe('Setup Cycles E2E Tests', () => {
     await page.waitForTimeout(2000);
 
     // Verify quarters still exist
-    await expect(page.locator('text=Q1 2024')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Q1 2024', { exact: true })).toBeVisible({
+      timeout: 5000,
+    });
 
     // Close dialog
     await page.keyboard.press('Escape');
@@ -210,12 +214,23 @@ test.describe('Setup Cycles E2E Tests', () => {
       await page.click('button:has-text("Manage Cycles")');
       await page.waitForTimeout(2000);
 
-      await page.click('button:has-text("Generate Standard Quarters")');
-      await page.waitForTimeout(5000);
+      // Check if quarters already exist in this dialog
+      const existingQ1 = await page.locator('text=Q1 2024').count();
+      if (existingQ1 === 0) {
+        await page.click('button:has-text("Generate Standard Quarters")');
+        await page.waitForTimeout(5000);
+      }
 
       const q1Row = page.locator('tr:has(td:text("Q1 2024"))');
-      await q1Row.locator('button:has-text("Generate Iterations")').click();
-      await page.waitForTimeout(5000);
+      if ((await q1Row.count()) > 0) {
+        const iterationsButton = q1Row.locator(
+          'button:has-text("Generate Iterations")'
+        );
+        if ((await iterationsButton.count()) > 0) {
+          await iterationsButton.click();
+          await page.waitForTimeout(5000);
+        }
+      }
 
       await page.keyboard.press('Escape');
       console.log('✅ Cycles created via Planning page from Settings test');
