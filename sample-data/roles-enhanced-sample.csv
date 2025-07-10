@@ -1,4 +1,3 @@
-
 role_id,role_name,description,default_annual_salary,default_hourly_rate,default_daily_rate,legacy_default_rate
 role-senior-developer,Senior Developer,Senior software developer with 5+ years experience,180000,120,960,120
 role-developer,Developer,Mid-level software developer,120000,85,680,85
