@@ -111,7 +111,7 @@ describe('teamUtils', () => {
 
     it('should return "Unknown Product Owner" when assigned PO does not exist', () => {
       const teamWithInvalidPO: Team = {
-        ...mockTeams[0],
+        ...mockTeams[2], // Use team-3 which has no natural PO
         productOwnerId: 'non-existent-person',
       };
       const result = getProductOwnerName(
