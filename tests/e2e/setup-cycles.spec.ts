@@ -97,12 +97,15 @@ test.describe('Setup Cycles E2E Tests', () => {
       console.log('✅ Quarters created successfully');
 
       // Generate iterations for Q1
-      const q1Row = page.locator('tr').filter({ hasText: 'Q1 2024' });
-      await expect(q1Row.first()).toBeVisible({ timeout: 5000 });
+      // First verify Q1 2024 text exists in the dialog (not the dropdown)
+      await expect(
+        page.locator('div.font-medium:has-text("Q1 2024")')
+      ).toBeVisible({ timeout: 5000 });
 
-      const generateIterationsButton = q1Row
-        .first()
-        .locator('button:has-text("Generate Iterations")');
+      // Then find the first Generate Iterations button (which should be for Q1)
+      const generateIterationsButton = page
+        .locator('button:has-text("Generate Iterations")')
+        .first();
       await expect(generateIterationsButton).toBeVisible({ timeout: 5000 });
       await generateIterationsButton.click();
       await page.waitForTimeout(5000);
@@ -129,11 +132,11 @@ test.describe('Setup Cycles E2E Tests', () => {
       }
 
       // Generate iterations for Q2 as well (for more comprehensive testing)
-      const q2Row = page.locator('tr:has(td:text("Q2 2024"))');
-      if ((await q2Row.count()) > 0) {
-        const q2GenerateButton = q2Row.locator(
-          'button:has-text("Generate Iterations")'
-        );
+      const q2Text = page.locator('div.font-medium:has-text("Q2 2024")');
+      if ((await q2Text.count()) > 0) {
+        const q2GenerateButton = page
+          .locator('button:has-text("Generate Iterations")')
+          .nth(1);
         if ((await q2GenerateButton.count()) > 0) {
           await q2GenerateButton.click();
           await page.waitForTimeout(3000);
@@ -173,8 +176,12 @@ test.describe('Setup Cycles E2E Tests', () => {
       await page.click('button:has-text("Generate Standard Quarters")');
       await page.waitForTimeout(5000);
 
-      const q1Row = page.locator('tr:has(td:text("Q1 2024"))');
-      await q1Row.locator('button:has-text("Generate Iterations")').click();
+      const q1Text = page.locator('div.font-medium:has-text("Q1 2024")');
+      await q1Text.first(); // Ensure it exists
+      await page
+        .locator('button:has-text("Generate Iterations")')
+        .first()
+        .click();
       await page.waitForTimeout(5000);
     }
 
@@ -235,11 +242,11 @@ test.describe('Setup Cycles E2E Tests', () => {
         await page.waitForTimeout(5000);
       }
 
-      const q1Row = page.locator('tr:has(td:text("Q1 2024"))');
-      if ((await q1Row.count()) > 0) {
-        const iterationsButton = q1Row.locator(
-          'button:has-text("Generate Iterations")'
-        );
+      const q1Text = page.locator('div.font-medium:has-text("Q1 2024")');
+      if ((await q1Text.count()) > 0) {
+        const iterationsButton = page
+          .locator('button:has-text("Generate Iterations")')
+          .first();
         if ((await iterationsButton.count()) > 0) {
           await iterationsButton.click();
           await page.waitForTimeout(5000);

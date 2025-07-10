@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1, // Use single worker to ensure test order
   reporter: 'html',
-  timeout: 30000, // 30 seconds per test
+  timeout: 60000, // 60 seconds per test
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',

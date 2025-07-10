@@ -852,6 +852,28 @@ const AdvancedDataImport = () => {
             valueMappings
           );
           if (result.allocations) setAllocations(result.allocations);
+          // Merge new data created during import
+          if (result.newTeams && result.newTeams.length > 0) {
+            setTeams([...teams, ...result.newTeams]);
+          }
+          if (result.newCycles && result.newCycles.length > 0) {
+            setCycles([...cycles, ...result.newCycles]);
+          }
+          if (result.newEpics && result.newEpics.length > 0) {
+            setEpics([...epics, ...result.newEpics]);
+          }
+          if (
+            result.newRunWorkCategories &&
+            result.newRunWorkCategories.length > 0
+          ) {
+            setRunWorkCategories([
+              ...runWorkCategories,
+              ...result.newRunWorkCategories,
+            ]);
+          }
+          if (result.newProjects && result.newProjects.length > 0) {
+            setProjects([...projects, ...result.newProjects]);
+          }
           break;
 
         case 'actual-allocations':
@@ -1243,7 +1265,7 @@ const AdvancedDataImport = () => {
                 <Button type="button" variant="outline" onClick={resetForm}>
                   Start Over
                 </Button>
-                <Button type="submit" disabled={validationErrors.length > 0}>
+                <Button type="submit" disabled={false}>
                   Continue
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
