@@ -1,0 +1,38 @@
+project_name,project_description,project_status,project_start_date,project_end_date,project_budget,epic_name,epic_description,epic_effort,epic_team,epic_target_date,milestone_name,milestone_due_date
+Digital Mortgage Platform,Comprehensive digital mortgage and lending platform,active,2024-01-01,2024-12-31,4500000,Loan Application Portal,Customer-facing loan application system,55,Mortgage Origination,2024-06-30,MVP Launch,2024-03-31
+Digital Mortgage Platform,,,,,,"Document Processing",Automated document verification and processing,42,Personal Loans Platform,2024-05-31,Document Processing MVP,2024-04-30
+Digital Mortgage Platform,,,,,,"Loan Account Management",Loan account management and servicing system,38,Loan Servicing,2024-07-31,Loan Management Beta,2024-06-15
+Digital Mortgage Platform,,,,,,"Debt Management System",Automated debt management and collections,45,Collections & Recovery,2024-08-31,Collections Automation,2024-07-30
+Digital Mortgage Platform,,,,,,"Underwriting Automation",Automated underwriting workflows and decisions,52,Mortgage Underwriting,2024-09-30,Underwriting Automation Live,2024-08-31
+Payment Integration Platform,Unified payment processing and integration system,active,2024-02-01,2024-11-30,3200000,Payment Integration Platform,Core payment processing integration,48,Personal Loans Platform,2024-07-31,Payment MVP,2024-05-31
+Payment Integration Platform,,,,,,"Payment Processing",Advanced loan payment processing capabilities,44,Loan Servicing,2024-08-31,Payment Processing Live,2024-07-15
+Payment Integration Platform,,,,,,"Integration Testing",End-to-end payment integration testing,35,Loan Servicing,2024-10-31,Integration Complete,2024-09-30
+Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2024-10-31,2800000,Mobile Authentication,Biometric and multi-factor authentication,42,Credit Assessment Engine,2024-06-30,Mobile Auth MVP,2024-04-30
+Mobile Banking 2.0,,,,,,"Mobile App Integration",Mobile app loan and banking features,46,Mortgage Origination,2024-09-30,Mobile Banking Launch,2024-08-31
+Analytics Dashboard,Business intelligence and analytics platform,active,2024-01-01,2024-09-30,2400000,Risk Analytics Dashboard,Credit risk analytics and monitoring,40,Credit Assessment Engine,2024-05-31,Analytics MVP,2024-03-31
+Analytics Dashboard,,,,,,"Credit Scoring Engine",Advanced credit scoring algorithms,48,Credit Assessment Engine,2024-07-31,Credit Scoring Live,2024-06-30
+Analytics Dashboard,,,,,,"Collections Analytics",Collections performance analytics platform,38,Collections & Recovery,2024-06-30,Collections Analytics Beta,2024-05-15
+Analytics Dashboard,,,,,,"Risk Assessment Engine",Advanced risk assessment tools,42,Mortgage Underwriting,2024-08-31,Risk Assessment Live,2024-07-31
+Analytics Dashboard,,,,,,"Machine Learning Models",ML models for credit and risk assessment,52,Credit Assessment Engine,2024-09-30,ML Models Production,2024-08-31
+Analytics Dashboard,,,,,,"Service Analytics",Loan servicing analytics and insights,36,Loan Servicing,2024-08-31,Service Analytics Live,2024-07-15
+Analytics Dashboard,,,,,,"Predictive Analytics",Predictive collections and risk analytics,45,Collections & Recovery,2024-09-30,Predictive Models Live,2024-08-31
+Analytics Dashboard,,,,,,"Real-time Scoring",Real-time credit scoring capabilities,40,Credit Assessment Engine,2024-10-31,Real-time Scoring Live,2024-09-30
+Analytics Dashboard,,,,,,"Risk Model Validation",Risk model validation and testing,38,Credit Assessment Engine,2024-11-30,Model Validation Complete,2024-10-31
+Analytics Dashboard,,,,,,"Reporting System",Enhanced reporting and dashboard capabilities,42,Collections & Recovery,2024-10-31,Reporting System Live,2024-09-30
+Customer Portal,Digital customer self-service portal,planning,2024-04-01,2024-10-31,1800000,Customer Portal,Core customer self-service portal,50,Loan Servicing,2024-08-31,Portal MVP,2024-06-30
+Customer Portal,,,,,,"Digital Onboarding",Digital customer onboarding workflows,45,Mortgage Origination,2024-07-31,Onboarding Beta,2024-06-15
+Customer Portal,,,,,,"Customer Communication",Customer communication and notification tools,38,Loan Servicing,2024-09-30,Communication Tools Live,2024-08-31
+API Gateway Optimization,Enterprise API gateway performance optimization,active,2024-02-01,2024-10-31,1500000,API Gateway Optimization,Core API gateway performance improvements,46,Personal Loans Platform,2024-06-30,API Gateway V2,2024-05-31
+API Gateway Optimization,,,,,,"Loan Origination API",Loan origination API development,42,Mortgage Origination,2024-08-31,Loan API Live,2024-07-31
+API Gateway Optimization,,,,,,"Integration Platform",API integration platform for underwriting,38,Mortgage Underwriting,2024-09-30,Integration Platform Live,2024-08-31
+API Gateway Optimization,,,,,,"System Integration",System integration and API management,40,Personal Loans Platform,2024-10-31,System Integration Complete,2024-09-30
+Performance Optimization,System performance tuning and optimization,active,2024-01-01,2024-12-31,1200000,Recovery Optimization,Collections recovery process optimization,44,Collections & Recovery,2024-07-31,Recovery Optimization Live,2024-06-30
+Performance Optimization,,,,,,"Performance Tuning",System performance optimization,40,Personal Loans Platform,2024-08-31,Performance Tuning Complete,2024-07-31
+Performance Optimization,,,,,,"Process Optimization",Loan origination process optimization,42,Mortgage Origination,2024-09-30,Process Optimization Live,2024-08-31
+Performance Optimization,,,,,,"Automated Workflows",Automated collection workflows,46,Collections & Recovery,2024-08-31,Workflow Automation Live,2024-07-31
+Performance Optimization,,,,,,"Service Optimization",Loan servicing optimization,38,Loan Servicing,2024-10-31,Service Optimization Complete,2024-09-30
+Performance Optimization,,,,,,"Process Improvement",Process improvement initiatives,35,Collections & Recovery,2024-11-30,Process Improvement Complete,2024-10-31
+Security Framework Enhancement,Enterprise security and compliance framework,active,2024-01-15,2024-12-15,2100000,Security Enhancement,Platform security enhancements,48,Personal Loans Platform,2024-09-30,Security Framework V2,2024-08-31
+Data Pipeline Optimization,Big data processing pipeline optimization,active,2024-01-15,2024-09-30,1600000,Data Pipeline Setup,Data pipeline for loan processing,45,Personal Loans Platform,2024-07-31,Data Pipeline Live,2024-06-30
+Legacy System Migration,Legacy system modernization and migration,active,2024-02-01,2024-11-30,2500000,Legacy Migration,Legacy system migration for mortgages,50,Mortgage Origination,2024-10-31,Legacy Migration Complete,2024-09-30
+Monitoring System Setup,Enterprise monitoring and observability platform,active,2024-03-01,2024-10-31,1100000,Monitoring Setup,Credit monitoring system setup,42,Credit Assessment Engine,2024-09-30,Monitoring System Live,2024-08-31

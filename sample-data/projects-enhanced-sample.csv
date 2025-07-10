@@ -1,21 +1,21 @@
 project_id,name,description,status,start_date,end_date,budget,domain,priority,manager_email
-proj-001,Digital Mortgage Platform,Modern loan origination and mortgage platform,active,2024-01-01,2024-12-31,2500000,Consumer Lending,high,sarah.johnson@bank.com
-proj-002,Payment Integration Platform,Unified payment processing and integration platform,active,2024-01-15,2024-11-30,1800000,Cards & Payments,high,mike.wilson@bank.com
-proj-003,API Gateway Optimization,Enterprise API gateway performance optimization,active,2024-02-01,2024-10-31,1200000,Technology,medium,alex.turner@company.com
-proj-004,Analytics Dashboard,Business intelligence and analytics platform,active,2024-01-01,2024-09-30,1600000,Technology,high,rachel.brown@company.com
-proj-005,Security Framework Enhancement,Enterprise security and compliance framework,active,2024-01-15,2024-12-15,2100000,Technology,high,andrew.kim@company.com
-proj-006,Push Notification System,Cross-platform push notification service,planning,2024-02-01,2024-08-31,800000,Technology,medium,emily.davis@company.com
-proj-007,Load Balancer Configuration,High-availability load balancing infrastructure,active,2024-03-01,2024-07-31,600000,Technology,medium,daniel.wilson@company.com
-proj-008,Code Refactoring Initiative,Legacy code modernization and refactoring,active,2024-01-01,2024-11-30,1400000,Technology,medium,robert.martinez@company.com
-proj-009,Microservices Architecture,Enterprise microservices platform migration,active,2024-02-15,2024-12-31,3200000,Technology,high,chris.johnson@company.com
-proj-010,Monitoring System Setup,Enterprise monitoring and observability platform,active,2024-03-01,2024-10-31,1100000,Technology,medium,jessica.lee@company.com
-proj-011,Mobile App Redesign,Mobile application user experience redesign,planning,2024-04-01,2024-11-30,1500000,Everyday Banking,high,ava.wilson@bank.com
-proj-012,Data Pipeline Optimization,Big data processing pipeline optimization,active,2024-01-15,2024-09-30,1900000,Technology,high,michael.thompson@company.com
-proj-013,E-commerce Platform,Digital commerce and marketplace platform,planning,2024-05-01,2024-12-31,2200000,Digital Services,medium,liam.jackson@company.com
-proj-014,Legacy System Migration,Legacy system modernization and migration,active,2024-02-01,2024-11-30,2800000,Technology,high,noah.williams@company.com
-proj-015,Cloud Infrastructure Migration,Cloud-native infrastructure migration,active,2024-03-01,2024-12-31,3500000,Technology,high,owen.garcia@company.com
-proj-016,Backup System Enhancement,Enterprise backup and disaster recovery,active,2024-01-01,2024-08-31,900000,Technology,medium,ethan.moore@company.com
-proj-017,Customer Portal,Digital customer self-service portal,planning,2024-04-01,2024-10-31,1300000,Everyday Banking,high,zoe.anderson@bank.com
-proj-018,API Versioning System,API lifecycle and versioning management,active,2024-02-15,2024-09-30,700000,Technology,medium,mason.lee@company.com
-proj-019,Performance Optimization,System performance tuning and optimization,active,2024-01-01,2024-12-31,1000000,Technology,medium,carter.brown@company.com
-proj-020,Database Performance Monitoring,Database monitoring and optimization platform,active,2024-01-15,2024-08-31,800000,Technology,medium,maya.wilson@company.com
+proj-001,Digital Mortgage Platform,Comprehensive digital mortgage and lending platform,active,2024-01-01,2024-12-31,4500000,Consumer Lending,high,sarah.johnson@bank.com
+proj-002,Payment Integration Platform,Unified payment processing and integration system,active,2024-02-01,2024-11-30,3200000,Cards & Payments,high,mike.wilson@bank.com
+proj-003,Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2024-10-31,2800000,Everyday Banking,high,jessica.martinez@bank.com
+proj-004,Analytics Dashboard,Business intelligence and analytics platform,active,2024-01-01,2024-09-30,2400000,Consumer Lending,high,rachel.brown@bank.com
+proj-005,Customer Portal,Digital customer self-service portal,planning,2024-04-01,2024-10-31,1800000,Everyday Banking,high,zoe.anderson@bank.com
+proj-006,API Gateway Optimization,Enterprise API gateway performance optimization,active,2024-02-01,2024-10-31,1500000,Technology,medium,alex.turner@bank.com
+proj-007,Performance Optimization,System performance tuning and optimization,active,2024-01-01,2024-12-31,1200000,Technology,medium,carter.brown@bank.com
+proj-008,Security Framework Enhancement,Enterprise security and compliance framework,active,2024-01-15,2024-12-15,2100000,Technology,high,andrew.kim@bank.com
+proj-009,Data Pipeline Optimization,Big data processing pipeline optimization,active,2024-01-15,2024-09-30,1600000,Technology,high,michael.thompson@bank.com
+proj-010,Legacy System Migration,Legacy system modernization and migration,active,2024-02-01,2024-11-30,2500000,Technology,high,noah.williams@bank.com
+proj-011,Monitoring System Setup,Enterprise monitoring and observability platform,active,2024-03-01,2024-10-31,1100000,Technology,medium,jessica.lee@bank.com
+proj-012,SME Lending Platform,Small and medium enterprise lending platform,planning,2024-05-01,2024-12-31,3000000,Business Lending,high,margaret.garcia@bank.com
+proj-013,Corporate Finance Platform,Corporate finance and investment banking platform,active,2024-01-08,2024-12-31,3500000,Business Lending,high,mary.rodriguez@bank.com
+proj-014,Business Risk Management,Business lending risk management system,active,2024-01-18,2024-11-30,2200000,Business Lending,high,sandra.davis@bank.com
+proj-015,Trade Finance Platform,International trade finance platform,active,2024-01-22,2024-12-31,2600000,Business Lending,medium,michelle.wilson@bank.com
+proj-016,Asset Finance Platform,Equipment and asset financing platform,active,2024-01-25,2024-11-30,2000000,Business Lending,medium,lisa.martinez@bank.com
+proj-017,Commercial Risk Analytics,Commercial lending risk analytics platform,active,2024-01-28,2024-10-31,1800000,Business Lending,high,betty.johnson@bank.com
+proj-018,Credit Card Platform,Credit card processing and management platform,active,2024-02-05,2024-11-30,2800000,Cards & Payments,high,zoe.anderson@bank.com
+proj-019,Debit Card Services,Debit card services and management platform,active,2024-02-12,2024-10-31,1600000,Cards & Payments,medium,jennifer.davis@bank.com
+proj-020,Payment Processing Engine,Core payment processing engine,active,2024-02-15,2024-12-31,3200000,Cards & Payments,high,sandra.wilson@bank.com

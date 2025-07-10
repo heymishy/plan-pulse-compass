@@ -1,31 +1,43 @@
-epic_id,name,description,project_id,project_name,estimated_effort,priority,status,assigned_team_id,assigned_team_name,target_start_date,target_end_date
-epic-001,User Authentication System,Core authentication system development,proj-001,Digital Mortgage Platform,34,high,active,team-001,Frontend Team,2024-01-01,2024-03-31
-epic-002,Payment Integration Platform,Payment processing integration,proj-002,Payment Integration Platform,55,high,active,team-002,Backend Team,2024-01-15,2024-04-15
-epic-003,API Gateway Optimization,Performance improvements for API gateway,proj-003,API Gateway Optimization,40,medium,active,team-003,Platform Team,2024-02-01,2024-05-31
-epic-004,Analytics Dashboard,Analytics platform development,proj-004,Analytics Dashboard,45,high,active,team-004,Data Team,2024-01-01,2024-06-30
-epic-005,Security Framework Enhancement,Security improvements and compliance,proj-005,Security Framework Enhancement,50,high,active,team-003,Platform Team,2024-01-15,2024-07-31
-epic-006,Push Notification System,Cross-platform notifications,proj-006,Push Notification System,30,medium,planning,team-001,Frontend Team,2024-02-01,2024-05-31
-epic-007,Load Balancer Configuration,Load balancer setup and configuration,proj-007,Load Balancer Configuration,25,medium,active,team-003,Platform Team,2024-03-01,2024-05-31
-epic-008,Code Refactoring Initiative,Code modernization and refactoring,proj-008,Code Refactoring Initiative,60,medium,active,team-001,Frontend Team,2024-01-01,2024-08-31
-epic-009,Microservices Architecture,Microservices implementation,proj-009,Microservices Architecture,80,high,active,team-002,Backend Team,2024-02-15,2024-09-30
-epic-010,Monitoring System Setup,Monitoring implementation,proj-010,Monitoring System Setup,35,medium,active,team-003,Platform Team,2024-03-01,2024-07-31
-epic-011,Mobile App Redesign,Mobile app modernization,proj-011,Mobile App Redesign,45,high,planning,team-001,Frontend Team,2024-04-01,2024-08-31
-epic-012,Data Pipeline Optimization,Data pipeline improvements,proj-012,Data Pipeline Optimization,65,high,active,team-004,Data Team,2024-01-15,2024-07-31
-epic-013,E-commerce Platform,E-commerce development,proj-013,E-commerce Platform,70,medium,planning,team-001,Frontend Team,2024-05-01,2024-10-31
-epic-014,Legacy System Migration,Legacy system migration,proj-014,Legacy System Migration,90,high,active,team-002,Backend Team,2024-02-01,2024-09-30
-epic-015,Cloud Infrastructure Migration,Cloud migration,proj-015,Cloud Infrastructure Migration,100,high,active,team-003,Platform Team,2024-03-01,2024-11-30
-epic-016,Backup System Enhancement,Backup system improvements,proj-016,Backup System Enhancement,40,medium,active,team-003,Platform Team,2024-01-01,2024-06-30
-epic-017,Customer Portal,Customer portal development,proj-017,Customer Portal,55,high,planning,team-001,Frontend Team,2024-04-01,2024-08-31
-epic-018,API Versioning System,API versioning implementation,proj-018,API Versioning System,30,medium,active,team-002,Backend Team,2024-02-15,2024-06-30
-epic-019,Performance Optimization,Performance improvements,proj-019,Performance Optimization,35,medium,active,team-003,Platform Team,2024-01-01,2024-08-31
-epic-020,Database Performance Monitoring,Database monitoring setup,proj-020,Database Performance Monitoring,40,medium,active,team-004,Data Team,2024-01-15,2024-06-30
-epic-021,Advanced Analytics,Advanced analytics development,proj-004,Analytics Dashboard,50,high,active,team-004,Data Team,2024-04-01,2024-09-30
-epic-022,Machine Learning Pipeline,ML pipeline development,proj-004,Analytics Dashboard,60,high,active,team-004,Data Team,2024-05-01,2024-10-31
-epic-023,Real-time Analytics,Real-time analytics,proj-004,Analytics Dashboard,45,high,active,team-004,Data Team,2024-06-01,2024-11-30
-epic-024,Business Intelligence Dashboard,BI dashboard development,proj-004,Analytics Dashboard,40,high,active,team-004,Data Team,2024-03-01,2024-08-31
-epic-025,Customer Analytics Platform,Customer analytics,proj-004,Analytics Dashboard,35,high,active,team-001,Frontend Team,2024-04-15,2024-09-15
-epic-026,Machine Learning Models,ML models development,proj-004,Analytics Dashboard,55,high,active,team-001,Frontend Team,2024-07-01,2024-12-31
-epic-027,Kubernetes Migration,Kubernetes implementation,proj-015,Cloud Infrastructure Migration,50,high,active,team-002,Backend Team,2024-03-15,2024-08-31
-epic-028,Container Orchestration,Container orchestration,proj-015,Cloud Infrastructure Migration,45,high,active,team-003,Platform Team,2024-04-01,2024-09-30
-epic-029,Serverless Architecture,Serverless implementation,proj-015,Cloud Infrastructure Migration,40,high,active,team-002,Backend Team,2024-05-01,2024-10-31
-epic-030,Multi-region Deployment,Multi-region setup,proj-015,Cloud Infrastructure Migration,60,high,active,team-001,Frontend Team,2024-06-01,2024-11-30
+epic_id,name,description,project_id,project_name,effort,priority,status,team_id,team_name,start_date,end_date
+epic-001,Loan Application Portal,Customer-facing loan application system,proj-001,Digital Mortgage Platform,55,high,active,team-007,Mortgage Origination,2024-01-01,2024-06-30
+epic-002,Document Processing,Automated document verification and processing,proj-001,Digital Mortgage Platform,42,high,active,team-008,Personal Loans Platform,2024-02-01,2024-05-31
+epic-003,Loan Account Management,Loan account management and servicing system,proj-001,Digital Mortgage Platform,38,medium,active,team-010,Loan Servicing,2024-03-01,2024-07-31
+epic-004,Debt Management System,Automated debt management and collections,proj-001,Digital Mortgage Platform,45,high,active,team-011,Collections & Recovery,2024-04-01,2024-08-31
+epic-005,Underwriting Automation,Automated underwriting workflows and decisions,proj-001,Digital Mortgage Platform,52,high,active,team-012,Mortgage Underwriting,2024-05-01,2024-09-30
+epic-006,Payment Integration Platform,Core payment processing integration,proj-002,Payment Integration Platform,48,high,active,team-008,Personal Loans Platform,2024-02-01,2024-07-31
+epic-007,Payment Processing,Advanced loan payment processing capabilities,proj-002,Payment Integration Platform,44,high,active,team-010,Loan Servicing,2024-03-01,2024-08-31
+epic-008,Integration Testing,End-to-end payment integration testing,proj-002,Payment Integration Platform,35,medium,planning,team-010,Loan Servicing,2024-06-01,2024-10-31
+epic-009,Mobile Authentication,Biometric and multi-factor authentication,proj-003,Mobile Banking 2.0,42,high,active,team-009,Credit Assessment Engine,2024-01-15,2024-06-30
+epic-010,Mobile App Integration,Mobile app loan and banking features,proj-003,Mobile Banking 2.0,46,high,active,team-007,Mortgage Origination,2024-04-01,2024-09-30
+epic-011,Risk Analytics Dashboard,Credit risk analytics and monitoring,proj-004,Analytics Dashboard,40,high,active,team-009,Credit Assessment Engine,2024-01-01,2024-05-31
+epic-012,Credit Scoring Engine,Advanced credit scoring algorithms,proj-004,Analytics Dashboard,48,high,active,team-009,Credit Assessment Engine,2024-03-01,2024-07-31
+epic-013,Collections Analytics,Collections performance analytics platform,proj-004,Analytics Dashboard,38,medium,active,team-011,Collections & Recovery,2024-02-01,2024-06-30
+epic-014,Risk Assessment Engine,Advanced risk assessment tools,proj-004,Analytics Dashboard,42,high,active,team-012,Mortgage Underwriting,2024-04-01,2024-08-31
+epic-015,Machine Learning Models,ML models for credit and risk assessment,proj-004,Analytics Dashboard,52,high,active,team-009,Credit Assessment Engine,2024-05-01,2024-09-30
+epic-016,Service Analytics,Loan servicing analytics and insights,proj-004,Analytics Dashboard,36,medium,active,team-010,Loan Servicing,2024-03-01,2024-08-31
+epic-017,Predictive Analytics,Predictive collections and risk analytics,proj-004,Analytics Dashboard,45,high,active,team-011,Collections & Recovery,2024-06-01,2024-09-30
+epic-018,Real-time Scoring,Real-time credit scoring capabilities,proj-004,Analytics Dashboard,40,high,planning,team-009,Credit Assessment Engine,2024-07-01,2024-10-31
+epic-019,Risk Model Validation,Risk model validation and testing,proj-004,Analytics Dashboard,38,medium,planning,team-009,Credit Assessment Engine,2024-08-01,2024-11-30
+epic-020,Reporting System,Enhanced reporting and dashboard capabilities,proj-004,Analytics Dashboard,42,medium,planning,team-011,Collections & Recovery,2024-07-01,2024-10-31
+epic-021,Customer Portal,Core customer self-service portal,proj-005,Customer Portal,50,high,planning,team-010,Loan Servicing,2024-04-01,2024-08-31
+epic-022,Digital Onboarding,Digital customer onboarding workflows,proj-005,Customer Portal,45,high,planning,team-007,Mortgage Origination,2024-05-01,2024-07-31
+epic-023,Customer Communication,Customer communication and notification tools,proj-005,Customer Portal,38,medium,planning,team-010,Loan Servicing,2024-06-01,2024-09-30
+epic-024,API Gateway Optimization,Core API gateway performance improvements,proj-006,API Gateway Optimization,46,medium,active,team-008,Personal Loans Platform,2024-02-01,2024-06-30
+epic-025,Loan Origination API,Loan origination API development,proj-006,API Gateway Optimization,42,medium,active,team-007,Mortgage Origination,2024-04-01,2024-08-31
+epic-026,Integration Platform,API integration platform for underwriting,proj-006,API Gateway Optimization,38,medium,planning,team-012,Mortgage Underwriting,2024-06-01,2024-09-30
+epic-027,System Integration,System integration and API management,proj-006,API Gateway Optimization,40,medium,planning,team-008,Personal Loans Platform,2024-07-01,2024-10-31
+epic-028,Recovery Optimization,Collections recovery process optimization,proj-007,Performance Optimization,44,medium,active,team-011,Collections & Recovery,2024-01-01,2024-07-31
+epic-029,Performance Tuning,System performance optimization,proj-007,Performance Optimization,40,medium,active,team-008,Personal Loans Platform,2024-03-01,2024-08-31
+epic-030,Process Optimization,Loan origination process optimization,proj-007,Performance Optimization,42,medium,active,team-007,Mortgage Origination,2024-05-01,2024-09-30
+epic-031,Automated Workflows,Automated collection workflows,proj-007,Performance Optimization,46,medium,active,team-011,Collections & Recovery,2024-06-01,2024-08-31
+epic-032,Service Optimization,Loan servicing optimization,proj-007,Performance Optimization,38,medium,planning,team-010,Loan Servicing,2024-07-01,2024-10-31
+epic-033,Process Improvement,Process improvement initiatives,proj-007,Performance Optimization,35,low,planning,team-011,Collections & Recovery,2024-08-01,2024-11-30
+epic-034,Security Enhancement,Platform security enhancements,proj-008,Security Framework Enhancement,48,high,active,team-008,Personal Loans Platform,2024-01-15,2024-09-30
+epic-035,Compliance Framework,Regulatory compliance framework,proj-008,Security Framework Enhancement,45,high,active,team-012,Mortgage Underwriting,2024-02-01,2024-10-31
+epic-036,Data Pipeline Setup,Data pipeline for loan processing,proj-009,Data Pipeline Optimization,45,high,active,team-008,Personal Loans Platform,2024-01-15,2024-07-31
+epic-037,Pipeline Monitoring,Data pipeline monitoring and alerting,proj-009,Data Pipeline Optimization,38,medium,planning,team-009,Credit Assessment Engine,2024-04-01,2024-09-30
+epic-038,Legacy Migration,Legacy system migration for mortgages,proj-010,Legacy System Migration,50,high,active,team-007,Mortgage Origination,2024-02-01,2024-10-31
+epic-039,Data Migration,Legacy data migration and validation,proj-010,Legacy System Migration,42,high,active,team-008,Personal Loans Platform,2024-03-01,2024-09-30
+epic-040,System Cutover,Legacy system cutover and testing,proj-010,Legacy System Migration,38,high,planning,team-010,Loan Servicing,2024-08-01,2024-11-30
+epic-041,Monitoring Setup,Credit monitoring system setup,proj-011,Monitoring System Setup,42,medium,active,team-009,Credit Assessment Engine,2024-03-01,2024-09-30
+epic-042,Alert Configuration,Monitoring alert configuration,proj-011,Monitoring System Setup,35,medium,planning,team-011,Collections & Recovery,2024-05-01,2024-10-31
