@@ -8,28 +8,12 @@ export const getProductOwnerName = (
   people: Person[],
   roles: Role[]
 ): string => {
-  // If no PO assigned to team, return early
-  if (!team.productOwnerId) {
-    return 'No Product Owner';
-  }
-
-  // Find the assigned PO person
-  const assignedPO = people.find(p => p.id === team.productOwnerId);
-  if (!assignedPO) {
-    return 'Unknown Product Owner';
-  }
-
-  // Find Product Owner role
+  // Find Product Owner role first
   const productOwnerRole = roles.find(
     role =>
       role.name.toLowerCase().includes('product owner') ||
       role.name.toLowerCase().includes('po')
   );
-
-  if (!productOwnerRole) {
-    // If no PO role exists, just return the assigned person's name
-    return assignedPO.name;
-  }
 
   // Get all active team members
   const teamMembers = people.filter(
@@ -37,9 +21,32 @@ export const getProductOwnerName = (
   );
 
   // Find the natural PO (person with PO role in the team)
-  const naturalPO = teamMembers.find(
-    person => person.roleId === productOwnerRole.id
-  );
+  const naturalPO = productOwnerRole
+    ? teamMembers.find(person => person.roleId === productOwnerRole.id)
+    : null;
+
+  // If no explicit PO assigned to team, check for natural PO
+  if (!team.productOwnerId) {
+    if (naturalPO) {
+      return naturalPO.name;
+    }
+    return 'No Product Owner';
+  }
+
+  // Find the assigned PO person
+  const assignedPO = people.find(p => p.id === team.productOwnerId);
+  if (!assignedPO) {
+    // Fallback to natural PO if assigned PO not found
+    if (naturalPO) {
+      return naturalPO.name;
+    }
+    return 'Unknown Product Owner';
+  }
+
+  if (!productOwnerRole) {
+    // If no PO role exists, just return the assigned person's name
+    return assignedPO.name;
+  }
 
   // Check if assigned PO is in the team
   const isAssignedPOInTeam = teamMembers.some(
