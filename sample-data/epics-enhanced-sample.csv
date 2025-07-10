@@ -1,10 +1,31 @@
-
-epic_name,project_name,project_id,description,estimated_effort,status,assigned_team_id,start_date,target_end_date,actual_end_date
-User Authentication,Mobile App Redesign,project-1,Implement secure user login and registration,21,completed,team-1,2024-01-15,2024-02-15,2024-02-10
-Payment Integration,Mobile App Redesign,project-1,Add payment processing capabilities,34,in-progress,team-2,2024-02-01,2024-03-15,
-Push Notifications,Mobile App Redesign,project-1,Implement push notification system,13,not-started,team-3,2024-03-01,2024-04-01,
-API Gateway Setup,API Integration Project,project-2,Set up API gateway for third-party integrations,13,not-started,team-3,2024-02-15,2024-03-01,
-OAuth Implementation,API Integration Project,project-2,Implement OAuth authentication for APIs,8,not-started,team-1,2024-03-01,2024-03-15,
-Product Catalog,E-commerce Platform,project-3,Build product listing and search functionality,55,in-progress,team-2,2024-01-15,2024-04-30,
-Shopping Cart,E-commerce Platform,project-3,Implement shopping cart and checkout,34,not-started,team-1,2024-03-01,2024-05-15,
-Order Management,E-commerce Platform,project-3,Order processing and fulfillment system,42,not-started,team-4,2024-04-01,2024-07-01,
+epic_id,name,description,project_id,project_name,estimated_effort,priority,status,assigned_team_id,assigned_team_name,target_start_date,target_end_date
+epic-001,User Authentication System,Core authentication system development,proj-001,Digital Mortgage Platform,34,high,active,team-001,Frontend Team,2024-01-01,2024-03-31
+epic-002,Payment Integration Platform,Payment processing integration,proj-002,Payment Integration Platform,55,high,active,team-002,Backend Team,2024-01-15,2024-04-15
+epic-003,API Gateway Optimization,Performance improvements for API gateway,proj-003,API Gateway Optimization,40,medium,active,team-003,Platform Team,2024-02-01,2024-05-31
+epic-004,Analytics Dashboard,Analytics platform development,proj-004,Analytics Dashboard,45,high,active,team-004,Data Team,2024-01-01,2024-06-30
+epic-005,Security Framework Enhancement,Security improvements and compliance,proj-005,Security Framework Enhancement,50,high,active,team-003,Platform Team,2024-01-15,2024-07-31
+epic-006,Push Notification System,Cross-platform notifications,proj-006,Push Notification System,30,medium,planning,team-001,Frontend Team,2024-02-01,2024-05-31
+epic-007,Load Balancer Configuration,Load balancer setup and configuration,proj-007,Load Balancer Configuration,25,medium,active,team-003,Platform Team,2024-03-01,2024-05-31
+epic-008,Code Refactoring Initiative,Code modernization and refactoring,proj-008,Code Refactoring Initiative,60,medium,active,team-001,Frontend Team,2024-01-01,2024-08-31
+epic-009,Microservices Architecture,Microservices implementation,proj-009,Microservices Architecture,80,high,active,team-002,Backend Team,2024-02-15,2024-09-30
+epic-010,Monitoring System Setup,Monitoring implementation,proj-010,Monitoring System Setup,35,medium,active,team-003,Platform Team,2024-03-01,2024-07-31
+epic-011,Mobile App Redesign,Mobile app modernization,proj-011,Mobile App Redesign,45,high,planning,team-001,Frontend Team,2024-04-01,2024-08-31
+epic-012,Data Pipeline Optimization,Data pipeline improvements,proj-012,Data Pipeline Optimization,65,high,active,team-004,Data Team,2024-01-15,2024-07-31
+epic-013,E-commerce Platform,E-commerce development,proj-013,E-commerce Platform,70,medium,planning,team-001,Frontend Team,2024-05-01,2024-10-31
+epic-014,Legacy System Migration,Legacy system migration,proj-014,Legacy System Migration,90,high,active,team-002,Backend Team,2024-02-01,2024-09-30
+epic-015,Cloud Infrastructure Migration,Cloud migration,proj-015,Cloud Infrastructure Migration,100,high,active,team-003,Platform Team,2024-03-01,2024-11-30
+epic-016,Backup System Enhancement,Backup system improvements,proj-016,Backup System Enhancement,40,medium,active,team-003,Platform Team,2024-01-01,2024-06-30
+epic-017,Customer Portal,Customer portal development,proj-017,Customer Portal,55,high,planning,team-001,Frontend Team,2024-04-01,2024-08-31
+epic-018,API Versioning System,API versioning implementation,proj-018,API Versioning System,30,medium,active,team-002,Backend Team,2024-02-15,2024-06-30
+epic-019,Performance Optimization,Performance improvements,proj-019,Performance Optimization,35,medium,active,team-003,Platform Team,2024-01-01,2024-08-31
+epic-020,Database Performance Monitoring,Database monitoring setup,proj-020,Database Performance Monitoring,40,medium,active,team-004,Data Team,2024-01-15,2024-06-30
+epic-021,Advanced Analytics,Advanced analytics development,proj-004,Analytics Dashboard,50,high,active,team-004,Data Team,2024-04-01,2024-09-30
+epic-022,Machine Learning Pipeline,ML pipeline development,proj-004,Analytics Dashboard,60,high,active,team-004,Data Team,2024-05-01,2024-10-31
+epic-023,Real-time Analytics,Real-time analytics,proj-004,Analytics Dashboard,45,high,active,team-004,Data Team,2024-06-01,2024-11-30
+epic-024,Business Intelligence Dashboard,BI dashboard development,proj-004,Analytics Dashboard,40,high,active,team-004,Data Team,2024-03-01,2024-08-31
+epic-025,Customer Analytics Platform,Customer analytics,proj-004,Analytics Dashboard,35,high,active,team-001,Frontend Team,2024-04-15,2024-09-15
+epic-026,Machine Learning Models,ML models development,proj-004,Analytics Dashboard,55,high,active,team-001,Frontend Team,2024-07-01,2024-12-31
+epic-027,Kubernetes Migration,Kubernetes implementation,proj-015,Cloud Infrastructure Migration,50,high,active,team-002,Backend Team,2024-03-15,2024-08-31
+epic-028,Container Orchestration,Container orchestration,proj-015,Cloud Infrastructure Migration,45,high,active,team-003,Platform Team,2024-04-01,2024-09-30
+epic-029,Serverless Architecture,Serverless implementation,proj-015,Cloud Infrastructure Migration,40,high,active,team-002,Backend Team,2024-05-01,2024-10-31
+epic-030,Multi-region Deployment,Multi-region setup,proj-015,Cloud Infrastructure Migration,60,high,active,team-001,Frontend Team,2024-06-01,2024-11-30

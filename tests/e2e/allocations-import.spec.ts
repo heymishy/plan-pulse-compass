@@ -201,15 +201,15 @@ Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2
 
     // Create test CSV data for planning allocations using consistent team and epic names
     const csvContent = `team_name,quarter,iteration_number,epic_name,project_name,percentage,notes
-Mortgage Origination,Q1 2024,1,Loan Application Portal,Digital Lending Platform,50,Core lending functionality
+Mortgage Origination,Q1 2024,1,User Authentication System,Digital Mortgage Platform,50,Core authentication system development
 Mortgage Origination,Q1 2024,1,Critical Run,,30,BAU support and maintenance
 Mortgage Origination,Q1 2024,1,Bug Fixes,,20,Production issue resolution
-Personal Loans Platform,Q1 2024,1,Document Processing,Digital Lending Platform,60,Document automation
+Personal Loans Platform,Q1 2024,1,Payment Integration Platform,Payment Integration Platform,60,Payment processing integration
 Personal Loans Platform,Q1 2024,1,Production Support,,25,System monitoring
-Personal Loans Platform,Q1 2024,1,Performance Optimization,,15,System improvements
-Credit Assessment Engine,Q1 2024,1,Mobile Authentication,Mobile Banking 2.0,45,Authentication development
+Personal Loans Platform,Q1 2024,1,Performance Optimization,Performance Optimization,15,System improvements
+Credit Assessment Engine,Q1 2024,1,Analytics Dashboard,Analytics Dashboard,45,Analytics platform development
 Credit Assessment Engine,Q1 2024,1,Critical Run,,35,BAU activities
-Credit Assessment Engine,Q1 2024,1,Compliance & Security,,20,Security reviews`;
+Credit Assessment Engine,Q1 2024,1,Security Framework Enhancement,Security Framework Enhancement,20,Security improvements`;
 
     // Find the Advanced CSV file input
     const fileInput = page.locator('#advanced-csv-file');

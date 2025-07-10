@@ -28,14 +28,16 @@ This directory contains all the **actively used** sample data files for the Plan
 ### 4. **projects-enhanced-sample.csv**
 
 - **Purpose**: Project definitions with budgets, dates, and status
-- **Projects**: 10 banking projects (Digital Lending, Mobile Banking, etc.)
-- **Data**: Name, description, status, dates, budgets
+- **Projects**: 20 projects matching allocation data (Digital Mortgage Platform, Payment Integration Platform, etc.)
+- **Data**: Name, description, status, dates, budgets, domains, priorities
+- **Consistency**: All projects referenced in planning-allocations-sample.csv are included
 
 ### 5. **epics-enhanced-sample.csv**
 
 - **Purpose**: Epic/work item definitions linked to projects
-- **Epics**: Work breakdown structure for projects
-- **Data**: Epic names, project associations, effort estimates
+- **Epics**: 30 epics with project associations and team assignments
+- **Data**: Epic names, project linkage, effort estimates, team assignments, dates
+- **Consistency**: All epics referenced in planning-allocations-sample.csv are included
 
 ### 6. **roles-enhanced-sample.csv**
 
@@ -84,7 +86,14 @@ Unused, duplicate, and inconsistent files have been moved to `archive/sample-dat
 
 - **Teams**: 35 teams (6 core + 29 banking-specific)
 - **People**: 80 people (5-8 per team)
-- **Projects**: 10 projects
-- **Epics**: Multiple epics per project
+- **Projects**: 20 projects with full consistency
+- **Epics**: 30 epics linked to projects and teams
 - **Allocations**: 143 allocation records
 - **Realistic**: Banking/financial services domain data
+
+## Project/Epic Consistency Verification
+
+✅ **All project names** in planning-allocations-sample.csv exist in projects-enhanced-sample.csv
+✅ **All epic names** in planning-allocations-sample.csv exist in epics-enhanced-sample.csv  
+✅ **E2E test data** uses consistent project and epic names
+✅ **Team assignments** in epics match team structure
