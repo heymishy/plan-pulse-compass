@@ -114,6 +114,16 @@ export function useEncryptedLocalStorage<T>(
           );
           window.localStorage.setItem(key, JSON.stringify(encrypted));
           console.log(`Successfully encrypted and saved data for key "${key}"`);
+
+          // Trigger storage event for cross-component synchronization
+          window.dispatchEvent(
+            new StorageEvent('storage', {
+              key,
+              newValue: JSON.stringify(encrypted),
+              oldValue: null,
+              storageArea: window.localStorage,
+            })
+          );
         } else {
           console.warn('localStorage is not available, data will not persist');
         }
@@ -161,6 +171,16 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       if (isLocalStorageAvailable()) {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
         console.log(`Successfully saved data for key "${key}"`);
+
+        // Trigger storage event for cross-component synchronization
+        window.dispatchEvent(
+          new StorageEvent('storage', {
+            key,
+            newValue: JSON.stringify(valueToStore),
+            oldValue: null,
+            storageArea: window.localStorage,
+          })
+        );
       } else {
         console.warn('localStorage is not available, data will not persist');
       }
@@ -183,6 +203,22 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     } catch (error) {
       console.error(`Error syncing from localStorage key "${key}":`, error);
     }
+
+    // Listen for storage events to sync across components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === key && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setStoredValue(parsed);
+          console.log(`Synced data for key "${key}" from storage event`);
+        } catch (error) {
+          console.error(`Error parsing storage event for key "${key}":`, error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [key]);
 
   return [storedValue, setValue] as const;

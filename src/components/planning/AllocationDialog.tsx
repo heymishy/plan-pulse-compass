@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Allocation, Team, Cycle, Project, Epic, RunWorkCategory } from '@/types';
+import {
+  Allocation,
+  Team,
+  Cycle,
+  Project,
+  Epic,
+  RunWorkCategory,
+} from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -70,7 +77,9 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
 
   useEffect(() => {
     if (allocation) {
-      const epic = allocation.epicId ? epics.find(e => e.id === allocation.epicId) : null;
+      const epic = allocation.epicId
+        ? epics.find(e => e.id === allocation.epicId)
+        : null;
       setFormData({
         teamId: allocation.teamId,
         iterationNumber: allocation.iterationNumber.toString(),
@@ -83,7 +92,9 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
       });
     } else if (prefilledData) {
       // Handle prefilled data from matrix click
-      const suggestedEpic = prefilledData.suggestedEpicId ? epics.find(e => e.id === prefilledData.suggestedEpicId) : null;
+      const suggestedEpic = prefilledData.suggestedEpicId
+        ? epics.find(e => e.id === prefilledData.suggestedEpicId)
+        : null;
       setFormData({
         teamId: prefilledData.teamId || '',
         iterationNumber: prefilledData.iterationNumber?.toString() || '',
@@ -123,12 +134,12 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.teamId || !formData.iterationNumber || !formData.percentage) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive',
       });
       return;
     }
@@ -136,27 +147,27 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
     const percentage = parseFloat(formData.percentage);
     if (percentage <= 0 || percentage > 100) {
       toast({
-        title: "Error",
-        description: "Percentage must be between 1 and 100",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Percentage must be between 1 and 100',
+        variant: 'destructive',
       });
       return;
     }
 
     if (formData.workType === 'epic' && !formData.epicId) {
       toast({
-        title: "Error",
-        description: "Please select an epic",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please select an epic',
+        variant: 'destructive',
       });
       return;
     }
 
     if (formData.workType === 'run-work' && !formData.runWorkCategoryId) {
       toast({
-        title: "Error",
-        description: "Please select a run work category",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Please select a run work category',
+        variant: 'destructive',
       });
       return;
     }
@@ -165,32 +176,43 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
     if (formData.workType === 'epic') {
       const selectedEpic = epics.find(e => e.id === formData.epicId);
       const selectedTeam = teams.find(t => t.id === formData.teamId);
-      
-      if (selectedEpic && selectedTeam && selectedEpic.assignedTeamId && selectedEpic.assignedTeamId !== formData.teamId) {
-        const assignedTeam = teams.find(t => t.id === selectedEpic.assignedTeamId);
+
+      if (
+        selectedEpic &&
+        selectedTeam &&
+        selectedEpic.assignedTeamId &&
+        selectedEpic.assignedTeamId !== formData.teamId
+      ) {
+        const assignedTeam = teams.find(
+          t => t.id === selectedEpic.assignedTeamId
+        );
         toast({
-          title: "Warning",
+          title: 'Warning',
           description: `Epic "${selectedEpic.name}" is assigned to ${assignedTeam?.name}, but you're allocating it to ${selectedTeam.name}. Consider reassigning the epic first.`,
-          variant: "destructive",
+          variant: 'destructive',
         });
         return;
       }
     }
 
     // Check for over-allocation
-    const existingAllocations = allocations.filter(a => 
-      a.teamId === formData.teamId && 
-      a.cycleId === cycleId && 
-      a.iterationNumber === parseInt(formData.iterationNumber) &&
-      a.id !== allocation?.id
+    const existingAllocations = allocations.filter(
+      a =>
+        a.teamId === formData.teamId &&
+        a.cycleId === cycleId &&
+        a.iterationNumber === parseInt(formData.iterationNumber) &&
+        a.id !== allocation?.id
     );
-    
-    const totalExistingPercentage = existingAllocations.reduce((sum, a) => sum + a.percentage, 0);
+
+    const totalExistingPercentage = existingAllocations.reduce(
+      (sum, a) => sum + a.percentage,
+      0
+    );
     if (totalExistingPercentage + percentage > 100) {
       toast({
-        title: "Warning",
-        description: `This allocation would result in ${totalExistingPercentage + percentage}% allocation for this team in this iteration. Consider adjusting the percentage.`,
-        variant: "destructive",
+        title: 'Warning',
+        description: `This allocation would result in ${Math.round(totalExistingPercentage + percentage)}% allocation for this team in this iteration. Consider adjusting the percentage.`,
+        variant: 'destructive',
       });
     }
 
@@ -200,30 +222,37 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
       cycleId,
       iterationNumber: parseInt(formData.iterationNumber),
       epicId: formData.workType === 'epic' ? formData.epicId : undefined,
-      runWorkCategoryId: formData.workType === 'run-work' ? formData.runWorkCategoryId : undefined,
+      runWorkCategoryId:
+        formData.workType === 'run-work'
+          ? formData.runWorkCategoryId
+          : undefined,
       percentage,
       notes: formData.notes.trim() || undefined,
     };
 
     if (allocation) {
-      setAllocations(prev => prev.map(a => a.id === allocation.id ? allocationData : a));
+      setAllocations(prev =>
+        prev.map(a => (a.id === allocation.id ? allocationData : a))
+      );
       toast({
-        title: "Success",
-        description: "Allocation updated successfully",
+        title: 'Success',
+        description: 'Allocation updated successfully',
       });
     } else {
       setAllocations(prev => [...prev, allocationData]);
       toast({
-        title: "Success",
-        description: "Allocation created successfully",
+        title: 'Success',
+        description: 'Allocation created successfully',
       });
     }
 
     onClose();
   };
 
-  const selectableProjects = projects.filter(p => p.status === 'active' || p.status === 'planning');
-  const availableEpics = formData.projectId 
+  const selectableProjects = projects.filter(
+    p => p.status === 'active' || p.status === 'planning'
+  );
+  const availableEpics = formData.projectId
     ? epics.filter(epic => epic.projectId === formData.projectId)
     : [];
 
@@ -254,7 +283,10 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="team">Team *</Label>
-              <Select value={formData.teamId} onValueChange={(value) => handleInputChange('teamId', value)}>
+              <Select
+                value={formData.teamId}
+                onValueChange={value => handleInputChange('teamId', value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select team" />
                 </SelectTrigger>
@@ -270,13 +302,21 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
 
             <div className="space-y-2">
               <Label htmlFor="iteration">Iteration *</Label>
-              <Select value={formData.iterationNumber} onValueChange={(value) => handleInputChange('iterationNumber', value)}>
+              <Select
+                value={formData.iterationNumber}
+                onValueChange={value =>
+                  handleInputChange('iterationNumber', value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select iteration" />
                 </SelectTrigger>
                 <SelectContent>
                   {iterations.map((iteration, index) => (
-                    <SelectItem key={iteration.id} value={(index + 1).toString()}>
+                    <SelectItem
+                      key={iteration.id}
+                      value={(index + 1).toString()}
+                    >
                       Iteration {index + 1}
                     </SelectItem>
                   ))}
@@ -287,7 +327,10 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
 
           <div className="space-y-2">
             <Label htmlFor="workType">Work Type *</Label>
-            <Select value={formData.workType} onValueChange={(value) => handleInputChange('workType', value)}>
+            <Select
+              value={formData.workType}
+              onValueChange={value => handleInputChange('workType', value)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -302,7 +345,10 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
             <>
               <div className="space-y-2">
                 <Label htmlFor="project">Project *</Label>
-                <Select value={formData.projectId} onValueChange={(value) => handleInputChange('projectId', value)}>
+                <Select
+                  value={formData.projectId}
+                  onValueChange={value => handleInputChange('projectId', value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select project first" />
                   </SelectTrigger>
@@ -318,28 +364,39 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="epic">Epic *</Label>
-                <Select 
-                  value={formData.epicId} 
-                  onValueChange={(value) => handleInputChange('epicId', value)}
+                <Select
+                  value={formData.epicId}
+                  onValueChange={value => handleInputChange('epicId', value)}
                   disabled={!formData.projectId}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={formData.projectId ? "Select epic" : "Select project first"} />
+                    <SelectValue
+                      placeholder={
+                        formData.projectId
+                          ? 'Select epic'
+                          : 'Select project first'
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {availableEpics.length === 0 && formData.projectId ? (
-                      <div className="px-4 py-2 text-sm text-gray-500">No epics found for this project</div>
+                      <div className="px-4 py-2 text-sm text-gray-500">
+                        No epics found for this project
+                      </div>
                     ) : (
                       availableEpics.map(epic => {
                         const teamInfo = getEpicTeamInfo(epic);
-                        const isAssignedToSelectedTeam = epic.assignedTeamId === formData.teamId;
-                        
+                        const isAssignedToSelectedTeam =
+                          epic.assignedTeamId === formData.teamId;
+
                         return (
                           <SelectItem key={epic.id} value={epic.id}>
                             <div className="flex flex-col">
                               <span>{epic.name}</span>
                               {teamInfo && (
-                                <span className={`text-xs ${isAssignedToSelectedTeam ? 'text-green-600' : 'text-orange-600'}`}>
+                                <span
+                                  className={`text-xs ${isAssignedToSelectedTeam ? 'text-green-600' : 'text-orange-600'}`}
+                                >
                                   {teamInfo}
                                 </span>
                               )}
@@ -350,11 +407,19 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
                     )}
                   </SelectContent>
                 </Select>
-                {formData.epicId && formData.teamId && (
+                {formData.epicId &&
+                  formData.teamId &&
                   (() => {
-                    const selectedEpic = availableEpics.find(e => e.id === formData.epicId);
-                    if (selectedEpic?.assignedTeamId && selectedEpic.assignedTeamId !== formData.teamId) {
-                      const assignedTeam = teams.find(t => t.id === selectedEpic.assignedTeamId);
+                    const selectedEpic = availableEpics.find(
+                      e => e.id === formData.epicId
+                    );
+                    if (
+                      selectedEpic?.assignedTeamId &&
+                      selectedEpic.assignedTeamId !== formData.teamId
+                    ) {
+                      const assignedTeam = teams.find(
+                        t => t.id === selectedEpic.assignedTeamId
+                      );
                       return (
                         <p className="text-sm text-orange-600">
                           ⚠️ This epic is assigned to {assignedTeam?.name}
@@ -362,8 +427,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
                       );
                     }
                     return null;
-                  })()
-                )}
+                  })()}
               </div>
             </>
           )}
@@ -371,12 +435,19 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
           {formData.workType === 'run-work' && (
             <div className="space-y-2">
               <Label htmlFor="runWorkCategory">Run Work Category *</Label>
-              <Select value={formData.runWorkCategoryId} onValueChange={(value) => handleInputChange('runWorkCategoryId', value)}>
+              <Select
+                value={formData.runWorkCategoryId}
+                onValueChange={value =>
+                  handleInputChange('runWorkCategoryId', value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unassigned">No category assigned</SelectItem>
+                  <SelectItem value="unassigned">
+                    No category assigned
+                  </SelectItem>
                   {runWorkCategories.map(category => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -393,7 +464,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
               id="percentage"
               type="number"
               value={formData.percentage}
-              onChange={(e) => handleInputChange('percentage', e.target.value)}
+              onChange={e => handleInputChange('percentage', e.target.value)}
               placeholder="e.g., 20"
               min="1"
               max="100"
@@ -406,7 +477,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
             <Textarea
               id="notes"
               value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
+              onChange={e => handleInputChange('notes', e.target.value)}
               placeholder="Additional notes"
               rows={3}
             />

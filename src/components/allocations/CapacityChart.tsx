@@ -194,7 +194,7 @@ const CapacityChart: React.FC<CapacityChartProps> = ({
                                     : 'bg-gray-300'
                             }`}
                           ></div>
-                          <span>{data.percentage}%</span>
+                          <span>{Math.round(data.percentage)}%</span>
                           <span className="text-gray-500">({data.hours}h)</span>
                         </div>
                       </div>

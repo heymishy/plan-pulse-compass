@@ -14,8 +14,11 @@ test.describe('People Import E2E Tests', () => {
     // Create test CSV data for people import
     const csvContent = `name,email,role,team_name,employment_type,annual_salary,is_active
 "John Doe","john.doe@company.com","Software Engineer","Frontend Team","permanent","95000","true"
-"Jane Smith","jane.smith@company.com","Product Manager","Product Team","permanent","120000","true"
-"Bob Wilson","bob.wilson@company.com","Designer","Design Team","contractor","85000","true"`;
+"Jane Smith","jane.smith@company.com","Product Owner","Backend Team","permanent","120000","true"
+"Bob Wilson","bob.wilson@company.com","UX Designer","Design Team","contractor","85000","true"
+"Alice Johnson","alice.johnson@company.com","Platform Engineer","Platform Team","permanent","110000","true"
+"Charlie Brown","charlie.brown@company.com","Data Scientist","Data Team","permanent","115000","true"
+"Diana Prince","diana.prince@company.com","Quality Engineer","QA Team","permanent","90000","true"`;
 
     // Find the Enhanced People CSV file input
     const fileInput = page.locator('#enhancedPeopleCSV');
@@ -37,7 +40,7 @@ test.describe('People Import E2E Tests', () => {
       .or(page.locator('text=imported'))
       .or(page.locator('text=completed'))
       .or(page.locator('text=processed'))
-      .or(page.locator('text=3')) // Number of rows processed
+      .or(page.locator('text=6')) // Number of rows processed
       .or(page.locator('[class*="success"]'))
       .or(page.locator('[class*="complete"]'));
 

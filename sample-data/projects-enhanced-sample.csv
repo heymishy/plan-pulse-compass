@@ -1,0 +1,6 @@
+
+project_name,description,status,start_date,end_date,budget,milestone_names,milestone_due_dates,milestone_descriptions,milestone_statuses
+Mobile App Redesign,Complete overhaul of mobile application,active,2024-01-15,2024-06-30,150000,Design Phase;Development Phase;Testing Phase,2024-03-01;2024-05-15;2024-06-15,Complete UI/UX design;Build new features;Quality assurance,completed;in-progress;not-started
+API Integration Project,Integrate third-party APIs,planning,2024-02-01,2024-04-30,75000,API Analysis;Implementation;Documentation,2024-02-15;2024-04-01;2024-04-30,Analyze API requirements;Implement integrations;Create documentation,not-started;not-started;not-started
+E-commerce Platform,Build comprehensive e-commerce solution,active,2024-01-01,2024-12-31,500000,MVP;Beta Launch;Production,2024-06-30;2024-09-30;2024-12-31,Minimum viable product;Beta testing release;Full production launch,completed;in-progress;not-started
+Data Analytics Dashboard,Business intelligence reporting platform,planning,2024-03-01,2024-08-31,120000,Data Model;Dashboard UI;Integration,2024-04-15;2024-06-30;2024-08-31,Design data architecture;Build dashboard interface;Integrate with systems,not-started;not-started;not-started

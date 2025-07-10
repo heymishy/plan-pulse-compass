@@ -1,7 +1,13 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Team, Cycle, Allocation, Project, Epic, RunWorkCategory } from '@/types';
+import {
+  Team,
+  Cycle,
+  Allocation,
+  Project,
+  Epic,
+  RunWorkCategory,
+} from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -42,11 +48,13 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
   allocations,
   projects,
   epics,
-  runWorkCategories
+  runWorkCategories,
 }) => {
   const { setAllocations } = useApp();
   const { toast } = useToast();
-  const [selectedAllocations, setSelectedAllocations] = useState<Set<string>>(new Set());
+  const [selectedAllocations, setSelectedAllocations] = useState<Set<string>>(
+    new Set()
+  );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const getIterationNumber = (iteration: Cycle) => {
@@ -60,7 +68,9 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
       const project = epic ? projects.find(p => p.id === epic.projectId) : null;
       return `${project?.name || 'Unknown'} - ${epic?.name || 'Unknown'}`;
     } else if (allocation.runWorkCategoryId) {
-      const category = runWorkCategories.find(c => c.id === allocation.runWorkCategoryId);
+      const category = runWorkCategories.find(
+        c => c.id === allocation.runWorkCategoryId
+      );
       return category?.name || 'Unknown Category';
     }
     return 'Unknown Allocation';
@@ -68,7 +78,9 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedAllocations(new Set(allocations.map(allocation => allocation.id)));
+      setSelectedAllocations(
+        new Set(allocations.map(allocation => allocation.id))
+      );
     } else {
       setSelectedAllocations(new Set());
     }
@@ -85,12 +97,14 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
   };
 
   const handleBulkDelete = () => {
-    setAllocations(prevAllocations => 
-      prevAllocations.filter(allocation => !selectedAllocations.has(allocation.id))
+    setAllocations(prevAllocations =>
+      prevAllocations.filter(
+        allocation => !selectedAllocations.has(allocation.id)
+      )
     );
 
     toast({
-      title: "Allocations Deleted",
+      title: 'Allocations Deleted',
       description: `Successfully deleted ${selectedAllocations.size} allocation${selectedAllocations.size !== 1 ? 's' : ''}`,
     });
 
@@ -98,7 +112,8 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
     setShowDeleteDialog(false);
   };
 
-  const isAllSelected = allocations.length > 0 && selectedAllocations.size === allocations.length;
+  const isAllSelected =
+    allocations.length > 0 && selectedAllocations.size === allocations.length;
 
   return (
     <Card>
@@ -108,7 +123,8 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
           {selectedAllocations.size > 0 && (
             <div className="flex items-center space-x-4">
               <span className="text-sm text-blue-700">
-                {selectedAllocations.size} allocation{selectedAllocations.size !== 1 ? 's' : ''} selected
+                {selectedAllocations.size} allocation
+                {selectedAllocations.size !== 1 ? 's' : ''} selected
               </span>
               <Button
                 variant="destructive"
@@ -137,21 +153,29 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
                 <TableHead>Team</TableHead>
                 <TableHead>Work Item</TableHead>
                 {iterations.map(iteration => (
-                  <TableHead key={iteration.id} className="text-center min-w-24">
+                  <TableHead
+                    key={iteration.id}
+                    className="text-center min-w-24"
+                  >
                     {iteration.name}
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {allocations.map((allocation) => {
+              {allocations.map(allocation => {
                 const team = teams.find(t => t.id === allocation.teamId);
                 return (
                   <TableRow key={allocation.id}>
                     <TableCell>
                       <Checkbox
                         checked={selectedAllocations.has(allocation.id)}
-                        onCheckedChange={(checked) => handleSelectAllocation(allocation.id, checked as boolean)}
+                        onCheckedChange={checked =>
+                          handleSelectAllocation(
+                            allocation.id,
+                            checked as boolean
+                          )
+                        }
                         aria-label={`Select allocation`}
                       />
                     </TableCell>
@@ -160,20 +184,23 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="font-medium">{getAllocationName(allocation)}</div>
+                        <div className="font-medium">
+                          {getAllocationName(allocation)}
+                        </div>
                         <Badge variant="outline" className="text-xs">
-                          {allocation.percentage}% capacity
+                          {Math.round(allocation.percentage)}% capacity
                         </Badge>
                       </div>
                     </TableCell>
                     {iterations.map(iteration => {
                       const iterationNumber = getIterationNumber(iteration);
-                      const isCurrentIteration = iterationNumber === allocation.iterationNumber;
+                      const isCurrentIteration =
+                        iterationNumber === allocation.iterationNumber;
                       return (
                         <TableCell key={iteration.id} className="text-center">
                           {isCurrentIteration ? (
                             <Badge variant="secondary">
-                              {allocation.percentage}%
+                              {Math.round(allocation.percentage)}%
                             </Badge>
                           ) : (
                             <span className="text-gray-400">-</span>
@@ -186,7 +213,10 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
               })}
               {allocations.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3 + iterations.length} className="text-center py-8 text-gray-500">
+                  <TableCell
+                    colSpan={3 + iterations.length}
+                    className="text-center py-8 text-gray-500"
+                  >
                     No allocations found for this quarter
                   </TableCell>
                 </TableRow>
@@ -200,13 +230,17 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Allocations</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete {selectedAllocations.size} allocation{selectedAllocations.size !== 1 ? 's' : ''}? 
-                This action cannot be undone.
+                Are you sure you want to delete {selectedAllocations.size}{' '}
+                allocation{selectedAllocations.size !== 1 ? 's' : ''}? This
+                action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+              <AlertDialogAction
+                onClick={handleBulkDelete}
+                className="bg-red-600 hover:bg-red-700"
+              >
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>
