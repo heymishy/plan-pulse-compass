@@ -41,3 +41,13 @@ epic-039,Data Migration,Legacy data migration and validation,proj-010,Legacy Sys
 epic-040,System Cutover,Legacy system cutover and testing,proj-010,Legacy System Migration,38,high,planning,team-010,Loan Servicing,2024-08-01,2024-11-30
 epic-041,Monitoring Setup,Credit monitoring system setup,proj-011,Monitoring System Setup,42,medium,active,team-009,Credit Assessment Engine,2024-03-01,2024-09-30
 epic-042,Alert Configuration,Monitoring alert configuration,proj-011,Monitoring System Setup,35,medium,planning,team-011,Collections & Recovery,2024-05-01,2024-10-31
+epic-043,Critical Run,Business-as-usual operations and support work,,Critical Run,20,medium,active,team-007,Mortgage Origination,2024-01-01,2024-12-31
+epic-044,Bug Fixes,Production issue resolution and bug fixes,,Bug Fixes,15,medium,active,team-007,Mortgage Origination,2024-01-01,2024-12-31
+epic-045,Production Support,System monitoring and production support,,Production Support,18,medium,active,team-008,Personal Loans Platform,2024-01-01,2024-12-31
+epic-046,System Maintenance,Ongoing system maintenance and updates,,System Maintenance,16,medium,active,team-010,Loan Servicing,2024-01-01,2024-12-31
+epic-047,Compliance Monitoring,Regulatory compliance monitoring and audit,,Compliance Monitoring,22,high,active,team-011,Collections & Recovery,2024-01-01,2024-12-31
+epic-048,Regulatory Compliance,Compliance and regulatory support activities,,Regulatory Compliance,20,high,active,team-012,Mortgage Underwriting,2024-01-01,2024-12-31
+epic-049,Document Management,Document management system for underwriting,proj-001,Digital Mortgage Platform,38,medium,active,team-012,Mortgage Underwriting,2024-04-01,2024-08-31
+epic-050,Workflow Automation,Workflow automation for underwriting processes,proj-001,Digital Mortgage Platform,35,medium,active,team-012,Mortgage Underwriting,2024-06-01,2024-09-30
+epic-051,Quality Assurance,QA process automation for underwriting,proj-001,Digital Mortgage Platform,32,medium,planning,team-012,Mortgage Underwriting,2024-07-01,2024-10-31
+epic-052,Documentation System,Documentation automation for underwriting,proj-001,Digital Mortgage Platform,28,low,planning,team-012,Mortgage Underwriting,2024-08-01,2024-11-30
