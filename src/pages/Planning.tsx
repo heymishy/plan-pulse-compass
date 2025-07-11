@@ -95,9 +95,7 @@ const Planning = () => {
 
   const financialYearOptions = generateFinancialYearOptions();
 
-  // Temporarily disable auto-initialization for maximum test compatibility
-  // Initialize with current financial year only if it has quarters
-  /*
+  // Initialize with current financial year and quarter based on current date
   React.useEffect(() => {
     if (config?.financialYear && !selectedFinancialYear && cycles.length > 0) {
       const currentFY = getCurrentFinancialYear(config.financialYear.startDate);
@@ -122,9 +120,16 @@ const Planning = () => {
           );
         });
 
-        // Only set current FY if it has quarters, otherwise leave unselected to show all
+        // Set current FY if it has quarters, otherwise fall back to showing all
         if (currentFYQuarters.length > 0) {
           setSelectedFinancialYear(currentFY);
+        } else {
+          // If current FY has no quarters but other FYs do, don't set any FY (show all)
+          const hasAnyQuarters = allQuarters.length > 0;
+          if (!hasAnyQuarters) {
+            // No quarters at all, still set current FY for when quarters are created
+            setSelectedFinancialYear(currentFY);
+          }
         }
       }
     }
@@ -134,12 +139,10 @@ const Planning = () => {
     cycles,
     financialYearOptions,
   ]);
-  */
 
   // Filter quarters by selected financial year
   const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
-    // If no financial year is selected yet, show all quarters to avoid empty dropdown
-    // This ensures test compatibility and predictable behavior
+    // If no financial year is selected, show all quarters
     if (!selectedFinancialYear) {
       return quarters;
     }
@@ -147,12 +150,18 @@ const Planning = () => {
     const selectedFY = financialYearOptions.find(
       fy => fy.value === selectedFinancialYear
     );
-    if (!selectedFY) return quarters;
+    if (!selectedFY) {
+      console.warn(
+        'Selected financial year not found in options:',
+        selectedFinancialYear
+      );
+      return quarters;
+    }
 
     const fyStart = new Date(selectedFY.startDate);
     const fyEnd = new Date(selectedFY.endDate);
 
-    return quarters.filter(quarter => {
+    const filtered = quarters.filter(quarter => {
       const quarterStart = new Date(quarter.startDate);
       const quarterEnd = new Date(quarter.endDate);
 
@@ -160,12 +169,22 @@ const Planning = () => {
       // 1. Quarter starts within FY, or
       // 2. Quarter ends within FY, or
       // 3. Quarter spans entire FY
-      return (
+      const overlaps =
         (quarterStart >= fyStart && quarterStart <= fyEnd) ||
         (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
-        (quarterStart <= fyStart && quarterEnd >= fyEnd)
-      );
+        (quarterStart <= fyStart && quarterEnd >= fyEnd);
+
+      return overlaps;
     });
+
+    console.log(
+      'Filtering quarters for FY:',
+      selectedFY.label,
+      'Found:',
+      filtered.length,
+      'quarters'
+    );
+    return filtered;
   };
 
   // Get all quarter cycles for display
@@ -185,11 +204,45 @@ const Planning = () => {
     activeQuarterCycles.find(c => c.status === 'active') ||
     activeQuarterCycles[0];
 
+  // Auto-select current quarter when available
   React.useEffect(() => {
     if (currentQuarter && !selectedCycleId) {
       setSelectedCycleId(currentQuarter.id);
     }
   }, [currentQuarter, selectedCycleId]);
+
+  // Reset quarter selection when financial year changes and current selection is not valid
+  React.useEffect(() => {
+    if (selectedCycleId && allQuarterCycles.length > 0) {
+      const isCurrentSelectionValid = allQuarterCycles.some(
+        quarter => quarter.id === selectedCycleId
+      );
+
+      if (!isCurrentSelectionValid) {
+        // Current selection is not in the filtered quarters, select the best alternative
+        const newCurrentQuarter =
+          getCurrentQuarterByDate(allQuarterCycles) ||
+          allQuarterCycles.find(c => c.status === 'active') ||
+          allQuarterCycles[0];
+
+        if (newCurrentQuarter) {
+          setSelectedCycleId(newCurrentQuarter.id);
+        } else {
+          setSelectedCycleId('');
+        }
+      }
+    } else if (!selectedCycleId && allQuarterCycles.length > 0) {
+      // No quarter selected but quarters are available, select the best one
+      const newCurrentQuarter =
+        getCurrentQuarterByDate(allQuarterCycles) ||
+        allQuarterCycles.find(c => c.status === 'active') ||
+        allQuarterCycles[0];
+
+      if (newCurrentQuarter) {
+        setSelectedCycleId(newCurrentQuarter.id);
+      }
+    }
+  }, [selectedFinancialYear, allQuarterCycles, selectedCycleId]);
 
   // Get iterations for selected quarter
   const iterations = cycles
