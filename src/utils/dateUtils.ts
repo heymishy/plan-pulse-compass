@@ -34,6 +34,34 @@ export const parseDateString = (
 };
 
 /**
+ * Determines the current financial year based on a financial year start date
+ * @param fyStartDate - Financial year start date (e.g., "2025-04-01")
+ * @param currentDate - Optional date to check against (defaults to current date)
+ * @returns The financial year start date for the current financial year
+ */
+export const getCurrentFinancialYear = (
+  fyStartDate: string,
+  currentDate: Date = new Date()
+): string => {
+  const fyStart = new Date(fyStartDate);
+  const fyMonth = fyStart.getMonth();
+  const fyDay = fyStart.getDate();
+
+  const currentYear = currentDate.getFullYear();
+
+  // Create financial year start for current calendar year
+  const currentFyStart = new Date(currentYear, fyMonth, fyDay);
+
+  // If current date is before the FY start date, we're in the previous financial year
+  if (currentDate < currentFyStart) {
+    return `${currentYear - 1}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
+  }
+
+  // Otherwise, we're in the current financial year
+  return `${currentYear}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
+};
+
+/**
  * Determines the current quarter based on the current date and available quarterly cycles
  * @param quarterCycles - Array of quarterly cycles to check against
  * @param currentDate - Optional date to check against (defaults to current date)

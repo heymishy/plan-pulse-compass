@@ -62,17 +62,20 @@ const Planning = () => {
     suggestedEpicId?: string;
   } | null>(null);
 
-  // Get current quarter cycles
-  const quarterCycles = cycles.filter(
-    c => c.type === 'quarterly' && c.status !== 'completed'
+  // Get all quarter cycles for display
+  const allQuarterCycles = cycles.filter(c => c.type === 'quarterly');
+
+  // Get current quarter cycles (non-completed) for initial selection
+  const activeQuarterCycles = allQuarterCycles.filter(
+    c => c.status !== 'completed'
   );
 
   // Determine current quarter based on actual date first, then fall back to status
-  const currentQuarterByDate = getCurrentQuarterByDate(quarterCycles);
+  const currentQuarterByDate = getCurrentQuarterByDate(activeQuarterCycles);
   const currentQuarter =
     currentQuarterByDate ||
-    quarterCycles.find(c => c.status === 'active') ||
-    quarterCycles[0];
+    activeQuarterCycles.find(c => c.status === 'active') ||
+    activeQuarterCycles[0];
 
   React.useEffect(() => {
     if (currentQuarter && !selectedCycleId) {
@@ -295,7 +298,7 @@ const Planning = () => {
                     <SelectValue placeholder="Select quarter" />
                   </SelectTrigger>
                   <SelectContent>
-                    {quarterCycles.map(cycle => (
+                    {allQuarterCycles.map(cycle => (
                       <SelectItem key={cycle.id} value={cycle.id}>
                         {cycle.name} ({cycle.status})
                       </SelectItem>

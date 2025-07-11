@@ -75,13 +75,26 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
       quarterEnd.setMonth(quarterEnd.getMonth() + 3);
       quarterEnd.setDate(quarterEnd.getDate() - 1); // Last day of the quarter
 
+      // Use the actual year from the quarter start date for proper naming
+      const quarterYear = quarterStart.getFullYear();
+
+      // Determine status based on current date
+      const currentDate = new Date();
+      let status: 'planning' | 'active' | 'completed' = 'planning';
+
+      if (currentDate >= quarterStart && currentDate <= quarterEnd) {
+        status = 'active';
+      } else if (currentDate > quarterEnd) {
+        status = 'completed';
+      }
+
       newQuarters.push({
         id: crypto.randomUUID(),
         type: 'quarterly',
-        name: `Q${i + 1} ${fyYear}`,
+        name: `Q${i + 1} ${quarterYear}`,
         startDate: quarterStart.toISOString().split('T')[0],
         endDate: quarterEnd.toISOString().split('T')[0],
-        status: i === 0 ? 'active' : 'planning',
+        status: status,
       });
     }
 

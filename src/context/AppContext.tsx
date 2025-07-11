@@ -453,8 +453,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (!isDataLoading && cycles.length === 0) {
-      console.log('Initializing default cycles');
+    // Only create default cycles if there's no financial year config
+    // When there's a financial year config, quarters should be generated via the CycleDialog
+    if (!isDataLoading && cycles.length === 0 && !config?.financialYear) {
+      console.log('Initializing default cycles (no financial year config)');
       setCycles([
         {
           id: 'q1-2024',
@@ -490,7 +492,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         },
       ]);
     }
-  }, [isDataLoading, cycles.length, setCycles]);
+  }, [isDataLoading, cycles.length, setCycles, config?.financialYear]);
 
   // Generate iterations for default quarters when config is available
   useEffect(() => {

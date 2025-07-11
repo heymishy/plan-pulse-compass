@@ -1,4 +1,14 @@
 import { test, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+// Helper function to read sample data files
+const readSampleFile = (fileName: string) => {
+  return fs.readFileSync(
+    path.join(process.cwd(), 'sample-data', fileName),
+    'utf-8'
+  );
+};
 
 test.describe('Allocations Import E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -112,10 +122,7 @@ test.describe('Allocations Import E2E Tests', () => {
     const teamsFileInput = page.locator('#teamsCSV');
     await expect(teamsFileInput).toBeVisible({ timeout: 5000 });
 
-    const teamsCSV = `team_id,team_name,division_id,division_name,capacity
-team-001,Mortgage Origination,div-001,Consumer Lending,160
-team-002,Personal Loans Platform,div-001,Consumer Lending,160
-team-003,Credit Assessment Engine,div-001,Consumer Lending,160`;
+    const teamsCSV = readSampleFile('teams-divisions-sample.csv');
 
     await teamsFileInput.setInputFiles({
       name: 'teams-divisions.csv',
@@ -156,10 +163,9 @@ team-003,Credit Assessment Engine,div-001,Consumer Lending,160`;
       '[role="option"]:has-text("Projects, Epics & Milestones")'
     );
 
-    const projectsCSV = `project_name,project_description,project_status,project_start_date,project_end_date,project_budget,epic_name,epic_description,epic_effort,epic_team,epic_target_date,milestone_name,milestone_due_date
-Digital Lending Platform,Modern loan origination and servicing platform,active,2024-01-01,2024-12-31,2500000,Loan Application Portal,Customer-facing loan application system,34,Mortgage Origination,2024-03-31,MVP Launch,2024-06-30
-Digital Lending Platform,,,,,Document Processing,Automated document verification and processing,42,Personal Loans Platform,2024-04-30,,
-Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2024-10-31,1800000,Mobile Authentication,Biometric and multi-factor authentication,21,Credit Assessment Engine,2024-03-15,,`;
+    const projectsCSV = readSampleFile(
+      'projects-epics-milestones-combined.csv'
+    );
 
     const projectsFileInput = page.locator('#advanced-csv-file');
     await projectsFileInput.setInputFiles({
@@ -199,17 +205,7 @@ Mobile Banking 2.0,Next-generation mobile banking experience,active,2024-01-15,2
     await page.click('[id="import-type"]');
     await page.click('[role="option"]:has-text("Planning Allocations")');
 
-    // Create test CSV data for planning allocations using consistent team and epic names
-    const csvContent = `team_name,quarter,iteration_number,epic_name,project_name,percentage,notes
-Mortgage Origination,Q1 2024,1,User Authentication System,Digital Mortgage Platform,50,Core authentication system development
-Mortgage Origination,Q1 2024,1,Critical Run,,30,BAU support and maintenance
-Mortgage Origination,Q1 2024,1,Bug Fixes,,20,Production issue resolution
-Personal Loans Platform,Q1 2024,1,Payment Integration Platform,Payment Integration Platform,60,Payment processing integration
-Personal Loans Platform,Q1 2024,1,Production Support,,25,System monitoring
-Personal Loans Platform,Q1 2024,1,Performance Optimization,Performance Optimization,15,System improvements
-Credit Assessment Engine,Q1 2024,1,Analytics Dashboard,Analytics Dashboard,45,Analytics platform development
-Credit Assessment Engine,Q1 2024,1,Critical Run,,35,BAU activities
-Credit Assessment Engine,Q1 2024,1,Security Framework Enhancement,Security Framework Enhancement,20,Security improvements`;
+    const csvContent = readSampleFile('planning-allocations-sample.csv');
 
     // Find the Advanced CSV file input
     const fileInput = page.locator('#advanced-csv-file');
