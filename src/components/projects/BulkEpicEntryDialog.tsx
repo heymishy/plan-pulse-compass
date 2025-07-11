@@ -180,7 +180,6 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
                   <TableHead className="w-64">Epic Name *</TableHead>
                   <TableHead className="w-80">Description</TableHead>
                   <TableHead className="w-32">Story Points *</TableHead>
-                  <TableHead className="w-48">Assigned Team</TableHead>
                   <TableHead className="w-40">Target End Date</TableHead>
                   <TableHead className="w-16">Actions</TableHead>
                 </TableRow>
@@ -220,26 +219,6 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
                         step="0.5"
                         className="w-full"
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={epic.assignedTeamId}
-                        onValueChange={value =>
-                          updateEpic(epic.id, 'assignedTeamId', value)
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select team" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No team assigned</SelectItem>
-                          {teams.map(team => (
-                            <SelectItem key={team.id} value={team.id}>
-                              {team.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </TableCell>
                     <TableCell>
                       <Input
