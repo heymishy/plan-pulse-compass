@@ -105,7 +105,34 @@ const Planning = () => {
 
   // Filter quarters by selected financial year
   const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
-    if (!selectedFinancialYear) return quarters;
+    // If no financial year is selected yet, show quarters for current FY to avoid empty dropdown
+    if (!selectedFinancialYear) {
+      // If we have a default financial year and config, filter by current FY
+      if (config?.financialYear) {
+        const currentFY = getCurrentFinancialYear(
+          config.financialYear.startDate
+        );
+        const selectedFY = financialYearOptions.find(
+          fy => fy.value === currentFY
+        );
+        if (selectedFY) {
+          const fyStart = new Date(selectedFY.startDate);
+          const fyEnd = new Date(selectedFY.endDate);
+
+          return quarters.filter(quarter => {
+            const quarterStart = new Date(quarter.startDate);
+            const quarterEnd = new Date(quarter.endDate);
+
+            return (
+              (quarterStart >= fyStart && quarterStart <= fyEnd) ||
+              (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
+              (quarterStart <= fyStart && quarterEnd >= fyEnd)
+            );
+          });
+        }
+      }
+      return quarters; // Fallback to show all quarters
+    }
 
     const selectedFY = financialYearOptions.find(
       fy => fy.value === selectedFinancialYear
