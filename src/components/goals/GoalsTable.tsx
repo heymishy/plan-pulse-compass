@@ -1,6 +1,12 @@
-
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -14,11 +20,16 @@ const GoalsTable: React.FC = () => {
 
   const getStatusColor = (status: Goal['status']) => {
     switch (status) {
-      case 'completed': return 'bg-green-500';
-      case 'in-progress': return 'bg-blue-500';
-      case 'at-risk': return 'bg-yellow-500';
-      case 'cancelled': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'completed':
+        return 'bg-green-500';
+      case 'in-progress':
+        return 'bg-blue-500';
+      case 'at-risk':
+        return 'bg-yellow-500';
+      case 'cancelled':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
     }
   };
 
@@ -59,17 +70,20 @@ const GoalsTable: React.FC = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {goals.map((goal) => (
+          {goals.map(goal => (
             <TableRow key={goal.id}>
               <TableCell>
                 <div>
                   <div className="font-medium">{goal.title}</div>
                   {goal.description && (
-                    <div className="text-sm text-gray-500 mt-1">{goal.description}</div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      {goal.description}
+                    </div>
                   )}
                   <div className="flex items-center mt-2 text-sm text-gray-600">
                     <Target className="h-3 w-3 mr-1" />
-                    {goal.metric.target}{goal.metric.unit}
+                    {goal.metric.target}
+                    {goal.metric.unit}
                     {goal.metric.direction === 'increase' ? (
                       <TrendingUp className="h-3 w-3 ml-1 text-green-500" />
                     ) : (
@@ -80,21 +94,24 @@ const GoalsTable: React.FC = () => {
               </TableCell>
               <TableCell>
                 <Badge className={getStatusColor(goal.status)}>
-                  {goal.status.replace('-', ' ')}
+                  {goal.status ? goal.status.replace('-', ' ') : 'Unknown'}
                 </Badge>
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
                   <Progress value={calculateProgress(goal)} className="w-20" />
                   <div className="text-xs text-gray-500">
-                    {goal.metric.current} / {goal.metric.target}{goal.metric.unit}
+                    {goal.metric.current} / {goal.metric.target}
+                    {goal.metric.unit}
                   </div>
                 </div>
               </TableCell>
               <TableCell>
                 <div className="flex items-center space-x-2">
                   <Progress value={goal.confidence * 100} className="w-16" />
-                  <span className="text-sm">{Math.round(goal.confidence * 100)}%</span>
+                  <span className="text-sm">
+                    {Math.round(goal.confidence * 100)}%
+                  </span>
                 </div>
               </TableCell>
               <TableCell>
@@ -110,8 +127,8 @@ const GoalsTable: React.FC = () => {
                 </div>
               </TableCell>
               <TableCell>
-                <GoalDialog 
-                  goal={goal} 
+                <GoalDialog
+                  goal={goal}
                   trigger={
                     <Button variant="outline" size="sm">
                       Edit

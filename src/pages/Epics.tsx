@@ -523,7 +523,7 @@ const Epics = () => {
                   <TableCell>{epic.teamName || 'Unassigned'}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(epic.status)}>
-                      {epic.status.replace('-', ' ')}
+                      {epic.status ? epic.status.replace('-', ' ') : 'Unknown'}
                     </Badge>
                   </TableCell>
                   <TableCell>{epic.estimatedEffort || 'Not set'}</TableCell>

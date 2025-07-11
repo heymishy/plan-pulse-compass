@@ -244,7 +244,9 @@ const ProjectReportDialog: React.FC<ProjectReportDialogProps> = ({
                               : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        {epic.status.replace('-', ' ')}
+                        {epic.status
+                          ? epic.status.replace('-', ' ')
+                          : 'Unknown'}
                       </span>
                     </div>
                   </div>

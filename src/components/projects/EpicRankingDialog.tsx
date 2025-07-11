@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Epic } from '@/types';
@@ -39,9 +38,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface EpicRankingDialogProps {
@@ -55,10 +52,10 @@ interface SortableEpicRowProps {
   onRankingChange: (epicId: string, newRanking: string) => void;
 }
 
-const SortableEpicRow: React.FC<SortableEpicRowProps> = ({ 
-  epic, 
-  index, 
-  onRankingChange 
+const SortableEpicRow: React.FC<SortableEpicRowProps> = ({
+  epic,
+  index,
+  onRankingChange,
 }) => {
   const {
     attributes,
@@ -76,21 +73,24 @@ const SortableEpicRow: React.FC<SortableEpicRowProps> = ({
 
   const getStatusBadgeVariant = (status: Epic['status']) => {
     switch (status) {
-      case 'completed': return 'default';
-      case 'in-progress': return 'secondary';
-      default: return 'outline';
+      case 'completed':
+        return 'default';
+      case 'in-progress':
+        return 'secondary';
+      default:
+        return 'outline';
     }
   };
 
   return (
-    <TableRow 
-      ref={setNodeRef} 
-      style={style} 
+    <TableRow
+      ref={setNodeRef}
+      style={style}
       className={isDragging ? 'opacity-50' : ''}
     >
       <TableCell>
-        <div 
-          {...attributes} 
+        <div
+          {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
         >
@@ -103,7 +103,7 @@ const SortableEpicRow: React.FC<SortableEpicRowProps> = ({
           min="1"
           max="1000"
           value={epic.mvpPriority || epic.releasePriority || index + 1}
-          onChange={(e) => onRankingChange(epic.id, e.target.value)}
+          onChange={e => onRankingChange(epic.id, e.target.value)}
           placeholder="Rank"
           className="w-20"
         />
@@ -120,7 +120,9 @@ const SortableEpicRow: React.FC<SortableEpicRowProps> = ({
       </TableCell>
       <TableCell>
         <div>
-          <div className="font-medium">{epic.projectName || 'Unknown Project'}</div>
+          <div className="font-medium">
+            {epic.projectName || 'Unknown Project'}
+          </div>
           {epic.teamName && (
             <div className="text-sm text-gray-500">{epic.teamName}</div>
           )}
@@ -128,24 +130,27 @@ const SortableEpicRow: React.FC<SortableEpicRowProps> = ({
       </TableCell>
       <TableCell>
         <Badge variant={getStatusBadgeVariant(epic.status)}>
-          {epic.status.replace('-', ' ')}
+          {epic.status ? epic.status.replace('-', ' ') : 'Unknown'}
         </Badge>
       </TableCell>
-      <TableCell>
-        {epic.estimatedEffort || 'Not set'}
-      </TableCell>
-      <TableCell>
-        {epic.targetEndDate || 'Not set'}
-      </TableCell>
+      <TableCell>{epic.estimatedEffort || 'Not set'}</TableCell>
+      <TableCell>{epic.targetEndDate || 'Not set'}</TableCell>
     </TableRow>
   );
 };
 
-const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }) => {
+const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const { epics, setEpics, projects, teams } = useApp();
   const { toast } = useToast();
-  const [mvpEpics, setMvpEpics] = useState<(Epic & { projectName?: string; teamName?: string })[]>([]);
-  const [releaseEpics, setReleaseEpics] = useState<(Epic & { projectName?: string; teamName?: string })[]>([]);
+  const [mvpEpics, setMvpEpics] = useState<
+    (Epic & { projectName?: string; teamName?: string })[]
+  >([]);
+  const [releaseEpics, setReleaseEpics] = useState<
+    (Epic & { projectName?: string; teamName?: string })[]
+  >([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -159,7 +164,9 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
       // Enrich epics with project and team data
       const enrichedEpics = epics.map(epic => {
         const project = projects.find(p => p.id === epic.projectId);
-        const team = epic.assignedTeamId ? teams.find(t => t.id === epic.assignedTeamId) : null;
+        const team = epic.assignedTeamId
+          ? teams.find(t => t.id === epic.assignedTeamId)
+          : null;
         return {
           ...epic,
           projectName: project?.name,
@@ -169,7 +176,8 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
 
       // Sort for MVP priority
       const mvpSorted = [...enrichedEpics].sort((a, b) => {
-        if (a.mvpPriority && b.mvpPriority) return a.mvpPriority - b.mvpPriority;
+        if (a.mvpPriority && b.mvpPriority)
+          return a.mvpPriority - b.mvpPriority;
         if (a.mvpPriority && !b.mvpPriority) return -1;
         if (!a.mvpPriority && b.mvpPriority) return 1;
         return a.name.localeCompare(b.name);
@@ -177,7 +185,8 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
 
       // Sort for Release priority
       const releaseSorted = [...enrichedEpics].sort((a, b) => {
-        if (a.releasePriority && b.releasePriority) return a.releasePriority - b.releasePriority;
+        if (a.releasePriority && b.releasePriority)
+          return a.releasePriority - b.releasePriority;
         if (a.releasePriority && !b.releasePriority) return -1;
         if (!a.releasePriority && b.releasePriority) return 1;
         return a.name.localeCompare(b.name);
@@ -192,16 +201,16 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setMvpEpics((epics) => {
-        const oldIndex = epics.findIndex((epic) => epic.id === active.id);
-        const newIndex = epics.findIndex((epic) => epic.id === over?.id);
+      setMvpEpics(epics => {
+        const oldIndex = epics.findIndex(epic => epic.id === active.id);
+        const newIndex = epics.findIndex(epic => epic.id === over?.id);
 
         const newEpics = arrayMove(epics, oldIndex, newIndex);
-        
+
         // Update MVP priorities based on new positions
         return newEpics.map((epic, index) => ({
           ...epic,
-          mvpPriority: index + 1
+          mvpPriority: index + 1,
         }));
       });
     }
@@ -211,16 +220,16 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setReleaseEpics((epics) => {
-        const oldIndex = epics.findIndex((epic) => epic.id === active.id);
-        const newIndex = epics.findIndex((epic) => epic.id === over?.id);
+      setReleaseEpics(epics => {
+        const oldIndex = epics.findIndex(epic => epic.id === active.id);
+        const newIndex = epics.findIndex(epic => epic.id === over?.id);
 
         const newEpics = arrayMove(epics, oldIndex, newIndex);
-        
+
         // Update release priorities based on new positions
         return newEpics.map((epic, index) => ({
           ...epic,
-          releasePriority: index + 1
+          releasePriority: index + 1,
         }));
       });
     }
@@ -228,16 +237,16 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
 
   const handleMvpRankingChange = (epicId: string, newRanking: string) => {
     const ranking = newRanking ? parseInt(newRanking) : undefined;
-    setMvpEpics(prev => prev.map(e => 
-      e.id === epicId ? { ...e, mvpPriority: ranking } : e
-    ));
+    setMvpEpics(prev =>
+      prev.map(e => (e.id === epicId ? { ...e, mvpPriority: ranking } : e))
+    );
   };
 
   const handleReleaseRankingChange = (epicId: string, newRanking: string) => {
     const ranking = newRanking ? parseInt(newRanking) : undefined;
-    setReleaseEpics(prev => prev.map(e => 
-      e.id === epicId ? { ...e, releasePriority: ranking } : e
-    ));
+    setReleaseEpics(prev =>
+      prev.map(e => (e.id === epicId ? { ...e, releasePriority: ranking } : e))
+    );
   };
 
   const handleSave = () => {
@@ -245,7 +254,7 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
     const updatedEpics = epics.map(epic => {
       const mvpEpic = mvpEpics.find(e => e.id === epic.id);
       const releaseEpic = releaseEpics.find(e => e.id === epic.id);
-      
+
       return {
         ...epic,
         mvpPriority: mvpEpic?.mvpPriority || epic.mvpPriority,
@@ -255,8 +264,8 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
 
     setEpics(updatedEpics);
     toast({
-      title: "Success",
-      description: "Epic rankings updated successfully",
+      title: 'Success',
+      description: 'Epic rankings updated successfully',
     });
     onClose();
   };
@@ -270,7 +279,8 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
 
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Drag epics to reorder them by priority, or manually set rankings from 1-1000. Higher numbers = lower priority.
+            Drag epics to reorder them by priority, or manually set rankings
+            from 1-1000. Higher numbers = lower priority.
           </p>
 
           <Tabs defaultValue="mvp" className="w-full">
@@ -304,8 +314,8 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <SortableContext 
-                      items={mvpEpics.map(e => e.id)} 
+                    <SortableContext
+                      items={mvpEpics.map(e => e.id)}
                       strategy={verticalListSortingStrategy}
                     >
                       {mvpEpics.map((epic, index) => (
@@ -341,8 +351,8 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <SortableContext 
-                      items={releaseEpics.map(e => e.id)} 
+                    <SortableContext
+                      items={releaseEpics.map(e => e.id)}
                       strategy={verticalListSortingStrategy}
                     >
                       {releaseEpics.map((epic, index) => (
@@ -365,9 +375,7 @@ const EpicRankingDialog: React.FC<EpicRankingDialogProps> = ({ isOpen, onClose }
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            Save Rankings
-          </Button>
+          <Button onClick={handleSave}>Save Rankings</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

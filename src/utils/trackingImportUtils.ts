@@ -1583,6 +1583,32 @@ export const parsePlanningAllocationCSVWithMapping = (
     }
   });
 
+  // Validate for overallocation
+  const allocationTotals: { [key: string]: number } = {};
+  allocations.forEach(alloc => {
+    const key = `${alloc.teamId}-${alloc.cycleId}-${alloc.iterationNumber}`;
+    allocationTotals[key] = (allocationTotals[key] || 0) + alloc.percentage;
+  });
+
+  const overallocationErrors = new Set<string>();
+  Object.entries(allocationTotals).forEach(([key, total]) => {
+    if (total > 200) {
+      const [teamId, cycleId, iterationNumber] = key.split('-');
+      const team =
+        teams.find(t => t.id === teamId) || newTeams.find(t => t.id === teamId);
+      const cycle =
+        cycles.find(c => c.id === cycleId) ||
+        newCycles.find(c => c.id === cycleId);
+      const teamName = team ? team.name : 'Unknown Team';
+      const cycleName = cycle ? cycle.name : 'Unknown Cycle';
+      const errorMessage = `Team "${teamName}" is overallocated at ${total}% for ${cycleName}, Iteration ${iterationNumber}. Maximum is 200%.`;
+      if (!overallocationErrors.has(errorMessage)) {
+        errors.push({ row: -1, message: errorMessage });
+        overallocationErrors.add(errorMessage);
+      }
+    }
+  });
+
   return {
     allocations,
     errors,
