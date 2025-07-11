@@ -1,4 +1,5 @@
-import { parse, isValid, format } from 'date-fns';
+import { parse, isValid, format, isWithinInterval } from 'date-fns';
+import { Cycle } from '@/types';
 
 const SUPPORTED_FORMATS = [
   'yyyy-MM-dd',
@@ -10,7 +11,9 @@ const SUPPORTED_FORMATS = [
   'yyyy/MM/dd',
 ];
 
-export const parseDateString = (dateString: string | undefined | null): string | undefined => {
+export const parseDateString = (
+  dateString: string | undefined | null
+): string | undefined => {
   if (!dateString) {
     return undefined;
   }
@@ -28,4 +31,53 @@ export const parseDateString = (dateString: string | undefined | null): string |
   }
 
   return undefined;
+};
+
+/**
+ * Determines the current quarter based on the current date and available quarterly cycles
+ * @param quarterCycles - Array of quarterly cycles to check against
+ * @param currentDate - Optional date to check against (defaults to current date)
+ * @returns The quarterly cycle that contains the current date, or null if none found
+ */
+export const getCurrentQuarterByDate = (
+  quarterCycles: Cycle[],
+  currentDate: Date = new Date()
+): Cycle | null => {
+  if (!quarterCycles || quarterCycles.length === 0) {
+    return null;
+  }
+
+  // Find the quarter that contains the current date
+  const currentQuarter = quarterCycles.find(cycle => {
+    const startDate = new Date(cycle.startDate);
+    const endDate = new Date(cycle.endDate);
+
+    return isWithinInterval(currentDate, {
+      start: startDate,
+      end: endDate,
+    });
+  });
+
+  if (currentQuarter) {
+    return currentQuarter;
+  }
+
+  // If no quarter contains the current date, find the nearest future quarter
+  const futureQuarters = quarterCycles
+    .filter(cycle => new Date(cycle.startDate) > currentDate)
+    .sort(
+      (a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
+
+  if (futureQuarters.length > 0) {
+    return futureQuarters[0];
+  }
+
+  // If no future quarters, return the most recent quarter
+  const sortedQuarters = quarterCycles.sort(
+    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+  );
+
+  return sortedQuarters[0] || null;
 };

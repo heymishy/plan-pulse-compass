@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { getCurrentQuarterByDate } from '@/utils/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -65,8 +66,13 @@ const Planning = () => {
   const quarterCycles = cycles.filter(
     c => c.type === 'quarterly' && c.status !== 'completed'
   );
+
+  // Determine current quarter based on actual date first, then fall back to status
+  const currentQuarterByDate = getCurrentQuarterByDate(quarterCycles);
   const currentQuarter =
-    quarterCycles.find(c => c.status === 'active') || quarterCycles[0];
+    currentQuarterByDate ||
+    quarterCycles.find(c => c.status === 'active') ||
+    quarterCycles[0];
 
   React.useEffect(() => {
     if (currentQuarter && !selectedCycleId) {
