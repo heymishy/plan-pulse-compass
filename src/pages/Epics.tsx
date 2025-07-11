@@ -30,7 +30,7 @@ import { Epic } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
 const Epics = () => {
-  const { epics, setEpics, projects, teams, divisions, releases } = useApp();
+  const { epics, setEpics, projects, releases } = useApp();
   const { toast } = useToast();
 
   const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
@@ -63,12 +63,6 @@ const Epics = () => {
   const enrichedEpics = useMemo(() => {
     return epics.map(epic => {
       const project = projects.find(p => p.id === epic.projectId);
-      const team = epic.assignedTeamId
-        ? teams.find(t => t.id === epic.assignedTeamId)
-        : null;
-      const division = team?.divisionId
-        ? divisions.find(d => d.id === team.divisionId)
-        : null;
       const release = epic.releaseId
         ? releases.find(r => r.id === epic.releaseId)
         : null;
@@ -77,12 +71,10 @@ const Epics = () => {
         ...epic,
         projectName: project?.name || 'Unknown Project',
         projectStatus: project?.status,
-        teamName: team?.name,
-        divisionName: division?.name,
         releaseName: release?.name,
       };
     });
-  }, [epics, projects, teams, divisions, releases]);
+  }, [epics, projects, releases]);
 
   // Apply filters and sorting
   const filteredAndSortedEpics = useMemo(() => {
@@ -479,7 +471,6 @@ const Epics = () => {
                 </TableHead>
                 <TableHead>Epic Name</TableHead>
                 <TableHead>Project</TableHead>
-                <TableHead>Team</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Effort</TableHead>
                 <TableHead>Target Date</TableHead>
@@ -513,14 +504,8 @@ const Epics = () => {
                   <TableCell>
                     <div>
                       <div className="font-medium">{epic.projectName}</div>
-                      {epic.divisionName && (
-                        <div className="text-sm text-gray-500">
-                          {epic.divisionName}
-                        </div>
-                      )}
                     </div>
                   </TableCell>
-                  <TableCell>{epic.teamName || 'Unassigned'}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(epic.status)}>
                       {epic.status ? epic.status.replace('-', ' ') : 'Unknown'}

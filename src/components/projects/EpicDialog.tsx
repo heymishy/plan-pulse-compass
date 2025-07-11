@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Epic } from '@/types';
@@ -30,7 +29,12 @@ interface EpicDialogProps {
   projectId: string;
 }
 
-const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectId }) => {
+const EpicDialog: React.FC<EpicDialogProps> = ({
+  isOpen,
+  onClose,
+  epic,
+  projectId,
+}) => {
   const { epics, setEpics, teams, releases } = useApp();
   const { toast } = useToast();
 
@@ -38,7 +42,6 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
     name: '',
     description: '',
     status: 'not-started' as Epic['status'],
-    assignedTeamId: 'none',
     estimatedEffort: '',
     storyPoints: '',
     startDate: '',
@@ -58,7 +61,6 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
         name: epic.name,
         description: epic.description || '',
         status: epic.status,
-        assignedTeamId: epic.assignedTeamId || 'none',
         estimatedEffort: epic.estimatedEffort?.toString() || '',
         storyPoints: epic.storyPoints?.toString() || '',
         startDate: epic.startDate || '',
@@ -76,7 +78,6 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
         name: '',
         description: '',
         status: 'not-started',
-        assignedTeamId: 'none',
         estimatedEffort: '',
         storyPoints: '',
         startDate: '',
@@ -94,12 +95,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Epic name is required",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Epic name is required',
+        variant: 'destructive',
       });
       return;
     }
@@ -110,14 +111,21 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
       description: formData.description.trim() || undefined,
       status: formData.status,
       projectId,
-      assignedTeamId: formData.assignedTeamId === 'none' ? undefined : formData.assignedTeamId,
-      estimatedEffort: formData.estimatedEffort ? parseInt(formData.estimatedEffort) : undefined,
-      storyPoints: formData.storyPoints ? parseInt(formData.storyPoints) : undefined,
+      estimatedEffort: formData.estimatedEffort
+        ? parseInt(formData.estimatedEffort)
+        : undefined,
+      storyPoints: formData.storyPoints
+        ? parseInt(formData.storyPoints)
+        : undefined,
       startDate: formData.startDate || undefined,
       targetEndDate: formData.targetEndDate || undefined,
       releaseId: formData.releaseId === 'none' ? undefined : formData.releaseId,
-      mvpPriority: formData.mvpPriority ? parseInt(formData.mvpPriority) : undefined,
-      releasePriority: formData.releasePriority ? parseInt(formData.releasePriority) : undefined,
+      mvpPriority: formData.mvpPriority
+        ? parseInt(formData.mvpPriority)
+        : undefined,
+      releasePriority: formData.releasePriority
+        ? parseInt(formData.releasePriority)
+        : undefined,
       isDeployed: formData.isDeployed,
       deploymentDate: formData.deploymentDate || undefined,
       isToggleEnabled: formData.isToggleEnabled,
@@ -125,16 +133,16 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
     };
 
     if (epic) {
-      setEpics(prev => prev.map(e => e.id === epic.id ? newEpic : e));
+      setEpics(prev => prev.map(e => (e.id === epic.id ? newEpic : e)));
       toast({
-        title: "Success",
-        description: "Epic updated successfully",
+        title: 'Success',
+        description: 'Epic updated successfully',
       });
     } else {
       setEpics(prev => [...prev, newEpic]);
       toast({
-        title: "Success",
-        description: "Epic created successfully",
+        title: 'Success',
+        description: 'Epic created successfully',
       });
     }
 
@@ -155,7 +163,9 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, name: e.target.value }))
+                }
                 placeholder="Enter epic name"
                 required
               />
@@ -166,7 +176,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 placeholder="Enter epic description"
                 rows={3}
               />
@@ -174,7 +189,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
 
             <div>
               <Label>Status</Label>
-              <Select value={formData.status} onValueChange={(value: Epic['status']) => setFormData(prev => ({ ...prev, status: value }))}>
+              <Select
+                value={formData.status}
+                onValueChange={(value: Epic['status']) =>
+                  setFormData(prev => ({ ...prev, status: value }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -187,30 +207,18 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
             </div>
 
             <div>
-              <Label>Assigned Team</Label>
-              <Select value={formData.assignedTeamId} onValueChange={(value) => setFormData(prev => ({ ...prev, assignedTeamId: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select team" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No team assigned</SelectItem>
-                  {teams.map(team => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
               <Label htmlFor="estimatedEffort">Estimated Effort (hours)</Label>
               <Input
                 id="estimatedEffort"
                 type="number"
                 min="0"
                 value={formData.estimatedEffort}
-                onChange={(e) => setFormData(prev => ({ ...prev, estimatedEffort: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    estimatedEffort: e.target.value,
+                  }))
+                }
                 placeholder="0"
               />
             </div>
@@ -222,7 +230,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 type="number"
                 min="0"
                 value={formData.storyPoints}
-                onChange={(e) => setFormData(prev => ({ ...prev, storyPoints: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    storyPoints: e.target.value,
+                  }))
+                }
                 placeholder="0"
               />
             </div>
@@ -233,7 +246,9 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 id="startDate"
                 type="date"
                 value={formData.startDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, startDate: e.target.value }))
+                }
               />
             </div>
 
@@ -243,13 +258,23 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 id="targetEndDate"
                 type="date"
                 value={formData.targetEndDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, targetEndDate: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    targetEndDate: e.target.value,
+                  }))
+                }
               />
             </div>
 
             <div>
               <Label>Release</Label>
-              <Select value={formData.releaseId} onValueChange={(value) => setFormData(prev => ({ ...prev, releaseId: value }))}>
+              <Select
+                value={formData.releaseId}
+                onValueChange={value =>
+                  setFormData(prev => ({ ...prev, releaseId: value }))
+                }
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select release" />
                 </SelectTrigger>
@@ -272,7 +297,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 min="1"
                 max="1000"
                 value={formData.mvpPriority}
-                onChange={(e) => setFormData(prev => ({ ...prev, mvpPriority: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    mvpPriority: e.target.value,
+                  }))
+                }
                 placeholder="Enter priority"
               />
             </div>
@@ -285,7 +315,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 min="1"
                 max="1000"
                 value={formData.releasePriority}
-                onChange={(e) => setFormData(prev => ({ ...prev, releasePriority: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    releasePriority: e.target.value,
+                  }))
+                }
                 placeholder="Enter priority"
               />
             </div>
@@ -296,7 +331,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 id="deploymentDate"
                 type="date"
                 value={formData.deploymentDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, deploymentDate: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    deploymentDate: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -305,7 +345,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 <Checkbox
                   id="isDeployed"
                   checked={formData.isDeployed}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isDeployed: checked as boolean }))}
+                  onCheckedChange={checked =>
+                    setFormData(prev => ({
+                      ...prev,
+                      isDeployed: checked as boolean,
+                    }))
+                  }
                 />
                 <Label htmlFor="isDeployed">Is Deployed</Label>
               </div>
@@ -314,7 +359,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                 <Checkbox
                   id="isToggleEnabled"
                   checked={formData.isToggleEnabled}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isToggleEnabled: checked as boolean }))}
+                  onCheckedChange={checked =>
+                    setFormData(prev => ({
+                      ...prev,
+                      isToggleEnabled: checked as boolean,
+                    }))
+                  }
                 />
                 <Label htmlFor="isToggleEnabled">Feature Toggle Enabled</Label>
               </div>
@@ -326,7 +376,12 @@ const EpicDialog: React.FC<EpicDialogProps> = ({ isOpen, onClose, epic, projectI
                     id="toggleEnabledDate"
                     type="date"
                     value={formData.toggleEnabledDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, toggleEnabledDate: e.target.value }))}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        toggleEnabledDate: e.target.value,
+                      }))
+                    }
                   />
                 </div>
               )}

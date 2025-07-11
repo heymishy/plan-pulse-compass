@@ -87,7 +87,6 @@ export interface Epic {
   estimatedEffort?: number; // Made optional - story points or hours
   storyPoints?: number; // Optional story points
   status: 'not-started' | 'in-progress' | 'completed';
-  assignedTeamId?: string; // Team responsible for this epic
   startDate?: string;
   targetEndDate?: string;
   actualEndDate?: string;

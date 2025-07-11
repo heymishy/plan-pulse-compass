@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Epic } from '@/types';
@@ -35,7 +34,6 @@ interface BulkEpicEntry {
   name: string;
   description: string;
   estimatedEffort: string;
-  assignedTeamId: string;
   targetEndDate: string;
 }
 
@@ -52,7 +50,7 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
   projectId,
   projectName,
 }) => {
-  const { epics, setEpics, teams } = useApp();
+  const { epics, setEpics } = useApp();
   const { toast } = useToast();
   const [bulkEpics, setBulkEpics] = useState<BulkEpicEntry[]>([
     {
@@ -60,7 +58,6 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
       name: '',
       description: '',
       estimatedEffort: '',
-      assignedTeamId: '',
       targetEndDate: '',
     },
   ]);
@@ -73,7 +70,6 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
         name: '',
         description: '',
         estimatedEffort: '',
-        assignedTeamId: '',
         targetEndDate: '',
       },
     ]);
@@ -85,26 +81,30 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
     }
   };
 
-  const updateEpic = (id: string, field: keyof BulkEpicEntry, value: string) => {
+  const updateEpic = (
+    id: string,
+    field: keyof BulkEpicEntry,
+    value: string
+  ) => {
     setBulkEpics(prev =>
-      prev.map(epic =>
-        epic.id === id ? { ...epic, [field]: value } : epic
-      )
+      prev.map(epic => (epic.id === id ? { ...epic, [field]: value } : epic))
     );
   };
 
   const handleSave = () => {
-    const validEpics = bulkEpics.filter(epic => 
-      epic.name.trim() && 
-      epic.estimatedEffort && 
-      parseFloat(epic.estimatedEffort) > 0
+    const validEpics = bulkEpics.filter(
+      epic =>
+        epic.name.trim() &&
+        epic.estimatedEffort &&
+        parseFloat(epic.estimatedEffort) > 0
     );
 
     if (validEpics.length === 0) {
       toast({
-        title: "Error",
-        description: "Please add at least one epic with a name and estimated effort",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          'Please add at least one epic with a name and estimated effort',
+        variant: 'destructive',
       });
       return;
     }
@@ -116,14 +116,13 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
       description: epic.description.trim() || undefined,
       estimatedEffort: parseFloat(epic.estimatedEffort),
       status: 'not-started' as const,
-      assignedTeamId: epic.assignedTeamId === 'none' ? undefined : epic.assignedTeamId || undefined,
       targetEndDate: epic.targetEndDate || undefined,
     }));
 
     setEpics(prev => [...prev, ...newEpics]);
 
     toast({
-      title: "Success",
+      title: 'Success',
       description: `Successfully created ${newEpics.length} epic${newEpics.length !== 1 ? 's' : ''}`,
     });
 
@@ -134,7 +133,6 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
         name: '',
         description: '',
         estimatedEffort: '',
-        assignedTeamId: '',
         targetEndDate: '',
       },
     ]);
@@ -150,7 +148,6 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
         name: '',
         description: '',
         estimatedEffort: '',
-        assignedTeamId: '',
         targetEndDate: '',
       },
     ]);
@@ -161,15 +158,14 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            Bulk Add Epics to {projectName}
-          </DialogTitle>
+          <DialogTitle>Bulk Add Epics to {projectName}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Add multiple epics quickly. Fill in the required fields (name and estimated effort) for each epic.
+              Add multiple epics quickly. Fill in the required fields (name and
+              estimated effort) for each epic.
             </p>
             <Button onClick={addNewRow} size="sm">
               <Plus className="h-4 w-4 mr-2" />
@@ -195,7 +191,9 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
                     <TableCell>
                       <Input
                         value={epic.name}
-                        onChange={(e) => updateEpic(epic.id, 'name', e.target.value)}
+                        onChange={e =>
+                          updateEpic(epic.id, 'name', e.target.value)
+                        }
                         placeholder="Epic name"
                         className="w-full"
                       />
@@ -203,7 +201,9 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
                     <TableCell>
                       <Input
                         value={epic.description}
-                        onChange={(e) => updateEpic(epic.id, 'description', e.target.value)}
+                        onChange={e =>
+                          updateEpic(epic.id, 'description', e.target.value)
+                        }
                         placeholder="Epic description"
                         className="w-full"
                       />
@@ -212,7 +212,9 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
                       <Input
                         type="number"
                         value={epic.estimatedEffort}
-                        onChange={(e) => updateEpic(epic.id, 'estimatedEffort', e.target.value)}
+                        onChange={e =>
+                          updateEpic(epic.id, 'estimatedEffort', e.target.value)
+                        }
                         placeholder="Points"
                         min="0"
                         step="0.5"
@@ -222,7 +224,9 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
                     <TableCell>
                       <Select
                         value={epic.assignedTeamId}
-                        onValueChange={(value) => updateEpic(epic.id, 'assignedTeamId', value)}
+                        onValueChange={value =>
+                          updateEpic(epic.id, 'assignedTeamId', value)
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select team" />
@@ -241,7 +245,9 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
                       <Input
                         type="date"
                         value={epic.targetEndDate}
-                        onChange={(e) => updateEpic(epic.id, 'targetEndDate', e.target.value)}
+                        onChange={e =>
+                          updateEpic(epic.id, 'targetEndDate', e.target.value)
+                        }
                         className="w-full"
                       />
                     </TableCell>
@@ -264,7 +270,9 @@ const BulkEpicEntryDialog: React.FC<BulkEpicEntryDialogProps> = ({
 
           <div className="text-xs text-gray-500 space-y-1">
             <p>• Fields marked with * are required</p>
-            <p>• Empty rows (without name and estimated effort) will be ignored</p>
+            <p>
+              • Empty rows (without name and estimated effort) will be ignored
+            </p>
             <p>• All epics will be created with "Not Started" status</p>
           </div>
         </div>

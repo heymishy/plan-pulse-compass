@@ -1,4 +1,3 @@
-
 import { Team, Allocation, Cycle, Epic } from '@/types';
 
 export interface CapacityCheck {
@@ -20,12 +19,15 @@ export const calculateTeamCapacity = (
     a => a.teamId === team.id && a.iterationNumber === iterationNumber
   );
 
-  const totalPercentage = teamAllocations.reduce((sum, a) => sum + a.percentage, 0);
-  
+  const totalPercentage = teamAllocations.reduce(
+    (sum, a) => sum + a.percentage,
+    0
+  );
+
   // Get iteration duration to calculate actual capacity
   const iteration = iterations[iterationNumber - 1];
   let iterationWeeks = 2; // Default to 2 weeks
-  
+
   if (iteration) {
     const startDate = new Date(iteration.startDate);
     const endDate = new Date(iteration.endDate);
@@ -45,40 +47,9 @@ export const calculateTeamCapacity = (
   };
 };
 
-export const validateEpicAllocation = (
-  epic: Epic,
-  team: Team,
-  allocations: Allocation[],
-  iterations: Cycle[]
-): { canAllocate: boolean; message: string } => {
-  if (!epic.assignedTeamId || epic.assignedTeamId !== team.id) {
-    return {
-      canAllocate: false,
-      message: `Epic "${epic.name}" is not assigned to team "${team.name}"`,
-    };
-  }
-
-  // Check if team has capacity for this epic across iterations
-  const epicAllocations = allocations.filter(a => a.epicId === epic.id);
-  const totalAllocatedEffort = epicAllocations.reduce((sum, a) => {
-    const capacity = calculateTeamCapacity(team, a.iterationNumber, allocations, iterations);
-    return sum + (capacity.capacityHours * (a.percentage / 100));
-  }, 0);
-
-  if (totalAllocatedEffort < epic.estimatedEffort) {
-    return {
-      canAllocate: true,
-      message: `Epic needs ${epic.estimatedEffort - totalAllocatedEffort} more hours of allocation`,
-    };
-  }
-
-  return {
-    canAllocate: true,
-    message: `Epic is fully allocated`,
-  };
-};
-
-export const getProjectEndDateFromEpics = (epics: Epic[]): string | undefined => {
+export const getProjectEndDateFromEpics = (
+  epics: Epic[]
+): string | undefined => {
   const endDates = epics
     .map(epic => epic.actualEndDate || epic.targetEndDate)
     .filter(Boolean) as string[];
