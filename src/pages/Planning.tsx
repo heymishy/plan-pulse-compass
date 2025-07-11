@@ -67,13 +67,43 @@ const Planning = () => {
     suggestedEpicId?: string;
   } | null>(null);
 
-  // Initialize with current financial year
+  // Initialize with current financial year only if it has quarters
   React.useEffect(() => {
-    if (config?.financialYear && !selectedFinancialYear) {
+    if (config?.financialYear && !selectedFinancialYear && cycles.length > 0) {
       const currentFY = getCurrentFinancialYear(config.financialYear.startDate);
-      setSelectedFinancialYear(currentFY);
+      const allQuarters = cycles.filter(c => c.type === 'quarterly');
+
+      // Check if current FY has quarters
+      const selectedFY = financialYearOptions.find(
+        fy => fy.value === currentFY
+      );
+      if (selectedFY && allQuarters.length > 0) {
+        const fyStart = new Date(selectedFY.startDate);
+        const fyEnd = new Date(selectedFY.endDate);
+
+        const currentFYQuarters = allQuarters.filter(quarter => {
+          const quarterStart = new Date(quarter.startDate);
+          const quarterEnd = new Date(quarter.endDate);
+
+          return (
+            (quarterStart >= fyStart && quarterStart <= fyEnd) ||
+            (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
+            (quarterStart <= fyStart && quarterEnd >= fyEnd)
+          );
+        });
+
+        // Only set current FY if it has quarters, otherwise leave unselected to show all
+        if (currentFYQuarters.length > 0) {
+          setSelectedFinancialYear(currentFY);
+        }
+      }
     }
-  }, [config?.financialYear, selectedFinancialYear]);
+  }, [
+    config?.financialYear,
+    selectedFinancialYear,
+    cycles,
+    financialYearOptions,
+  ]);
 
   // Generate financial year options for filtering
   const generateFinancialYearOptions = () => {
@@ -105,33 +135,10 @@ const Planning = () => {
 
   // Filter quarters by selected financial year
   const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
-    // If no financial year is selected yet, show quarters for current FY to avoid empty dropdown
+    // If no financial year is selected yet, show all quarters to avoid empty dropdown
+    // This ensures test compatibility and predictable behavior
     if (!selectedFinancialYear) {
-      // If we have a default financial year and config, filter by current FY
-      if (config?.financialYear) {
-        const currentFY = getCurrentFinancialYear(
-          config.financialYear.startDate
-        );
-        const selectedFY = financialYearOptions.find(
-          fy => fy.value === currentFY
-        );
-        if (selectedFY) {
-          const fyStart = new Date(selectedFY.startDate);
-          const fyEnd = new Date(selectedFY.endDate);
-
-          return quarters.filter(quarter => {
-            const quarterStart = new Date(quarter.startDate);
-            const quarterEnd = new Date(quarter.endDate);
-
-            return (
-              (quarterStart >= fyStart && quarterStart <= fyEnd) ||
-              (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
-              (quarterStart <= fyStart && quarterEnd >= fyEnd)
-            );
-          });
-        }
-      }
-      return quarters; // Fallback to show all quarters
+      return quarters;
     }
 
     const selectedFY = financialYearOptions.find(
