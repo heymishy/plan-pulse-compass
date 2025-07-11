@@ -4,6 +4,7 @@ import {
   useLocalStorage,
 } from '@/hooks/useLocalStorage';
 import { addWeeks, addMonths } from 'date-fns';
+import { getCurrentFinancialYear } from '@/utils/dateUtils';
 import {
   Person,
   Role,
@@ -493,6 +494,68 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       ]);
     }
   }, [isDataLoading, cycles.length, setCycles, config?.financialYear]);
+
+  // Auto-generate quarters for current financial year if they don't exist
+  useEffect(() => {
+    if (!isDataLoading && config?.financialYear && cycles.length > 0) {
+      const currentFY = getCurrentFinancialYear(config.financialYear.startDate);
+      const currentQuarters = cycles.filter(c => c.type === 'quarterly');
+
+      // Check if current financial year has quarters
+      const currentFYQuarters = currentQuarters.filter(quarter => {
+        const quarterStart = new Date(quarter.startDate);
+        const fyStart = new Date(currentFY);
+        const fyEnd = new Date(fyStart);
+        fyEnd.setFullYear(fyEnd.getFullYear() + 1);
+        fyEnd.setDate(fyEnd.getDate() - 1);
+
+        return quarterStart >= fyStart && quarterStart <= fyEnd;
+      });
+
+      if (currentFYQuarters.length === 0) {
+        console.log(
+          'Auto-generating quarters for current financial year:',
+          currentFY
+        );
+
+        const fyStart = new Date(currentFY);
+        const newQuarters: Cycle[] = [];
+
+        // Generate 4 quarters based on financial year start
+        for (let i = 0; i < 4; i++) {
+          const quarterStart = new Date(fyStart);
+          quarterStart.setMonth(quarterStart.getMonth() + i * 3);
+
+          const quarterEnd = new Date(quarterStart);
+          quarterEnd.setMonth(quarterEnd.getMonth() + 3);
+          quarterEnd.setDate(quarterEnd.getDate() - 1);
+
+          const quarterYear = quarterStart.getFullYear();
+
+          // Determine status based on current date
+          const currentDate = new Date();
+          let status: 'planning' | 'active' | 'completed' = 'planning';
+
+          if (currentDate >= quarterStart && currentDate <= quarterEnd) {
+            status = 'active';
+          } else if (currentDate > quarterEnd) {
+            status = 'completed';
+          }
+
+          newQuarters.push({
+            id: crypto.randomUUID(),
+            type: 'quarterly',
+            name: `Q${i + 1} ${quarterYear}`,
+            startDate: quarterStart.toISOString().split('T')[0],
+            endDate: quarterEnd.toISOString().split('T')[0],
+            status: status,
+          });
+        }
+
+        setCycles(prev => [...prev, ...newQuarters]);
+      }
+    }
+  }, [isDataLoading, config?.financialYear, cycles, setCycles]);
 
   // Generate iterations for default quarters when config is available
   useEffect(() => {

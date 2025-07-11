@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, Plus, Trash2, Zap } from 'lucide-react';
 import { format, addWeeks, addMonths } from 'date-fns';
+import { getCurrentFinancialYear } from '@/utils/dateUtils';
 
 interface CycleDialogProps {
   isOpen: boolean;
@@ -48,8 +49,49 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
     status: 'planning' as Cycle['status'],
   });
 
+  // State for financial year selection
+  const [selectedFinancialYear, setSelectedFinancialYear] =
+    useState<string>('');
+
+  // Initialize with current financial year
+  useEffect(() => {
+    if (config?.financialYear && !selectedFinancialYear) {
+      const currentFY = getCurrentFinancialYear(config.financialYear.startDate);
+      setSelectedFinancialYear(currentFY);
+    }
+  }, [config?.financialYear, selectedFinancialYear]);
+
   const quarters = cycles.filter(c => c.type === 'quarterly');
   const iterations = cycles.filter(c => c.type === 'iteration');
+
+  // Generate available financial years (3 years back, current, 3 years forward)
+  const generateFinancialYearOptions = () => {
+    if (!config?.financialYear) return [];
+
+    const fyStart = new Date(config.financialYear.startDate);
+    const fyMonth = fyStart.getMonth();
+    const fyDay = fyStart.getDate();
+    const currentYear = new Date().getFullYear();
+
+    const years = [];
+    for (let i = -3; i <= 3; i++) {
+      const year = currentYear + i;
+      const startDate = `${year}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
+      const endYear = year + 1;
+      const endDate = `${endYear}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay - 1).padStart(2, '0')}`;
+
+      years.push({
+        value: startDate,
+        label: `FY ${year}-${endYear}`,
+        startDate,
+        endDate,
+      });
+    }
+
+    return years;
+  };
+
+  const financialYearOptions = generateFinancialYearOptions();
 
   const generateStandardQuarters = () => {
     if (!config?.financialYear) {
@@ -62,7 +104,17 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
       return;
     }
 
-    const fyStart = new Date(config.financialYear.startDate);
+    if (!selectedFinancialYear) {
+      toast({
+        title: 'Error',
+        description: 'Please select a financial year first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Use the selected financial year instead of the configured one
+    const fyStart = new Date(selectedFinancialYear);
     const fyYear = fyStart.getFullYear();
     const newQuarters: Cycle[] = [];
 
@@ -337,31 +389,45 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
           {selectedTab === 'quarters' && (
             <div className="space-y-4">
               {/* Generate Standard Quarters */}
-              {config?.financialYear && quarters.length === 0 && (
+              {config?.financialYear && (
                 <Card className="border-blue-200 bg-blue-50">
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center text-blue-700">
                       <Zap className="h-5 w-5 mr-2" />
-                      Quick Setup
+                      Generate Quarters
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-blue-600 mb-4">
-                      Generate standard quarters based on your financial year (
-                      {format(
-                        new Date(config.financialYear.startDate),
-                        'MMM yyyy'
-                      )}{' '}
-                      -{' '}
-                      {format(
-                        new Date(config.financialYear.endDate),
-                        'MMM yyyy'
-                      )}
-                      )
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="financial-year-select">
+                        Select Financial Year
+                      </Label>
+                      <Select
+                        value={selectedFinancialYear}
+                        onValueChange={setSelectedFinancialYear}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select financial year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {financialYearOptions.map(fy => (
+                            <SelectItem key={fy.value} value={fy.value}>
+                              {fy.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <p className="text-blue-600 text-sm">
+                      Generate 4 standard quarters for the selected financial
+                      year
                     </p>
+
                     <Button
                       onClick={generateStandardQuarters}
                       className="w-full"
+                      disabled={!selectedFinancialYear}
                     >
                       <Zap className="h-4 w-4 mr-2" />
                       Generate Standard Quarters

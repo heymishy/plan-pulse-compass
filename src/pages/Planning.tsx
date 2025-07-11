@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { getCurrentQuarterByDate } from '@/utils/dateUtils';
+import {
+  getCurrentQuarterByDate,
+  getCurrentFinancialYear,
+} from '@/utils/dateUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +51,8 @@ const Planning = () => {
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('all');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
+  const [selectedFinancialYear, setSelectedFinancialYear] =
+    useState<string>('');
   const [viewMode, setViewMode] = useState<'matrix' | 'bulk'>('matrix');
   const [activeTab, setActiveTab] = useState<
     'planning' | 'analysis' | 'advanced'
@@ -62,8 +67,74 @@ const Planning = () => {
     suggestedEpicId?: string;
   } | null>(null);
 
+  // Initialize with current financial year
+  React.useEffect(() => {
+    if (config?.financialYear && !selectedFinancialYear) {
+      const currentFY = getCurrentFinancialYear(config.financialYear.startDate);
+      setSelectedFinancialYear(currentFY);
+    }
+  }, [config?.financialYear, selectedFinancialYear]);
+
+  // Generate financial year options for filtering
+  const generateFinancialYearOptions = () => {
+    if (!config?.financialYear) return [];
+
+    const fyStart = new Date(config.financialYear.startDate);
+    const fyMonth = fyStart.getMonth();
+    const fyDay = fyStart.getDate();
+    const currentYear = new Date().getFullYear();
+
+    const years = [];
+    for (let i = -3; i <= 3; i++) {
+      const year = currentYear + i;
+      const startDate = `${year}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
+      const endYear = year + 1;
+
+      years.push({
+        value: startDate,
+        label: `FY ${year}-${endYear}`,
+        startDate,
+        endDate: `${endYear}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay - 1).padStart(2, '0')}`,
+      });
+    }
+
+    return years;
+  };
+
+  const financialYearOptions = generateFinancialYearOptions();
+
+  // Filter quarters by selected financial year
+  const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
+    if (!selectedFinancialYear) return quarters;
+
+    const selectedFY = financialYearOptions.find(
+      fy => fy.value === selectedFinancialYear
+    );
+    if (!selectedFY) return quarters;
+
+    const fyStart = new Date(selectedFY.startDate);
+    const fyEnd = new Date(selectedFY.endDate);
+
+    return quarters.filter(quarter => {
+      const quarterStart = new Date(quarter.startDate);
+      const quarterEnd = new Date(quarter.endDate);
+
+      // Quarter overlaps with financial year if either:
+      // 1. Quarter starts within FY, or
+      // 2. Quarter ends within FY, or
+      // 3. Quarter spans entire FY
+      return (
+        (quarterStart >= fyStart && quarterStart <= fyEnd) ||
+        (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
+        (quarterStart <= fyStart && quarterEnd >= fyEnd)
+      );
+    });
+  };
+
   // Get all quarter cycles for display
-  const allQuarterCycles = cycles.filter(c => c.type === 'quarterly');
+  const allQuarterCycles = filterQuartersByFinancialYear(
+    cycles.filter(c => c.type === 'quarterly')
+  );
 
   // Get current quarter cycles (non-completed) for initial selection
   const activeQuarterCycles = allQuarterCycles.filter(
@@ -288,6 +359,24 @@ const Planning = () => {
           {/* Filters and View Toggle */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium">Financial Year:</label>
+                <Select
+                  value={selectedFinancialYear}
+                  onValueChange={setSelectedFinancialYear}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select financial year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {financialYearOptions.map(fy => (
+                      <SelectItem key={fy.value} value={fy.value}>
+                        {fy.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="flex items-center space-x-2">
                 <label className="text-sm font-medium">Quarter:</label>
                 <Select
