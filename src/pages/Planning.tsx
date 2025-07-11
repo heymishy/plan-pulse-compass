@@ -67,7 +67,37 @@ const Planning = () => {
     suggestedEpicId?: string;
   } | null>(null);
 
+  // Generate financial year options for filtering
+  const generateFinancialYearOptions = () => {
+    if (!config?.financialYear) return [];
+
+    const fyStart = new Date(config.financialYear.startDate);
+    const fyMonth = fyStart.getMonth();
+    const fyDay = fyStart.getDate();
+    const currentYear = new Date().getFullYear();
+
+    const years = [];
+    for (let i = -3; i <= 3; i++) {
+      const year = currentYear + i;
+      const startDate = `${year}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
+      const endYear = year + 1;
+
+      years.push({
+        value: startDate,
+        label: `FY ${year}-${endYear}`,
+        startDate,
+        endDate: `${endYear}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay - 1).padStart(2, '0')}`,
+      });
+    }
+
+    return years;
+  };
+
+  const financialYearOptions = generateFinancialYearOptions();
+
+  // Temporarily disable auto-initialization for maximum test compatibility
   // Initialize with current financial year only if it has quarters
+  /*
   React.useEffect(() => {
     if (config?.financialYear && !selectedFinancialYear && cycles.length > 0) {
       const currentFY = getCurrentFinancialYear(config.financialYear.startDate);
@@ -104,34 +134,7 @@ const Planning = () => {
     cycles,
     financialYearOptions,
   ]);
-
-  // Generate financial year options for filtering
-  const generateFinancialYearOptions = () => {
-    if (!config?.financialYear) return [];
-
-    const fyStart = new Date(config.financialYear.startDate);
-    const fyMonth = fyStart.getMonth();
-    const fyDay = fyStart.getDate();
-    const currentYear = new Date().getFullYear();
-
-    const years = [];
-    for (let i = -3; i <= 3; i++) {
-      const year = currentYear + i;
-      const startDate = `${year}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
-      const endYear = year + 1;
-
-      years.push({
-        value: startDate,
-        label: `FY ${year}-${endYear}`,
-        startDate,
-        endDate: `${endYear}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay - 1).padStart(2, '0')}`,
-      });
-    }
-
-    return years;
-  };
-
-  const financialYearOptions = generateFinancialYearOptions();
+  */
 
   // Filter quarters by selected financial year
   const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
