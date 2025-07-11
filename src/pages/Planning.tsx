@@ -52,7 +52,7 @@ const Planning = () => {
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [selectedFinancialYear, setSelectedFinancialYear] =
-    useState<string>('');
+    useState<string>('all');
   const [viewMode, setViewMode] = useState<'matrix' | 'bulk'>('matrix');
   const [activeTab, setActiveTab] = useState<
     'planning' | 'analysis' | 'advanced'
@@ -97,7 +97,11 @@ const Planning = () => {
 
   // Initialize with current financial year only if it has quarters (and for user convenience)
   React.useEffect(() => {
-    if (config?.financialYear && !selectedFinancialYear && cycles.length > 0) {
+    if (
+      config?.financialYear &&
+      selectedFinancialYear === 'all' &&
+      cycles.length > 0
+    ) {
       const currentFY = getCurrentFinancialYear(config.financialYear.startDate);
       const allQuarters = cycles.filter(c => c.type === 'quarterly');
 
@@ -144,10 +148,10 @@ const Planning = () => {
 
   // Filter quarters by selected financial year for dropdown display
   const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
-    // If no financial year is selected, show all quarters
-    if (!selectedFinancialYear) {
+    // If no financial year is selected or "all" is selected, show all quarters
+    if (!selectedFinancialYear || selectedFinancialYear === 'all') {
       console.log(
-        'Planning: No financial year selected, showing all quarters:',
+        'Planning: No financial year selected or "all" selected, showing all quarters:',
         quarters.length
       );
       return quarters;
@@ -471,7 +475,7 @@ const Planning = () => {
                     <SelectValue placeholder="Select financial year" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Financial Years</SelectItem>
+                    <SelectItem value="all">All Financial Years</SelectItem>
                     {financialYearOptions.map(fy => (
                       <SelectItem key={fy.value} value={fy.value}>
                         {fy.label}
