@@ -312,10 +312,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const isDataLoading = isPeopleLoading || isProjectsLoading || isGoalsLoading;
 
-  // Initialize default data if none exists
+  // Check if any significant data has been imported
+  const hasImportedData =
+    people.length > 0 ||
+    projects.length > 0 ||
+    epics.length > 0 ||
+    (teams.length > 0 &&
+      !teams.every(team =>
+        ['engineering', 'product', 'design', 'marketing'].includes(team.id)
+      ));
+
+  // Initialize default data only for first-time setup (no imported data)
   useEffect(() => {
-    if (!isDataLoading && divisions.length === 0) {
-      console.log('Initializing default divisions');
+    if (!isDataLoading && divisions.length === 0 && !hasImportedData) {
+      console.log('Initializing default divisions for first-time setup');
       const defaultDivisions = [
         {
           id: 'engineering-division',
@@ -335,11 +345,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
       ];
       setDivisions(defaultDivisions);
     }
-  }, [isDataLoading, divisions.length, setDivisions]);
+  }, [isDataLoading, divisions.length, hasImportedData, setDivisions]);
 
   useEffect(() => {
-    if (!isDataLoading && teams.length === 0 && divisions.length > 0) {
-      console.log('Initializing default teams');
+    if (
+      !isDataLoading &&
+      teams.length === 0 &&
+      divisions.length > 0 &&
+      !hasImportedData
+    ) {
+      console.log('Initializing default teams for first-time setup');
       setTeams([
         {
           id: 'engineering',
@@ -367,7 +382,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         },
       ]);
     }
-  }, [isDataLoading, teams.length, divisions.length, setTeams, teams]);
+  }, [
+    isDataLoading,
+    teams.length,
+    divisions.length,
+    hasImportedData,
+    setTeams,
+  ]);
 
   // Fix existing teams that have empty divisionId
   useEffect(() => {

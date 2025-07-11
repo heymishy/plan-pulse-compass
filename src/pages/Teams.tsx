@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import {
   Plus,
   Users,
@@ -14,6 +15,7 @@ import {
   BarChart3,
   Target,
   Activity,
+  Trash2,
 } from 'lucide-react';
 import TeamTable from '@/components/teams/TeamTable';
 import TeamCards from '@/components/teams/TeamCards';
@@ -26,7 +28,8 @@ import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtiliz
 import EnterpriseTeamAnalytics from '@/components/teams/EnterpriseTeamAnalytics';
 
 const Teams = () => {
-  const { teams, people, divisions, isSetupComplete } = useApp();
+  const { teams, people, divisions, isSetupComplete, setTeams } = useApp();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDivision, setSelectedDivision] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
@@ -75,6 +78,31 @@ const Teams = () => {
     setIsDialogOpen(true);
   };
 
+  // Check if default teams exist
+  const defaultTeamIds = ['engineering', 'product', 'design', 'marketing'];
+  const hasDefaultTeams = teams.some(team => defaultTeamIds.includes(team.id));
+
+  const handleRemoveDefaultTeams = () => {
+    const defaultTeamsToRemove = teams.filter(team =>
+      defaultTeamIds.includes(team.id)
+    );
+
+    if (defaultTeamsToRemove.length === 0) {
+      toast({
+        title: 'No Default Teams',
+        description: 'No default teams found to remove.',
+      });
+      return;
+    }
+
+    setTeams(prev => prev.filter(team => !defaultTeamIds.includes(team.id)));
+
+    toast({
+      title: 'Success',
+      description: `Removed ${defaultTeamsToRemove.length} default team${defaultTeamsToRemove.length !== 1 ? 's' : ''}: ${defaultTeamsToRemove.map(t => t.name).join(', ')}`,
+    });
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
@@ -84,10 +112,22 @@ const Teams = () => {
             Manage teams and their capacity across your organization
           </p>
         </div>
-        <Button onClick={handleAddTeam}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Team
-        </Button>
+        <div className="flex gap-2">
+          {hasDefaultTeams && (
+            <Button
+              variant="outline"
+              onClick={handleRemoveDefaultTeams}
+              className="text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remove Default Teams
+            </Button>
+          )}
+          <Button onClick={handleAddTeam}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Team
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
