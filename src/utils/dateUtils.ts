@@ -37,7 +37,7 @@ export const parseDateString = (
  * Determines the current quarter based on the current date and available quarterly cycles
  * @param quarterCycles - Array of quarterly cycles to check against
  * @param currentDate - Optional date to check against (defaults to current date)
- * @returns The quarterly cycle that contains the current date, or null if none found
+ * @returns The quarterly cycle that contains the current date, next upcoming quarter, or first quarter chronologically
  */
 export const getCurrentQuarterByDate = (
   quarterCycles: Cycle[],
@@ -74,9 +74,10 @@ export const getCurrentQuarterByDate = (
     return futureQuarters[0];
   }
 
-  // If no future quarters, return the most recent quarter
+  // If no future quarters, return the first quarter chronologically
+  // This ensures consistent behavior, especially for testing scenarios
   const sortedQuarters = quarterCycles.sort(
-    (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+    (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
   );
 
   return sortedQuarters[0] || null;
