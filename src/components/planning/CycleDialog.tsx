@@ -29,12 +29,14 @@ interface CycleDialogProps {
   isOpen: boolean;
   onClose: () => void;
   parentCycle?: Cycle;
+  selectedFinancialYear?: string;
 }
 
 const CycleDialog: React.FC<CycleDialogProps> = ({
   isOpen,
   onClose,
   parentCycle,
+  selectedFinancialYear: parentSelectedFinancialYear,
 }) => {
   const { cycles, setCycles, config } = useApp();
   const { toast } = useToast();
@@ -53,17 +55,22 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
   const [selectedFinancialYear, setSelectedFinancialYear] =
     useState<string>('');
 
-  // Initialize with configured financial year (for test compatibility)
+  // Initialize with parent's selected financial year or configured financial year
   useEffect(() => {
-    if (config?.financialYear && !selectedFinancialYear) {
-      // Use the configured financial year start date directly for test compatibility
-      // This ensures tests that set up "2024-01-01" will default to generating 2024 quarters
-      setSelectedFinancialYear(config.financialYear.startDate);
+    if (!selectedFinancialYear) {
+      if (parentSelectedFinancialYear) {
+        // Use parent's selected financial year (from Planning page)
+        setSelectedFinancialYear(parentSelectedFinancialYear);
+      } else if (config?.financialYear) {
+        // Fallback to configured financial year start date for test compatibility
+        setSelectedFinancialYear(config.financialYear.startDate);
+      }
     }
-  }, [config?.financialYear, selectedFinancialYear]);
-
-  const quarters = cycles.filter(c => c.type === 'quarterly');
-  const iterations = cycles.filter(c => c.type === 'iteration');
+  }, [
+    config?.financialYear,
+    selectedFinancialYear,
+    parentSelectedFinancialYear,
+  ]);
 
   // Generate available financial years (3 years back, current, 3 years forward)
   const generateFinancialYearOptions = () => {
@@ -93,6 +100,74 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
   };
 
   const financialYearOptions = generateFinancialYearOptions();
+
+  // Filter quarters by selected financial year
+  const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
+    // If no financial year is selected, show all quarters
+    if (!selectedFinancialYear) {
+      return quarters;
+    }
+
+    const selectedFY = financialYearOptions.find(
+      fy => fy.value === selectedFinancialYear
+    );
+    if (!selectedFY) {
+      console.warn(
+        'CycleDialog: Selected financial year not found in options:',
+        selectedFinancialYear
+      );
+      // If the selected FY is not in our generated options, it might be a direct date
+      // In this case, try to filter by comparing the year directly
+      const selectedYear = new Date(selectedFinancialYear).getFullYear();
+      const quartersInYear = quarters.filter(quarter => {
+        const quarterYear = new Date(quarter.startDate).getFullYear();
+        return quarterYear === selectedYear || quarterYear === selectedYear + 1;
+      });
+
+      console.log(
+        'CycleDialog: Filtering by year fallback:',
+        selectedYear,
+        'Found:',
+        quartersInYear.length,
+        'quarters'
+      );
+      return quartersInYear.length > 0 ? quartersInYear : quarters;
+    }
+
+    const fyStart = new Date(selectedFY.startDate);
+    const fyEnd = new Date(selectedFY.endDate);
+
+    const filtered = quarters.filter(quarter => {
+      const quarterStart = new Date(quarter.startDate);
+      const quarterEnd = new Date(quarter.endDate);
+
+      // Quarter overlaps with financial year if either:
+      // 1. Quarter starts within FY, or
+      // 2. Quarter ends within FY, or
+      // 3. Quarter spans entire FY
+      const overlaps =
+        (quarterStart >= fyStart && quarterStart <= fyEnd) ||
+        (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
+        (quarterStart <= fyStart && quarterEnd >= fyEnd);
+
+      return overlaps;
+    });
+
+    console.log(
+      'CycleDialog: Filtering quarters for FY:',
+      selectedFY.label,
+      'Found:',
+      filtered.length,
+      'quarters'
+    );
+
+    // If no quarters found for the selected FY, show all quarters to avoid empty state
+    return filtered.length > 0 ? filtered : quarters;
+  };
+
+  const allQuarters = cycles.filter(c => c.type === 'quarterly');
+  const quarters = filterQuartersByFinancialYear(allQuarters);
+  const iterations = cycles.filter(c => c.type === 'iteration');
 
   const generateStandardQuarters = () => {
     if (!config?.financialYear) {

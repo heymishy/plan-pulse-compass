@@ -826,6 +826,7 @@ const Planning = () => {
         isOpen={isCycleDialogOpen}
         onClose={() => setIsCycleDialogOpen(false)}
         parentCycle={currentQuarter}
+        selectedFinancialYear={selectedFinancialYear}
       />
     </div>
   );
