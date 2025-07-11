@@ -90,8 +90,7 @@ const Epics = () => {
         filters.divisionId === 'all' ||
         epic.divisionName ===
           divisions.find(d => d.id === filters.divisionId)?.name;
-      const matchesTeam =
-        filters.teamId === 'all' || epic.assignedTeamId === filters.teamId;
+      const matchesTeam = filters.teamId === 'all';
       const matchesStatus =
         filters.status === 'all' || epic.status === filters.status;
       const matchesRelease =

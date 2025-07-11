@@ -21,8 +21,6 @@ export interface EpicCSVRow {
   description?: string;
   estimated_effort?: string;
   status?: string;
-  assigned_team_name?: string;
-  assigned_team_id?: string;
   start_date?: string;
   target_end_date?: string;
   actual_end_date?: string;
@@ -241,7 +239,6 @@ export const parseEpicsCSV = (
         ? parseFloat(rowData.estimated_effort)
         : undefined,
       status: status,
-      assignedTeamId: rowData.assigned_team_id || undefined,
       startDate: parseDateString(rowData.start_date),
       targetEndDate: parseDateString(rowData.target_end_date),
       actualEndDate: parseDateString(rowData.actual_end_date),
@@ -465,7 +462,6 @@ export const parseCombinedProjectEpicCSVWithMapping = (
           (rowData.epic_status?.toLowerCase() as Epic['status']) || epic.status;
         epic.targetEndDate =
           parseDateString(rowData.epic_target_date) || epic.targetEndDate;
-        epic.assignedTeamId = rowData.epic_team || epic.assignedTeamId;
         updatedEpics.add(epic.id);
       } else {
         // Create new epic
@@ -479,7 +475,6 @@ export const parseCombinedProjectEpicCSVWithMapping = (
             : undefined,
           status: 'not-started',
           targetEndDate: parseDateString(rowData.epic_target_date),
-          assignedTeamId: rowData.epic_team || undefined,
         };
         epicsMap.set(rowData.epic_name.toLowerCase(), epic);
         newEpics.push(epic);
@@ -572,7 +567,6 @@ export const exportEpicsCSV = (epics: Epic[], projects: Project[]): string => {
     'description',
     'estimated_effort',
     'status',
-    'assigned_team_id',
     'start_date',
     'target_end_date',
     'actual_end_date',
@@ -590,7 +584,6 @@ export const exportEpicsCSV = (epics: Epic[], projects: Project[]): string => {
       epic.description || '',
       epic.estimatedEffort?.toString() || '',
       epic.status,
-      epic.assignedTeamId || '',
       epic.startDate || '',
       epic.targetEndDate || '',
       epic.actualEndDate || '',
@@ -678,7 +671,6 @@ export const exportCombinedProjectEpicCSV = (
           epic?.name || '',
           epic?.description || '',
           epic?.estimatedEffort?.toString() || '',
-          epic?.assignedTeamId || '',
           epic?.targetEndDate || '',
           milestone?.name || '',
           milestone?.dueDate || '',

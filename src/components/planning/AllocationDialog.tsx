@@ -355,26 +355,11 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
                         No epics found for this project
                       </div>
                     ) : (
-                      availableEpics.map(epic => {
-                        const teamInfo = getEpicTeamInfo(epic);
-                        const isAssignedToSelectedTeam =
-                          epic.assignedTeamId === formData.teamId;
-
-                        return (
-                          <SelectItem key={epic.id} value={epic.id}>
-                            <div className="flex flex-col">
-                              <span>{epic.name}</span>
-                              {teamInfo && (
-                                <span
-                                  className={`text-xs ${isAssignedToSelectedTeam ? 'text-green-600' : 'text-orange-600'}`}
-                                >
-                                  {teamInfo}
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        );
-                      })
+                      availableEpics.map(epic => (
+                        <SelectItem key={epic.id} value={epic.id}>
+                          {epic.name}
+                        </SelectItem>
+                      ))
                     )}
                   </SelectContent>
                 </Select>
