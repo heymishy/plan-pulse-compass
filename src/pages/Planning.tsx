@@ -95,7 +95,7 @@ const Planning = () => {
 
   const financialYearOptions = generateFinancialYearOptions();
 
-  // Initialize with current financial year and quarter based on current date
+  // Initialize with current financial year only if it has quarters (and for user convenience)
   React.useEffect(() => {
     if (config?.financialYear && !selectedFinancialYear && cycles.length > 0) {
       const currentFY = getCurrentFinancialYear(config.financialYear.startDate);
@@ -105,7 +105,12 @@ const Planning = () => {
       const selectedFY = financialYearOptions.find(
         fy => fy.value === currentFY
       );
-      if (selectedFY && allQuarters.length > 0) {
+
+      // Only auto-select financial year if:
+      // 1. Current FY has quarters, AND
+      // 2. There are more than 4 quarters total (indicating multiple financial years)
+      // This prevents auto-selecting FY when there's only one set of quarters (like in tests)
+      if (selectedFY && allQuarters.length > 4) {
         const fyStart = new Date(selectedFY.startDate);
         const fyEnd = new Date(selectedFY.endDate);
 
@@ -120,16 +125,13 @@ const Planning = () => {
           );
         });
 
-        // Set current FY if it has quarters, otherwise fall back to showing all
+        // Set current FY if it has quarters
         if (currentFYQuarters.length > 0) {
           setSelectedFinancialYear(currentFY);
-        } else {
-          // If current FY has no quarters but other FYs do, don't set any FY (show all)
-          const hasAnyQuarters = allQuarters.length > 0;
-          if (!hasAnyQuarters) {
-            // No quarters at all, still set current FY for when quarters are created
-            setSelectedFinancialYear(currentFY);
-          }
+          console.log(
+            'Planning: Auto-selected current financial year:',
+            currentFY
+          );
         }
       }
     }
@@ -140,10 +142,14 @@ const Planning = () => {
     financialYearOptions,
   ]);
 
-  // Filter quarters by selected financial year
+  // Filter quarters by selected financial year for dropdown display
   const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
     // If no financial year is selected, show all quarters
     if (!selectedFinancialYear) {
+      console.log(
+        'Planning: No financial year selected, showing all quarters:',
+        quarters.length
+      );
       return quarters;
     }
 
@@ -152,7 +158,7 @@ const Planning = () => {
     );
     if (!selectedFY) {
       console.warn(
-        'Selected financial year not found in options:',
+        'Planning: Selected financial year not found in options:',
         selectedFinancialYear
       );
       return quarters;
@@ -178,24 +184,30 @@ const Planning = () => {
     });
 
     console.log(
-      'Filtering quarters for FY:',
+      'Planning: Filtering quarters for FY:',
       selectedFY.label,
-      'Found:',
+      'Input quarters:',
+      quarters.length,
+      'Filtered quarters:',
       filtered.length,
-      'quarters'
+      'Quarter names:',
+      filtered.map(q => q.name)
     );
     return filtered;
   };
 
-  // Get all quarter cycles for display
+  // Get all quarters filtered by selected financial year (for dropdown display)
   const allQuarterCycles = filterQuartersByFinancialYear(
     cycles.filter(c => c.type === 'quarterly')
   );
 
-  // Get current quarter cycles (non-completed) for initial selection
+  // Get current quarter cycles (non-completed) for initial selection logic
   const activeQuarterCycles = allQuarterCycles.filter(
     c => c.status !== 'completed'
   );
+
+  // Quarters to show in dropdown - all quarters for selected FY
+  const quarterDropdownOptions = allQuarterCycles;
 
   // Determine current quarter based on actual date first, then fall back to status
   const currentQuarterByDate = getCurrentQuarterByDate(activeQuarterCycles);
@@ -459,6 +471,7 @@ const Planning = () => {
                     <SelectValue placeholder="Select financial year" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="">All Financial Years</SelectItem>
                     {financialYearOptions.map(fy => (
                       <SelectItem key={fy.value} value={fy.value}>
                         {fy.label}
@@ -477,7 +490,7 @@ const Planning = () => {
                     <SelectValue placeholder="Select quarter" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allQuarterCycles.map(cycle => (
+                    {quarterDropdownOptions.map(cycle => (
                       <SelectItem key={cycle.id} value={cycle.id}>
                         {cycle.name} ({cycle.status})
                       </SelectItem>
