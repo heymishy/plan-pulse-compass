@@ -2,16 +2,29 @@ name: Quick Check
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop, 'feature/**']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
 
 jobs:
   quick:
     name: Quick Check
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-    
+    timeout-minutes: 10
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,8 +32,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+
+      - name: Cache dependencies and build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            .next/cache
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
 
       - name: Install dependencies
         run: npm ci
@@ -33,6 +57,20 @@ jobs:
 
       - name: Run unit tests only
         run: npm run test:unit
+        env:
+          CI: true
 
       - name: Quick build check
-        run: npm run build 
+        run: npm run build
+        env:
+          CI: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: quick-check-results
+          path: |
+            test-results/
+            coverage/
+          retention-days: 3

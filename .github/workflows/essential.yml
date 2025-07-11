@@ -2,15 +2,28 @@ name: Essential Checks
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
-    branches: [main, develop]
+    branches: [develop]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
 
 jobs:
   essential:
     name: Essential Checks
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     steps:
       - name: Checkout code
@@ -19,29 +32,45 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Cache dependencies and build outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            .next/cache
+          key: ${{ runner.os }}-essential-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-essential-
 
-      - name: Run linting (warnings only)
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
         run: npm run lint
-        continue-on-error: true # Temporarily allow linting warnings to pass CI
 
       - name: Run type check
         run: npm run typecheck
 
-      - name: Run fast tests
-        run: npm run test:run:fast
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          CI: true
 
       - name: Build application
         run: npm run build
+        env:
+          CI: true
 
-      - name: Security audit
-        run: npm audit --audit-level=high
-        continue-on-error: true # Allow moderate vulnerabilities to pass CI
-
-      - name: Build analysis
-        run: npm run build:analyze
-        continue-on-error: true # Allow build analysis to fail without blocking CI
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: essential-check-results
+          path: |
+            test-results/
+            coverage/
+          retention-days: 3
