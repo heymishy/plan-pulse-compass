@@ -82,12 +82,23 @@ const Planning = () => {
       const startDate = `${year}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
       const endYear = year + 1;
 
-      years.push({
+      // Calculate proper end date (day before FY starts next year)
+      const fyEndDate = new Date(endYear, fyMonth, fyDay);
+      fyEndDate.setDate(fyEndDate.getDate() - 1);
+
+      const fyOption = {
         value: startDate,
         label: `FY ${year}-${endYear}`,
         startDate,
-        endDate: `${endYear}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay - 1).padStart(2, '0')}`,
-      });
+        endDate: fyEndDate.toISOString().split('T')[0],
+      };
+
+      // Debug logging for current year
+      if (year === currentYear) {
+        console.log('Planning: Generated current FY option:', fyOption);
+      }
+
+      years.push(fyOption);
     }
 
     return years;
@@ -183,6 +194,16 @@ const Planning = () => {
         (quarterStart >= fyStart && quarterStart <= fyEnd) ||
         (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
         (quarterStart <= fyStart && quarterEnd >= fyEnd);
+
+      // Debug logging for the first few quarters
+      if (quarters.indexOf(quarter) < 3) {
+        console.log(
+          `Planning: Debug quarter "${quarter.name}":`,
+          `Quarter: ${quarter.startDate} to ${quarter.endDate}`,
+          `FY: ${selectedFY.startDate} to ${selectedFY.endDate}`,
+          `Overlaps: ${overlaps}`
+        );
+      }
 
       return overlaps;
     });
