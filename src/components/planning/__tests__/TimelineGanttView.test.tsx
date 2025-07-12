@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import TimelineGanttView from '../TimelineGanttView';
 import { Team, Allocation, Cycle, Epic, Project } from '@/types';
 
@@ -107,12 +108,12 @@ const defaultProps = {
   epics: mockEpics,
   projects: mockProjects,
   selectedCycleId: 'q1-2024',
-  onAllocationClick: jest.fn(),
+  onAllocationClick: vi.fn(),
 };
 
 describe('TimelineGanttView', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders without crashing', () => {
@@ -176,7 +177,7 @@ describe('TimelineGanttView', () => {
 
   it('handles allocation clicks', async () => {
     const user = userEvent.setup();
-    const mockOnAllocationClick = jest.fn();
+    const mockOnAllocationClick = vi.fn();
 
     render(
       <TimelineGanttView

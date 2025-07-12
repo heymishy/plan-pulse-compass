@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import WorkloadDistributionCharts from '../WorkloadDistributionCharts';
 import { Team, Allocation, Cycle, Epic, Project } from '@/types';
 
@@ -135,8 +136,8 @@ const defaultProps = {
 };
 
 // Mock the calculateTeamCapacity function
-jest.mock('@/utils/capacityUtils', () => ({
-  calculateTeamCapacity: jest.fn((team, iterationNumber, allocations) => {
+vi.mock('@/utils/capacityUtils', () => ({
+  calculateTeamCapacity: vi.fn((team, iterationNumber, allocations) => {
     const teamAllocations = allocations.filter(
       a => a.teamId === team.id && a.iterationNumber === iterationNumber
     );
@@ -154,7 +155,7 @@ jest.mock('@/utils/capacityUtils', () => ({
 
 describe('WorkloadDistributionCharts', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders without crashing', () => {

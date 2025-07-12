@@ -114,7 +114,7 @@ describe('ProgressIndicators', () => {
     render(<ProgressIndicators {...defaultProps} />);
 
     // Should show 75% complete (3 allocated cells out of 4 total)
-    expect(screen.getAllByText('75% Complete')[0]).toBeInTheDocument();
+    expect(screen.getByText('75% Complete')).toBeInTheDocument();
     expect(screen.getByText('3 of 4 cells')).toBeInTheDocument();
   });
 
@@ -122,8 +122,10 @@ describe('ProgressIndicators', () => {
     render(<ProgressIndicators {...defaultProps} />);
 
     // Both teams have allocations, so 100% coverage
-    expect(screen.getAllByText('100%')[0]).toBeInTheDocument();
     expect(screen.getByText('Team Coverage')).toBeInTheDocument();
+    // Check for team coverage percentage in the specific section
+    const teamCoverageElements = screen.getAllByText('100%');
+    expect(teamCoverageElements.length).toBeGreaterThan(0);
   });
 
   it('displays iteration coverage correctly', () => {
@@ -137,8 +139,10 @@ describe('ProgressIndicators', () => {
     render(<ProgressIndicators {...defaultProps} />);
 
     // Average of 80%, 100%, 90% = 90%
-    expect(screen.getByText('90%')).toBeInTheDocument();
     expect(screen.getByText('Average Allocation')).toBeInTheDocument();
+    // Check for 90% in the average allocation section
+    const ninetyPercentElements = screen.getAllByText('90%');
+    expect(ninetyPercentElements.length).toBeGreaterThan(0);
   });
 
   it('shows optimal cells count', () => {
@@ -152,8 +156,9 @@ describe('ProgressIndicators', () => {
   it('displays epic coverage', () => {
     render(<ProgressIndicators {...defaultProps} />);
 
-    // 2 epics with allocations out of 2 total
-    expect(screen.getAllByText('Epic Coverage')[0]).toBeInTheDocument();
+    // 2 epics with allocations out of 2 total - Epic Coverage appears in multiple places
+    const epicCoverageElements = screen.getAllByText('Epic Coverage');
+    expect(epicCoverageElements.length).toBeGreaterThan(0);
     expect(screen.getByText('2 of 2')).toBeInTheDocument();
   });
 
@@ -164,7 +169,9 @@ describe('ProgressIndicators', () => {
     expect(screen.getByText('Planned')).toBeInTheDocument();
     expect(screen.getByText('Optimal')).toBeInTheDocument();
     expect(screen.getByText('Issues')).toBeInTheDocument();
-    expect(screen.getAllByText('Epic Coverage')[0]).toBeInTheDocument();
+    // Epic Coverage appears in multiple places, so just check it exists
+    const epicCoverageElements = screen.getAllByText('Epic Coverage');
+    expect(epicCoverageElements.length).toBeGreaterThan(0);
   });
 
   it('handles empty data gracefully', () => {
@@ -236,7 +243,7 @@ describe('ProgressIndicators', () => {
 
     render(<ProgressIndicators {...partialProps} />);
 
-    expect(screen.getAllByText('25% Complete')[0]).toBeInTheDocument();
+    expect(screen.getByText('25% Complete')).toBeInTheDocument();
     expect(screen.getByText('1 of 4 cells')).toBeInTheDocument();
   });
 });

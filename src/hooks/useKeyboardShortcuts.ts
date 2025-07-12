@@ -25,7 +25,7 @@ export const useKeyboardShortcuts = (
         target.tagName === 'INPUT' ||
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable ||
-        target.closest('[contenteditable="true"]')
+        (target.closest && target.closest('[contenteditable="true"]'))
       ) {
         return;
       }

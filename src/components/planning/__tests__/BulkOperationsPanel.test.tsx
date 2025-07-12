@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import BulkOperationsPanel, { BulkSelection } from '../BulkOperationsPanel';
 import { Team, Cycle, Epic, Project, RunWorkCategory } from '@/types';
 
@@ -67,16 +68,16 @@ const defaultProps = {
   projects: mockProjects,
   epics: mockEpics,
   runWorkCategories: mockRunWorkCategories,
-  onBulkAllocate: jest.fn(),
-  onBulkDelete: jest.fn(),
-  onBulkCopy: jest.fn(),
+  onBulkAllocate: vi.fn(),
+  onBulkDelete: vi.fn(),
+  onBulkCopy: vi.fn(),
   selection: { teams: new Set(), iterations: new Set() } as BulkSelection,
-  onSelectionChange: jest.fn(),
+  onSelectionChange: vi.fn(),
 };
 
 describe('BulkOperationsPanel', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders without crashing', () => {
@@ -101,7 +102,7 @@ describe('BulkOperationsPanel', () => {
 
   it('allows team selection and calls onSelectionChange', async () => {
     const user = userEvent.setup();
-    const mockOnSelectionChange = jest.fn();
+    const mockOnSelectionChange = vi.fn();
 
     render(
       <BulkOperationsPanel
@@ -120,7 +121,7 @@ describe('BulkOperationsPanel', () => {
 
   it('allows iteration selection and calls onSelectionChange', async () => {
     const user = userEvent.setup();
-    const mockOnSelectionChange = jest.fn();
+    const mockOnSelectionChange = vi.fn();
 
     render(
       <BulkOperationsPanel
@@ -182,7 +183,7 @@ describe('BulkOperationsPanel', () => {
 
   it('calls onBulkAllocate when allocation is submitted', async () => {
     const user = userEvent.setup();
-    const mockOnBulkAllocate = jest.fn();
+    const mockOnBulkAllocate = vi.fn();
     const selection = {
       teams: new Set(['team1']),
       iterations: new Set([1]),
@@ -215,7 +216,7 @@ describe('BulkOperationsPanel', () => {
 
   it('calls onBulkDelete when delete is clicked', async () => {
     const user = userEvent.setup();
-    const mockOnBulkDelete = jest.fn();
+    const mockOnBulkDelete = vi.fn();
     const selection = {
       teams: new Set(['team1']),
       iterations: new Set([1]),
@@ -265,7 +266,7 @@ describe('BulkOperationsPanel', () => {
 
   it('allows selecting all teams', async () => {
     const user = userEvent.setup();
-    const mockOnSelectionChange = jest.fn();
+    const mockOnSelectionChange = vi.fn();
 
     render(
       <BulkOperationsPanel
@@ -284,7 +285,7 @@ describe('BulkOperationsPanel', () => {
 
   it('validates allocation form before submission', async () => {
     const user = userEvent.setup();
-    const mockOnBulkAllocate = jest.fn();
+    const mockOnBulkAllocate = vi.fn();
     const selection = {
       teams: new Set(['team1']),
       iterations: new Set([1]),
@@ -315,7 +316,7 @@ describe('BulkOperationsPanel', () => {
 
   it('clears selection when clear button is clicked', async () => {
     const user = userEvent.setup();
-    const mockOnSelectionChange = jest.fn();
+    const mockOnSelectionChange = vi.fn();
     const selection = {
       teams: new Set(['team1']),
       iterations: new Set([1]),

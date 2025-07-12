@@ -1,23 +1,24 @@
 import { renderHook } from '@testing-library/react';
 import { fireEvent } from '@testing-library/dom';
+import { vi } from 'vitest';
 import {
   useKeyboardShortcuts,
   KeyboardShortcut,
 } from '../useKeyboardShortcuts';
 
 describe('useKeyboardShortcuts', () => {
-  let mockActions: { [key: string]: jest.Mock };
+  let mockActions: { [key: string]: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockActions = {
-      action1: jest.fn(),
-      action2: jest.fn(),
-      action3: jest.fn(),
+      action1: vi.fn(),
+      action2: vi.fn(),
+      action3: vi.fn(),
     };
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const createShortcuts = (): KeyboardShortcut[] => [
@@ -117,7 +118,7 @@ describe('useKeyboardShortcuts', () => {
     renderHook(() => useKeyboardShortcuts(shortcuts, true));
 
     const event = new KeyboardEvent('keydown', { key: 'n' });
-    const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
     document.dispatchEvent(event);
 
@@ -135,8 +136,8 @@ describe('useKeyboardShortcuts', () => {
 
   it('should clean up event listeners on unmount', () => {
     const shortcuts = createShortcuts();
-    const addEventListenerSpy = jest.spyOn(document, 'addEventListener');
-    const removeEventListenerSpy = jest.spyOn(document, 'removeEventListener');
+    const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
+    const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
 
     const { unmount } = renderHook(() => useKeyboardShortcuts(shortcuts, true));
 

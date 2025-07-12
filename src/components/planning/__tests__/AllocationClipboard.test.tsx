@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import {
   AllocationClipboardProvider,
   ClipboardControls,
@@ -10,8 +11,8 @@ import {
 import { Team, Allocation, Epic } from '@/types';
 
 // Mock the toast hook
-jest.mock('@/components/ui/use-toast', () => ({
-  toast: jest.fn(),
+vi.mock('@/components/ui/use-toast', () => ({
+  toast: vi.fn(),
 }));
 
 // Mock data
@@ -99,7 +100,7 @@ const TestComponent: React.FC = () => {
 
 const renderWithProvider = (
   component: React.ReactElement,
-  onAllocationsChange = jest.fn(),
+  onAllocationsChange = vi.fn(),
   allAllocations = mockAllocations,
   selectedCycleId = 'q1-2024'
 ) => {
@@ -116,7 +117,7 @@ const renderWithProvider = (
 
 describe('AllocationClipboard', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('AllocationClipboardProvider', () => {
@@ -141,7 +142,7 @@ describe('AllocationClipboard', () => {
 
     it('handles pasting allocations', async () => {
       const user = userEvent.setup();
-      const mockOnAllocationsChange = jest.fn();
+      const mockOnAllocationsChange = vi.fn();
       renderWithProvider(<TestComponent />, mockOnAllocationsChange);
 
       // First copy
@@ -226,8 +227,8 @@ describe('AllocationClipboard', () => {
 
     it('handles paste action', async () => {
       const user = userEvent.setup();
-      const mockOnPaste = jest.fn();
-      const mockOnAllocationsChange = jest.fn();
+      const mockOnPaste = vi.fn();
+      const mockOnAllocationsChange = vi.fn();
 
       renderWithProvider(
         <ClipboardControls {...defaultProps} onPaste={mockOnPaste} />,
@@ -349,7 +350,7 @@ describe('AllocationClipboard', () => {
   describe('Edge cases', () => {
     it('prevents pasting to same location', async () => {
       const user = userEvent.setup();
-      const mockOnAllocationsChange = jest.fn();
+      const mockOnAllocationsChange = vi.fn();
 
       const testComponent = (
         <div>
@@ -433,7 +434,7 @@ describe('AllocationClipboard', () => {
 
       // Mock Date.now to control time
       const mockNow = Date.now();
-      jest.spyOn(Date, 'now').mockReturnValue(mockNow);
+      vi.spyOn(Date, 'now').mockReturnValue(mockNow);
 
       renderWithProvider(
         <div>
@@ -445,7 +446,7 @@ describe('AllocationClipboard', () => {
       await user.click(screen.getByTestId('copy-button'));
 
       // Advance time by 2 minutes
-      jest.spyOn(Date, 'now').mockReturnValue(mockNow + 2 * 60 * 1000);
+      vi.spyOn(Date, 'now').mockReturnValue(mockNow + 2 * 60 * 1000);
 
       // Re-render to update time display
       renderWithProvider(
@@ -459,7 +460,7 @@ describe('AllocationClipboard', () => {
       expect(screen.getByText(/2m ago/)).toBeInTheDocument();
 
       // Restore Date.now
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
   });
 });

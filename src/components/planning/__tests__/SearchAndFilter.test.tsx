@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { vi } from 'vitest';
 import SearchAndFilter, { SearchFilters } from '../SearchAndFilter';
 import { Team, Project, Epic, Division, Allocation } from '@/types';
 
@@ -96,16 +97,16 @@ const defaultProps = {
   divisions: mockDivisions,
   allocations: mockAllocations,
   filters: defaultFilters,
-  onFiltersChange: jest.fn(),
+  onFiltersChange: vi.fn(),
   presets: [],
-  onPresetSave: jest.fn(),
-  onPresetLoad: jest.fn(),
-  onPresetDelete: jest.fn(),
+  onPresetSave: vi.fn(),
+  onPresetLoad: vi.fn(),
+  onPresetDelete: vi.fn(),
 };
 
 describe('SearchAndFilter', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders without crashing', () => {
@@ -122,7 +123,7 @@ describe('SearchAndFilter', () => {
 
   it('handles search input changes', async () => {
     const user = userEvent.setup();
-    const mockOnFiltersChange = jest.fn();
+    const mockOnFiltersChange = vi.fn();
 
     render(
       <SearchAndFilter
@@ -184,7 +185,7 @@ describe('SearchAndFilter', () => {
 
   it('can clear search', async () => {
     const user = userEvent.setup();
-    const mockOnFiltersChange = jest.fn();
+    const mockOnFiltersChange = vi.fn();
     const filtersWithSearch = { ...defaultFilters, searchQuery: 'test' };
 
     render(
@@ -211,7 +212,7 @@ describe('SearchAndFilter', () => {
 
   it('handles allocation status filter changes', async () => {
     const user = userEvent.setup();
-    const mockOnFiltersChange = jest.fn();
+    const mockOnFiltersChange = vi.fn();
 
     render(
       <SearchAndFilter
@@ -249,7 +250,7 @@ describe('SearchAndFilter', () => {
 
   it('handles division filter selection', async () => {
     const user = userEvent.setup();
-    const mockOnFiltersChange = jest.fn();
+    const mockOnFiltersChange = vi.fn();
 
     render(
       <SearchAndFilter
@@ -274,7 +275,7 @@ describe('SearchAndFilter', () => {
 
   it('handles team filter selection', async () => {
     const user = userEvent.setup();
-    const mockOnFiltersChange = jest.fn();
+    const mockOnFiltersChange = vi.fn();
 
     render(
       <SearchAndFilter
@@ -311,7 +312,7 @@ describe('SearchAndFilter', () => {
 
   it('can clear all filters', async () => {
     const user = userEvent.setup();
-    const mockOnFiltersChange = jest.fn();
+    const mockOnFiltersChange = vi.fn();
     const filtersWithActive = {
       ...defaultFilters,
       searchQuery: 'test',
@@ -333,7 +334,7 @@ describe('SearchAndFilter', () => {
 
   it('handles preset saving', async () => {
     const user = userEvent.setup();
-    const mockOnPresetSave = jest.fn();
+    const mockOnPresetSave = vi.fn();
 
     render(
       <SearchAndFilter {...defaultProps} onPresetSave={mockOnPresetSave} />
@@ -376,7 +377,7 @@ describe('SearchAndFilter', () => {
 
   it('handles preset loading', async () => {
     const user = userEvent.setup();
-    const mockOnPresetLoad = jest.fn();
+    const mockOnPresetLoad = vi.fn();
     const presets = [
       {
         id: 'preset1',
@@ -400,7 +401,7 @@ describe('SearchAndFilter', () => {
 
   it('handles search result selection', async () => {
     const user = userEvent.setup();
-    const mockOnFiltersChange = jest.fn();
+    const mockOnFiltersChange = vi.fn();
     const filtersWithSearch = { ...defaultFilters, searchQuery: 'frontend' };
 
     render(
