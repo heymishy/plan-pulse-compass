@@ -95,6 +95,14 @@ global.requestAnimationFrame = vi.fn(callback => {
 // Mock cancelAnimationFrame
 global.cancelAnimationFrame = vi.fn();
 
+// Mock pointer capture methods and scrollIntoView for JSDOM
+if (typeof HTMLElement !== 'undefined') {
+  HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
+  HTMLElement.prototype.setPointerCapture = vi.fn();
+  HTMLElement.prototype.releasePointerCapture = vi.fn();
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+}
+
 // Reduce console noise in tests
 global.console = {
   ...console,
