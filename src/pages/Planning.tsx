@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import {
+  useKeyboardShortcuts,
+  KeyboardShortcut,
+} from '@/hooks/useKeyboardShortcuts';
+import {
   getCurrentQuarterByDate,
   getCurrentFinancialYear,
 } from '@/utils/dateUtils';
@@ -25,6 +29,9 @@ import {
   Zap,
   BarChart3,
   Clock,
+  Eye,
+  EyeOff,
+  Filter,
 } from 'lucide-react';
 import PlanningMatrix from '@/components/planning/PlanningMatrix';
 import BulkAllocationGrid from '@/components/planning/BulkAllocationGrid';
@@ -33,6 +40,20 @@ import CycleDialog from '@/components/planning/CycleDialog';
 import AdvancedPlanningDashboard from '@/components/planning/AdvancedPlanningDashboard';
 import QuarterAnalysisDashboard from '@/components/planning/QuarterAnalysisDashboard';
 import IterationSequenceView from '@/components/planning/IterationSequenceView';
+import KeyboardShortcutsDialog from '@/components/planning/KeyboardShortcutsDialog';
+import BulkOperationsPanel, {
+  BulkSelection,
+} from '@/components/planning/BulkOperationsPanel';
+import HeatMapView from '@/components/planning/HeatMapView';
+import ProgressIndicators from '@/components/planning/ProgressIndicators';
+import SearchAndFilter, {
+  SearchFilters,
+  FilterPreset,
+} from '@/components/planning/SearchAndFilter';
+import ConflictDetection from '@/components/planning/ConflictDetection';
+import CapacityWarnings from '@/components/planning/CapacityWarnings';
+import TimelineGanttView from '@/components/planning/TimelineGanttView';
+import { applyFilters, getDefaultFilterPresets } from '@/utils/filterUtils';
 import { Allocation, Cycle } from '@/types';
 
 const Planning = () => {
@@ -53,12 +74,33 @@ const Planning = () => {
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [selectedFinancialYear, setSelectedFinancialYear] =
     useState<string>('all');
-  const [viewMode, setViewMode] = useState<'matrix' | 'bulk'>('matrix');
+  const [viewMode, setViewMode] = useState<
+    'matrix' | 'bulk' | 'heatmap' | 'timeline'
+  >('matrix');
   const [activeTab, setActiveTab] = useState<
     'planning' | 'analysis' | 'advanced'
   >('planning');
+  const [hideEmptyRows, setHideEmptyRows] = useState<boolean>(false);
   const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
   const [isCycleDialogOpen, setIsCycleDialogOpen] = useState(false);
+  const [isShortcutsDialogOpen, setIsShortcutsDialogOpen] = useState(false);
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [bulkSelection, setBulkSelection] = useState<BulkSelection>({
+    teams: new Set(),
+    iterations: new Set(),
+  });
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
+    searchQuery: '',
+    selectedDivisionIds: [],
+    selectedTeamIds: [],
+    selectedProjectIds: [],
+    selectedEpicIds: [],
+    allocationStatus: 'all',
+    dateRange: 'all',
+  });
+  const [filterPresets, setFilterPresets] = useState<FilterPreset[]>(
+    getDefaultFilterPresets()
+  );
   const [selectedAllocation, setSelectedAllocation] =
     useState<Allocation | null>(null);
   const [prefilledData, setPrefilledData] = useState<{
@@ -341,13 +383,22 @@ const Planning = () => {
     }
   }, [selectedDivisionId, teamsInDivision, selectedTeamId]);
 
-  // Filter teams for display
+  // Filter teams for display (combine existing division/team filters with search filters)
   const filteredTeams = React.useMemo(() => {
-    if (selectedTeamId === 'all') {
-      return teamsInDivision;
+    let teams = filteredData.teams;
+
+    // Apply existing division filter
+    if (selectedDivisionId !== 'all') {
+      teams = teams.filter(t => t.divisionId === selectedDivisionId);
     }
-    return teamsInDivision.filter(t => t.id === selectedTeamId);
-  }, [selectedTeamId, teamsInDivision]);
+
+    // Apply existing team filter
+    if (selectedTeamId !== 'all') {
+      teams = teams.filter(t => t.id === selectedTeamId);
+    }
+
+    return teams;
+  }, [filteredData.teams, selectedDivisionId, selectedTeamId]);
 
   const handleCreateAllocation = () => {
     setSelectedAllocation(null);
@@ -397,6 +448,103 @@ const Planning = () => {
     setPrefilledData(null);
   };
 
+  // Bulk operations handlers
+  const handleBulkAllocate = (
+    teamIds: string[],
+    iterationNumbers: number[],
+    allocation: {
+      epicId?: string;
+      runWorkCategoryId?: string;
+      percentage: number;
+    }
+  ) => {
+    if (!selectedCycleId) return;
+
+    const newAllocations: Allocation[] = [];
+
+    teamIds.forEach(teamId => {
+      iterationNumbers.forEach(iterationNumber => {
+        const newAllocation: Allocation = {
+          id: Date.now().toString() + Math.random().toString(36),
+          teamId,
+          cycleId: selectedCycleId,
+          iterationNumber,
+          percentage: allocation.percentage,
+          epicId: allocation.epicId || '',
+          runWorkCategoryId: allocation.runWorkCategoryId || '',
+          notes: '',
+        };
+        newAllocations.push(newAllocation);
+      });
+    });
+
+    setAllocations(prev => [...prev, ...newAllocations]);
+
+    // Clear selection after bulk operation
+    setBulkSelection({ teams: new Set(), iterations: new Set() });
+  };
+
+  const handleBulkDelete = (teamIds: string[], iterationNumbers: number[]) => {
+    if (!selectedCycleId) return;
+
+    setAllocations(prev =>
+      prev.filter(allocation => {
+        if (allocation.cycleId !== selectedCycleId) return true;
+        return !(
+          teamIds.includes(allocation.teamId) &&
+          iterationNumbers.includes(allocation.iterationNumber)
+        );
+      })
+    );
+
+    // Clear selection after bulk operation
+    setBulkSelection({ teams: new Set(), iterations: new Set() });
+  };
+
+  const handleBulkCopy = (
+    sourceTeamId: string,
+    sourceIteration: number,
+    targetTeamIds: string[],
+    targetIterations: number[]
+  ) => {
+    if (!selectedCycleId) return;
+
+    // Find source allocations
+    const sourceAllocations = allocations.filter(
+      a =>
+        a.teamId === sourceTeamId &&
+        a.iterationNumber === sourceIteration &&
+        a.cycleId === selectedCycleId
+    );
+
+    if (sourceAllocations.length === 0) return;
+
+    const newAllocations: Allocation[] = [];
+
+    targetTeamIds.forEach(teamId => {
+      targetIterations.forEach(iterationNumber => {
+        // Skip copying to self
+        if (teamId === sourceTeamId && iterationNumber === sourceIteration)
+          return;
+
+        sourceAllocations.forEach(sourceAllocation => {
+          const newAllocation: Allocation = {
+            ...sourceAllocation,
+            id: Date.now().toString() + Math.random().toString(36),
+            teamId,
+            iterationNumber,
+          };
+          newAllocations.push(newAllocation);
+        });
+      });
+    });
+
+    setAllocations(prev => [...prev, ...newAllocations]);
+
+    // Clear selection after bulk operation
+    setBulkSelection({ teams: new Set(), iterations: new Set() });
+  };
+
   const getQuarterStats = () => {
     if (!currentQuarter)
       return { totalTeams: 0, allocatedTeams: 0, totalIterations: 0 };
@@ -414,6 +562,140 @@ const Planning = () => {
   };
 
   const stats = getQuarterStats();
+
+  // Apply filters to get filtered data
+  const filteredData = React.useMemo(() => {
+    if (!selectedCycleId) {
+      return { teams: [], projects: [], epics: [], allocations: [] };
+    }
+
+    return applyFilters(
+      {
+        teams: teams,
+        projects: projects,
+        epics: epics,
+        allocations: allocations,
+        iterations: iterations,
+      },
+      searchFilters,
+      selectedCycleId
+    );
+  }, [
+    teams,
+    projects,
+    epics,
+    allocations,
+    iterations,
+    searchFilters,
+    selectedCycleId,
+  ]);
+
+  // Filter management
+  const handleFilterPresetSave = (preset: Omit<FilterPreset, 'id'>) => {
+    const newPreset: FilterPreset = {
+      ...preset,
+      id: Date.now().toString(),
+    };
+    setFilterPresets(prev => [...prev, newPreset]);
+  };
+
+  const handleFilterPresetLoad = (preset: FilterPreset) => {
+    setSearchFilters(preset.filters);
+  };
+
+  const handleFilterPresetDelete = (presetId: string) => {
+    setFilterPresets(prev => prev.filter(p => p.id !== presetId));
+  };
+
+  // Keyboard shortcuts
+  const shortcuts: KeyboardShortcut[] = [
+    {
+      key: 'n',
+      action: handleCreateAllocation,
+      description: 'Create new allocation',
+      category: 'Actions',
+    },
+    {
+      key: 'c',
+      action: () => setIsCycleDialogOpen(true),
+      description: 'Manage cycles',
+      category: 'Actions',
+    },
+    {
+      key: 'Escape',
+      action: () => {
+        setIsAllocationDialogOpen(false);
+        setIsCycleDialogOpen(false);
+        setIsShortcutsDialogOpen(false);
+      },
+      description: 'Close dialogs',
+      category: 'Navigation',
+    },
+    {
+      key: '?',
+      action: () => setIsShortcutsDialogOpen(!isShortcutsDialogOpen),
+      description: 'Toggle keyboard shortcuts help',
+      category: 'Help',
+    },
+    {
+      key: 'm',
+      action: () =>
+        setViewMode(
+          viewMode === 'matrix'
+            ? 'bulk'
+            : viewMode === 'bulk'
+              ? 'heatmap'
+              : viewMode === 'heatmap'
+                ? 'timeline'
+                : 'matrix'
+        ),
+      description: 'Cycle view modes',
+      category: 'View',
+    },
+    {
+      key: 'h',
+      action: () => setHideEmptyRows(!hideEmptyRows),
+      description: 'Toggle hide empty rows',
+      category: 'View',
+    },
+    {
+      key: 't',
+      ctrlKey: true,
+      action: () =>
+        setActiveTab(
+          activeTab === 'planning'
+            ? 'analysis'
+            : activeTab === 'analysis'
+              ? 'advanced'
+              : 'planning'
+        ),
+      description: 'Cycle through tabs',
+      category: 'Navigation',
+    },
+    {
+      key: 'b',
+      action: () => setIsBulkMode(!isBulkMode),
+      description: 'Toggle bulk selection mode',
+      category: 'Actions',
+    },
+    {
+      key: 'f',
+      ctrlKey: true,
+      action: () => {
+        // Focus search input
+        const searchInput = document.querySelector(
+          'input[placeholder*="Search"]'
+        ) as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      },
+      description: 'Focus search',
+      category: 'Navigation',
+    },
+  ];
+
+  useKeyboardShortcuts(shortcuts, true);
 
   if (!config) {
     return (
@@ -467,7 +749,9 @@ const Planning = () => {
       {/* Main Planning Tabs */}
       <Tabs
         value={activeTab}
-        onValueChange={value => setActiveTab(value as any)}
+        onValueChange={value =>
+          setActiveTab(value as 'planning' | 'analysis' | 'advanced')
+        }
         className="space-y-6"
       >
         <TabsList>
@@ -483,110 +767,197 @@ const Planning = () => {
         </TabsList>
 
         <TabsContent value="planning" className="space-y-6">
-          {/* Filters and View Toggle */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium">Financial Year:</label>
-                <Select
-                  value={selectedFinancialYear}
-                  onValueChange={setSelectedFinancialYear}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select financial year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Financial Years</SelectItem>
-                    {financialYearOptions.map(fy => (
-                      <SelectItem key={fy.value} value={fy.value}>
-                        {fy.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Enhanced Filters Section */}
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center">
+                  <Filter className="h-5 w-5 mr-2 text-blue-500" />
+                  Planning Filters & View Options
+                </CardTitle>
+                <Badge variant="outline" className="text-xs">
+                  {currentQuarter?.name || 'No Quarter Selected'}
+                </Badge>
               </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium">Quarter:</label>
-                <Select
-                  value={selectedCycleId}
-                  onValueChange={setSelectedCycleId}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select quarter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {quarterDropdownOptions.map(cycle => (
-                      <SelectItem key={cycle.id} value={cycle.id}>
-                        {cycle.name} ({cycle.status})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Primary Filters Row */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Financial Year
+                  </label>
+                  <Select
+                    value={selectedFinancialYear}
+                    onValueChange={setSelectedFinancialYear}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select financial year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Financial Years</SelectItem>
+                      {financialYearOptions.map(fy => (
+                        <SelectItem key={fy.value} value={fy.value}>
+                          {fy.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Quarter
+                  </label>
+                  <Select
+                    value={selectedCycleId}
+                    onValueChange={setSelectedCycleId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select quarter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {quarterDropdownOptions.map(cycle => (
+                        <SelectItem key={cycle.id} value={cycle.id}>
+                          {cycle.name} ({cycle.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Division
+                  </label>
+                  <Select
+                    value={selectedDivisionId}
+                    onValueChange={setSelectedDivisionId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select division" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Divisions</SelectItem>
+                      {divisions.map(division => (
+                        <SelectItem key={division.id} value={division.id}>
+                          {division.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">
+                    Team
+                  </label>
+                  <Select
+                    value={selectedTeamId}
+                    onValueChange={setSelectedTeamId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Teams</SelectItem>
+                      {teamsInDivision.map(team => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium">Division:</label>
-                <Select
-                  value={selectedDivisionId}
-                  onValueChange={setSelectedDivisionId}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select division" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Divisions</SelectItem>
-                    {divisions.map(division => (
-                      <SelectItem key={division.id} value={division.id}>
-                        {division.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium">Team:</label>
-                <Select
-                  value={selectedTeamId}
-                  onValueChange={setSelectedTeamId}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Teams</SelectItem>
-                    {teamsInDivision.map(team => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
-            <div className="flex items-center space-x-2">
-              <label className="text-sm font-medium">View:</label>
-              <div className="flex items-center border rounded-md">
-                <Button
-                  variant={viewMode === 'matrix' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('matrix')}
-                  className="rounded-r-none"
-                >
-                  <List className="h-4 w-4 mr-1" />
-                  Matrix
-                </Button>
-                <Button
-                  variant={viewMode === 'bulk' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('bulk')}
-                  className="rounded-l-none"
-                >
-                  <Grid3X3 className="h-4 w-4 mr-1" />
-                  Bulk Entry
-                </Button>
+              {/* View Options & Display Controls Row */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      View Mode:
+                    </label>
+                    <div className="flex items-center border rounded-md">
+                      <Button
+                        variant={viewMode === 'matrix' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('matrix')}
+                        className="rounded-r-none border-r"
+                      >
+                        <List className="h-4 w-4 mr-1" />
+                        Matrix
+                      </Button>
+                      <Button
+                        variant={viewMode === 'heatmap' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('heatmap')}
+                        className="rounded-none border-r"
+                      >
+                        <BarChart3 className="h-4 w-4 mr-1" />
+                        Heat Map
+                      </Button>
+                      <Button
+                        variant={viewMode === 'bulk' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('bulk')}
+                        className="rounded-none border-r"
+                      >
+                        <Grid3X3 className="h-4 w-4 mr-1" />
+                        Bulk Entry
+                      </Button>
+                      <Button
+                        variant={viewMode === 'timeline' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('timeline')}
+                        className="rounded-l-none"
+                      >
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Timeline
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant={hideEmptyRows ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setHideEmptyRows(!hideEmptyRows)}
+                      className="text-xs"
+                    >
+                      {hideEmptyRows ? (
+                        <Eye className="h-4 w-4 mr-1" />
+                      ) : (
+                        <EyeOff className="h-4 w-4 mr-1" />
+                      )}
+                      {hideEmptyRows ? 'Show Empty Rows' : 'Hide Empty Rows'}
+                    </Button>
+
+                    <Button
+                      variant={isBulkMode ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setIsBulkMode(!isBulkMode)}
+                      className="text-xs"
+                    >
+                      <Users className="h-4 w-4 mr-1" />
+                      {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Mode'}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <span>
+                    Showing: {filteredTeams.length} team
+                    {filteredTeams.length !== 1 ? 's' : ''}
+                  </span>
+                  {selectedCycleId && <span className="text-gray-400">•</span>}
+                  {selectedCycleId && (
+                    <span>
+                      {iterations.length} iteration
+                      {iterations.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -632,6 +1003,73 @@ const Planning = () => {
             </Card>
           </div>
 
+          {/* Search and Filter */}
+          <SearchAndFilter
+            teams={teams}
+            projects={projects}
+            epics={epics}
+            divisions={divisions}
+            allocations={allocations.filter(a => a.cycleId === selectedCycleId)}
+            filters={searchFilters}
+            onFiltersChange={setSearchFilters}
+            presets={filterPresets}
+            onPresetSave={handleFilterPresetSave}
+            onPresetLoad={handleFilterPresetLoad}
+            onPresetDelete={handleFilterPresetDelete}
+          />
+
+          {/* Progress Indicators */}
+          {selectedCycleId && iterations.length > 0 && (
+            <ProgressIndicators
+              teams={filteredTeams}
+              iterations={iterations}
+              allocations={filteredData.allocations}
+              projects={filteredData.projects}
+              epics={filteredData.epics}
+              selectedCycleId={selectedCycleId}
+            />
+          )}
+
+          {/* Conflict Detection */}
+          {selectedCycleId && iterations.length > 0 && (
+            <ConflictDetection
+              allocations={filteredData.allocations}
+              teams={filteredTeams}
+              epics={filteredData.epics}
+              projects={filteredData.projects}
+              people={people}
+              iterations={iterations}
+              selectedCycleId={selectedCycleId}
+            />
+          )}
+
+          {/* Capacity Warnings */}
+          {selectedCycleId && iterations.length > 0 && (
+            <CapacityWarnings
+              teams={filteredTeams}
+              allocations={filteredData.allocations}
+              iterations={iterations}
+              selectedCycleId={selectedCycleId}
+              realTimeUpdates={true}
+            />
+          )}
+
+          {/* Bulk Operations Panel */}
+          {isBulkMode && selectedCycleId && iterations.length > 0 && (
+            <BulkOperationsPanel
+              selection={bulkSelection}
+              onSelectionChange={setBulkSelection}
+              teams={filteredTeams}
+              iterations={iterations}
+              projects={filteredData.projects}
+              epics={filteredData.epics}
+              runWorkCategories={runWorkCategories}
+              onBulkAllocate={handleBulkAllocate}
+              onBulkDelete={handleBulkDelete}
+              onBulkCopy={handleBulkCopy}
+            />
+          )}
+
           {/* Planning Views */}
           {selectedCycleId && iterations.length > 0 && (
             <>
@@ -639,14 +1077,30 @@ const Planning = () => {
                 <PlanningMatrix
                   teams={filteredTeams}
                   iterations={iterations}
-                  allocations={allocations.filter(
-                    a => a.cycleId === selectedCycleId
-                  )}
+                  allocations={filteredData.allocations}
                   onEditAllocation={handleEditAllocation}
                   onCreateAllocation={handleCreateAllocationFromMatrix}
-                  projects={projects}
-                  epics={epics}
+                  projects={filteredData.projects}
+                  epics={filteredData.epics}
                   runWorkCategories={runWorkCategories}
+                  hideEmptyRows={hideEmptyRows}
+                  bulkSelection={bulkSelection}
+                  onBulkSelectionChange={setBulkSelection}
+                  isBulkMode={isBulkMode}
+                />
+              )}
+
+              {viewMode === 'heatmap' && (
+                <HeatMapView
+                  teams={filteredTeams}
+                  iterations={iterations}
+                  allocations={filteredData.allocations}
+                  onEditAllocation={handleEditAllocation}
+                  onCreateAllocation={handleCreateAllocationFromMatrix}
+                  projects={filteredData.projects}
+                  epics={filteredData.epics}
+                  runWorkCategories={runWorkCategories}
+                  hideEmptyRows={hideEmptyRows}
                 />
               )}
 
@@ -658,6 +1112,18 @@ const Planning = () => {
                   projects={projects}
                   epics={epics}
                   runWorkCategories={runWorkCategories}
+                />
+              )}
+
+              {viewMode === 'timeline' && (
+                <TimelineGanttView
+                  teams={filteredTeams}
+                  allocations={filteredData.allocations}
+                  iterations={iterations}
+                  epics={filteredData.epics}
+                  projects={filteredData.projects}
+                  selectedCycleId={selectedCycleId}
+                  onAllocationClick={handleEditAllocation}
                 />
               )}
             </>
@@ -865,6 +1331,12 @@ const Planning = () => {
         onClose={() => setIsCycleDialogOpen(false)}
         parentCycle={currentQuarter}
         selectedFinancialYear={selectedFinancialYear}
+      />
+
+      <KeyboardShortcutsDialog
+        isOpen={isShortcutsDialogOpen}
+        onClose={() => setIsShortcutsDialogOpen(false)}
+        shortcuts={shortcuts}
       />
     </div>
   );
