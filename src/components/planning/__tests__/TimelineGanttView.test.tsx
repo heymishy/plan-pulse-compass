@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@/test/utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import TimelineGanttView from '../TimelineGanttView';

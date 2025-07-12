@@ -86,6 +86,15 @@ Object.defineProperty(window, 'scrollTo', {
   value: vi.fn(),
 });
 
+// Mock requestAnimationFrame
+global.requestAnimationFrame = vi.fn(callback => {
+  setTimeout(callback, 0);
+  return 1;
+});
+
+// Mock cancelAnimationFrame
+global.cancelAnimationFrame = vi.fn();
+
 // Reduce console noise in tests
 global.console = {
   ...console,

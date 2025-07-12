@@ -3,6 +3,7 @@ import { render, RenderOptions, cleanup } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { vi, afterEach } from 'vitest';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Mock the Toaster component to avoid issues in tests
 vi.mock('@/components/ui/toaster', () => ({
@@ -18,7 +19,9 @@ afterEach(() => {
 const LightweightProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <BrowserRouter>
-      <SidebarProvider>{children}</SidebarProvider>
+      <SidebarProvider>
+        <TooltipProvider>{children}</TooltipProvider>
+      </SidebarProvider>
     </BrowserRouter>
   );
 };
@@ -27,14 +30,16 @@ const LightweightProviders = ({ children }: { children: React.ReactNode }) => {
 const SidebarProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <BrowserRouter>
-      <SidebarProvider>{children}</SidebarProvider>
+      <SidebarProvider>
+        <TooltipProvider>{children}</TooltipProvider>
+      </SidebarProvider>
     </BrowserRouter>
   );
 };
 
 // Wrapper for components that already have a router (like App component)
 const NoRouterProviders = ({ children }: { children: React.ReactNode }) => {
-  return <>{children}</>;
+  return <TooltipProvider>{children}</TooltipProvider>;
 };
 
 // Lightweight render for simple component tests (default)

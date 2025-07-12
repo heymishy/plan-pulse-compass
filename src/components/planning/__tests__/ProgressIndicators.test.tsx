@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from '@/test/utils/test-utils';
 import ProgressIndicators from '../ProgressIndicators';
 import { Team, Cycle, Allocation, Project, Epic } from '@/types';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@/test/utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import SearchAndFilter, { SearchFilters } from '../SearchAndFilter';
