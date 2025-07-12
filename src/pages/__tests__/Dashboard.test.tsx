@@ -1,7 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@/test/utils/test-utils';
-import { BrowserRouter } from 'react-router-dom';
+import { render, screen, renderWithoutRouter } from '@/test/utils/test-utils';
 
 // Mock all the complex dependencies
 vi.mock('@/context/AppContext', () => ({
@@ -66,11 +65,7 @@ vi.mock('../Dashboard', () => ({
 
 describe('Dashboard', () => {
   it('renders dashboard components', () => {
-    render(
-      <BrowserRouter>
-        <MockDashboard />
-      </BrowserRouter>
-    );
+    render(<MockDashboard />);
 
     expect(screen.getByTestId('dashboard')).toBeInTheDocument();
     expect(screen.getByTestId('current-status-card')).toBeInTheDocument();
@@ -80,17 +75,9 @@ describe('Dashboard', () => {
   });
 
   it('shows dashboard title', () => {
-    render(
-      <BrowserRouter>
-        <MockDashboard />
-      </BrowserRouter>
-    );
+    render(<MockDashboard />);
 
-    // Use getAllByTestId to handle multiple instances and test the first one
-    const dashboardElements = screen.getAllByTestId('dashboard');
-    expect(dashboardElements.length).toBeGreaterThan(0);
-
-    const firstDashboard = dashboardElements[0];
-    expect(firstDashboard.querySelector('h1')).toHaveTextContent('Dashboard');
+    expect(screen.getByTestId('dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
 });
