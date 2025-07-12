@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import {
   Clock,
   Target,
   X,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { Team, Allocation, Cycle } from '@/types';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
@@ -60,6 +62,7 @@ const CapacityWarnings: React.FC<CapacityWarningsProps> = ({
   onAutoFix,
   realTimeUpdates = true,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [dismissedWarnings, setDismissedWarnings] = React.useState<Set<string>>(
     new Set()
   );
@@ -242,41 +245,55 @@ const CapacityWarnings: React.FC<CapacityWarningsProps> = ({
   if (warnings.length === 0) {
     return (
       <Card className="border-l-4 border-l-green-500">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center">
-            <Shield className="h-5 w-5 mr-2 text-green-500" />
-            Capacity Monitoring
-            {realTimeUpdates && (
-              <Badge variant="outline" className="ml-2 text-xs">
-                Live
-              </Badge>
-            )}
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center justify-between">
+            <div className="flex items-center">
+              <Shield className="h-4 w-4 mr-2 text-green-500" />
+              <span>Capacity Monitoring</span>
+              {realTimeUpdates && (
+                <Badge variant="outline" className="ml-2 text-xs">
+                  Live
+                </Badge>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Shield className="h-4 w-4 text-green-500" />
+              <span className="text-sm font-normal text-green-700">
+                All Normal
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="p-1 h-6 w-6"
+              >
+                {isExpanded ? (
+                  <Minimize2 className="h-3 w-3" />
+                ) : (
+                  <Maximize2 className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-3">
-            <Shield className="h-8 w-8 text-green-500" />
-            <div>
-              <div className="text-lg font-semibold text-green-700">
-                All Systems Normal
-              </div>
-              <div className="text-sm text-gray-600">
-                No capacity issues detected. Team allocations are within healthy
-                ranges.
-              </div>
+        {isExpanded && (
+          <CardContent className="pt-0">
+            <div className="text-sm text-gray-600">
+              No capacity issues detected. Team allocations are within healthy
+              ranges.
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
     );
   }
 
   return (
     <Card className="border-l-4 border-l-orange-500">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center justify-between">
           <div className="flex items-center">
-            <Bell className="h-5 w-5 mr-2 text-orange-500" />
+            <Bell className="h-4 w-4 mr-2 text-orange-500" />
             <span>Capacity Warnings</span>
             {realTimeUpdates && (
               <Badge variant="outline" className="ml-2 text-xs">
@@ -284,144 +301,172 @@ const CapacityWarnings: React.FC<CapacityWarningsProps> = ({
               </Badge>
             )}
           </div>
-          <Badge variant="secondary">
-            {warningCounts.total} warning{warningCounts.total !== 1 ? 's' : ''}
-          </Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="secondary" className="text-xs">
+              {warningCounts.total} warning
+              {warningCounts.total !== 1 ? 's' : ''}
+            </Badge>
+            <div className="text-xs text-gray-600">
+              {warningCounts.critical + warningCounts.error > 0 && (
+                <span className="text-red-600">
+                  {warningCounts.critical + warningCounts.error} critical
+                </span>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-1 h-6 w-6"
+            >
+              {isExpanded ? (
+                <Minimize2 className="h-3 w-3" />
+              ) : (
+                <Maximize2 className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Warning Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-            <div className="text-lg font-bold text-red-600">
-              {warningCounts.critical + warningCounts.error}
+      {isExpanded && (
+        <CardContent className="space-y-4 pt-0">
+          {/* Warning Summary */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
+              <div className="text-lg font-bold text-red-600">
+                {warningCounts.critical + warningCounts.error}
+              </div>
+              <div className="text-xs text-red-600">Critical/Error</div>
             </div>
-            <div className="text-xs text-red-600">Critical/Error</div>
-          </div>
-          <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-            <div className="text-lg font-bold text-orange-600">
-              {warningCounts.warning}
+            <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="text-lg font-bold text-orange-600">
+                {warningCounts.warning}
+              </div>
+              <div className="text-xs text-orange-600">Warning</div>
             </div>
-            <div className="text-xs text-orange-600">Warning</div>
-          </div>
-          <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="text-lg font-bold text-blue-600">
-              {warningCounts.info}
+            <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-lg font-bold text-blue-600">
+                {warningCounts.info}
+              </div>
+              <div className="text-xs text-blue-600">Info</div>
             </div>
-            <div className="text-xs text-blue-600">Info</div>
-          </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="text-lg font-bold text-gray-600">
-              {teams.length - new Set(warnings.map(w => w.teamId)).size}
+            <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="text-lg font-bold text-gray-600">
+                {teams.length - new Set(warnings.map(w => w.teamId)).size}
+              </div>
+              <div className="text-xs text-gray-600">Healthy Teams</div>
             </div>
-            <div className="text-xs text-gray-600">Healthy Teams</div>
           </div>
-        </div>
 
-        {/* Warning List */}
-        <div className="space-y-2">
-          {warnings.slice(0, 10).map(warning => (
-            <Card
-              key={warning.id}
-              className={`border ${getWarningColor(warning.level)}`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
-                    <div
-                      className={`p-2 rounded-lg ${getWarningColor(warning.level)}`}
-                    >
-                      {getWarningIcon(warning.type)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{warning.teamName}</span>
-                        {warning.iterationNumber > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            Iteration {warning.iterationNumber}
-                          </Badge>
-                        )}
-                        {getTrendIcon(warning.trend)}
+          {/* Warning List */}
+          <div className="space-y-2">
+            {warnings.slice(0, 10).map(warning => (
+              <Card
+                key={warning.id}
+                className={`border ${getWarningColor(warning.level)}`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3 flex-1">
+                      <div
+                        className={`p-2 rounded-lg ${getWarningColor(warning.level)}`}
+                      >
+                        {getWarningIcon(warning.type)}
                       </div>
-                      <div className="text-sm text-gray-700 mt-1">
-                        {warning.message}
-                      </div>
-                      <div className="text-xs text-gray-600 mt-1">
-                        💡 {warning.suggestion}
-                      </div>
-
-                      {/* Capacity Bar */}
-                      <div className="mt-2">
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                          <span>Capacity Usage</span>
-                          <span>{Math.round(warning.currentCapacity)}%</span>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">
+                            {warning.teamName}
+                          </span>
+                          {warning.iterationNumber > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              Iteration {warning.iterationNumber}
+                            </Badge>
+                          )}
+                          {getTrendIcon(warning.trend)}
                         </div>
-                        <Progress
-                          value={Math.min(warning.currentCapacity, 150)}
-                          className="h-2"
-                        />
+                        <div className="text-sm text-gray-700 mt-1">
+                          {warning.message}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          💡 {warning.suggestion}
+                        </div>
+
+                        {/* Capacity Bar */}
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                            <span>Capacity Usage</span>
+                            <span>{Math.round(warning.currentCapacity)}%</span>
+                          </div>
+                          <Progress
+                            value={Math.min(warning.currentCapacity, 150)}
+                            className="h-2"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center space-x-2 ml-4">
-                    {onAutoFix && warning.level !== 'info' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onAutoFix(warning.id, 'auto-rebalance')}
-                        className="text-xs"
-                      >
-                        Auto-fix
-                      </Button>
-                    )}
-                    {warning.canAutoDismiss && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDismiss(warning.id)}
-                        className="p-1"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <div className="flex items-center space-x-2 ml-4">
+                      {onAutoFix && warning.level !== 'info' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            onAutoFix(warning.id, 'auto-rebalance')
+                          }
+                          className="text-xs"
+                        >
+                          Auto-fix
+                        </Button>
+                      )}
+                      {warning.canAutoDismiss && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDismiss(warning.id)}
+                          className="p-1"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
 
-          {warnings.length > 10 && (
-            <div className="text-center text-sm text-gray-500 py-2">
-              ... and {warnings.length - 10} more warnings
+            {warnings.length > 10 && (
+              <div className="text-center text-sm text-gray-500 py-2">
+                ... and {warnings.length - 10} more warnings
+              </div>
+            )}
+          </div>
+
+          {/* Quick Actions */}
+          {warningCounts.total > 0 && (
+            <div className="border-t pt-4">
+              <div className="text-sm font-medium mb-2">Quick Actions</div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm">
+                  <Target className="h-4 w-4 mr-1" />
+                  Auto-rebalance All
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Clock className="h-4 w-4 mr-1" />
+                  Extend Timelines
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDismissedWarnings(new Set())}
+                >
+                  Show All Warnings
+                </Button>
+              </div>
             </div>
           )}
-        </div>
-
-        {/* Quick Actions */}
-        {warningCounts.total > 0 && (
-          <div className="border-t pt-4">
-            <div className="text-sm font-medium mb-2">Quick Actions</div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm">
-                <Target className="h-4 w-4 mr-1" />
-                Auto-rebalance All
-              </Button>
-              <Button variant="outline" size="sm">
-                <Clock className="h-4 w-4 mr-1" />
-                Extend Timelines
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDismissedWarnings(new Set())}
-              >
-                Show All Warnings
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 };
