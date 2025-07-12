@@ -180,11 +180,13 @@ export const getHeatMapStats = (heatMapData: HeatMapCell[]) => {
 
   return {
     ...stats,
-    healthScore: Math.round(
-      ((stats.optimal + stats.nearFull) / stats.total) * 100
-    ),
-    utilizationRate: Math.round(
-      ((stats.total - stats.empty) / stats.total) * 100
-    ),
+    healthScore:
+      stats.total > 0
+        ? Math.round(((stats.optimal + stats.nearFull) / stats.total) * 100)
+        : 0,
+    utilizationRate:
+      stats.total > 0
+        ? Math.round(((stats.total - stats.empty) / stats.total) * 100)
+        : 0,
   };
 };

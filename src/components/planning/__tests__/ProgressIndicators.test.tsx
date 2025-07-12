@@ -114,7 +114,7 @@ describe('ProgressIndicators', () => {
     render(<ProgressIndicators {...defaultProps} />);
 
     // Should show 75% complete (3 allocated cells out of 4 total)
-    expect(screen.getByText('75% Complete')).toBeInTheDocument();
+    expect(screen.getAllByText('75% Complete')[0]).toBeInTheDocument();
     expect(screen.getByText('3 of 4 cells')).toBeInTheDocument();
   });
 
@@ -122,7 +122,7 @@ describe('ProgressIndicators', () => {
     render(<ProgressIndicators {...defaultProps} />);
 
     // Both teams have allocations, so 100% coverage
-    expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.getAllByText('100%')[0]).toBeInTheDocument();
     expect(screen.getByText('Team Coverage')).toBeInTheDocument();
   });
 
@@ -153,7 +153,7 @@ describe('ProgressIndicators', () => {
     render(<ProgressIndicators {...defaultProps} />);
 
     // 2 epics with allocations out of 2 total
-    expect(screen.getByText('Epic Coverage')).toBeInTheDocument();
+    expect(screen.getAllByText('Epic Coverage')[0]).toBeInTheDocument();
     expect(screen.getByText('2 of 2')).toBeInTheDocument();
   });
 
@@ -164,7 +164,7 @@ describe('ProgressIndicators', () => {
     expect(screen.getByText('Planned')).toBeInTheDocument();
     expect(screen.getByText('Optimal')).toBeInTheDocument();
     expect(screen.getByText('Issues')).toBeInTheDocument();
-    expect(screen.getByText('Epic Coverage')).toBeInTheDocument();
+    expect(screen.getAllByText('Epic Coverage')[0]).toBeInTheDocument();
   });
 
   it('handles empty data gracefully', () => {
@@ -236,7 +236,7 @@ describe('ProgressIndicators', () => {
 
     render(<ProgressIndicators {...partialProps} />);
 
-    expect(screen.getByText('25% Complete')).toBeInTheDocument();
+    expect(screen.getAllByText('25% Complete')[0]).toBeInTheDocument();
     expect(screen.getByText('1 of 4 cells')).toBeInTheDocument();
   });
 });

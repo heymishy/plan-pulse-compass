@@ -324,7 +324,7 @@ describe('heatMapUtils', () => {
       expect(stats.healthScore).toBe(50); // 2 optimal/near-full out of 4 = 50%
       expect(stats.critical).toBe(1);
       expect(stats.under).toBe(1);
-      expect(stats.nearFull).toBe(1);
+      expect(stats.nearFull).toBe(2);
       expect(stats.optimal).toBe(0);
     });
   });

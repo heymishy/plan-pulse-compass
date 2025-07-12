@@ -20,6 +20,7 @@ export interface AllocationConflict {
   affectedTeams: string[];
   affectedEpics: string[];
   suggestedActions: string[];
+  currentCapacity?: number; // For overallocation conflicts
   impact: {
     delayRisk: number; // 0-100
     qualityRisk: number; // 0-100
@@ -157,6 +158,7 @@ const detectOverallocationConflicts = (
           affectedEpics: teamAllocations
             .filter(a => a.epicId)
             .map(a => a.epicId!),
+          currentCapacity: totalPercentage,
           suggestedActions: [
             'Reduce allocation percentages',
             'Move some work to another iteration',

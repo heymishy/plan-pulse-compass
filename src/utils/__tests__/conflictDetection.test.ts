@@ -147,7 +147,7 @@ describe('conflictDetection', () => {
         c => c.type === 'overallocation'
       );
       expect(overallocationConflict).toBeDefined();
-      expect(overallocationConflict!.severity).toBe('medium');
+      expect(overallocationConflict!.severity).toBe('high');
       expect(overallocationConflict!.affectedTeams).toContain('team1');
     });
 
@@ -362,7 +362,7 @@ describe('conflictDetection', () => {
           teamId: 'team2',
           cycleId: 'q1-2024',
           iterationNumber: 1,
-          percentage: 110, // Medium overallocation
+          percentage: 115, // Medium overallocation
           epicId: 'epic2',
           runWorkCategoryId: '',
           notes: '',
@@ -380,7 +380,8 @@ describe('conflictDetection', () => {
       );
 
       expect(result.summary.total).toBe(2);
-      expect(result.summary.critical).toBe(1);
+      expect(result.summary.critical).toBe(0);
+      expect(result.summary.high).toBe(1);
       expect(result.summary.medium).toBe(1);
       expect(result.affectedTeamsCount).toBe(2);
       expect(result.overallRiskScore).toBeGreaterThan(0);

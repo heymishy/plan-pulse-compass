@@ -60,14 +60,17 @@ const ProgressIndicators: React.FC<ProgressIndicatorsProps> = ({
     const teamsWithAllocations = new Set(
       relevantAllocations.map(a => a.teamId)
     );
-    const teamCoverage = (teamsWithAllocations.size / teams.length) * 100;
+    const teamCoverage =
+      teams.length > 0 ? (teamsWithAllocations.size / teams.length) * 100 : 0;
 
     // Calculate iteration coverage
     const iterationsWithAllocations = new Set(
       relevantAllocations.map(a => a.iterationNumber)
     );
     const iterationCoverage =
-      (iterationsWithAllocations.size / iterations.length) * 100;
+      iterations.length > 0
+        ? (iterationsWithAllocations.size / iterations.length) * 100
+        : 0;
 
     // Calculate average allocation percentage
     const totalAllocation = relevantAllocations.reduce(
@@ -102,7 +105,8 @@ const ProgressIndicators: React.FC<ProgressIndicatorsProps> = ({
     return {
       totalCells,
       allocatedCells,
-      completionPercentage: (allocatedCells / totalCells) * 100,
+      completionPercentage:
+        totalCells > 0 ? (allocatedCells / totalCells) * 100 : 0,
       teamCoverage,
       iterationCoverage,
       averageAllocation,
