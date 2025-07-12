@@ -10,8 +10,17 @@ import {
   Epic,
   RunWorkCategory,
 } from '@/types';
-import { Plus, AlertTriangle, CheckCircle, Users } from 'lucide-react';
+import {
+  Plus,
+  AlertTriangle,
+  CheckCircle,
+  Users,
+  CheckSquare,
+  Square,
+} from 'lucide-react';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
+import { BulkSelection } from './BulkOperationsPanel';
+import { ClipboardControls } from './AllocationClipboard';
 
 interface PlanningMatrixProps {
   teams: Team[];
@@ -22,6 +31,10 @@ interface PlanningMatrixProps {
   projects: Project[];
   epics: Epic[];
   runWorkCategories: RunWorkCategory[];
+  hideEmptyRows?: boolean;
+  bulkSelection?: BulkSelection;
+  onBulkSelectionChange?: (selection: BulkSelection) => void;
+  isBulkMode?: boolean;
 }
 
 const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
@@ -33,6 +46,10 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
   projects,
   epics,
   runWorkCategories,
+  hideEmptyRows = false,
+  bulkSelection,
+  onBulkSelectionChange,
+  isBulkMode = false,
 }) => {
   const getTeamIterationAllocations = (
     teamId: string,
@@ -88,7 +105,49 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
   };
 
   const handleEmptyCellClick = (teamId: string, iterationNumber: number) => {
-    onCreateAllocation(teamId, iterationNumber);
+    if (isBulkMode && bulkSelection && onBulkSelectionChange) {
+      handleCellSelection(teamId, iterationNumber);
+    } else {
+      onCreateAllocation(teamId, iterationNumber);
+    }
+  };
+
+  const handleCellSelection = (teamId: string, iterationNumber: number) => {
+    if (!bulkSelection || !onBulkSelectionChange) return;
+
+    const newTeams = new Set(bulkSelection.teams);
+    const newIterations = new Set(bulkSelection.iterations);
+
+    const isTeamSelected = newTeams.has(teamId);
+    const isIterationSelected = newIterations.has(iterationNumber);
+    const isCellSelected = isTeamSelected && isIterationSelected;
+
+    if (isCellSelected) {
+      // Deselect this specific cell - more complex logic needed
+      // For now, just toggle the team and iteration
+      if (newTeams.size === 1) {
+        newTeams.delete(teamId);
+      }
+      if (newIterations.size === 1) {
+        newIterations.delete(iterationNumber);
+      }
+    } else {
+      // Select this cell
+      newTeams.add(teamId);
+      newIterations.add(iterationNumber);
+    }
+
+    onBulkSelectionChange({
+      teams: newTeams,
+      iterations: newIterations,
+    });
+  };
+
+  const isCellSelected = (teamId: string, iterationNumber: number) => {
+    return (
+      bulkSelection?.teams.has(teamId) &&
+      bulkSelection?.iterations.has(iterationNumber)
+    );
   };
 
   return (
@@ -118,88 +177,149 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {teams.map(team => {
-                  return (
-                    <tr key={team.id} className="border-b">
-                      <td className="p-3 font-medium">
-                        <div>
-                          {team.name}
-                          <div className="text-xs text-gray-500">
-                            {team.capacity}h/week capacity
+                {teams
+                  .filter(team => {
+                    if (!hideEmptyRows) return true;
+                    // Check if team has any allocations across all iterations
+                    return iterations.some((_, index) => {
+                      const iterationAllocations = getTeamIterationAllocations(
+                        team.id,
+                        index + 1
+                      );
+                      return iterationAllocations.length > 0;
+                    });
+                  })
+                  .map(team => {
+                    return (
+                      <tr key={team.id} className="border-b">
+                        <td className="p-3 font-medium">
+                          <div>
+                            {team.name}
+                            <div className="text-xs text-gray-500">
+                              {team.capacity}h/week capacity
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      {iterations.map((iteration, index) => {
-                        const iterationAllocations =
-                          getTeamIterationAllocations(team.id, index + 1);
-                        const capacityCheck = calculateTeamCapacity(
-                          team,
-                          index + 1,
-                          allocations,
-                          iterations
-                        );
+                        </td>
+                        {iterations.map((iteration, index) => {
+                          const iterationAllocations =
+                            getTeamIterationAllocations(team.id, index + 1);
+                          const capacityCheck = calculateTeamCapacity(
+                            team,
+                            index + 1,
+                            allocations,
+                            iterations
+                          );
 
-                        return (
-                          <td key={iteration.id} className="p-3 text-center">
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-center space-x-2">
-                                {getAllocationBadge(
-                                  capacityCheck.allocatedPercentage,
-                                  capacityCheck.capacityHours
-                                )}
-                                {getAllocationStatus(
-                                  capacityCheck.allocatedPercentage
-                                )}
-                              </div>
+                          const isSelected = isCellSelected(team.id, index + 1);
 
-                              {iterationAllocations.length > 0 ? (
-                                <div className="space-y-1">
-                                  {iterationAllocations.map(allocation => {
-                                    const epic = allocation.epicId
-                                      ? epics.find(
-                                          e => e.id === allocation.epicId
-                                        )
-                                      : null;
-
-                                    return (
-                                      <div
-                                        key={allocation.id}
-                                        className="text-xs p-1 rounded cursor-pointer hover:bg-gray-100 bg-gray-50"
-                                        onClick={() =>
-                                          onEditAllocation(allocation)
-                                        }
-                                      >
-                                        <div className="font-medium">
-                                          {Math.round(allocation.percentage)}%
-                                        </div>
-                                        <div className="text-gray-600">
-                                          {allocation.epicId
-                                            ? getEpicName(allocation.epicId)
-                                            : getRunWorkCategoryName(
-                                                allocation.runWorkCategoryId!
-                                              )}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <div
-                                  className="min-h-12 border-2 border-dashed border-gray-200 rounded cursor-pointer hover:border-blue-300 hover:bg-blue-50 flex items-center justify-center transition-colors"
-                                  onClick={() =>
-                                    handleEmptyCellClick(team.id, index + 1)
-                                  }
-                                >
-                                  <Plus className="h-4 w-4 text-gray-400 hover:text-blue-500" />
+                          return (
+                            <td
+                              key={iteration.id}
+                              className={`p-3 text-center relative ${
+                                isSelected
+                                  ? 'bg-blue-50 ring-2 ring-blue-300'
+                                  : ''
+                              }`}
+                            >
+                              {isBulkMode && isSelected && (
+                                <div className="absolute top-1 right-1">
+                                  <CheckSquare className="h-4 w-4 text-blue-600" />
                                 </div>
                               )}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-center space-x-2">
+                                  {getAllocationBadge(
+                                    capacityCheck.allocatedPercentage,
+                                    capacityCheck.capacityHours
+                                  )}
+                                  {getAllocationStatus(
+                                    capacityCheck.allocatedPercentage
+                                  )}
+                                </div>
+
+                                {iterationAllocations.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {iterationAllocations.map(allocation => {
+                                      const epic = allocation.epicId
+                                        ? epics.find(
+                                            e => e.id === allocation.epicId
+                                          )
+                                        : null;
+
+                                      return (
+                                        <div
+                                          key={allocation.id}
+                                          className="text-xs p-1 rounded cursor-pointer hover:bg-gray-100 bg-gray-50"
+                                          onClick={() => {
+                                            if (isBulkMode) {
+                                              handleCellSelection(
+                                                team.id,
+                                                index + 1
+                                              );
+                                            } else {
+                                              onEditAllocation(allocation);
+                                            }
+                                          }}
+                                        >
+                                          <div className="font-medium">
+                                            {Math.round(allocation.percentage)}%
+                                          </div>
+                                          <div className="text-gray-600">
+                                            {allocation.epicId
+                                              ? getEpicName(allocation.epicId)
+                                              : getRunWorkCategoryName(
+                                                  allocation.runWorkCategoryId!
+                                                )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+
+                                    {/* Clipboard Controls */}
+                                    {!isBulkMode && (
+                                      <div className="mt-1 flex justify-center">
+                                        <ClipboardControls
+                                          teamId={team.id}
+                                          teamName={team.name}
+                                          iterationNumber={index + 1}
+                                          allocations={iterationAllocations}
+                                          compact={true}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <div
+                                      className="min-h-12 border-2 border-dashed border-gray-200 rounded cursor-pointer hover:border-blue-300 hover:bg-blue-50 flex items-center justify-center transition-colors"
+                                      onClick={() =>
+                                        handleEmptyCellClick(team.id, index + 1)
+                                      }
+                                    >
+                                      <Plus className="h-4 w-4 text-gray-400 hover:text-blue-500" />
+                                    </div>
+
+                                    {/* Clipboard Controls for Empty Cells */}
+                                    {!isBulkMode && (
+                                      <div className="flex justify-center">
+                                        <ClipboardControls
+                                          teamId={team.id}
+                                          teamName={team.name}
+                                          iterationNumber={index + 1}
+                                          allocations={[]}
+                                          compact={true}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
