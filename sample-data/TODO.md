@@ -17,3 +17,9 @@ TO DO
 
 ability to import just peoples names
  - unallocated person to team feature - with filters for teams, divisions. good UX to map each person to a team
+
+what ar emain 3 scenarios for customer/me
+
+ - import improvements, mapping UI
+
+ - milestone to project details
