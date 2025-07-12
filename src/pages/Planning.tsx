@@ -53,6 +53,11 @@ import SearchAndFilter, {
 import ConflictDetection from '@/components/planning/ConflictDetection';
 import CapacityWarnings from '@/components/planning/CapacityWarnings';
 import TimelineGanttView from '@/components/planning/TimelineGanttView';
+import WorkloadDistributionCharts from '@/components/planning/WorkloadDistributionCharts';
+import {
+  AllocationClipboardProvider,
+  ClipboardStatus,
+} from '@/components/planning/AllocationClipboard';
 import { applyFilters, getDefaultFilterPresets } from '@/utils/filterUtils';
 import { Allocation, Cycle } from '@/types';
 
@@ -714,631 +719,665 @@ const Planning = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1
-            className="text-2xl font-bold text-gray-900"
-            data-testid="planning-title"
-          >
-            Planning
-          </h1>
-          <p className="text-gray-600">
-            Plan team allocations and analyze project feasibility
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsCycleDialogOpen(true)}
-            data-testid="manage-cycles-header-button"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Manage Cycles
-          </Button>
-          <Button
-            onClick={handleCreateAllocation}
-            data-testid="new-allocation-button"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            New Allocation
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Planning Tabs */}
-      <Tabs
-        value={activeTab}
-        onValueChange={value =>
-          setActiveTab(value as 'planning' | 'analysis' | 'advanced')
-        }
-        className="space-y-6"
-      >
-        <TabsList>
-          <TabsTrigger value="planning">Quarterly Planning</TabsTrigger>
-          <TabsTrigger value="analysis">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Plan Analysis
-          </TabsTrigger>
-          <TabsTrigger value="advanced">
-            <Zap className="h-4 w-4 mr-2" />
-            Advanced Planning
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="planning" className="space-y-6">
-          {/* Enhanced Filters Section */}
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center">
-                  <Filter className="h-5 w-5 mr-2 text-blue-500" />
-                  Planning Filters & View Options
-                </CardTitle>
-                <Badge variant="outline" className="text-xs">
-                  {currentQuarter?.name || 'No Quarter Selected'}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Primary Filters Row */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">
-                    Financial Year
-                  </label>
-                  <Select
-                    value={selectedFinancialYear}
-                    onValueChange={setSelectedFinancialYear}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select financial year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Financial Years</SelectItem>
-                      {financialYearOptions.map(fy => (
-                        <SelectItem key={fy.value} value={fy.value}>
-                          {fy.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">
-                    Quarter
-                  </label>
-                  <Select
-                    value={selectedCycleId}
-                    onValueChange={setSelectedCycleId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select quarter" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {quarterDropdownOptions.map(cycle => (
-                        <SelectItem key={cycle.id} value={cycle.id}>
-                          {cycle.name} ({cycle.status})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">
-                    Division
-                  </label>
-                  <Select
-                    value={selectedDivisionId}
-                    onValueChange={setSelectedDivisionId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select division" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Divisions</SelectItem>
-                      {divisions.map(division => (
-                        <SelectItem key={division.id} value={division.id}>
-                          {division.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-gray-700">
-                    Team
-                  </label>
-                  <Select
-                    value={selectedTeamId}
-                    onValueChange={setSelectedTeamId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Teams</SelectItem>
-                      {teamsInDivision.map(team => (
-                        <SelectItem key={team.id} value={team.id}>
-                          {team.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* View Options & Display Controls Row */}
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                <div className="flex items-center space-x-6">
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      View Mode:
-                    </label>
-                    <div className="flex items-center border rounded-md">
-                      <Button
-                        variant={viewMode === 'matrix' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('matrix')}
-                        className="rounded-r-none border-r"
-                      >
-                        <List className="h-4 w-4 mr-1" />
-                        Matrix
-                      </Button>
-                      <Button
-                        variant={viewMode === 'heatmap' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('heatmap')}
-                        className="rounded-none border-r"
-                      >
-                        <BarChart3 className="h-4 w-4 mr-1" />
-                        Heat Map
-                      </Button>
-                      <Button
-                        variant={viewMode === 'bulk' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('bulk')}
-                        className="rounded-none border-r"
-                      >
-                        <Grid3X3 className="h-4 w-4 mr-1" />
-                        Bulk Entry
-                      </Button>
-                      <Button
-                        variant={viewMode === 'timeline' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('timeline')}
-                        className="rounded-l-none"
-                      >
-                        <Calendar className="h-4 w-4 mr-1" />
-                        Timeline
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant={hideEmptyRows ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setHideEmptyRows(!hideEmptyRows)}
-                      className="text-xs"
-                    >
-                      {hideEmptyRows ? (
-                        <Eye className="h-4 w-4 mr-1" />
-                      ) : (
-                        <EyeOff className="h-4 w-4 mr-1" />
-                      )}
-                      {hideEmptyRows ? 'Show Empty Rows' : 'Hide Empty Rows'}
-                    </Button>
-
-                    <Button
-                      variant={isBulkMode ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setIsBulkMode(!isBulkMode)}
-                      className="text-xs"
-                    >
-                      <Users className="h-4 w-4 mr-1" />
-                      {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Mode'}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <span>
-                    Showing: {filteredTeams.length} team
-                    {filteredTeams.length !== 1 ? 's' : ''}
-                  </span>
-                  {selectedCycleId && <span className="text-gray-400">•</span>}
-                  {selectedCycleId && (
-                    <span>
-                      {iterations.length} iteration
-                      {iterations.length !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <Users className="h-4 w-4 mr-2" />
-                  Team Coverage
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.allocatedTeams}/{stats.totalTeams}
-                </div>
-                <p className="text-sm text-gray-600">Teams with allocations</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Iterations
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {stats.totalIterations}
-                </div>
-                <p className="text-sm text-gray-600">Total iterations</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <Target className="h-4 w-4 mr-2" />
-                  Projects
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{projects.length}</div>
-                <p className="text-sm text-gray-600">Active projects</p>
-              </CardContent>
-            </Card>
+    <AllocationClipboardProvider
+      onAllocationsChange={setAllocations}
+      allAllocations={allocations}
+      selectedCycleId={selectedCycleId}
+    >
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1
+              className="text-2xl font-bold text-gray-900"
+              data-testid="planning-title"
+            >
+              Planning
+            </h1>
+            <p className="text-gray-600">
+              Plan team allocations and analyze project feasibility
+            </p>
           </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsCycleDialogOpen(true)}
+              data-testid="manage-cycles-header-button"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Manage Cycles
+            </Button>
+            <Button
+              onClick={handleCreateAllocation}
+              data-testid="new-allocation-button"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Allocation
+            </Button>
+          </div>
+        </div>
 
-          {/* Search and Filter */}
-          <SearchAndFilter
-            teams={teams}
-            projects={projects}
-            epics={epics}
-            divisions={divisions}
-            allocations={allocations.filter(a => a.cycleId === selectedCycleId)}
-            filters={searchFilters}
-            onFiltersChange={setSearchFilters}
-            presets={filterPresets}
-            onPresetSave={handleFilterPresetSave}
-            onPresetLoad={handleFilterPresetLoad}
-            onPresetDelete={handleFilterPresetDelete}
-          />
+        {/* Main Planning Tabs */}
+        <Tabs
+          value={activeTab}
+          onValueChange={value =>
+            setActiveTab(value as 'planning' | 'analysis' | 'advanced')
+          }
+          className="space-y-6"
+        >
+          <TabsList>
+            <TabsTrigger value="planning">Quarterly Planning</TabsTrigger>
+            <TabsTrigger value="analysis">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Plan Analysis
+            </TabsTrigger>
+            <TabsTrigger value="advanced">
+              <Zap className="h-4 w-4 mr-2" />
+              Advanced Planning
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Progress Indicators */}
-          {selectedCycleId && iterations.length > 0 && (
-            <ProgressIndicators
-              teams={filteredTeams}
-              iterations={iterations}
-              allocations={filteredData.allocations}
-              projects={filteredData.projects}
-              epics={filteredData.epics}
-              selectedCycleId={selectedCycleId}
-            />
-          )}
-
-          {/* Conflict Detection */}
-          {selectedCycleId && iterations.length > 0 && (
-            <ConflictDetection
-              allocations={filteredData.allocations}
-              teams={filteredTeams}
-              epics={filteredData.epics}
-              projects={filteredData.projects}
-              people={people}
-              iterations={iterations}
-              selectedCycleId={selectedCycleId}
-            />
-          )}
-
-          {/* Capacity Warnings */}
-          {selectedCycleId && iterations.length > 0 && (
-            <CapacityWarnings
-              teams={filteredTeams}
-              allocations={filteredData.allocations}
-              iterations={iterations}
-              selectedCycleId={selectedCycleId}
-              realTimeUpdates={true}
-            />
-          )}
-
-          {/* Bulk Operations Panel */}
-          {isBulkMode && selectedCycleId && iterations.length > 0 && (
-            <BulkOperationsPanel
-              selection={bulkSelection}
-              onSelectionChange={setBulkSelection}
-              teams={filteredTeams}
-              iterations={iterations}
-              projects={filteredData.projects}
-              epics={filteredData.epics}
-              runWorkCategories={runWorkCategories}
-              onBulkAllocate={handleBulkAllocate}
-              onBulkDelete={handleBulkDelete}
-              onBulkCopy={handleBulkCopy}
-            />
-          )}
-
-          {/* Planning Views */}
-          {selectedCycleId && iterations.length > 0 && (
-            <>
-              {viewMode === 'matrix' && (
-                <PlanningMatrix
-                  teams={filteredTeams}
-                  iterations={iterations}
-                  allocations={filteredData.allocations}
-                  onEditAllocation={handleEditAllocation}
-                  onCreateAllocation={handleCreateAllocationFromMatrix}
-                  projects={filteredData.projects}
-                  epics={filteredData.epics}
-                  runWorkCategories={runWorkCategories}
-                  hideEmptyRows={hideEmptyRows}
-                  bulkSelection={bulkSelection}
-                  onBulkSelectionChange={setBulkSelection}
-                  isBulkMode={isBulkMode}
-                />
-              )}
-
-              {viewMode === 'heatmap' && (
-                <HeatMapView
-                  teams={filteredTeams}
-                  iterations={iterations}
-                  allocations={filteredData.allocations}
-                  onEditAllocation={handleEditAllocation}
-                  onCreateAllocation={handleCreateAllocationFromMatrix}
-                  projects={filteredData.projects}
-                  epics={filteredData.epics}
-                  runWorkCategories={runWorkCategories}
-                  hideEmptyRows={hideEmptyRows}
-                />
-              )}
-
-              {viewMode === 'bulk' && (
-                <BulkAllocationGrid
-                  teams={teams}
-                  iterations={iterations}
-                  cycleId={selectedCycleId}
-                  projects={projects}
-                  epics={epics}
-                  runWorkCategories={runWorkCategories}
-                />
-              )}
-
-              {viewMode === 'timeline' && (
-                <TimelineGanttView
-                  teams={filteredTeams}
-                  allocations={filteredData.allocations}
-                  iterations={iterations}
-                  epics={filteredData.epics}
-                  projects={filteredData.projects}
-                  selectedCycleId={selectedCycleId}
-                  onAllocationClick={handleEditAllocation}
-                />
-              )}
-            </>
-          )}
-
-          {selectedCycleId && iterations.length === 0 && (
-            <Card>
-              <CardContent
-                className="text-center py-12"
-                data-testid="planning-no-iterations"
-              >
-                <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                {isWaitingForIterations ? (
-                  <>
-                    <h3
-                      className="text-lg font-semibold text-gray-900 mb-2"
-                      data-testid="generating-iterations-title"
+          <TabsContent value="planning" className="space-y-6">
+            {/* Enhanced Filters Section */}
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center">
+                    <Filter className="h-5 w-5 mr-2 text-blue-500" />
+                    Planning Filters & View Options
+                  </CardTitle>
+                  <Badge variant="outline" className="text-xs">
+                    {currentQuarter?.name || 'No Quarter Selected'}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Primary Filters Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">
+                      Financial Year
+                    </label>
+                    <Select
+                      value={selectedFinancialYear}
+                      onValueChange={setSelectedFinancialYear}
                     >
-                      Generating Iterations...
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Please wait while iterations are being generated for this
-                      quarter.
-                    </p>
-                    <div className="flex justify-center">
-                      <div
-                        className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-                        data-testid="generating-spinner"
-                      ></div>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select financial year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Financial Years</SelectItem>
+                        {financialYearOptions.map(fy => (
+                          <SelectItem key={fy.value} value={fy.value}>
+                            {fy.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">
+                      Quarter
+                    </label>
+                    <Select
+                      value={selectedCycleId}
+                      onValueChange={setSelectedCycleId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select quarter" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {quarterDropdownOptions.map(cycle => (
+                          <SelectItem key={cycle.id} value={cycle.id}>
+                            {cycle.name} ({cycle.status})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">
+                      Division
+                    </label>
+                    <Select
+                      value={selectedDivisionId}
+                      onValueChange={setSelectedDivisionId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select division" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Divisions</SelectItem>
+                        {divisions.map(division => (
+                          <SelectItem key={division.id} value={division.id}>
+                            {division.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-gray-700">
+                      Team
+                    </label>
+                    <Select
+                      value={selectedTeamId}
+                      onValueChange={setSelectedTeamId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Teams</SelectItem>
+                        {teamsInDivision.map(team => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* View Options & Display Controls Row */}
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        View Mode:
+                      </label>
+                      <div className="flex items-center border rounded-md">
+                        <Button
+                          variant={viewMode === 'matrix' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setViewMode('matrix')}
+                          className="rounded-r-none border-r"
+                        >
+                          <List className="h-4 w-4 mr-1" />
+                          Matrix
+                        </Button>
+                        <Button
+                          variant={viewMode === 'heatmap' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setViewMode('heatmap')}
+                          className="rounded-none border-r"
+                        >
+                          <BarChart3 className="h-4 w-4 mr-1" />
+                          Heat Map
+                        </Button>
+                        <Button
+                          variant={viewMode === 'bulk' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setViewMode('bulk')}
+                          className="rounded-none border-r"
+                        >
+                          <Grid3X3 className="h-4 w-4 mr-1" />
+                          Bulk Entry
+                        </Button>
+                        <Button
+                          variant={
+                            viewMode === 'timeline' ? 'default' : 'ghost'
+                          }
+                          size="sm"
+                          onClick={() => setViewMode('timeline')}
+                          className="rounded-l-none"
+                        >
+                          <Calendar className="h-4 w-4 mr-1" />
+                          Timeline
+                        </Button>
+                      </div>
                     </div>
-                  </>
-                ) : iterationRetryCount >= 3 ? (
-                  <>
-                    <h3
-                      className="text-lg font-semibold text-gray-900 mb-2"
-                      data-testid="no-iterations-title"
-                    >
-                      No Iterations Found
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      This quarter exists but has no iterations. Generate
-                      iterations to start planning.
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsCycleDialogOpen(true)}
-                      data-testid="manage-cycles-button"
-                    >
-                      Manage Cycles
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <h3
-                      className="text-lg font-semibold text-gray-900 mb-2"
-                      data-testid="loading-iterations-title"
-                    >
-                      Loading Iterations...
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      Waiting for iterations to be generated automatically...
-                    </p>
-                    <div className="flex justify-center">
-                      <div
-                        className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
-                        data-testid="loading-spinner"
-                      ></div>
-                    </div>
-                  </>
-                )}
-                {/* Show teams even without iterations for debugging */}
-                {teams.length > 0 && (
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                      Available Teams:
-                    </h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      {teams.slice(0, 5).map(team => (
-                        <div key={team.id} className="flex justify-between">
-                          <span>{team.name}</span>
-                          <span className="text-gray-400">{team.division}</span>
-                        </div>
-                      ))}
-                      {teams.length > 5 && (
-                        <div className="text-gray-400">
-                          ...and {teams.length - 5} more teams
-                        </div>
-                      )}
+
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant={hideEmptyRows ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setHideEmptyRows(!hideEmptyRows)}
+                        className="text-xs"
+                      >
+                        {hideEmptyRows ? (
+                          <Eye className="h-4 w-4 mr-1" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 mr-1" />
+                        )}
+                        {hideEmptyRows ? 'Show Empty Rows' : 'Hide Empty Rows'}
+                      </Button>
+
+                      <Button
+                        variant={isBulkMode ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setIsBulkMode(!isBulkMode)}
+                        className="text-xs"
+                      >
+                        <Users className="h-4 w-4 mr-1" />
+                        {isBulkMode ? 'Exit Bulk Mode' : 'Bulk Mode'}
+                      </Button>
                     </div>
                   </div>
+
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span>
+                      Showing: {filteredTeams.length} team
+                      {filteredTeams.length !== 1 ? 's' : ''}
+                    </span>
+                    {selectedCycleId && (
+                      <span className="text-gray-400">•</span>
+                    )}
+                    {selectedCycleId && (
+                      <span>
+                        {iterations.length} iteration
+                        {iterations.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <Users className="h-4 w-4 mr-2" />
+                    Team Coverage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {stats.allocatedTeams}/{stats.totalTeams}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Teams with allocations
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Iterations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {stats.totalIterations}
+                  </div>
+                  <p className="text-sm text-gray-600">Total iterations</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <Target className="h-4 w-4 mr-2" />
+                    Projects
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{projects.length}</div>
+                  <p className="text-sm text-gray-600">Active projects</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Search and Filter */}
+            <SearchAndFilter
+              teams={teams}
+              projects={projects}
+              epics={epics}
+              divisions={divisions}
+              allocations={allocations.filter(
+                a => a.cycleId === selectedCycleId
+              )}
+              filters={searchFilters}
+              onFiltersChange={setSearchFilters}
+              presets={filterPresets}
+              onPresetSave={handleFilterPresetSave}
+              onPresetLoad={handleFilterPresetLoad}
+              onPresetDelete={handleFilterPresetDelete}
+            />
+
+            {/* Clipboard Status */}
+            <ClipboardStatus epics={epics} />
+
+            {/* Progress Indicators */}
+            {selectedCycleId && iterations.length > 0 && (
+              <ProgressIndicators
+                teams={filteredTeams}
+                iterations={iterations}
+                allocations={filteredData.allocations}
+                projects={filteredData.projects}
+                epics={filteredData.epics}
+                selectedCycleId={selectedCycleId}
+              />
+            )}
+
+            {/* Conflict Detection */}
+            {selectedCycleId && iterations.length > 0 && (
+              <ConflictDetection
+                allocations={filteredData.allocations}
+                teams={filteredTeams}
+                epics={filteredData.epics}
+                projects={filteredData.projects}
+                people={people}
+                iterations={iterations}
+                selectedCycleId={selectedCycleId}
+              />
+            )}
+
+            {/* Capacity Warnings */}
+            {selectedCycleId && iterations.length > 0 && (
+              <CapacityWarnings
+                teams={filteredTeams}
+                allocations={filteredData.allocations}
+                iterations={iterations}
+                selectedCycleId={selectedCycleId}
+                realTimeUpdates={true}
+              />
+            )}
+
+            {/* Bulk Operations Panel */}
+            {isBulkMode && selectedCycleId && iterations.length > 0 && (
+              <BulkOperationsPanel
+                selection={bulkSelection}
+                onSelectionChange={setBulkSelection}
+                teams={filteredTeams}
+                iterations={iterations}
+                projects={filteredData.projects}
+                epics={filteredData.epics}
+                runWorkCategories={runWorkCategories}
+                onBulkAllocate={handleBulkAllocate}
+                onBulkDelete={handleBulkDelete}
+                onBulkCopy={handleBulkCopy}
+              />
+            )}
+
+            {/* Planning Views */}
+            {selectedCycleId && iterations.length > 0 && (
+              <>
+                {viewMode === 'matrix' && (
+                  <PlanningMatrix
+                    teams={filteredTeams}
+                    iterations={iterations}
+                    allocations={filteredData.allocations}
+                    onEditAllocation={handleEditAllocation}
+                    onCreateAllocation={handleCreateAllocationFromMatrix}
+                    projects={filteredData.projects}
+                    epics={filteredData.epics}
+                    runWorkCategories={runWorkCategories}
+                    hideEmptyRows={hideEmptyRows}
+                    bulkSelection={bulkSelection}
+                    onBulkSelectionChange={setBulkSelection}
+                    isBulkMode={isBulkMode}
+                  />
                 )}
-              </CardContent>
-            </Card>
-          )}
 
-          {!selectedCycleId && (
-            <Card>
-              <CardContent className="text-center py-12">
-                <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No Planning Data
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {!selectedCycleId
-                    ? 'Select a quarter to start planning'
-                    : 'No iterations found for this quarter. Create iterations first.'}
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCycleDialogOpen(true)}
+                {viewMode === 'heatmap' && (
+                  <HeatMapView
+                    teams={filteredTeams}
+                    iterations={iterations}
+                    allocations={filteredData.allocations}
+                    onEditAllocation={handleEditAllocation}
+                    onCreateAllocation={handleCreateAllocationFromMatrix}
+                    projects={filteredData.projects}
+                    epics={filteredData.epics}
+                    runWorkCategories={runWorkCategories}
+                    hideEmptyRows={hideEmptyRows}
+                  />
+                )}
+
+                {viewMode === 'bulk' && (
+                  <BulkAllocationGrid
+                    teams={teams}
+                    iterations={iterations}
+                    cycleId={selectedCycleId}
+                    projects={projects}
+                    epics={epics}
+                    runWorkCategories={runWorkCategories}
+                  />
+                )}
+
+                {viewMode === 'timeline' && (
+                  <TimelineGanttView
+                    teams={filteredTeams}
+                    allocations={filteredData.allocations}
+                    iterations={iterations}
+                    epics={filteredData.epics}
+                    projects={filteredData.projects}
+                    selectedCycleId={selectedCycleId}
+                    onAllocationClick={handleEditAllocation}
+                  />
+                )}
+              </>
+            )}
+
+            {selectedCycleId && iterations.length === 0 && (
+              <Card>
+                <CardContent
+                  className="text-center py-12"
+                  data-testid="planning-no-iterations"
                 >
-                  Manage Cycles
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+                  <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  {isWaitingForIterations ? (
+                    <>
+                      <h3
+                        className="text-lg font-semibold text-gray-900 mb-2"
+                        data-testid="generating-iterations-title"
+                      >
+                        Generating Iterations...
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Please wait while iterations are being generated for
+                        this quarter.
+                      </p>
+                      <div className="flex justify-center">
+                        <div
+                          className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+                          data-testid="generating-spinner"
+                        ></div>
+                      </div>
+                    </>
+                  ) : iterationRetryCount >= 3 ? (
+                    <>
+                      <h3
+                        className="text-lg font-semibold text-gray-900 mb-2"
+                        data-testid="no-iterations-title"
+                      >
+                        No Iterations Found
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        This quarter exists but has no iterations. Generate
+                        iterations to start planning.
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsCycleDialogOpen(true)}
+                        data-testid="manage-cycles-button"
+                      >
+                        Manage Cycles
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <h3
+                        className="text-lg font-semibold text-gray-900 mb-2"
+                        data-testid="loading-iterations-title"
+                      >
+                        Loading Iterations...
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        Waiting for iterations to be generated automatically...
+                      </p>
+                      <div className="flex justify-center">
+                        <div
+                          className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+                          data-testid="loading-spinner"
+                        ></div>
+                      </div>
+                    </>
+                  )}
+                  {/* Show teams even without iterations for debugging */}
+                  {teams.length > 0 && (
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">
+                        Available Teams:
+                      </h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        {teams.slice(0, 5).map(team => (
+                          <div key={team.id} className="flex justify-between">
+                            <span>{team.name}</span>
+                            <span className="text-gray-400">
+                              {team.division}
+                            </span>
+                          </div>
+                        ))}
+                        {teams.length > 5 && (
+                          <div className="text-gray-400">
+                            ...and {teams.length - 5} more teams
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-        <TabsContent value="analysis" className="space-y-6">
-          {selectedCycleId && iterations.length > 0 ? (
-            <Tabs defaultValue="quarter-analysis" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="quarter-analysis">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Quarter Analysis
-                </TabsTrigger>
-                <TabsTrigger value="iteration-sequence">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Iteration Sequence
-                </TabsTrigger>
-              </TabsList>
+            {!selectedCycleId && (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No Planning Data
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {!selectedCycleId
+                      ? 'Select a quarter to start planning'
+                      : 'No iterations found for this quarter. Create iterations first.'}
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCycleDialogOpen(true)}
+                  >
+                    Manage Cycles
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-              <TabsContent value="quarter-analysis">
-                <QuarterAnalysisDashboard
-                  cycleId={selectedCycleId}
-                  teams={teams}
-                  iterations={iterations}
-                  allocations={allocations}
-                  projects={projects}
-                  epics={epics}
-                  milestones={projects.flatMap(p => p.milestones)}
-                  runWorkCategories={runWorkCategories}
-                  divisions={divisions}
-                  people={people}
-                />
-              </TabsContent>
+          <TabsContent value="analysis" className="space-y-6">
+            {selectedCycleId && iterations.length > 0 ? (
+              <Tabs defaultValue="quarter-analysis" className="space-y-6">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="quarter-analysis">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Quarter Analysis
+                  </TabsTrigger>
+                  <TabsTrigger value="workload-distribution">
+                    <Users className="h-4 w-4 mr-2" />
+                    Workload Distribution
+                  </TabsTrigger>
+                  <TabsTrigger value="iteration-sequence">
+                    <Clock className="h-4 w-4 mr-2" />
+                    Iteration Sequence
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="iteration-sequence">
-                <IterationSequenceView
-                  cycleId={selectedCycleId}
-                  teams={teams}
-                  iterations={iterations}
-                  allocations={allocations}
-                  projects={projects}
-                  epics={epics}
-                  milestones={projects.flatMap(p => p.milestones)}
-                  runWorkCategories={runWorkCategories}
-                  divisions={divisions}
-                  people={people}
-                />
-              </TabsContent>
-            </Tabs>
-          ) : (
-            <Card>
-              <CardContent className="text-center py-12">
-                <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No Analysis Data
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Select a quarter with iterations to view analysis
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCycleDialogOpen(true)}
-                >
-                  Manage Cycles
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+                <TabsContent value="quarter-analysis">
+                  <QuarterAnalysisDashboard
+                    cycleId={selectedCycleId}
+                    teams={teams}
+                    iterations={iterations}
+                    allocations={allocations}
+                    projects={projects}
+                    epics={epics}
+                    milestones={projects.flatMap(p => p.milestones)}
+                    runWorkCategories={runWorkCategories}
+                    divisions={divisions}
+                    people={people}
+                  />
+                </TabsContent>
 
-        <TabsContent value="advanced">
-          <AdvancedPlanningDashboard />
-        </TabsContent>
-      </Tabs>
+                <TabsContent value="workload-distribution">
+                  <WorkloadDistributionCharts
+                    teams={teams}
+                    allocations={allocations}
+                    iterations={iterations}
+                    epics={epics}
+                    projects={projects}
+                    selectedCycleId={selectedCycleId}
+                  />
+                </TabsContent>
 
-      {/* Dialogs */}
-      <AllocationDialog
-        isOpen={isAllocationDialogOpen}
-        onClose={handleCloseAllocationDialog}
-        allocation={selectedAllocation}
-        cycleId={selectedCycleId}
-        teams={teams}
-        iterations={iterations}
-        projects={projects}
-        epics={epics}
-        runWorkCategories={runWorkCategories}
-        prefilledData={prefilledData}
-      />
+                <TabsContent value="iteration-sequence">
+                  <IterationSequenceView
+                    cycleId={selectedCycleId}
+                    teams={teams}
+                    iterations={iterations}
+                    allocations={allocations}
+                    projects={projects}
+                    epics={epics}
+                    milestones={projects.flatMap(p => p.milestones)}
+                    runWorkCategories={runWorkCategories}
+                    divisions={divisions}
+                    people={people}
+                  />
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    No Analysis Data
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Select a quarter with iterations to view analysis
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCycleDialogOpen(true)}
+                  >
+                    Manage Cycles
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-      <CycleDialog
-        isOpen={isCycleDialogOpen}
-        onClose={() => setIsCycleDialogOpen(false)}
-        parentCycle={currentQuarter}
-        selectedFinancialYear={selectedFinancialYear}
-      />
+          <TabsContent value="advanced">
+            <AdvancedPlanningDashboard />
+          </TabsContent>
+        </Tabs>
 
-      <KeyboardShortcutsDialog
-        isOpen={isShortcutsDialogOpen}
-        onClose={() => setIsShortcutsDialogOpen(false)}
-        shortcuts={shortcuts}
-      />
-    </div>
+        {/* Dialogs */}
+        <AllocationDialog
+          isOpen={isAllocationDialogOpen}
+          onClose={handleCloseAllocationDialog}
+          allocation={selectedAllocation}
+          cycleId={selectedCycleId}
+          teams={teams}
+          iterations={iterations}
+          projects={projects}
+          epics={epics}
+          runWorkCategories={runWorkCategories}
+          prefilledData={prefilledData}
+        />
+
+        <CycleDialog
+          isOpen={isCycleDialogOpen}
+          onClose={() => setIsCycleDialogOpen(false)}
+          parentCycle={currentQuarter}
+          selectedFinancialYear={selectedFinancialYear}
+        />
+
+        <KeyboardShortcutsDialog
+          isOpen={isShortcutsDialogOpen}
+          onClose={() => setIsShortcutsDialogOpen(false)}
+          shortcuts={shortcuts}
+        />
+      </div>
+    </AllocationClipboardProvider>
   );
 };
 

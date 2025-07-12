@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
 import { BulkSelection } from './BulkOperationsPanel';
+import { ClipboardControls } from './AllocationClipboard';
 
 interface PlanningMatrixProps {
   teams: Team[];
@@ -273,15 +274,43 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
                                         </div>
                                       );
                                     })}
+
+                                    {/* Clipboard Controls */}
+                                    {!isBulkMode && (
+                                      <div className="mt-1 flex justify-center">
+                                        <ClipboardControls
+                                          teamId={team.id}
+                                          teamName={team.name}
+                                          iterationNumber={index + 1}
+                                          allocations={iterationAllocations}
+                                          compact={true}
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 ) : (
-                                  <div
-                                    className="min-h-12 border-2 border-dashed border-gray-200 rounded cursor-pointer hover:border-blue-300 hover:bg-blue-50 flex items-center justify-center transition-colors"
-                                    onClick={() =>
-                                      handleEmptyCellClick(team.id, index + 1)
-                                    }
-                                  >
-                                    <Plus className="h-4 w-4 text-gray-400 hover:text-blue-500" />
+                                  <div className="space-y-2">
+                                    <div
+                                      className="min-h-12 border-2 border-dashed border-gray-200 rounded cursor-pointer hover:border-blue-300 hover:bg-blue-50 flex items-center justify-center transition-colors"
+                                      onClick={() =>
+                                        handleEmptyCellClick(team.id, index + 1)
+                                      }
+                                    >
+                                      <Plus className="h-4 w-4 text-gray-400 hover:text-blue-500" />
+                                    </div>
+
+                                    {/* Clipboard Controls for Empty Cells */}
+                                    {!isBulkMode && (
+                                      <div className="flex justify-center">
+                                        <ClipboardControls
+                                          teamId={team.id}
+                                          teamName={team.name}
+                                          iterationNumber={index + 1}
+                                          allocations={[]}
+                                          compact={true}
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
