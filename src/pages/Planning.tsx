@@ -72,12 +72,15 @@ const Planning = () => {
     cycles,
     setCycles,
     allocations,
+    setAllocations,
     config,
     projects,
     epics,
     runWorkCategories,
     divisions,
     people,
+    personSkills,
+    skills,
   } = useApp();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('all');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
@@ -393,6 +396,33 @@ const Planning = () => {
     }
   }, [selectedDivisionId, teamsInDivision, selectedTeamId]);
 
+  // Apply filters to get filtered data (moved before filteredTeams to prevent temporal dead zone)
+  const filteredData = React.useMemo(() => {
+    if (!selectedCycleId) {
+      return { teams: [], projects: [], epics: [], allocations: [] };
+    }
+
+    return applyFilters(
+      {
+        teams: teams,
+        projects: projects,
+        epics: epics,
+        allocations: allocations,
+        iterations: iterations,
+      },
+      searchFilters,
+      selectedCycleId
+    );
+  }, [
+    teams,
+    projects,
+    epics,
+    allocations,
+    iterations,
+    searchFilters,
+    selectedCycleId,
+  ]);
+
   // Filter teams for display (combine existing division/team filters with search filters)
   const filteredTeams = React.useMemo(() => {
     let teams = filteredData.teams;
@@ -572,33 +602,6 @@ const Planning = () => {
   };
 
   const stats = getQuarterStats();
-
-  // Apply filters to get filtered data
-  const filteredData = React.useMemo(() => {
-    if (!selectedCycleId) {
-      return { teams: [], projects: [], epics: [], allocations: [] };
-    }
-
-    return applyFilters(
-      {
-        teams: teams,
-        projects: projects,
-        epics: epics,
-        allocations: allocations,
-        iterations: iterations,
-      },
-      searchFilters,
-      selectedCycleId
-    );
-  }, [
-    teams,
-    projects,
-    epics,
-    allocations,
-    iterations,
-    searchFilters,
-    selectedCycleId,
-  ]);
 
   // Filter management
   const handleFilterPresetSave = (preset: Omit<FilterPreset, 'id'>) => {
