@@ -23,7 +23,12 @@ vi.mock('@/utils/crypto', () => ({
 
 // Simplified date-fns mock - only mock what's actually used
 vi.mock('date-fns', () => ({
-  format: vi.fn(() => '2024-01-15'),
+  format: vi.fn((date, formatStr) => {
+    if (formatStr === 'MMM dd') return 'Jan 01';
+    if (formatStr === 'MMM yyyy') return 'Jan 2024';
+    if (formatStr === 'yyyy-MM-dd') return '2024-01-01';
+    return '2024-01-15';
+  }),
   parseISO: vi.fn(() => new Date('2024-01-15')),
   isValid: vi.fn(() => true),
   addDays: vi.fn(
@@ -38,6 +43,10 @@ vi.mock('date-fns', () => ({
   isWithinInterval: vi.fn(() => true),
   isBefore: vi.fn(() => false),
   isToday: vi.fn(() => false),
+  eachDayOfInterval: vi.fn(() => [
+    new Date('2024-01-01'),
+    new Date('2024-01-02'),
+  ]),
 }));
 
 // Mock localStorage
