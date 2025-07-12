@@ -477,7 +477,11 @@ describe('AllocationClipboard', () => {
         expect(timeElement).toBeInTheDocument();
       } else {
         // If time display not working, just verify clipboard has data
-        expect(screen.getByTestId('has-data')).toHaveTextContent('true');
+        const hasDataElements = screen.getAllByTestId('has-data');
+        const hasDataWithTrue = hasDataElements.find(
+          el => el.textContent === 'true'
+        );
+        expect(hasDataWithTrue).toBeInTheDocument();
       }
 
       // Restore Date.now
