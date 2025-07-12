@@ -24,12 +24,13 @@ export const applyFilters = (
     teams: initialTeams,
     projects: initialProjects,
     epics: initialEpics,
-    allocations,
+    allocations: initialAllocations,
     iterations,
   } = data;
   let teams = initialTeams;
   let projects = initialProjects;
   let epics = initialEpics;
+  let allocations = initialAllocations;
 
   // Filter allocations by selected cycle
   const relevantAllocations = allocations.filter(

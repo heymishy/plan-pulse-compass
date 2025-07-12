@@ -32,6 +32,8 @@ import {
   Eye,
   EyeOff,
   Filter,
+  Network,
+  AlertTriangle,
 } from 'lucide-react';
 import PlanningMatrix from '@/components/planning/PlanningMatrix';
 import BulkAllocationGrid from '@/components/planning/BulkAllocationGrid';
@@ -54,6 +56,9 @@ import ConflictDetection from '@/components/planning/ConflictDetection';
 import CapacityWarnings from '@/components/planning/CapacityWarnings';
 import TimelineGanttView from '@/components/planning/TimelineGanttView';
 import WorkloadDistributionCharts from '@/components/planning/WorkloadDistributionCharts';
+import DependenciesView from '@/components/planning/DependenciesView';
+import BottleneckDetection from '@/components/planning/BottleneckDetection';
+import PlanningConfidenceScore from '@/components/planning/PlanningConfidenceScore';
 import {
   AllocationClipboardProvider,
   ClipboardStatus,
@@ -80,7 +85,7 @@ const Planning = () => {
   const [selectedFinancialYear, setSelectedFinancialYear] =
     useState<string>('all');
   const [viewMode, setViewMode] = useState<
-    'matrix' | 'bulk' | 'heatmap' | 'timeline'
+    'matrix' | 'bulk' | 'heatmap' | 'timeline' | 'dependencies'
   >('matrix');
   const [activeTab, setActiveTab] = useState<
     'planning' | 'analysis' | 'advanced'
@@ -652,7 +657,9 @@ const Planning = () => {
               ? 'heatmap'
               : viewMode === 'heatmap'
                 ? 'timeline'
-                : 'matrix'
+                : viewMode === 'timeline'
+                  ? 'dependencies'
+                  : 'matrix'
         ),
       description: 'Cycle view modes',
       category: 'View',
@@ -919,10 +926,21 @@ const Planning = () => {
                           }
                           size="sm"
                           onClick={() => setViewMode('timeline')}
-                          className="rounded-l-none"
+                          className="rounded-none border-r"
                         >
                           <Calendar className="h-4 w-4 mr-1" />
                           Timeline
+                        </Button>
+                        <Button
+                          variant={
+                            viewMode === 'dependencies' ? 'default' : 'ghost'
+                          }
+                          size="sm"
+                          onClick={() => setViewMode('dependencies')}
+                          className="rounded-l-none"
+                        >
+                          <Network className="h-4 w-4 mr-1" />
+                          Dependencies
                         </Button>
                       </div>
                     </div>
@@ -1147,6 +1165,17 @@ const Planning = () => {
                     onAllocationClick={handleEditAllocation}
                   />
                 )}
+
+                {viewMode === 'dependencies' && (
+                  <DependenciesView
+                    teams={filteredTeams}
+                    projects={filteredData.projects}
+                    epics={filteredData.epics}
+                    allocations={filteredData.allocations}
+                    cycles={cycles}
+                    selectedCycleId={selectedCycleId}
+                  />
+                )}
               </>
             )}
 
@@ -1268,7 +1297,7 @@ const Planning = () => {
           <TabsContent value="analysis" className="space-y-6">
             {selectedCycleId && iterations.length > 0 ? (
               <Tabs defaultValue="quarter-analysis" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-5">
                   <TabsTrigger value="quarter-analysis">
                     <BarChart3 className="h-4 w-4 mr-2" />
                     Quarter Analysis
@@ -1280,6 +1309,14 @@ const Planning = () => {
                   <TabsTrigger value="iteration-sequence">
                     <Clock className="h-4 w-4 mr-2" />
                     Iteration Sequence
+                  </TabsTrigger>
+                  <TabsTrigger value="bottleneck-detection">
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Bottlenecks
+                  </TabsTrigger>
+                  <TabsTrigger value="confidence-score">
+                    <Zap className="h-4 w-4 mr-2" />
+                    Confidence
                   </TabsTrigger>
                 </TabsList>
 
@@ -1321,6 +1358,34 @@ const Planning = () => {
                     runWorkCategories={runWorkCategories}
                     divisions={divisions}
                     people={people}
+                  />
+                </TabsContent>
+
+                <TabsContent value="bottleneck-detection">
+                  <BottleneckDetection
+                    teams={filteredTeams}
+                    projects={filteredData.projects}
+                    epics={filteredData.epics}
+                    allocations={filteredData.allocations}
+                    people={people}
+                    personSkills={personSkills}
+                    skills={skills}
+                    cycles={cycles}
+                    selectedCycleId={selectedCycleId}
+                  />
+                </TabsContent>
+
+                <TabsContent value="confidence-score">
+                  <PlanningConfidenceScore
+                    teams={filteredTeams}
+                    projects={filteredData.projects}
+                    epics={filteredData.epics}
+                    allocations={filteredData.allocations}
+                    people={people}
+                    personSkills={personSkills}
+                    skills={skills}
+                    cycles={cycles}
+                    selectedCycleId={selectedCycleId}
                   />
                 </TabsContent>
               </Tabs>
