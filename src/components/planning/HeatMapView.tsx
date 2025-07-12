@@ -238,124 +238,193 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {filteredTeams.map(team => (
-                  <tr key={team.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-medium">
-                      <div>
-                        <div className="text-sm">{team.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {team.capacity}h/week
-                        </div>
-                      </div>
-                    </td>
-                    {iterations.map((iteration, index) => {
-                      const iterationNumber = index + 1;
-                      const heatMapCell = getHeatMapCell(
-                        team.id,
-                        iterationNumber
-                      );
-                      const colors = heatMapCell
-                        ? getHeatMapColors(
-                            heatMapCell.level,
-                            heatMapCell.intensity
-                          )
-                        : getHeatMapColors('empty', 0);
+                {Array.from(teamsByDivision.entries()).map(
+                  ([divisionKey, teamsInDivision]) => {
+                    const filteredTeamsInDivision =
+                      getFilteredTeamsForDivision(teamsInDivision);
+                    const isExpanded = expandedDivisions.has(divisionKey);
+                    const divisionName = getDivisionDisplayName(divisionKey);
 
-                      const cellAllocations = getTeamIterationAllocations(
-                        team.id,
-                        iterationNumber
-                      );
+                    if (filteredTeamsInDivision.length === 0 && hideEmptyRows) {
+                      return null;
+                    }
 
-                      return (
-                        <TooltipProvider key={iteration.id}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <td
-                                className="p-1 text-center cursor-pointer transition-all duration-200 hover:scale-105"
-                                style={{
-                                  backgroundColor: colors.backgroundColor,
-                                  borderColor: colors.borderColor,
-                                  color: colors.textColor,
-                                }}
-                                onClick={() =>
-                                  handleCellClick(team.id, iterationNumber)
-                                }
-                              >
-                                <div className="h-16 w-full flex flex-col items-center justify-center rounded border-2">
-                                  {heatMapCell && heatMapCell.percentage > 0 ? (
-                                    <>
-                                      <div className="text-sm font-bold">
-                                        {Math.round(heatMapCell.percentage)}%
-                                      </div>
-                                      <div className="text-xs opacity-75">
-                                        {cellAllocations.length} allocation
-                                        {cellAllocations.length !== 1
-                                          ? 's'
-                                          : ''}
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div className="text-xs opacity-50">
-                                      Click to add
-                                    </div>
-                                  )}
+                    return (
+                      <React.Fragment key={divisionKey}>
+                        {/* Division Header Row */}
+                        <tr className="bg-gray-50 border-b-2 border-gray-200">
+                          <td colSpan={iterations.length + 1} className="p-2">
+                            <button
+                              onClick={() => toggleDivision(divisionKey)}
+                              className="flex items-center space-x-2 w-full text-left hover:bg-gray-100 rounded p-2 transition-colors"
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="h-4 w-4 text-gray-600" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-gray-600" />
+                              )}
+                              <Building2 className="h-4 w-4 text-gray-600" />
+                              <span className="font-medium text-gray-800">
+                                {divisionName}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                ({filteredTeamsInDivision.length} teams)
+                              </span>
+                            </button>
+                          </td>
+                        </tr>
+
+                        {/* Teams in Division */}
+                        {isExpanded &&
+                          filteredTeamsInDivision.map(team => (
+                            <tr
+                              key={team.id}
+                              className="border-b hover:bg-gray-50"
+                            >
+                              <td className="p-3 font-medium pl-8">
+                                <div>
+                                  <div className="text-sm">{team.name}</div>
+                                  <div className="text-xs text-gray-500">
+                                    {team.capacity}h/week
+                                  </div>
                                 </div>
                               </td>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="text-sm space-y-1">
-                                <div className="font-medium">
-                                  {team.name} - Iteration {iterationNumber}
-                                </div>
-                                <div>
-                                  Allocation:{' '}
-                                  {heatMapCell
-                                    ? Math.round(heatMapCell.percentage)
-                                    : 0}
-                                  %
-                                </div>
-                                <div>Capacity: {team.capacity}h/week</div>
-                                {cellAllocations.length > 0 && (
-                                  <div className="border-t pt-1 mt-1">
-                                    <div className="text-xs text-gray-600">
-                                      Allocations:
-                                    </div>
-                                    {cellAllocations
-                                      .slice(0, 3)
-                                      .map(allocation => (
-                                        <div
-                                          key={allocation.id}
-                                          className="text-xs"
+                              {iterations.map((iteration, index) => {
+                                const iterationNumber = index + 1;
+                                const heatMapCell = getHeatMapCell(
+                                  team.id,
+                                  iterationNumber
+                                );
+                                const colors = heatMapCell
+                                  ? getHeatMapColors(
+                                      heatMapCell.level,
+                                      heatMapCell.intensity
+                                    )
+                                  : getHeatMapColors('empty', 0);
+
+                                const cellAllocations =
+                                  getTeamIterationAllocations(
+                                    team.id,
+                                    iterationNumber
+                                  );
+
+                                return (
+                                  <TooltipProvider key={iteration.id}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <td
+                                          className="p-1 text-center cursor-pointer transition-all duration-200 hover:scale-105"
+                                          style={{
+                                            backgroundColor:
+                                              colors.backgroundColor,
+                                            borderColor: colors.borderColor,
+                                            color: colors.textColor,
+                                          }}
+                                          onClick={() =>
+                                            handleCellClick(
+                                              team.id,
+                                              iterationNumber
+                                            )
+                                          }
                                         >
-                                          • {Math.round(allocation.percentage)}%
-                                          -{' '}
-                                          {allocation.epicId
-                                            ? getEpicName(allocation.epicId)
-                                            : getRunWorkCategoryName(
-                                                allocation.runWorkCategoryId!
+                                          <div className="h-16 w-full flex flex-col items-center justify-center rounded border-2">
+                                            {heatMapCell &&
+                                            heatMapCell.percentage > 0 ? (
+                                              <>
+                                                <div className="text-sm font-bold">
+                                                  {Math.round(
+                                                    heatMapCell.percentage
+                                                  )}
+                                                  %
+                                                </div>
+                                                <div className="text-xs opacity-75">
+                                                  {cellAllocations.length}{' '}
+                                                  allocation
+                                                  {cellAllocations.length !== 1
+                                                    ? 's'
+                                                    : ''}
+                                                </div>
+                                              </>
+                                            ) : (
+                                              <div className="text-xs opacity-50">
+                                                Click to add
+                                              </div>
+                                            )}
+                                          </div>
+                                        </td>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <div className="text-sm space-y-1">
+                                          <div className="font-medium">
+                                            {team.name} - Iteration{' '}
+                                            {iterationNumber}
+                                          </div>
+                                          <div>
+                                            Allocation:{' '}
+                                            {heatMapCell
+                                              ? Math.round(
+                                                  heatMapCell.percentage
+                                                )
+                                              : 0}
+                                            %
+                                          </div>
+                                          <div>
+                                            Capacity: {team.capacity}h/week
+                                          </div>
+                                          {cellAllocations.length > 0 && (
+                                            <div className="border-t pt-1 mt-1">
+                                              <div className="text-xs text-gray-600">
+                                                Allocations:
+                                              </div>
+                                              {cellAllocations
+                                                .slice(0, 3)
+                                                .map(allocation => (
+                                                  <div
+                                                    key={allocation.id}
+                                                    className="text-xs"
+                                                  >
+                                                    •{' '}
+                                                    {Math.round(
+                                                      allocation.percentage
+                                                    )}
+                                                    % -{' '}
+                                                    {allocation.epicId
+                                                      ? getEpicName(
+                                                          allocation.epicId
+                                                        )
+                                                      : getRunWorkCategoryName(
+                                                          allocation.runWorkCategoryId!
+                                                        )}
+                                                  </div>
+                                                ))}
+                                              {cellAllocations.length > 3 && (
+                                                <div className="text-xs text-gray-500">
+                                                  ...and{' '}
+                                                  {cellAllocations.length - 3}{' '}
+                                                  more
+                                                </div>
                                               )}
+                                            </div>
+                                          )}
+                                          <div className="text-xs text-gray-500 border-t pt-1">
+                                            Click to{' '}
+                                            {cellAllocations.length > 0
+                                              ? 'edit'
+                                              : 'add'}{' '}
+                                            allocation
+                                          </div>
                                         </div>
-                                      ))}
-                                    {cellAllocations.length > 3 && (
-                                      <div className="text-xs text-gray-500">
-                                        ...and {cellAllocations.length - 3} more
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                                <div className="text-xs text-gray-500 border-t pt-1">
-                                  Click to{' '}
-                                  {cellAllocations.length > 0 ? 'edit' : 'add'}{' '}
-                                  allocation
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      );
-                    })}
-                  </tr>
-                ))}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                      </React.Fragment>
+                    );
+                  }
+                )}
               </tbody>
             </table>
           </div>
