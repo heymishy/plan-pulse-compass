@@ -108,3 +108,27 @@ export const createMockEpic = (overrides = {}) => ({
   priority: 1,
   ...overrides,
 });
+
+// Helper functions for common test patterns
+export const getByTextFirst = (screen: any, text: string | RegExp) => {
+  const elements = screen.getAllByText(text);
+  return elements[0];
+};
+
+export const getByRoleFirst = (screen: any, role: string, options?: any) => {
+  const elements = screen.getAllByRole(role, options);
+  return elements[0];
+};
+
+export const waitForTextToAppear = (
+  screen: any,
+  text: string | RegExp,
+  timeout = 1000
+) => {
+  return screen.findByText(text, {}, { timeout });
+};
+
+export const getSelectByIndex = (screen: any, index: number) => {
+  const comboboxes = screen.getAllByRole('combobox');
+  return comboboxes[index];
+};

@@ -1,7 +1,13 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@/test/utils/test-utils';
-import { AppProvider } from '@/context/AppContext';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  getByTextFirst,
+} from '@/test/utils/test-utils';
+import { createCompleteAppContextMock } from '@/test/utils/mockDataFactory';
 import SquadBuilder from '../SquadBuilder';
 import { Squad, SquadMember, Person, UnmappedPerson } from '@/types';
 
@@ -63,7 +69,10 @@ const mockUnmappedPeople: UnmappedPerson[] = [
   },
 ];
 
-const mockAppContextValue = {
+const mockAppContextValue = createCompleteAppContextMock();
+const mockSquads = mockAppContextValue.squads;
+
+const legacyMockAppContextValue = {
   squads: mockSquads,
   squadMembers: mockSquadMembers,
   people: mockPeople,
@@ -133,18 +142,13 @@ const mockAppContextValue = {
   loadSampleData: vi.fn(),
 };
 
-// Mock useApp hook
-vi.mock('@/context/AppContext', async () => {
-  const actual = await vi.importActual('@/context/AppContext');
-  return {
-    ...actual,
-    useApp: () => mockAppContextValue,
-  };
-});
+// Mock useApp hook completely - no real AppProvider
+vi.mock('@/context/AppContext', () => ({
+  useApp: () => mockAppContextValue,
+  AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <AppProvider>{children}</AppProvider>
-);
+// No TestWrapper needed - using default render with LightweightProviders
 
 describe('SquadBuilder', () => {
   beforeEach(() => {
@@ -152,24 +156,16 @@ describe('SquadBuilder', () => {
   });
 
   it('renders squad list with existing squads', () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder />
-      </TestWrapper>
-    );
+    render(<SquadBuilder />);
 
     expect(screen.getByText('Squads (1)')).toBeInTheDocument();
-    expect(screen.getByText('Alpha Squad')).toBeInTheDocument();
+    expect(getByTextFirst(screen, 'Alpha Squad')).toBeInTheDocument();
     expect(screen.getByText('project')).toBeInTheDocument();
     expect(screen.getByText('active')).toBeInTheDocument();
   });
 
   it('displays "New Squad" button', () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder />
-      </TestWrapper>
-    );
+    render(<SquadBuilder />);
 
     expect(
       screen.getByRole('button', { name: /new squad/i })
@@ -177,11 +173,7 @@ describe('SquadBuilder', () => {
   });
 
   it('opens create squad dialog when "New Squad" is clicked', async () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder />
-      </TestWrapper>
-    );
+    render(<SquadBuilder />);
 
     const newSquadButton = screen.getByRole('button', { name: /new squad/i });
     fireEvent.click(newSquadButton);
@@ -197,11 +189,7 @@ describe('SquadBuilder', () => {
   });
 
   it('creates a new squad with form data', async () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder />
-      </TestWrapper>
-    );
+    render(<SquadBuilder />);
 
     // Open dialog
     const newSquadButton = screen.getByRole('button', { name: /new squad/i });
@@ -239,13 +227,9 @@ describe('SquadBuilder', () => {
   });
 
   it('displays squad details when a squad is selected', () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
 
-    expect(screen.getByText('Alpha Squad')).toBeInTheDocument();
+    expect(getByTextFirst(screen, 'Alpha Squad')).toBeInTheDocument();
     expect(screen.getByText('Squad Members (1)')).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText(/lead • 100% allocation/)).toBeInTheDocument();
@@ -260,22 +244,14 @@ describe('SquadBuilder', () => {
 
     vi.mocked(mockAppContextValue).squads = [];
 
-    render(
-      <TestWrapper>
-        <SquadBuilder />
-      </TestWrapper>
-    );
+    render(<SquadBuilder />);
 
     expect(screen.getByText('No squads created yet')).toBeInTheDocument();
     expect(screen.getByText('Create your first squad')).toBeInTheDocument();
   });
 
   it('removes a squad member when delete button is clicked', async () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
 
     const deleteButton = screen.getByRole('button', { name: '' }); // Trash icon
     fireEvent.click(deleteButton);
@@ -289,25 +265,19 @@ describe('SquadBuilder', () => {
     const onSquadChange = vi.fn();
 
     render(
-      <TestWrapper>
-        <SquadBuilder
-          selectedSquad={mockSquads[0]}
-          onSquadChange={onSquadChange}
-        />
-      </TestWrapper>
+      <SquadBuilder
+        selectedSquad={mockSquads[0]}
+        onSquadChange={onSquadChange}
+      />
     );
 
     // This would normally be triggered by the UnmappedPeople component
     // We'll test the handlePersonSelect method indirectly through squad creation
-    expect(screen.getByText('Alpha Squad')).toBeInTheDocument();
+    expect(getByTextFirst(screen, 'Alpha Squad')).toBeInTheDocument();
   });
 
   it('calculates squad health correctly', () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder />
-      </TestWrapper>
-    );
+    render(<SquadBuilder />);
 
     // Squad with full allocation should show good health
     expect(screen.getByText('excellent')).toBeInTheDocument();
@@ -316,35 +286,21 @@ describe('SquadBuilder', () => {
   it('displays correct squad type icons', () => {
     const projectSquad = { ...mockSquads[0], type: 'project' as const };
 
-    render(
-      <TestWrapper>
-        <SquadBuilder selectedSquad={projectSquad} />
-      </TestWrapper>
-    );
+    render(<SquadBuilder selectedSquad={projectSquad} />);
 
     // The icon is rendered as an emoji in the component
     expect(screen.getByText('🚀')).toBeInTheDocument();
   });
 
   it('handles bulk actions from UnmappedPeople component', () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
 
     // The UnmappedPeople component is rendered and should handle bulk actions
-    expect(
-      screen.getByTestId('unmapped-people') || screen.getByText(/unmapped/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/unmapped/i)).toBeInTheDocument();
   });
 
   it('validates form inputs when creating a squad', async () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder />
-      </TestWrapper>
-    );
+    render(<SquadBuilder />);
 
     // Open dialog
     const newSquadButton = screen.getByRole('button', { name: /new squad/i });
@@ -363,11 +319,7 @@ describe('SquadBuilder', () => {
   });
 
   it('displays role icons correctly', () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
 
     // Check for lead role icon (Crown icon should be present)
     const memberElement = screen.getByText('John Doe').closest('.flex');
@@ -375,11 +327,7 @@ describe('SquadBuilder', () => {
   });
 
   it('shows timeline information when available', () => {
-    render(
-      <TestWrapper>
-        <SquadBuilder selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
 
     expect(screen.getByText('Timeline')).toBeInTheDocument();
     expect(screen.getByText(/1\/1\/2024/)).toBeInTheDocument();
@@ -388,15 +336,11 @@ describe('SquadBuilder', () => {
   it('handles squad selection correctly', () => {
     const onSquadChange = vi.fn();
 
-    render(
-      <TestWrapper>
-        <SquadBuilder onSquadChange={onSquadChange} />
-      </TestWrapper>
-    );
+    render(<SquadBuilder onSquadChange={onSquadChange} />);
 
-    const squadCard = screen
-      .getByText('Alpha Squad')
-      .closest('.cursor-pointer');
+    const squadCard = getByTextFirst(screen, 'Alpha Squad').closest(
+      '.cursor-pointer'
+    );
     if (squadCard) {
       fireEvent.click(squadCard);
       expect(onSquadChange).toHaveBeenCalledWith(mockSquads[0]);

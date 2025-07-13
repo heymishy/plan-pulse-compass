@@ -1,7 +1,13 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@/test/utils/test-utils';
-import { AppProvider } from '@/context/AppContext';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  getByTextFirst,
+} from '@/test/utils/test-utils';
+import { createCompleteAppContextMock } from '@/test/utils/mockDataFactory';
 import SquadSkillsAnalyzer from '../SquadSkillsAnalyzer';
 import {
   Squad,
@@ -103,16 +109,30 @@ const mockRecommendations: SquadRecommendation[] = [
   },
 ];
 
-const mockAppContextValue = {
+const mockAppContextValue = createCompleteAppContextMock();
+const mockSquads = mockAppContextValue.squads;
+
+const legacyMockAppContextValue = {
   squads: mockSquads,
   squadMembers: mockSquadMembers,
   people: mockPeople,
-  skills: [],
+  skills: [
+    { id: 'skill1', name: 'React', category: 'Technical' },
+    { id: 'skill2', name: 'TypeScript', category: 'Technical' },
+    { id: 'skill3', name: 'Node.js', category: 'Technical' },
+    { id: 'skill4', name: 'CSS', category: 'Technical' },
+  ],
   getSquadMembers: vi.fn(squadId =>
     mockSquadMembers.filter(m => m.squadId === squadId)
   ),
-  getSquadSkillGaps: vi.fn(() => mockSkillGaps),
-  generateSquadRecommendations: vi.fn(() => mockRecommendations),
+  getSquadSkillGaps: vi.fn(squadId => {
+    if (squadId === 'squad1') return mockSkillGaps;
+    return [];
+  }),
+  generateSquadRecommendations: vi.fn(squadId => {
+    if (squadId === 'squad1') return mockRecommendations;
+    return [];
+  }),
   // Add other required context methods as mocks
   unmappedPeople: [],
   divisions: [],
@@ -171,18 +191,13 @@ const mockAppContextValue = {
   loadSampleData: vi.fn(),
 };
 
-// Mock useApp hook
-vi.mock('@/context/AppContext', async () => {
-  const actual = await vi.importActual('@/context/AppContext');
-  return {
-    ...actual,
-    useApp: () => mockAppContextValue,
-  };
-});
+// Mock useApp hook completely - no real AppProvider
+vi.mock('@/context/AppContext', () => ({
+  useApp: () => mockAppContextValue,
+  AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <AppProvider>{children}</AppProvider>
-);
+// No TestWrapper needed - using default render with LightweightProviders
 
 describe('SquadSkillsAnalyzer', () => {
   beforeEach(() => {
@@ -190,11 +205,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('renders skills analysis overview', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer />);
 
     expect(screen.getByText('Skills Analysis')).toBeInTheDocument();
     expect(
@@ -203,11 +214,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('shows selected squad analysis when squad is provided', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     expect(
       screen.getByText(`Analyzing skills for ${mockSquads[0].name}`)
@@ -215,11 +222,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('displays different analysis tabs', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer />);
 
     expect(screen.getByText('Overview')).toBeInTheDocument();
     expect(screen.getByText('Skill Gaps')).toBeInTheDocument();
@@ -227,30 +230,22 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('shows squad skill metrics in overview tab', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     expect(screen.getByText('Alpha Squad')).toBeInTheDocument();
-    expect(screen.getByText(/skills/)).toBeInTheDocument();
+    expect(getByTextFirst(screen, /skills/)).toBeInTheDocument();
     expect(screen.getByText(/avg coverage/)).toBeInTheDocument();
   });
 
   it('displays skill gaps when gaps tab is selected', async () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     const gapsTab = screen.getByText('Skill Gaps');
     fireEvent.click(gapsTab);
 
     await waitFor(() => {
       expect(
-        screen.getByText(`Skill Gaps for ${mockSquads[0].name}`)
+        screen.getByText('Skill Gaps for Alpha Squad')
       ).toBeInTheDocument();
       expect(screen.getByText('Node.js')).toBeInTheDocument();
       expect(screen.getByText('high priority')).toBeInTheDocument();
@@ -259,18 +254,14 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('shows recommendations when recommendations tab is selected', async () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     const recommendationsTab = screen.getByText('Recommendations');
     fireEvent.click(recommendationsTab);
 
     await waitFor(() => {
       expect(
-        screen.getByText(`Recommendations for ${mockSquads[0].name}`)
+        screen.getByText('Recommendations for Alpha Squad')
       ).toBeInTheDocument();
       expect(screen.getByText('Add Backend Developer')).toBeInTheDocument();
       expect(
@@ -283,11 +274,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('shows empty state when no squad is selected for gaps', async () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer />);
 
     const gapsTab = screen.getByText('Skill Gaps');
     fireEvent.click(gapsTab);
@@ -301,11 +288,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('shows empty state when no squad is selected for recommendations', async () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer />);
 
     const recommendationsTab = screen.getByText('Recommendations');
     fireEvent.click(recommendationsTab);
@@ -319,11 +302,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('filters skills by category', async () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer />);
 
     const categoryFilter = screen.getByDisplayValue('All Categories');
     fireEvent.click(categoryFilter);
@@ -345,11 +324,7 @@ describe('SquadSkillsAnalyzer', () => {
 
     vi.mocked(mockAppContextValue.getSquadSkillGaps).mockReturnValue([]);
 
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     const gapsTab = screen.getByText('Skill Gaps');
     fireEvent.click(gapsTab);
@@ -373,11 +348,7 @@ describe('SquadSkillsAnalyzer', () => {
       []
     );
 
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     const recommendationsTab = screen.getByText('Recommendations');
     fireEvent.click(recommendationsTab);
@@ -391,11 +362,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('displays skill coverage progress bars', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     // Should display skill cards with progress bars
     expect(screen.getByText('React')).toBeInTheDocument();
@@ -403,11 +370,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('shows required skills with star indicator', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     // React should be marked as required (in targetSkills)
     const reactSkill = screen.getByText('React').closest('div');
@@ -415,11 +378,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('handles skill gap severity levels correctly', async () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     const gapsTab = screen.getByText('Skill Gaps');
     fireEvent.click(gapsTab);
@@ -431,11 +390,7 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('displays recommendation priority levels', async () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     const recommendationsTab = screen.getByText('Recommendations');
     fireEvent.click(recommendationsTab);
@@ -446,37 +401,25 @@ describe('SquadSkillsAnalyzer', () => {
   });
 
   it('calculates squad statistics correctly', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     // Should show skill metrics badges
-    expect(screen.getByText(/skills/)).toBeInTheDocument();
+    expect(getByTextFirst(screen, /skills/)).toBeInTheDocument();
     expect(screen.getByText(/avg coverage/)).toBeInTheDocument();
   });
 
   it('handles multiple squads in overview mode', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer />);
 
     // Should analyze all squads when no specific squad is selected
     expect(screen.getByText('Alpha Squad')).toBeInTheDocument();
   });
 
   it('displays member count for each skill', () => {
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     // Should show how many members have each skill
-    expect(screen.getByText(/members/)).toBeInTheDocument();
+    expect(getByTextFirst(screen, /members/)).toBeInTheDocument();
   });
 
   it('shows view all skills button when many skills exist', () => {
@@ -509,11 +452,7 @@ describe('SquadSkillsAnalyzer', () => {
 
     vi.mocked(mockAppContextValue.people).push(...manySkillsPeople.slice(2));
 
-    render(
-      <TestWrapper>
-        <SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadSkillsAnalyzer selectedSquad={mockSquads[0]} />);
 
     // If more than 9 skills, should show "View all X skills" button
     // This might not show in our simple test case

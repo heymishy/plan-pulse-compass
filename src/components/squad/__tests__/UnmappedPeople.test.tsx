@@ -1,7 +1,8 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@/test/utils/test-utils';
-import { AppProvider, useApp } from '@/context/AppContext';
+import { createCompleteAppContextMock } from '@/test/utils/mockDataFactory';
+// Context imports removed - using Mock-Only approach
 import UnmappedPeople from '../UnmappedPeople';
 import { UnmappedPerson } from '@/types';
 
@@ -52,7 +53,9 @@ const mockUnmappedPeople: UnmappedPerson[] = [
   },
 ];
 
-const mockAppContextValue = {
+const mockAppContextValue = createCompleteAppContextMock();
+
+const legacyMockAppContextValue = {
   unmappedPeople: mockUnmappedPeople,
   skills: [],
   roles: [],
@@ -118,31 +121,21 @@ const mockAppContextValue = {
   loadSampleData: vi.fn(),
 };
 
-// Mock useApp hook
-vi.mock('@/context/AppContext', async () => {
-  const actual = await vi.importActual('@/context/AppContext');
-  return {
-    ...actual,
-    useApp: vi.fn(),
-  };
-});
+// Mock useApp hook completely - no real AppProvider
+vi.mock('@/context/AppContext', () => ({
+  useApp: () => mockAppContextValue,
+  AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div>{children}</div>
-);
+// No TestWrapper needed - using default render with LightweightProviders
 
 describe('UnmappedPeople', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useApp).mockReturnValue(mockAppContextValue);
   });
 
   it('renders unmapped people list', () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     expect(screen.getByText('Unmapped People (3)')).toBeInTheDocument();
     expect(screen.getByText('Alice Johnson')).toBeInTheDocument();
@@ -151,11 +144,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('displays person details correctly', () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     expect(screen.getByText('alice@example.com')).toBeInTheDocument();
     expect(screen.getByText('80% available')).toBeInTheDocument();
@@ -164,11 +153,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('filters people by search term', async () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     const searchInput = screen.getByPlaceholderText('Search people...');
     fireEvent.change(searchInput, { target: { value: 'Alice' } });
@@ -181,11 +166,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('filters people by skill', async () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     // First combobox is the skill filter (based on layout order)
     const comboboxes = screen.getAllByRole('combobox');
@@ -202,11 +183,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('filters people by availability', async () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     // Second combobox is the availability filter (based on layout order)
     const comboboxes = screen.getAllByRole('combobox');
@@ -224,11 +201,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('sorts people by different criteria', async () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     // Third combobox is the sort select (based on layout order)
     const comboboxes = screen.getAllByRole('combobox');
@@ -252,11 +225,7 @@ describe('UnmappedPeople', () => {
   it('handles person selection', () => {
     const onPersonSelect = vi.fn();
 
-    render(
-      <TestWrapper>
-        <UnmappedPeople onPersonSelect={onPersonSelect} />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople onPersonSelect={onPersonSelect} />);
 
     const aliceCard = screen
       .getByText('Alice Johnson')
@@ -273,11 +242,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('handles select all functionality', () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     const selectAllCheckbox = screen.getByLabelText(/select all/i);
     fireEvent.click(selectAllCheckbox);
@@ -286,11 +251,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('displays bulk action buttons when people are selected', async () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople showBulkActions={true} />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople showBulkActions={true} />);
 
     // Select a person first
     const checkbox = screen.getAllByRole('checkbox')[1]; // First person checkbox (not select all)
@@ -306,9 +267,7 @@ describe('UnmappedPeople', () => {
     const onBulkAction = vi.fn();
 
     render(
-      <TestWrapper>
-        <UnmappedPeople onBulkAction={onBulkAction} showBulkActions={true} />
-      </TestWrapper>
+      <UnmappedPeople onBulkAction={onBulkAction} showBulkActions={true} />
     );
 
     // Select a person
@@ -336,11 +295,7 @@ describe('UnmappedPeople', () => {
 
     vi.mocked(mockAppContextValue).unmappedPeople = [];
 
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     const addSampleButtons = screen.getAllByText('Add Sample Data');
     fireEvent.click(addSampleButtons[0]);
@@ -356,11 +311,7 @@ describe('UnmappedPeople', () => {
 
     vi.mocked(mockAppContextValue).unmappedPeople = [];
 
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     expect(screen.getByText('No Unmapped People')).toBeInTheDocument();
     expect(
@@ -369,11 +320,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('shows no matches state when search yields no results', async () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     const searchInput = screen.getByPlaceholderText('Search people...');
     fireEvent.change(searchInput, { target: { value: 'NonexistentPerson' } });
@@ -387,11 +334,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('displays correct proficiency colors for skills', () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     // Expert skills should have purple background - Alice has TypeScript (expert)
     const expertSkill = screen.getByText('TypeScript (expert)');
@@ -403,11 +346,7 @@ describe('UnmappedPeople', () => {
   });
 
   it('displays correct availability colors', () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     // High availability (80%+) should be green - Bob has 100%
     const highAvailability = screen.getByText('100% available');
@@ -444,22 +383,14 @@ describe('UnmappedPeople', () => {
 
     vi.mocked(mockAppContextValue).unmappedPeople = [personWithManySkills];
 
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     // Should show +2 more indicator (6 skills - 4 displayed = 2 more)
     expect(screen.getByText('+2 more')).toBeInTheDocument();
   });
 
   it('disables sample data button when data already exists', () => {
-    render(
-      <TestWrapper>
-        <UnmappedPeople />
-      </TestWrapper>
-    );
+    render(<UnmappedPeople />);
 
     const addSampleButton = screen.getByText('Add Sample Data');
     expect(addSampleButton).toBeDisabled();

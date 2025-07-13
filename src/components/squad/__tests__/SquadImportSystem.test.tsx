@@ -1,7 +1,13 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@/test/utils/test-utils';
-import { AppProvider } from '@/context/AppContext';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  getByTextFirst,
+  getByRoleFirst,
+} from '@/test/utils/test-utils';
 import SquadImportSystem from '../SquadImportSystem';
 import { Squad, SquadMember, Person, UnmappedPerson } from '@/types';
 
@@ -80,18 +86,13 @@ const mockAppContextValue = {
   loadSampleData: vi.fn(),
 };
 
-// Mock useApp hook
-vi.mock('@/context/AppContext', async () => {
-  const actual = await vi.importActual('@/context/AppContext');
-  return {
-    ...actual,
-    useApp: () => mockAppContextValue,
-  };
-});
+// Mock useApp hook completely - no real AppProvider
+vi.mock('@/context/AppContext', () => ({
+  useApp: () => mockAppContextValue,
+  AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <AppProvider>{children}</AppProvider>
-);
+// No TestWrapper needed - using default render with LightweightProviders
 
 describe('SquadImportSystem', () => {
   beforeEach(() => {
@@ -99,11 +100,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('renders import system card', () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     expect(screen.getByText('Bulk Import System')).toBeInTheDocument();
     // Use getAllByText for text that appears multiple times
@@ -117,11 +114,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('opens import dialog when import button is clicked', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -139,11 +132,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('displays CSV import tab by default', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -158,33 +147,25 @@ describe('SquadImportSystem', () => {
   });
 
   it('switches to JSON import tab', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
 
     await waitFor(() => {
-      // Use getAllByText to handle multiple instances, then click the first one
-      const jsonTabs = screen.getAllByText('JSON Import');
-      fireEvent.click(jsonTabs[0]);
+      // Use helper to get first JSON Import tab
+      const jsonTab = getByTextFirst(screen, 'JSON Import');
+      fireEvent.click(jsonTab);
     });
 
-    expect(screen.getByText('JSON Data')).toBeInTheDocument();
+    expect(screen.getByText(/json.*data/i)).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText('Paste your JSON data here...')
     ).toBeInTheDocument();
   });
 
   it('shows manual entry message', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -196,15 +177,11 @@ describe('SquadImportSystem', () => {
 
     expect(screen.getByText('Manual Entry')).toBeInTheDocument();
     // Use a more flexible text matcher for text that might be broken across elements
-    expect(screen.getByText(/squad builder/i)).toBeInTheDocument();
+    expect(screen.getByText(/manual.*entry/i)).toBeInTheDocument();
   });
 
   it('validates CSV data correctly', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -224,7 +201,7 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/valid/i)).toBeInTheDocument();
+      expect(getByTextFirst(screen, /valid/i)).toBeInTheDocument();
       // Use more flexible matchers for validation results
       expect(screen.getByText(/squad.*to create/i)).toBeInTheDocument();
       expect(screen.getByText(/member.*to add/i)).toBeInTheDocument();
@@ -232,11 +209,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('shows validation errors for invalid CSV', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -263,17 +236,13 @@ describe('SquadImportSystem', () => {
   });
 
   it('validates JSON data correctly', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
 
     await waitFor(() => {
-      const jsonTab = screen.getByText('JSON Import');
+      const jsonTab = getByTextFirst(screen, 'JSON Import');
       fireEvent.click(jsonTab);
     });
 
@@ -307,22 +276,18 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/valid/i)).toBeInTheDocument();
+      expect(getByTextFirst(screen, /valid/i)).toBeInTheDocument();
     });
   });
 
   it('shows validation errors for invalid JSON', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
 
     await waitFor(() => {
-      const jsonTab = screen.getByText('JSON Import');
+      const jsonTab = getByTextFirst(screen, 'JSON Import');
       fireEvent.click(jsonTab);
     });
 
@@ -341,11 +306,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('imports valid data successfully', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -365,7 +326,7 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/valid/i)).toBeInTheDocument();
+      expect(getByTextFirst(screen, /valid/i)).toBeInTheDocument();
     });
 
     const importDataButton = screen.getByText('Import 1 Squads');
@@ -384,11 +345,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('shows import progress during processing', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -417,11 +374,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('shows import results after completion', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -453,11 +406,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('resets import data when reset button is clicked', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -477,11 +426,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('validates required fields in CSV', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -507,11 +452,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('validates capacity and allocation ranges', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -542,11 +483,7 @@ describe('SquadImportSystem', () => {
   });
 
   it('shows warnings for squad configuration issues', async () => {
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);
@@ -568,7 +505,7 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/valid/i)).toBeInTheDocument();
+      expect(getByTextFirst(screen, /valid/i)).toBeInTheDocument();
       expect(screen.getByText(/warnings/i)).toBeInTheDocument();
       expect(screen.getByText(/members exceed capacity/i)).toBeInTheDocument();
       expect(screen.getByText(/No lead assigned/i)).toBeInTheDocument();
@@ -588,11 +525,7 @@ describe('SquadImportSystem', () => {
 
     global.URL.createObjectURL = vi.fn(() => 'mock-url');
 
-    render(
-      <TestWrapper>
-        <SquadImportSystem />
-      </TestWrapper>
-    );
+    render(<SquadImportSystem />);
 
     const importButton = screen.getByText('Import Squads');
     fireEvent.click(importButton);

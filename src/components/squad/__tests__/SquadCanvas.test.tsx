@@ -1,7 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@/test/utils/test-utils';
-import { AppProvider } from '@/context/AppContext';
 import SquadCanvas from '../SquadCanvas';
 import { Squad, SquadMember, Person } from '@/types';
 
@@ -42,11 +41,15 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'height', {
   set: vi.fn(),
 });
 
-// Mock ResizeObserver
+// Mock ResizeObserver with spy tracking
+const mockObserve = vi.fn();
+const mockDisconnect = vi.fn();
+const mockUnobserve = vi.fn();
+
 class MockResizeObserver {
-  observe = vi.fn();
-  disconnect = vi.fn();
-  unobserve = vi.fn();
+  observe = mockObserve;
+  disconnect = mockDisconnect;
+  unobserve = mockUnobserve;
 }
 global.ResizeObserver = MockResizeObserver;
 
@@ -231,30 +234,24 @@ const mockAppContextValue = {
   loadSampleData: vi.fn(),
 };
 
-// Mock useApp hook
-vi.mock('@/context/AppContext', async () => {
-  const actual = await vi.importActual('@/context/AppContext');
-  return {
-    ...actual,
-    useApp: () => mockAppContextValue,
-  };
-});
+// Mock useApp hook completely - no real AppProvider
+vi.mock('@/context/AppContext', () => ({
+  useApp: () => mockAppContextValue,
+  AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <AppProvider>{children}</AppProvider>
-);
+// No TestWrapper needed - using default render with LightweightProviders
 
 describe('SquadCanvas', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockObserve.mockClear();
+    mockDisconnect.mockClear();
+    mockUnobserve.mockClear();
   });
 
   it('renders canvas with default squads view', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     expect(screen.getByText('Squad Canvas - Squads View')).toBeInTheDocument();
     expect(screen.getByText('Legend')).toBeInTheDocument();
@@ -263,54 +260,34 @@ describe('SquadCanvas', () => {
   });
 
   it('displays zoom controls', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     expect(screen.getByRole('button', { name: '' })).toBeInTheDocument(); // Zoom in button
     expect(screen.getByText('100%')).toBeInTheDocument();
   });
 
   it('changes view mode when different view buttons are clicked', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas viewMode="skills" />
-      </TestWrapper>
-    );
+    render(<SquadCanvas viewMode="skills" />);
 
     expect(screen.getByText('Squad Canvas - Skills View')).toBeInTheDocument();
   });
 
   it('renders skills view legend', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas viewMode="skills" />
-      </TestWrapper>
-    );
+    render(<SquadCanvas viewMode="skills" />);
 
     expect(screen.getByText('Skills')).toBeInTheDocument();
     expect(screen.getByText('Squads')).toBeInTheDocument();
   });
 
   it('renders network view legend', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas viewMode="network" />
-      </TestWrapper>
-    );
+    render(<SquadCanvas viewMode="network" />);
 
     expect(screen.getByText('Active member')).toBeInTheDocument();
     expect(screen.getByText('Unmapped')).toBeInTheDocument();
   });
 
   it('handles zoom in functionality', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const zoomInButton = screen.getAllByRole('button')[0]; // First button should be zoom in
     fireEvent.click(zoomInButton);
@@ -320,11 +297,7 @@ describe('SquadCanvas', () => {
   });
 
   it('handles zoom out functionality', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const zoomOutButton = screen.getAllByRole('button')[1]; // Second button should be zoom out
     fireEvent.click(zoomOutButton);
@@ -334,11 +307,7 @@ describe('SquadCanvas', () => {
   });
 
   it('resets view when reset button is clicked', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     // First zoom in
     const zoomInButton = screen.getAllByRole('button')[0];
@@ -352,11 +321,7 @@ describe('SquadCanvas', () => {
   });
 
   it('renders canvas element', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const canvas = document.querySelector('canvas');
     expect(canvas).toBeInTheDocument();
@@ -364,11 +329,7 @@ describe('SquadCanvas', () => {
   });
 
   it('handles mouse down on canvas', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const canvas = document.querySelector('canvas');
     if (canvas) {
@@ -378,11 +339,7 @@ describe('SquadCanvas', () => {
   });
 
   it('handles mouse move on canvas', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const canvas = document.querySelector('canvas');
     if (canvas) {
@@ -392,11 +349,7 @@ describe('SquadCanvas', () => {
   });
 
   it('handles mouse up on canvas', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const canvas = document.querySelector('canvas');
     if (canvas) {
@@ -406,11 +359,7 @@ describe('SquadCanvas', () => {
   });
 
   it('handles mouse leave on canvas', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const canvas = document.querySelector('canvas');
     if (canvas) {
@@ -420,11 +369,7 @@ describe('SquadCanvas', () => {
   });
 
   it('displays different squad types with correct colors', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     // Verify legend shows different squad types
     expect(screen.getByText('Project')).toBeInTheDocument();
@@ -433,11 +378,7 @@ describe('SquadCanvas', () => {
   });
 
   it('shows node info panel when node is selected', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     // Initially no info panel should be visible
     expect(screen.queryByText('×')).not.toBeInTheDocument();
@@ -463,11 +404,7 @@ describe('SquadCanvas', () => {
   });
 
   it('generates correct canvas data for squads view', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas viewMode="squads" />
-      </TestWrapper>
-    );
+    render(<SquadCanvas viewMode="squads" />);
 
     // Should call getSquadMembers for each squad
     expect(mockAppContextValue.getSquadMembers).toHaveBeenCalledWith('squad1');
@@ -475,11 +412,7 @@ describe('SquadCanvas', () => {
   });
 
   it('generates correct canvas data for network view', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas viewMode="network" />
-      </TestWrapper>
-    );
+    render(<SquadCanvas viewMode="network" />);
 
     // Should call getPersonSquads for each person
     expect(mockAppContextValue.getPersonSquads).toHaveBeenCalledWith('person1');
@@ -488,11 +421,7 @@ describe('SquadCanvas', () => {
   });
 
   it('handles selected squad prop', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas selectedSquad={mockSquads[0]} />
-      </TestWrapper>
-    );
+    render(<SquadCanvas selectedSquad={mockSquads[0]} />);
 
     // Should only analyze the selected squad
     expect(mockAppContextValue.getSquadMembers).toHaveBeenCalledWith('squad1');
@@ -502,43 +431,27 @@ describe('SquadCanvas', () => {
   });
 
   it('calls getContext on canvas element', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     expect(mockGetContext).toHaveBeenCalledWith('2d');
   });
 
   it('sets up ResizeObserver for canvas', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
-    expect(MockResizeObserver.prototype.observe).toHaveBeenCalled();
+    expect(mockObserve).toHaveBeenCalled();
   });
 
   it('cleans up ResizeObserver on unmount', () => {
-    const { unmount } = render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    const { unmount } = render(<SquadCanvas />);
 
     unmount();
 
-    expect(MockResizeObserver.prototype.disconnect).toHaveBeenCalled();
+    expect(mockDisconnect).toHaveBeenCalled();
   });
 
   it('limits zoom to reasonable bounds', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const zoomOutButton = screen.getAllByRole('button')[1];
 
@@ -562,11 +475,7 @@ describe('SquadCanvas', () => {
   });
 
   it('handles dragging functionality', () => {
-    render(
-      <TestWrapper>
-        <SquadCanvas />
-      </TestWrapper>
-    );
+    render(<SquadCanvas />);
 
     const canvas = document.querySelector('canvas');
     if (canvas) {
