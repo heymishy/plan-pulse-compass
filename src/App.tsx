@@ -23,6 +23,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Canvas from './pages/Canvas';
 import ScenarioAnalysis from './pages/ScenarioAnalysis';
+import SquadManagement from './pages/SquadManagement';
 import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
 import {
@@ -73,6 +74,10 @@ function App() {
                       <Route
                         path="/scenario-analysis"
                         element={<ScenarioAnalysis />}
+                      />
+                      <Route
+                        path="/squad-management"
+                        element={<SquadManagement />}
                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

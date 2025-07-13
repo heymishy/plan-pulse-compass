@@ -411,6 +411,118 @@ export interface ProjectReportData {
   risks: ProjectRisk[];
 }
 
+// Advanced Squad Management Types
+export interface Squad {
+  id: string;
+  name: string;
+  description?: string;
+  type: 'project' | 'initiative' | 'workstream' | 'feature-team';
+  status: 'planning' | 'active' | 'completed' | 'on-hold';
+  duration?: {
+    start: string;
+    end: string;
+  };
+  targetSkills: string[]; // Required skill IDs
+  capacity: number; // people capacity
+  divisionId?: string; // Optional division association
+  projectIds?: string[]; // Associated projects
+  createdDate: string;
+  lastModified: string;
+}
+
+export interface SquadMember {
+  id: string;
+  squadId: string;
+  personId: string;
+  role: 'lead' | 'member' | 'advisor' | 'consultant';
+  allocation: number; // percentage (0-100)
+  startDate: string;
+  endDate?: string;
+  isActive: boolean;
+  notes?: string;
+}
+
+export interface SquadSkillRequirement {
+  id: string;
+  squadId: string;
+  skillId: string;
+  requiredProficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  priority: 'critical' | 'important' | 'nice-to-have';
+  currentCoverage: number; // percentage covered (0-100)
+  requiredCount: number; // number of people needed with this skill
+}
+
+export interface SquadSkillGap {
+  skillId: string;
+  skillName: string;
+  required: number;
+  available: number;
+  gap: number;
+  priority: 'critical' | 'important' | 'nice-to-have';
+  availablePeople: {
+    personId: string;
+    personName: string;
+    proficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+    currentAllocation: number;
+  }[];
+}
+
+export interface UnmappedPerson {
+  id: string;
+  name: string;
+  email?: string;
+  roleId?: string;
+  roleName?: string;
+  skills: {
+    skillId: string;
+    skillName: string;
+    proficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  }[];
+  currentTeamId?: string;
+  currentTeamName?: string;
+  availability: number; // percentage available for new squads
+  joinDate?: string;
+  importedDate: string;
+}
+
+export interface SquadRecommendation {
+  squadId: string;
+  squadName: string;
+  personId: string;
+  personName: string;
+  score: number; // 0-100, higher is better match
+  reasons: string[];
+  skillMatches: {
+    skillId: string;
+    skillName: string;
+    personProficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+    requiredProficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+    priority: 'critical' | 'important' | 'nice-to-have';
+  }[];
+  conflicts: {
+    type: 'over-allocation' | 'skill-mismatch' | 'timeline-conflict';
+    description: string;
+    severity: 'low' | 'medium' | 'high';
+  }[];
+}
+
+export type SquadMemberRole = 'lead' | 'member' | 'advisor' | 'consultant';
+export type SquadType =
+  | 'project'
+  | 'initiative'
+  | 'workstream'
+  | 'feature-team';
+export type SquadStatus = 'planning' | 'active' | 'completed' | 'on-hold';
+
+// Squad Canvas View Types
+export type SquadCanvasViewType =
+  | 'squads-people'
+  | 'squads-skills'
+  | 'people-squads'
+  | 'skill-coverage'
+  | 'allocation-timeline'
+  | 'squad-dependencies';
+
 // Goal-related imports and additions
 export type {
   Goal,

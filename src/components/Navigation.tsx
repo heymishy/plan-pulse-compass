@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
+  UserPlus,
   FolderOpen,
   Target,
   Calendar,
@@ -31,6 +32,7 @@ const Navigation = () => {
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/teams', icon: Users, label: 'Teams' },
+    { path: '/squad-management', icon: UserPlus, label: 'Squad Management' },
     { path: '/people', icon: UserCheck, label: 'People' },
     { path: '/projects', icon: FolderOpen, label: 'Projects' },
     { path: '/epics', icon: Target, label: 'Epics' },
