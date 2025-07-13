@@ -25,6 +25,11 @@ import {
   Solution,
   ProjectSkill,
   ProjectSolution,
+  Squad,
+  SquadMember,
+  SquadSkillRequirement,
+  UnmappedPerson,
+  SquadRecommendation,
 } from '@/types';
 import {
   Goal,
@@ -91,6 +96,48 @@ interface AppContextType {
       | ProjectSolution[]
       | ((prev: ProjectSolution[]) => ProjectSolution[])
   ) => void;
+
+  // Squad Management
+  squads: Squad[];
+  setSquads: (squads: Squad[] | ((prev: Squad[]) => Squad[])) => void;
+  addSquad: (
+    squadData: Omit<Squad, 'id' | 'createdDate' | 'lastModified'>
+  ) => void;
+  updateSquad: (squadId: string, squadData: Partial<Squad>) => void;
+  deleteSquad: (squadId: string) => void;
+
+  squadMembers: SquadMember[];
+  setSquadMembers: (
+    members: SquadMember[] | ((prev: SquadMember[]) => SquadMember[])
+  ) => void;
+  addSquadMember: (memberData: Omit<SquadMember, 'id'>) => void;
+  updateSquadMember: (
+    memberId: string,
+    memberData: Partial<SquadMember>
+  ) => void;
+  removeSquadMember: (memberId: string) => void;
+
+  squadSkillRequirements: SquadSkillRequirement[];
+  setSquadSkillRequirements: (
+    requirements:
+      | SquadSkillRequirement[]
+      | ((prev: SquadSkillRequirement[]) => SquadSkillRequirement[])
+  ) => void;
+
+  unmappedPeople: UnmappedPerson[];
+  setUnmappedPeople: (
+    people: UnmappedPerson[] | ((prev: UnmappedPerson[]) => UnmappedPerson[])
+  ) => void;
+  addUnmappedPerson: (
+    personData: Omit<UnmappedPerson, 'id' | 'importedDate'>
+  ) => void;
+  removeUnmappedPerson: (personId: string) => void;
+
+  // Squad utility functions
+  getSquadMembers: (squadId: string) => SquadMember[];
+  getPersonSquads: (personId: string) => Squad[];
+  getSquadSkillGaps: (squadId: string) => any[]; // Will implement proper type later
+  generateSquadRecommendations: (personId: string) => SquadRecommendation[];
 
   // Tracking data
   actualAllocations: ActualAllocation[];
@@ -222,6 +269,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     ProjectSolution[]
   >('planning-project-solutions', []);
 
+  // Squad Management data - using encrypted storage for sensitive squad information
+  const [squads, setSquads, isSquadsLoading] = useEncryptedLocalStorage<
+    Squad[]
+  >('planning-squads', []);
+  const [squadMembers, setSquadMembers] = useLocalStorage<SquadMember[]>(
+    'planning-squad-members',
+    []
+  );
+  const [squadSkillRequirements, setSquadSkillRequirements] = useLocalStorage<
+    SquadSkillRequirement[]
+  >('planning-squad-skill-requirements', []);
+  const [unmappedPeople, setUnmappedPeople] = useLocalStorage<UnmappedPerson[]>(
+    'planning-unmapped-people',
+    []
+  );
+
   // Goal data with encrypted storage for sensitive goal information
   const [goals, setGoals, isGoalsLoading] = useEncryptedLocalStorage<Goal[]>(
     'planning-goals',
@@ -277,6 +340,128 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
+  // Squad Management Helper Functions
+  const addSquad = (
+    squadData: Omit<Squad, 'id' | 'createdDate' | 'lastModified'>
+  ) => {
+    const now = new Date().toISOString();
+    const newSquad: Squad = {
+      ...squadData,
+      id: Date.now().toString(),
+      createdDate: now,
+      lastModified: now,
+    };
+    setSquads(prev => [...prev, newSquad]);
+  };
+
+  const updateSquad = (squadId: string, squadData: Partial<Squad>) => {
+    setSquads(prev =>
+      prev.map(squad =>
+        squad.id === squadId
+          ? { ...squad, ...squadData, lastModified: new Date().toISOString() }
+          : squad
+      )
+    );
+  };
+
+  const deleteSquad = (squadId: string) => {
+    setSquads(prev => prev.filter(squad => squad.id !== squadId));
+    // Also remove all squad members for this squad
+    setSquadMembers(prev => prev.filter(member => member.squadId !== squadId));
+    // Remove squad skill requirements
+    setSquadSkillRequirements(prev =>
+      prev.filter(req => req.squadId !== squadId)
+    );
+  };
+
+  const addSquadMember = (memberData: Omit<SquadMember, 'id'>) => {
+    const newMember: SquadMember = {
+      ...memberData,
+      id: Date.now().toString(),
+    };
+    setSquadMembers(prev => [...prev, newMember]);
+  };
+
+  const updateSquadMember = (
+    memberId: string,
+    memberData: Partial<SquadMember>
+  ) => {
+    setSquadMembers(prev =>
+      prev.map(member =>
+        member.id === memberId ? { ...member, ...memberData } : member
+      )
+    );
+  };
+
+  const removeSquadMember = (memberId: string) => {
+    setSquadMembers(prev => prev.filter(member => member.id !== memberId));
+  };
+
+  const addUnmappedPerson = (
+    personData: Omit<UnmappedPerson, 'id' | 'importedDate'>
+  ) => {
+    const newPerson: UnmappedPerson = {
+      ...personData,
+      id: Date.now().toString(),
+      importedDate: new Date().toISOString(),
+    };
+    setUnmappedPeople(prev => [...prev, newPerson]);
+  };
+
+  const removeUnmappedPerson = (personId: string) => {
+    setUnmappedPeople(prev => prev.filter(person => person.id !== personId));
+  };
+
+  // Squad Utility Functions
+  const getSquadMembers = (squadId: string): SquadMember[] => {
+    return squadMembers.filter(
+      member => member.squadId === squadId && member.isActive
+    );
+  };
+
+  const getPersonSquads = (personId: string): Squad[] => {
+    const personSquadIds = squadMembers
+      .filter(member => member.personId === personId && member.isActive)
+      .map(member => member.squadId);
+    return squads.filter(squad => personSquadIds.includes(squad.id));
+  };
+
+  const getSquadSkillGaps = (squadId: string) => {
+    // This is a placeholder - will implement proper skill gap analysis
+    const requirements = squadSkillRequirements.filter(
+      req => req.squadId === squadId
+    );
+    const members = getSquadMembers(squadId);
+
+    // For now, return basic structure
+    return requirements.map(req => ({
+      skillId: req.skillId,
+      required: req.requiredCount,
+      available: 0, // Will calculate based on member skills
+      gap: req.requiredCount,
+      priority: req.priority,
+    }));
+  };
+
+  const generateSquadRecommendations = (
+    personId: string
+  ): SquadRecommendation[] => {
+    // This is a placeholder - will implement proper recommendation engine
+    const person = people.find(p => p.id === personId);
+    if (!person) return [];
+
+    return squads.map(squad => ({
+      squadId: squad.id,
+      squadName: squad.name,
+      personId,
+      personName: person.name,
+      score: Math.floor(Math.random() * 100), // Placeholder scoring
+      reasons: ['Skills match', 'Availability'], // Placeholder reasons
+      skillMatches: [],
+      conflicts: [],
+    }));
+  };
+
   const addGoal = (
     goalData: Omit<Goal, 'id' | 'createdDate' | 'updatedDate'>
   ) => {
@@ -310,7 +495,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     });
   };
 
-  const isDataLoading = isPeopleLoading || isProjectsLoading || isGoalsLoading;
+  const isDataLoading =
+    isPeopleLoading || isProjectsLoading || isGoalsLoading || isSquadsLoading;
 
   // Check if any significant data has been imported
   const hasImportedData =
@@ -732,6 +918,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     solutions,
     projectSkills,
     projectSolutions,
+    squads,
+    squadMembers,
+    squadSkillRequirements,
+    unmappedPeople,
     actualAllocations,
     iterationReviews,
     iterationSnapshots,
@@ -779,6 +969,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setProjectSkills,
     projectSolutions,
     setProjectSolutions,
+    // Squad Management
+    squads,
+    setSquads,
+    addSquad,
+    updateSquad,
+    deleteSquad,
+    squadMembers,
+    setSquadMembers,
+    addSquadMember,
+    updateSquadMember,
+    removeSquadMember,
+    squadSkillRequirements,
+    setSquadSkillRequirements,
+    unmappedPeople,
+    setUnmappedPeople,
+    addUnmappedPerson,
+    removeUnmappedPerson,
+    getSquadMembers,
+    getPersonSquads,
+    getSquadSkillGaps,
+    generateSquadRecommendations,
     actualAllocations,
     setActualAllocations,
     iterationReviews,
