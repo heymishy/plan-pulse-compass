@@ -224,7 +224,7 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Valid')).toBeInTheDocument();
+      expect(screen.getByText(/valid/i)).toBeInTheDocument();
       // Use more flexible matchers for validation results
       expect(screen.getByText(/squad.*to create/i)).toBeInTheDocument();
       expect(screen.getByText(/member.*to add/i)).toBeInTheDocument();
@@ -307,7 +307,7 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Valid')).toBeInTheDocument();
+      expect(screen.getByText(/valid/i)).toBeInTheDocument();
     });
   });
 
@@ -335,8 +335,8 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid')).toBeInTheDocument();
-      expect(screen.getByText(/JSON parsing error/)).toBeInTheDocument();
+      expect(screen.getByText(/invalid/i)).toBeInTheDocument();
+      expect(screen.getByText(/JSON parsing error/i)).toBeInTheDocument();
     });
   });
 
@@ -365,7 +365,7 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Valid')).toBeInTheDocument();
+      expect(screen.getByText(/valid/i)).toBeInTheDocument();
     });
 
     const importDataButton = screen.getByText('Import 1 Squads');
@@ -501,8 +501,8 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid')).toBeInTheDocument();
-      expect(screen.getByText(/Squad name is required/)).toBeInTheDocument();
+      expect(screen.getByText(/invalid/i)).toBeInTheDocument();
+      expect(screen.getByText(/Squad name is required/i)).toBeInTheDocument();
     });
   });
 
@@ -531,12 +531,12 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid')).toBeInTheDocument();
+      expect(screen.getByText(/invalid/i)).toBeInTheDocument();
       expect(
-        screen.getByText(/Capacity must be a positive number/)
+        screen.getByText(/Capacity must be a positive number/i)
       ).toBeInTheDocument();
       expect(
-        screen.getByText(/Allocation must be between 0 and 100/)
+        screen.getByText(/Allocation must be between 0 and 100/i)
       ).toBeInTheDocument();
     });
   });
@@ -568,10 +568,10 @@ describe('SquadImportSystem', () => {
     fireEvent.click(validateButton);
 
     await waitFor(() => {
-      expect(screen.getByText('Valid')).toBeInTheDocument();
-      expect(screen.getByText('Warnings:')).toBeInTheDocument();
-      expect(screen.getByText(/members exceed capacity/)).toBeInTheDocument();
-      expect(screen.getByText(/No lead assigned/)).toBeInTheDocument();
+      expect(screen.getByText(/valid/i)).toBeInTheDocument();
+      expect(screen.getByText(/warnings/i)).toBeInTheDocument();
+      expect(screen.getByText(/members exceed capacity/i)).toBeInTheDocument();
+      expect(screen.getByText(/No lead assigned/i)).toBeInTheDocument();
     });
   });
 

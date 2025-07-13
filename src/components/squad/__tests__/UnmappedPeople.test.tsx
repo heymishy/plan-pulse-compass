@@ -186,7 +186,7 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    const skillFilter = screen.getByDisplayValue('All skills');
+    const skillFilter = screen.getByRole('combobox', { name: /skill/i });
     fireEvent.click(skillFilter);
 
     const reactOption = screen.getByText('React');
@@ -205,7 +205,9 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    const availabilityFilter = screen.getByDisplayValue('All');
+    const availabilityFilter = screen.getByRole('combobox', {
+      name: /availability/i,
+    });
     fireEvent.click(availabilityFilter);
 
     const highAvailability = screen.getByText('High (80%+)');
@@ -225,7 +227,7 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    const sortSelect = screen.getByDisplayValue('Name');
+    const sortSelect = screen.getByRole('combobox', { name: /sort/i });
     fireEvent.click(sortSelect);
 
     const availabilitySort = screen.getByText('Availability');
@@ -335,8 +337,8 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    const addSampleButton = screen.getByText('Add Sample Data');
-    fireEvent.click(addSampleButton);
+    const addSampleButtons = screen.getAllByText('Add Sample Data');
+    fireEvent.click(addSampleButtons[0]);
 
     expect(mockAppContextValue.addUnmappedPerson).toHaveBeenCalled();
   });
@@ -387,11 +389,11 @@ describe('UnmappedPeople', () => {
     );
 
     // Expert skills should have purple background
-    const expertSkill = screen.getByText('TypeScript (expert)');
+    const expertSkill = screen.getByText(/TypeScript.*expert/i);
     expect(expertSkill).toHaveClass('bg-purple-500');
 
     // Advanced skills should have blue background
-    const advancedSkill = screen.getByText('React (advanced)');
+    const advancedSkill = screen.getByText(/React.*advanced/i);
     expect(advancedSkill).toHaveClass('bg-blue-500');
   });
 
@@ -403,12 +405,12 @@ describe('UnmappedPeople', () => {
     );
 
     // High availability (80%+) should be green
-    const highAvailability = screen.getByText('100% available');
+    const highAvailability = screen.getByText(/100%.*available/i);
     expect(highAvailability).toHaveClass('bg-green-500');
 
     // Medium availability (50-79%) should be yellow
-    const mediumAvailability = screen.getByText('60% available');
-    expect(mediumAvailability).toHaveClass('bg-red-500'); // Actually low availability (<50% is red, but 60% should be yellow)
+    const mediumAvailability = screen.getByText(/60%.*available/i);
+    expect(mediumAvailability).toHaveClass('bg-yellow-500');
   });
 
   it('limits skill display and shows overflow indicator', () => {
