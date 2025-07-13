@@ -65,6 +65,37 @@ const SquadCanvas: React.FC<SquadCanvasProps> = ({
   const [hoveredNode, setHoveredNode] = useState<CanvasNode | null>(null);
   const [selectedNode, setSelectedNode] = useState<CanvasNode | null>(null);
 
+  // Helper functions
+  const getSquadColor = (type: Squad['type']) => {
+    switch (type) {
+      case 'project':
+        return '#3B82F6';
+      case 'initiative':
+        return '#8B5CF6';
+      case 'workstream':
+        return '#10B981';
+      case 'feature-team':
+        return '#F59E0B';
+      default:
+        return '#6B7280';
+    }
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'lead':
+        return '#F59E0B';
+      case 'member':
+        return '#3B82F6';
+      case 'advisor':
+        return '#10B981';
+      case 'consultant':
+        return '#8B5CF6';
+      default:
+        return '#6B7280';
+    }
+  };
+
   // Generate canvas data based on view mode
   const canvasData = useMemo(() => {
     const nodes: CanvasNode[] = [];
@@ -261,37 +292,6 @@ const SquadCanvas: React.FC<SquadCanvasProps> = ({
     getSquadMembers,
     getPersonSquads,
   ]);
-
-  // Helper functions
-  const getSquadColor = (type: Squad['type']) => {
-    switch (type) {
-      case 'project':
-        return '#3B82F6';
-      case 'initiative':
-        return '#8B5CF6';
-      case 'workstream':
-        return '#10B981';
-      case 'feature-team':
-        return '#F59E0B';
-      default:
-        return '#6B7280';
-    }
-  };
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'lead':
-        return '#F59E0B';
-      case 'member':
-        return '#3B82F6';
-      case 'advisor':
-        return '#10B981';
-      case 'consultant':
-        return '#8B5CF6';
-      default:
-        return '#6B7280';
-    }
-  };
 
   // Canvas drawing function
   const drawCanvas = () => {
