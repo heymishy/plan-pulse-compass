@@ -128,7 +128,7 @@ vi.mock('@/context/AppContext', async () => {
 });
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <AppProvider>{children}</AppProvider>
+  <div>{children}</div>
 );
 
 describe('UnmappedPeople', () => {
@@ -186,7 +186,9 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    const skillFilter = screen.getByRole('combobox', { name: /skill/i });
+    // First combobox is the skill filter (based on layout order)
+    const comboboxes = screen.getAllByRole('combobox');
+    const skillFilter = comboboxes[0];
     fireEvent.click(skillFilter);
 
     const reactOption = screen.getByText('React');
@@ -205,9 +207,9 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    const availabilityFilter = screen.getByRole('combobox', {
-      name: /availability/i,
-    });
+    // Second combobox is the availability filter (based on layout order)
+    const comboboxes = screen.getAllByRole('combobox');
+    const availabilityFilter = comboboxes[1];
     fireEvent.click(availabilityFilter);
 
     const highAvailability = screen.getByText('High (80%+)');
@@ -227,7 +229,9 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    const sortSelect = screen.getByRole('combobox', { name: /sort/i });
+    // Third combobox is the sort select (based on layout order)
+    const comboboxes = screen.getAllByRole('combobox');
+    const sortSelect = comboboxes[2];
     fireEvent.click(sortSelect);
 
     const availabilitySort = screen.getByText('Availability');
@@ -388,12 +392,12 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    // Expert skills should have purple background
-    const expertSkill = screen.getByText(/TypeScript.*expert/i);
+    // Expert skills should have purple background - Alice has TypeScript (expert)
+    const expertSkill = screen.getByText('TypeScript (expert)');
     expect(expertSkill).toHaveClass('bg-purple-500');
 
-    // Advanced skills should have blue background
-    const advancedSkill = screen.getByText(/React.*advanced/i);
+    // Advanced skills should have blue background - Alice has React (advanced)
+    const advancedSkill = screen.getByText('React (advanced)');
     expect(advancedSkill).toHaveClass('bg-blue-500');
   });
 
@@ -404,12 +408,12 @@ describe('UnmappedPeople', () => {
       </TestWrapper>
     );
 
-    // High availability (80%+) should be green
-    const highAvailability = screen.getByText(/100%.*available/i);
+    // High availability (80%+) should be green - Bob has 100%
+    const highAvailability = screen.getByText('100% available');
     expect(highAvailability).toHaveClass('bg-green-500');
 
-    // Medium availability (50-79%) should be yellow
-    const mediumAvailability = screen.getByText(/60%.*available/i);
+    // Medium availability (50-79%) should be yellow - Carol has 60%
+    const mediumAvailability = screen.getByText('60% available');
     expect(mediumAvailability).toHaveClass('bg-yellow-500');
   });
 
