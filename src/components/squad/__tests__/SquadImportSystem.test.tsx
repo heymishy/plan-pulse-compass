@@ -153,15 +153,17 @@ describe('SquadImportSystem', () => {
     fireEvent.click(importButton);
 
     await waitFor(() => {
-      // Use helper to get first JSON Import tab
-      const jsonTab = getByTextFirst(screen, 'JSON Import');
+      // Use role-based selector for tab
+      const jsonTab = screen.getByRole('tab', { name: 'JSON Import' });
       fireEvent.click(jsonTab);
     });
 
-    expect(screen.getByText(/json.*data/i)).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText('Paste your JSON data here...')
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('JSON Data')).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText('Paste your JSON data here...')
+      ).toBeInTheDocument();
+    });
   });
 
   it('shows manual entry message', async () => {
@@ -242,12 +244,12 @@ describe('SquadImportSystem', () => {
     fireEvent.click(importButton);
 
     await waitFor(() => {
-      const jsonTab = getByTextFirst(screen, 'JSON Import');
+      const jsonTab = screen.getByRole('tab', { name: 'JSON Import' });
       fireEvent.click(jsonTab);
     });
 
-    const jsonInput = screen.getByPlaceholderText(
-      'Paste your JSON data here...'
+    const jsonInput = await waitFor(() =>
+      screen.getByPlaceholderText('Paste your JSON data here...')
     );
 
     const validJSON = JSON.stringify({
@@ -287,12 +289,12 @@ describe('SquadImportSystem', () => {
     fireEvent.click(importButton);
 
     await waitFor(() => {
-      const jsonTab = getByTextFirst(screen, 'JSON Import');
+      const jsonTab = screen.getByRole('tab', { name: 'JSON Import' });
       fireEvent.click(jsonTab);
     });
 
-    const jsonInput = screen.getByPlaceholderText(
-      'Paste your JSON data here...'
+    const jsonInput = await waitFor(() =>
+      screen.getByPlaceholderText('Paste your JSON data here...')
     );
     fireEvent.change(jsonInput, { target: { value: 'invalid json' } });
 

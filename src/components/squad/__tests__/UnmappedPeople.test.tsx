@@ -53,7 +53,10 @@ const mockUnmappedPeople: UnmappedPerson[] = [
   },
 ];
 
-const mockAppContextValue = createCompleteAppContextMock();
+const mockAppContextValue = {
+  ...createCompleteAppContextMock(),
+  unmappedPeople: mockUnmappedPeople,
+};
 
 const legacyMockAppContextValue = {
   unmappedPeople: mockUnmappedPeople,

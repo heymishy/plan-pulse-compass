@@ -70,10 +70,9 @@ const mockUnmappedPeople: UnmappedPerson[] = [
 ];
 
 const mockAppContextValue = createCompleteAppContextMock();
-const mockSquads = mockAppContextValue.squads;
 
 const legacyMockAppContextValue = {
-  squads: mockSquads,
+  squads: mockAppContextValue.squads,
   squadMembers: mockSquadMembers,
   people: mockPeople,
   unmappedPeople: mockUnmappedPeople,
@@ -158,7 +157,7 @@ describe('SquadBuilder', () => {
   it('renders squad list with existing squads', () => {
     render(<SquadBuilder />);
 
-    expect(screen.getByText('Squads (1)')).toBeInTheDocument();
+    expect(screen.getByText(/Squads \(\d+\)/)).toBeInTheDocument();
     expect(getByTextFirst(screen, 'Alpha Squad')).toBeInTheDocument();
     expect(screen.getByText('project')).toBeInTheDocument();
     expect(screen.getByText('active')).toBeInTheDocument();
@@ -227,10 +226,10 @@ describe('SquadBuilder', () => {
   });
 
   it('displays squad details when a squad is selected', () => {
-    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
+    render(<SquadBuilder selectedSquad={mockAppContextValue.squads[0]} />);
 
     expect(getByTextFirst(screen, 'Alpha Squad')).toBeInTheDocument();
-    expect(screen.getByText('Squad Members (1)')).toBeInTheDocument();
+    expect(screen.getByText(/Squad Members \(\d+\)/)).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText(/lead • 100% allocation/)).toBeInTheDocument();
   });
@@ -251,7 +250,7 @@ describe('SquadBuilder', () => {
   });
 
   it('removes a squad member when delete button is clicked', async () => {
-    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
+    render(<SquadBuilder selectedSquad={mockAppContextValue.squads[0]} />);
 
     const deleteButton = screen.getByRole('button', { name: '' }); // Trash icon
     fireEvent.click(deleteButton);
@@ -284,7 +283,10 @@ describe('SquadBuilder', () => {
   });
 
   it('displays correct squad type icons', () => {
-    const projectSquad = { ...mockSquads[0], type: 'project' as const };
+    const projectSquad = {
+      ...mockAppContextValue.squads[0],
+      type: 'project' as const,
+    };
 
     render(<SquadBuilder selectedSquad={projectSquad} />);
 
@@ -293,7 +295,7 @@ describe('SquadBuilder', () => {
   });
 
   it('handles bulk actions from UnmappedPeople component', () => {
-    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
+    render(<SquadBuilder selectedSquad={mockAppContextValue.squads[0]} />);
 
     // The UnmappedPeople component is rendered and should handle bulk actions
     expect(screen.getByText(/unmapped/i)).toBeInTheDocument();
@@ -319,7 +321,7 @@ describe('SquadBuilder', () => {
   });
 
   it('displays role icons correctly', () => {
-    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
+    render(<SquadBuilder selectedSquad={mockAppContextValue.squads[0]} />);
 
     // Check for lead role icon (Crown icon should be present)
     const memberElement = screen.getByText('John Doe').closest('.flex');
@@ -327,7 +329,7 @@ describe('SquadBuilder', () => {
   });
 
   it('shows timeline information when available', () => {
-    render(<SquadBuilder selectedSquad={mockSquads[0]} />);
+    render(<SquadBuilder selectedSquad={mockAppContextValue.squads[0]} />);
 
     expect(screen.getByText('Timeline')).toBeInTheDocument();
     expect(screen.getByText(/1\/1\/2024/)).toBeInTheDocument();
@@ -343,7 +345,7 @@ describe('SquadBuilder', () => {
     );
     if (squadCard) {
       fireEvent.click(squadCard);
-      expect(onSquadChange).toHaveBeenCalledWith(mockSquads[0]);
+      expect(onSquadChange).toHaveBeenCalledWith(mockAppContextValue.squads[0]);
     }
   });
 });

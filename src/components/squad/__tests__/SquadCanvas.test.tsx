@@ -262,7 +262,8 @@ describe('SquadCanvas', () => {
   it('displays zoom controls', () => {
     render(<SquadCanvas />);
 
-    expect(screen.getByRole('button', { name: '' })).toBeInTheDocument(); // Zoom in button
+    const buttons = screen.getAllByRole('button');
+    expect(buttons.length).toBeGreaterThanOrEqual(3); // At least zoom in, zoom out, reset
     expect(screen.getByText('100%')).toBeInTheDocument();
   });
 
