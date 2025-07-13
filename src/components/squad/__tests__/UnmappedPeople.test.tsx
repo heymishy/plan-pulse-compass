@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@/test/utils/test-utils';
-import { AppProvider } from '@/context/AppContext';
+import { AppProvider, useApp } from '@/context/AppContext';
 import UnmappedPeople from '../UnmappedPeople';
 import { UnmappedPerson } from '@/types';
 
@@ -123,7 +123,7 @@ vi.mock('@/context/AppContext', async () => {
   const actual = await vi.importActual('@/context/AppContext');
   return {
     ...actual,
-    useApp: () => mockAppContextValue,
+    useApp: vi.fn(),
   };
 });
 
@@ -134,6 +134,7 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 describe('UnmappedPeople', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useApp).mockReturnValue(mockAppContextValue);
   });
 
   it('renders unmapped people list', () => {
