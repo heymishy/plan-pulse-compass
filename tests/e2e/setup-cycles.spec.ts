@@ -80,17 +80,25 @@ test.describe('Setup Cycles E2E Tests', () => {
         console.log('✅ Quarters already exist, skipping generation');
       }
 
-      // Verify quarters were created
-      await expect(page.getByText('Q1 2024', { exact: true })).toBeVisible({
+      // Verify quarters were created within the dialog
+      await expect(
+        page.getByLabel('Manage Cycles').getByText('Q1 2024', { exact: true })
+      ).toBeVisible({
         timeout: 5000,
       });
-      await expect(page.getByText('Q2 2024', { exact: true })).toBeVisible({
+      await expect(
+        page.getByLabel('Manage Cycles').getByText('Q2 2024', { exact: true })
+      ).toBeVisible({
         timeout: 5000,
       });
-      await expect(page.getByText('Q3 2024', { exact: true })).toBeVisible({
+      await expect(
+        page.getByLabel('Manage Cycles').getByText('Q3 2024', { exact: true })
+      ).toBeVisible({
         timeout: 5000,
       });
-      await expect(page.getByText('Q4 2024', { exact: true })).toBeVisible({
+      await expect(
+        page.getByLabel('Manage Cycles').getByText('Q4 2024', { exact: true })
+      ).toBeVisible({
         timeout: 5000,
       });
 
@@ -196,8 +204,10 @@ test.describe('Setup Cycles E2E Tests', () => {
     await page.click('button:has-text("Manage Cycles")');
     await page.waitForTimeout(2000);
 
-    // Verify quarters still exist
-    await expect(page.getByText('Q1 2024', { exact: true })).toBeVisible({
+    // Verify quarters still exist within the dialog
+    await expect(
+      page.getByLabel('Manage Cycles').getByText('Q1 2024', { exact: true })
+    ).toBeVisible({
       timeout: 5000,
     });
 

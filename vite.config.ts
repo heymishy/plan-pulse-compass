@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
+    mode === 'development' && !process.env.CI && componentTagger(),
     mode === 'analyze' &&
       visualizer({
         filename: 'dist/stats.html',
