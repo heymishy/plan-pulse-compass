@@ -50,8 +50,8 @@ const UnmappedPeople: React.FC<UnmappedPeopleProps> = ({
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
-  const [skillFilter, setSkillFilter] = useState<string>('');
-  const [availabilityFilter, setAvailabilityFilter] = useState<string>('');
+  const [skillFilter, setSkillFilter] = useState<string>('all');
+  const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<
     'name' | 'availability' | 'skills' | 'importDate'
   >('name');
@@ -118,13 +118,13 @@ const UnmappedPeople: React.FC<UnmappedPeopleProps> = ({
         person.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesSkill =
-        !skillFilter ||
+        skillFilter === 'all' ||
         person.skills.some(skill =>
           skill.skillName.toLowerCase().includes(skillFilter.toLowerCase())
         );
 
       const matchesAvailability =
-        !availabilityFilter ||
+        availabilityFilter === 'all' ||
         (availabilityFilter === 'high' && person.availability >= 80) ||
         (availabilityFilter === 'medium' &&
           person.availability >= 50 &&
@@ -253,7 +253,7 @@ const UnmappedPeople: React.FC<UnmappedPeopleProps> = ({
                 <SelectValue placeholder="Filter by skill" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All skills</SelectItem>
+                <SelectItem value="all">All skills</SelectItem>
                 <SelectItem value="react">React</SelectItem>
                 <SelectItem value="python">Python</SelectItem>
                 <SelectItem value="product">Product Management</SelectItem>
@@ -268,7 +268,7 @@ const UnmappedPeople: React.FC<UnmappedPeopleProps> = ({
                 <SelectValue placeholder="Availability" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 <SelectItem value="high">High (80%+)</SelectItem>
                 <SelectItem value="medium">Medium (50-79%)</SelectItem>
                 <SelectItem value="low">Low (&lt;50%)</SelectItem>

@@ -53,7 +53,7 @@ const SquadSkillsAnalyzer: React.FC<SquadSkillsAnalyzerProps> = ({
     'overview' | 'gaps' | 'recommendations'
   >('overview');
   const [selectedSkillCategory, setSelectedSkillCategory] =
-    useState<string>('');
+    useState<string>('all');
 
   // Calculate skill coverage for all squads or selected squad
   const skillAnalysis = useMemo(() => {
@@ -204,7 +204,7 @@ const SquadSkillsAnalyzer: React.FC<SquadSkillsAnalyzerProps> = ({
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               <SelectItem value="technical">Technical</SelectItem>
               <SelectItem value="product">Product</SelectItem>
               <SelectItem value="design">Design</SelectItem>
