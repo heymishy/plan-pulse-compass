@@ -7,8 +7,6 @@ import {
   waitFor,
   within,
 } from '@/test/utils/test-utils';
-import { BrowserRouter } from 'react-router-dom';
-import { AppProvider } from '@/context/AppContext';
 import SquadManagement from '@/pages/SquadManagement';
 import { Squad, SquadMember, Person, UnmappedPerson } from '@/types';
 
@@ -253,11 +251,7 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver;
 
-const TestWrapper = ({ children }: { children: React.ReactNode }) => (
-  <BrowserRouter>
-    <AppProvider>{children}</AppProvider>
-  </BrowserRouter>
-);
+// Test wrapper is provided by test-utils, no need for additional wrapper
 
 describe('Squad Management UI Tests', () => {
   beforeEach(() => {
@@ -266,11 +260,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('Page Layout and Navigation', () => {
     it('renders squad management page with all main sections', () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       expect(screen.getByText('Squad Management')).toBeInTheDocument();
       expect(
@@ -288,11 +278,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('displays correct statistics from mock data', () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       expect(screen.getByText('2')).toBeInTheDocument(); // Total squads
       expect(screen.getByText('1 active')).toBeInTheDocument(); // Active squads
@@ -301,11 +287,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('shows all tab navigation options', () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       expect(screen.getByText('Overview')).toBeInTheDocument();
       expect(screen.getByText('Squads')).toBeInTheDocument();
@@ -318,11 +300,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('Overview Tab Functionality', () => {
     it('displays recent squads in overview', () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       expect(screen.getByText('Recent Squads')).toBeInTheDocument();
       expect(screen.getByText('Alpha Squad')).toBeInTheDocument();
@@ -332,11 +310,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('displays unmapped people in overview', () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       expect(screen.getByText('Unmapped People')).toBeInTheDocument();
       expect(screen.getByText('Alice Wilson')).toBeInTheDocument();
@@ -344,11 +318,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('shows map to squad button for unmapped people', () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const mapButtons = screen.getAllByText('Map to Squad');
       expect(mapButtons.length).toBeGreaterThan(0);
@@ -357,11 +327,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('Squads Tab Functionality', () => {
     it('switches to squads tab and shows squad builder', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const squadsTab = screen.getByText('Squads');
       fireEvent.click(squadsTab);
@@ -373,11 +339,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('displays squad cards with correct information', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const squadsTab = screen.getByText('Squads');
       fireEvent.click(squadsTab);
@@ -391,11 +353,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('opens create squad dialog when new squad button is clicked', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const squadsTab = screen.getByText('Squads');
       fireEvent.click(squadsTab);
@@ -414,11 +372,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('People Mapping Tab Functionality', () => {
     it('switches to people mapping tab and shows mapping interface', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const mappingTab = screen.getByText('People Mapping');
       fireEvent.click(mappingTab);
@@ -430,11 +384,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('displays unmapped people component in mapping tab', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const mappingTab = screen.getByText('People Mapping');
       fireEvent.click(mappingTab);
@@ -446,11 +396,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('shows squad overview with capacity information', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const mappingTab = screen.getByText('People Mapping');
       fireEvent.click(mappingTab);
@@ -465,11 +411,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('Import Tab Functionality', () => {
     it('switches to import tab and shows import system', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const importTab = screen.getByText('Import');
       fireEvent.click(importTab);
@@ -482,11 +424,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('opens import dialog when import button is clicked', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const importTab = screen.getByText('Import');
       fireEvent.click(importTab);
@@ -506,11 +444,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('Skills Analysis Tab Functionality', () => {
     it('switches to skills analysis tab and shows analyzer', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const skillsTab = screen.getByText('Skills Analysis');
       fireEvent.click(skillsTab);
@@ -524,11 +458,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('displays skills analysis tabs', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const skillsTab = screen.getByText('Skills Analysis');
       fireEvent.click(skillsTab);
@@ -541,11 +471,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('shows skill category filter', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const skillsTab = screen.getByText('Skills Analysis');
       fireEvent.click(skillsTab);
@@ -558,11 +484,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('Analytics Tab Functionality', () => {
     it('switches to analytics tab and shows canvas visualization', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const analyticsTab = screen.getByText('Analytics');
       fireEvent.click(analyticsTab);
@@ -578,11 +500,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('displays view mode buttons for canvas', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const analyticsTab = screen.getByText('Analytics');
       fireEvent.click(analyticsTab);
@@ -595,11 +513,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('changes canvas view mode when view buttons are clicked', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const analyticsTab = screen.getByText('Analytics');
       fireEvent.click(analyticsTab);
@@ -623,11 +537,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('Interactive Features', () => {
     it('allows squad selection and updates details', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const squadsTab = screen.getByText('Squads');
       fireEvent.click(squadsTab);
@@ -649,11 +559,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('handles search functionality in unmapped people', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const mappingTab = screen.getByText('People Mapping');
       fireEvent.click(mappingTab);
@@ -669,11 +575,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('shows bulk action buttons when people are selected', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const mappingTab = screen.getByText('People Mapping');
       fireEvent.click(mappingTab);
@@ -690,11 +592,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('handles zoom controls in canvas', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const analyticsTab = screen.getByText('Analytics');
       fireEvent.click(analyticsTab);
@@ -725,11 +623,7 @@ describe('Squad Management UI Tests', () => {
       vi.mocked(mockAppContextValue).squads = [];
       vi.mocked(mockAppContextValue).squadMembers = [];
 
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       expect(screen.getByText('0')).toBeInTheDocument(); // Total squads should be 0
     });
@@ -742,22 +636,14 @@ describe('Squad Management UI Tests', () => {
 
       vi.mocked(mockAppContextValue).people = [];
 
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       // Should not crash and should render the page
       expect(screen.getByText('Squad Management')).toBeInTheDocument();
     });
 
     it('validates form inputs when creating squads', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const squadsTab = screen.getByText('Squads');
       fireEvent.click(squadsTab);
@@ -779,11 +665,7 @@ describe('Squad Management UI Tests', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA labels and roles', () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       // Check for proper button roles
       const buttons = screen.getAllByRole('button');
@@ -799,11 +681,7 @@ describe('Squad Management UI Tests', () => {
     });
 
     it('supports keyboard navigation', async () => {
-      render(
-        <TestWrapper>
-          <SquadManagement />
-        </TestWrapper>
-      );
+      render(<SquadManagement />);
 
       const firstTab = screen.getByText('Overview');
       firstTab.focus();

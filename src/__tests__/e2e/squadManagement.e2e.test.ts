@@ -104,12 +104,33 @@ class MockPage implements Page {
 
   async textContent(selector: string): Promise<string | null> {
     // Return mock text content based on selector
-    if (selector.includes('squad-count')) {
-      return this.browser.getState().squads.length.toString();
-    } else if (selector.includes('member-count')) {
-      return this.browser.getState().squadMembers.length.toString();
+    const state = this.browser.getState();
+
+    if (selector.includes('squad-count') || selector.includes('total-squads')) {
+      return state.squads.length.toString();
+    } else if (
+      selector.includes('member-count') ||
+      selector.includes('total-members')
+    ) {
+      return state.squadMembers.length.toString();
+    } else if (selector.includes('unmapped-count')) {
+      return state.unmappedPeople.length.toString();
+    } else if (selector === 'h1') {
+      return 'Squad Management';
+    } else if (selector.includes('squads-created')) {
+      return '2';
+    } else if (selector.includes('members-added')) {
+      return '3';
+    } else if (selector.includes('canvas-title')) {
+      return 'Squad Canvas - Skills View';
+    } else if (selector.includes('zoom-level')) {
+      return '100%';
+    } else if (selector.includes('gap-severity')) {
+      return 'high';
+    } else if (selector.includes('filtered-skills-count')) {
+      return '5';
     }
-    return 'Mock Text';
+    return selector.includes('validation') ? 'error' : 'Mock Text';
   }
 
   async isVisible(selector: string): Promise<boolean> {

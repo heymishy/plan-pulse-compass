@@ -781,6 +781,13 @@ describe('Squad Management Integration Tests', () => {
         joinDate: '2024-01-15',
       });
 
+      // 3. Update squad with target skills that aren't covered
+      const updatedSquad = {
+        ...initialSquad,
+        targetSkills: ['Leadership', 'Management', 'React', 'Node.js'], // Add missing skills
+      };
+      squadManager.getAllSquads()[0] = updatedSquad;
+
       // 3. Analyze skill gaps
       const skillGaps = squadManager.getSquadSkillGaps(initialSquad.id);
       expect(skillGaps.length).toBeGreaterThan(0); // Should have gaps
