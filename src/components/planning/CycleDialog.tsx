@@ -77,6 +77,13 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
     if (!config?.financialYear) return [];
 
     const fyStart = new Date(config.financialYear.startDate);
+    if (isNaN(fyStart.getTime())) {
+      console.error(
+        'Invalid financial year start date:',
+        config.financialYear.startDate
+      );
+      return [];
+    }
     const fyMonth = fyStart.getMonth();
     const fyDay = fyStart.getDate();
     const currentYear = new Date().getFullYear();
@@ -191,6 +198,14 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
 
     // Use the selected financial year instead of the configured one
     const fyStart = new Date(selectedFinancialYear);
+    if (isNaN(fyStart.getTime())) {
+      toast({
+        title: 'Error',
+        description: `Invalid financial year date: ${selectedFinancialYear}`,
+        variant: 'destructive',
+      });
+      return;
+    }
     const fyYear = fyStart.getFullYear();
     const newQuarters: Cycle[] = [];
 

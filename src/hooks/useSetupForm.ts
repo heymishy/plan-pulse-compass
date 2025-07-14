@@ -133,7 +133,13 @@ export const useSetupForm = () => {
       ];
 
       // Create basic configuration with proper structure
-      const startYear = new Date(formData.financialYearStart).getFullYear();
+      const startDate = new Date(formData.financialYearStart);
+      if (isNaN(startDate.getTime())) {
+        throw new Error(
+          `Invalid financial year start date: ${formData.financialYearStart}`
+        );
+      }
+      const startYear = startDate.getFullYear();
       const config = {
         financialYear: {
           id: `fy-${startYear}`,

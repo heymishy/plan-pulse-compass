@@ -127,6 +127,13 @@ const Planning = () => {
     if (!config?.financialYear) return [];
 
     const fyStart = new Date(config.financialYear.startDate);
+    if (isNaN(fyStart.getTime())) {
+      console.error(
+        'Invalid financial year start date:',
+        config.financialYear.startDate
+      );
+      return [];
+    }
     const fyMonth = fyStart.getMonth();
     const fyDay = fyStart.getDate();
     const currentYear = new Date().getFullYear();
