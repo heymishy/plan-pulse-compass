@@ -16,12 +16,12 @@ import {
   Import,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { Team, TeamMember, UnmappedPerson } from '@/types';
+import { Team, UnmappedPerson } from '@/types';
+import { getTeamMembers } from '@/utils/teamUtils';
 import TeamBuilder from '@/components/teams/TeamBuilder';
 
 const TeamBuilderPage: React.FC = () => {
-  const { teams, teamMembers, unmappedPeople, people, getTeamMembers } =
-    useApp();
+  const { teams, unmappedPeople, people } = useApp();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -29,16 +29,28 @@ const TeamBuilderPage: React.FC = () => {
     'teams' | 'skills' | 'network'
   >('teams');
 
+  // Get all team members across all teams
+  const teamMembers = (teams || []).flatMap(team =>
+    getTeamMembers(team.id, people || []).map(person => ({
+      ...person,
+      teamId: team.id,
+      allocation: 100, // Default allocation percentage
+      isActive: person.isActive,
+    }))
+  );
+
   // Calculate overview statistics
   const stats = {
-    totalTeams: teams.length,
-    activeTeams: teams.filter(t => t.status === 'active').length,
-    totalMembers: teamMembers.filter(m => m.isActive).length,
-    unmappedCount: unmappedPeople.length,
+    totalTeams: teams?.length || 0,
+    activeTeams: teams?.filter(t => t.status === 'active').length || 0,
+    totalMembers: teamMembers?.filter(m => m.isActive).length || 0,
+    unmappedCount: unmappedPeople?.length || 0,
     avgTeamSize:
-      teams.length > 0
+      teams?.length > 0
         ? Math.round(
-            (teamMembers.filter(m => m.isActive).length / teams.length) * 10
+            ((teamMembers?.filter(m => m.isActive).length || 0) /
+              teams.length) *
+              10
           ) / 10
         : 0,
   };
@@ -156,7 +168,7 @@ const TeamBuilderPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {people.length > 0
+              {(people?.length || 0) > 0
                 ? Math.round((stats.totalMembers / people.length) * 100)
                 : 0}
               %
@@ -174,9 +186,10 @@ const TeamBuilderPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {teamMembers.length > 0
+              {(teamMembers?.length || 0) > 0
                 ? Math.round(
-                    (teamMembers.filter(m => m.allocation >= 80).length /
+                    ((teamMembers?.filter(m => m.allocation >= 80).length ||
+                      0) /
                       teamMembers.length) *
                       100
                   )
@@ -208,8 +221,8 @@ const TeamBuilderPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {teams.slice(0, 5).map(team => {
-                    const memberCount = getTeamMembers(team.id).length;
+                  {(teams || []).slice(0, 5).map(team => {
+                    const memberCount = getTeamMembers(team.id, people).length;
 
                     return (
                       <div
@@ -239,7 +252,7 @@ const TeamBuilderPage: React.FC = () => {
                     );
                   })}
 
-                  {teams.length === 0 && (
+                  {(teams?.length || 0) === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
                       <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
                       <p>No teams created yet</p>
@@ -259,7 +272,7 @@ const TeamBuilderPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {unmappedPeople.slice(0, 5).map(person => (
+                  {(unmappedPeople || []).slice(0, 5).map(person => (
                     <div
                       key={person.id}
                       className="flex items-center justify-between p-3 border rounded-lg"
@@ -282,7 +295,7 @@ const TeamBuilderPage: React.FC = () => {
                     </div>
                   ))}
 
-                  {unmappedPeople.length === 0 && (
+                  {(unmappedPeople?.length || 0) === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
                       <UserPlus className="h-12 w-12 mx-auto mb-3 opacity-50" />
                       <p>All people are mapped</p>
@@ -326,13 +339,10 @@ const TeamBuilderPage: React.FC = () => {
                 View existing teams and their current members.
               </p>
               <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                {teams.map(team => {
-                  const members = getTeamMembers(team.id);
+                {(teams || []).map(team => {
+                  const members = getTeamMembers(team.id, people);
                   const memberCount = members.length;
-                  const capacityUsed = members.reduce(
-                    (sum, m) => sum + (m.allocation / 100) * 40,
-                    0
-                  );
+                  const capacityUsed = memberCount * 40; // Assume 40 hours per week per member
 
                   return (
                     <Card key={team.id} className="p-4">
@@ -368,7 +378,7 @@ const TeamBuilderPage: React.FC = () => {
                   );
                 })}
 
-                {teams.length === 0 && (
+                {(teams?.length || 0) === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p>No teams created yet</p>
@@ -506,7 +516,9 @@ const TeamBuilderPage: React.FC = () => {
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-md mx-auto">
                   <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-lg font-bold">{teams.length}</div>
+                    <div className="text-lg font-bold">
+                      {teams?.length || 0}
+                    </div>
                     <div className="text-xs">Teams</div>
                   </div>
                   <div className="p-3 bg-gray-50 rounded">
@@ -517,7 +529,7 @@ const TeamBuilderPage: React.FC = () => {
                   </div>
                   <div className="p-3 bg-gray-50 rounded">
                     <div className="text-lg font-bold">
-                      {teams.reduce(
+                      {(teams || []).reduce(
                         (acc, team) => acc + (team.targetSkills?.length || 0),
                         0
                       )}
