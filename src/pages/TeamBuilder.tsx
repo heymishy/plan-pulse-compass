@@ -222,7 +222,14 @@ const TeamBuilderPage: React.FC = () => {
               <CardContent>
                 <div className="space-y-3">
                   {(teams || []).slice(0, 5).map(team => {
+<<<<<<< HEAD
                     const memberCount = getTeamMembers(team.id, people).length;
+=======
+                    const memberCount = getTeamMembers(
+                      team.id,
+                      people || []
+                    ).length;
+>>>>>>> 71dbe4d (Fix: Restore TeamBuilder functionality after merge revert)
 
                     return (
                       <div
@@ -340,7 +347,11 @@ const TeamBuilderPage: React.FC = () => {
               </p>
               <div className="space-y-3 max-h-[500px] overflow-y-auto">
                 {(teams || []).map(team => {
+<<<<<<< HEAD
                   const members = getTeamMembers(team.id, people);
+=======
+                  const members = getTeamMembers(team.id, people || []);
+>>>>>>> 71dbe4d (Fix: Restore TeamBuilder functionality after merge revert)
                   const memberCount = members.length;
                   const capacityUsed = memberCount * 40; // Assume 40 hours per week per member
 
