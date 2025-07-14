@@ -57,7 +57,7 @@ export const optimizeBudgetAllocation = (
   console.log('Starting budget optimization analysis...');
   
   // Calculate current state
-  const currentState = calculateCurrentState(divisions, teams, people, roles, divisionBudgets);
+  const currentState = calculateCurrentState(divisions, teams, people, roles, divisionBudgets, config);
   
   // Generate optimization scenarios
   const scenarios = generateOptimizationScenarios(
@@ -90,7 +90,8 @@ const calculateCurrentState = (
   teams: Team[],
   people: Person[],
   roles: Role[],
-  divisionBudgets: DivisionBudget[]
+  divisionBudgets: DivisionBudget[],
+  config: AppConfig
 ) => {
   const totalBudget = divisionBudgets.reduce((sum, db) => sum + db.totalBudget, 0);
   const totalActualSpend = divisionBudgets.reduce((sum, db) => sum + db.actualSpend, 0);
@@ -103,7 +104,7 @@ const calculateCurrentState = (
     teamMembers.forEach(person => {
       const role = roles.find(r => r.id === person.roleId);
       if (role) {
-        const personCost = calculatePersonCost(person, role);
+        const personCost = calculatePersonCost(person, role, config);
         totalCost += personCost.costPerMonth * 12; // Annual cost
       }
     });

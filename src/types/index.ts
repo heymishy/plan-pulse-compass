@@ -284,6 +284,192 @@ export interface AppConfig {
   financialYear: FinancialYear;
   iterationLength: 'fortnightly' | 'monthly' | '6-weekly';
   quarters: Cycle[];
+  workingDaysPerWeek: number; // e.g., 5 for a standard work week
+  workingHoursPerDay: number; // e.g., 8 for a standard workday
+  currencySymbol: string; // e.g., '
+
+export type ViewMode = 'table' | 'card' | 'canvas';
+export type CycleType = 'annual' | 'quarterly' | 'monthly' | 'iteration';
+
+// Financial calculation types
+export interface PersonCost {
+  personId: string;
+  costPerDay: number;
+  costPerWeek: number;
+  costPerMonth: number;
+  costPerYear: number;
+}
+
+export interface ProjectCost {
+  projectId: string;
+  totalCost: number;
+  costBreakdown: {
+    personId: string;
+    personName: string;
+    allocationPercentage: number;
+    duration: number; // in days
+    totalPersonCost: number;
+  }[];
+}
+
+// Skills Management Types
+export interface Skill {
+  id: string;
+  name: string;
+  category: SkillCategory;
+  description?: string;
+  createdDate: string;
+}
+
+export type SkillCategory =
+  | 'programming-language'
+  | 'framework'
+  | 'platform'
+  | 'domain-knowledge'
+  | 'methodology'
+  | 'tool'
+  | 'other';
+
+export interface PersonSkill {
+  id: string;
+  personId: string;
+  skillId: string;
+  proficiencyLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  yearsOfExperience?: number;
+  lastUsed?: string;
+  certifications?: string[];
+  notes?: string;
+}
+
+export interface TeamSkillSummary {
+  skillId: string;
+  skillName: string;
+  category: SkillCategory;
+  peopleCount: number;
+  averageProficiency: number;
+  proficiencyDistribution: {
+    beginner: number;
+    intermediate: number;
+    advanced: number;
+    expert: number;
+  };
+}
+
+// NEW: Project Risk Type
+export interface ProjectRisk {
+  id: string;
+  description: string;
+  impact: 'low' | 'medium' | 'high';
+  probability: 'low' | 'medium' | 'high';
+  status: 'open' | 'closed' | 'mitigated';
+  mitigation?: string;
+  ownerId?: string; // Person responsible
+  createdDate: string;
+}
+
+// NEW: Project Report Types
+export type ProjectHealthStatus = 'on-track' | 'at-risk' | 'off-track';
+
+export interface ProjectReportExecutiveSummary {
+  overallStatus: ProjectHealthStatus;
+  commentary: string;
+  keyMetrics: {
+    budget: { value: number; trend: 'up' | 'down' | 'stable' };
+    timeline: { value: string; trend: 'ahead' | 'behind' | 'stable' };
+    scope: {
+      completed: number;
+      total: number;
+      trend: 'up' | 'down' | 'stable';
+    };
+  };
+}
+
+export interface ProjectReportFinancials {
+  totalCost: number;
+  budget: number;
+  variance: number;
+  burnRate: number; // monthly
+  costBreakdown: {
+    personId: string;
+    personName: string;
+    allocationPercentage: number;
+    duration: number;
+    totalPersonCost: number;
+  }[];
+  teamBreakdown: {
+    teamId: string;
+    teamName: string;
+    totalCost: number;
+    allocationPercentage: number;
+  }[];
+}
+
+export interface ProjectReportProgress {
+  completedEpics: Epic[];
+  inProgressEpics: Epic[];
+  upcomingEpics: Epic[];
+  completedMilestones: Milestone[];
+  inProgressMilestones: Milestone[];
+  upcomingMilestones: Milestone[];
+}
+
+export interface ProjectReportTeamPerformance {
+  teamAllocations: {
+    teamId: string;
+    teamName: string;
+    totalAllocation: number; // percentage
+  }[];
+}
+
+export interface ProjectReportData {
+  projectId: string;
+  projectName: string;
+  generatedDate: string;
+  reportPeriod: {
+    startDate: string;
+    endDate: string;
+  };
+  summary: ProjectReportExecutiveSummary;
+  financials: ProjectReportFinancials;
+  progress: ProjectReportProgress;
+  teams: ProjectReportTeamPerformance;
+  risks: ProjectRisk[];
+}
+
+export interface UnmappedPerson {
+  id: string;
+  name: string;
+  email?: string;
+  roleId?: string;
+  roleName?: string;
+  skills: {
+    skillId: string;
+    skillName: string;
+    proficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  }[];
+  currentTeamId?: string;
+  currentTeamName?: string;
+  availability: number; // percentage available for new teams
+  joinDate?: string;
+  importedDate: string;
+}
+
+// Goal-related imports and additions
+export type {
+  Goal,
+  GoalMetric,
+  NorthStar,
+  GoalEpic,
+  GoalMilestone,
+  GoalTeam,
+  JourneyPath,
+  GoalProgress,
+  JourneyCanvasConfig,
+  GoalFilterType,
+  CreateGoalRequest,
+  UpdateGoalRequest,
+} from './goalTypes';
+, '€', '£'
 }
 
 export type ViewMode = 'table' | 'card' | 'canvas';

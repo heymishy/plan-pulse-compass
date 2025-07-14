@@ -1,8 +1,6 @@
 import { Person, Role, Allocation, Epic, Project, Cycle, Team, AppConfig } from '@/types';
 
-export const WORKING_DAYS_PER_WEEK = 5;
-export const WORKING_DAYS_PER_MONTH = 22;
-export const WORKING_DAYS_PER_YEAR = 260;
+
 
 export interface PersonCostCalculation {
   personId: string;
@@ -16,7 +14,8 @@ export interface PersonCostCalculation {
   rateType: 'hourly' | 'daily' | 'annual';
 }
 
-export const calculatePersonCost = (person: Person, role: Role): PersonCostCalculation => {
+export const calculatePersonCost = (person: Person, role: Role, config: AppConfig): PersonCostCalculation => {
+  const { workingHoursPerDay, workingDaysPerYear, workingDaysPerWeek, workingDaysPerMonth } = config;
   let costPerHour = 0;
   let rateSource: 'personal' | 'role-default' | 'legacy-fallback' = 'legacy-fallback';
   let effectiveRate = 0;
@@ -25,14 +24,14 @@ export const calculatePersonCost = (person: Person, role: Role): PersonCostCalcu
   if (person.employmentType === 'permanent') {
     // Priority 1: Individual salary
     if (person.annualSalary && person.annualSalary > 0) {
-      costPerHour = person.annualSalary / (WORKING_DAYS_PER_YEAR * 8);
+      costPerHour = person.annualSalary / (workingDaysPerYear * workingHoursPerDay);
       rateSource = 'personal';
       effectiveRate = person.annualSalary;
       rateType = 'annual';
     }
     // Priority 2: Role default annual salary
     else if (role.defaultAnnualSalary && role.defaultAnnualSalary > 0) {
-      costPerHour = role.defaultAnnualSalary / (WORKING_DAYS_PER_YEAR * 8);
+      costPerHour = role.defaultAnnualSalary / (workingDaysPerYear * workingHoursPerDay);
       rateSource = 'role-default';
       effectiveRate = role.defaultAnnualSalary;
       rateType = 'annual';
@@ -81,10 +80,10 @@ export const calculatePersonCost = (person: Person, role: Role): PersonCostCalcu
   return {
     personId: person.id,
     costPerHour,
-    costPerDay: costPerHour * 8,
-    costPerWeek: costPerHour * 8 * WORKING_DAYS_PER_WEEK,
-    costPerMonth: costPerHour * 8 * WORKING_DAYS_PER_MONTH,
-    costPerYear: costPerHour * 8 * WORKING_DAYS_PER_YEAR,
+    costPerDay: costPerHour * workingHoursPerDay,
+    costPerWeek: costPerHour * workingHoursPerDay * workingDaysPerWeek,
+    costPerMonth: costPerHour * workingHoursPerDay * workingDaysPerMonth,
+    costPerYear: costPerHour * workingHoursPerDay * workingDaysPerYear,
     rateSource,
     effectiveRate,
     rateType,
@@ -93,13 +92,14 @@ export const calculatePersonCost = (person: Person, role: Role): PersonCostCalcu
 
 export const calculateTeamWeeklyCost = (
   teamMembers: Person[],
-  roles: Role[]
+  roles: Role[],
+  config: AppConfig
 ): number => {
   let weeklyCost = 0;
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role);
+      const personCost = calculatePersonCost(person, role, config);
       weeklyCost += personCost.costPerWeek;
     }
   });
@@ -108,13 +108,14 @@ export const calculateTeamWeeklyCost = (
 
 export const calculateTeamMonthlyCost = (
   teamMembers: Person[],
-  roles: Role[]
+  roles: Role[],
+  config: AppConfig
 ): number => {
   let monthlyCost = 0;
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role);
+      const personCost = calculatePersonCost(person, role, config);
       monthlyCost += personCost.costPerMonth;
     }
   });
@@ -123,20 +124,22 @@ export const calculateTeamMonthlyCost = (
 
 export const calculateTeamQuarterlyCost = (
   teamMembers: Person[],
-  roles: Role[]
+  roles: Role[],
+  config: AppConfig
 ): number => {
-  return calculateTeamMonthlyCost(teamMembers, roles) * 3;
+  return calculateTeamMonthlyCost(teamMembers, roles, config) * 3;
 };
 
 export const calculateTeamAnnualCost = (
   teamMembers: Person[],
-  roles: Role[]
+  roles: Role[],
+  config: AppConfig
 ): number => {
   let annualCost = 0;
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role);
+      const personCost = calculatePersonCost(person, role, config);
       annualCost += personCost.costPerYear;
     }
   });
@@ -147,7 +150,8 @@ export const calculateAllocationCost = (
   allocation: Allocation,
   cycle: Cycle,
   teamMembers: Person[],
-  roles: Role[]
+  roles: Role[],
+  config: AppConfig
 ): number => {
   const cycleDurationInDays = Math.ceil(
     (new Date(cycle.endDate).getTime() - new Date(cycle.startDate).getTime()) / (1000 * 60 * 60 * 24)
@@ -159,7 +163,7 @@ export const calculateAllocationCost = (
     const role = roles.find(r => r.id === person.roleId);
     if (!role) return;
 
-    const personCost = calculatePersonCost(person, role);
+    const personCost = calculatePersonCost(person, role, config);
     const allocationCost = personCost.costPerDay * cycleDurationInDays * (allocation.percentage / 100);
     totalCost += allocationCost;
   });
@@ -174,7 +178,8 @@ export const calculateProjectCost = (
   cycles: Cycle[],
   people: Person[],
   roles: Role[],
-  teams: Team[]
+  teams: Team[],
+  config: AppConfig
 ): { totalCost: number; breakdown: any[]; teamBreakdown: any[]; monthlyBurnRate: number; totalDurationInDays: number; } => {
   const projectEpics = epics.filter(epic => epic.projectId === project.id);
   const projectAllocations = allocations.filter(allocation => 
@@ -205,7 +210,7 @@ export const calculateProjectCost = (
       const role = roles.find(r => r.id === person.roleId);
       if (!role) return;
 
-      const personCost = calculatePersonCost(person, role);
+      const personCost = calculatePersonCost(person, role, config);
       const cycleDurationInDays = Math.ceil(
         (new Date(cycle.endDate).getTime() - new Date(cycle.startDate).getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -307,7 +312,7 @@ export const calculateProjectCostForYear = (
         const teamMembers = people.filter(p => p.teamId === alloc.teamId && p.isActive);
         // calculateAllocationCost requires all team members, not just active ones for historical cost.
         const allTeamMembers = people.filter(p => p.teamId === alloc.teamId);
-        const costOfAllocation = calculateAllocationCost(alloc, iterationCycle, allTeamMembers, roles);
+        const costOfAllocation = calculateAllocationCost(alloc, iterationCycle, allTeamMembers, roles, config);
         quarterCost += costOfAllocation;
       }
     });

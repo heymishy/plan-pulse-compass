@@ -28,7 +28,19 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [config, setConfig] = useLocalStorage<AppConfig | null>(
     'planning-config',
-    null
+    {
+      financialYear: {
+        id: 'default-fy',
+        name: 'Default Financial Year',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      },
+      iterationLength: 'fortnightly',
+      quarters: [],
+      workingDaysPerWeek: 5,
+      workingHoursPerDay: 8,
+      currencySymbol: '$',
+    }
   );
   const [isSetupComplete, setIsSetupComplete] = useLocalStorage<boolean>(
     'planning-setup-complete',
