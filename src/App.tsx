@@ -8,6 +8,7 @@ import Index from './pages/Index';
 import Setup from './pages/Setup';
 import Dashboard from './pages/Dashboard';
 import Teams from './pages/Teams';
+import TeamBuilder from './pages/TeamBuilder';
 import People from './pages/People';
 import Skills from './pages/Skills';
 import Projects from './pages/Projects';
@@ -23,7 +24,6 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Canvas from './pages/Canvas';
 import ScenarioAnalysis from './pages/ScenarioAnalysis';
-import SquadManagement from './pages/SquadManagement';
 import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
 import {
@@ -77,7 +77,7 @@ function App() {
                       />
                       <Route
                         path="/squad-management"
-                        element={<SquadManagement />}
+                        element={<TeamBuilder />}
                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

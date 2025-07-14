@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,54 +29,48 @@ import {
   Crown,
   User,
   UserCheck,
+  UserPlus,
   Calendar,
   AlertCircle,
   CheckCircle,
   Star,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import {
-  Squad,
-  SquadMember,
-  SquadType,
-  SquadStatus,
-  SquadMemberRole,
-  UnmappedPerson,
-} from '@/types';
-import UnmappedPeople from './UnmappedPeople';
+import { Team, TeamMember, UnmappedPerson } from '@/types';
+// UnmappedPeople component was consolidated into Team functionality
 
-interface SquadBuilderProps {
-  selectedSquad?: Squad;
-  onSquadChange?: (squad: Squad) => void;
+interface TeamBuilderProps {
+  selectedTeam?: Team;
+  onTeamChange?: (team: Team) => void;
 }
 
-const SquadBuilder: React.FC<SquadBuilderProps> = ({
-  selectedSquad,
-  onSquadChange,
+const TeamBuilder: React.FC<TeamBuilderProps> = ({
+  selectedTeam,
+  onTeamChange,
 }) => {
   const {
-    squads,
-    squadMembers,
+    teams,
+    teamMembers,
     people,
-    addSquad,
-    updateSquad,
-    deleteSquad,
-    addSquadMember,
-    updateSquadMember,
-    removeSquadMember,
-    getSquadMembers,
+    addTeam,
+    updateTeam,
+    deleteTeam,
+    addTeamMember,
+    updateTeamMember,
+    removeTeamMember,
+    getTeamMembers,
     divisions,
     projects,
   } = useApp();
 
-  const [editingSquad, setEditingSquad] = useState<Squad | null>(null);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newSquadData, setNewSquadData] = useState({
+  const [newTeamData, setNewTeamData] = useState({
     name: '',
     description: '',
-    type: 'project' as SquadType,
-    status: 'planning' as SquadStatus,
-    capacity: 5,
+    type: 'project' as Team['type'],
+    status: 'planning' as Team['status'],
+    capacity: 40,
     divisionId: '',
     projectIds: [] as string[],
     targetSkills: [] as string[],
@@ -86,11 +80,11 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
     },
   });
 
-  const currentSquadMembers = selectedSquad
-    ? getSquadMembers(selectedSquad.id)
+  const currentTeamMembers = selectedTeam
+    ? getTeamMembers(selectedTeam.id)
     : [];
 
-  const getSquadStatusColor = (status: SquadStatus) => {
+  const getTeamStatusColor = (status: Team['status']) => {
     switch (status) {
       case 'active':
         return 'bg-green-500';
@@ -105,7 +99,7 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
     }
   };
 
-  const getSquadTypeIcon = (type: SquadType) => {
+  const getTeamTypeIcon = (type: Team['type']) => {
     switch (type) {
       case 'project':
         return '🚀';
@@ -115,12 +109,14 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
         return '🔄';
       case 'feature-team':
         return '⚡';
+      case 'permanent':
+        return '🏢';
       default:
         return '👥';
     }
   };
 
-  const getRoleIcon = (role: SquadMemberRole) => {
+  const getRoleIcon = (role: TeamMember['role']) => {
     switch (role) {
       case 'lead':
         return <Crown className="h-4 w-4 text-yellow-500" />;
@@ -135,22 +131,22 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
     }
   };
 
-  const handleCreateSquad = () => {
-    if (!newSquadData.name.trim()) return;
+  const handleCreateTeam = () => {
+    if (!newTeamData.name.trim()) return;
 
-    const squadData = {
-      ...newSquadData,
-      targetSkills: [], // Will be populated later
+    const teamData = {
+      ...newTeamData,
+      targetSkills: [],
     };
 
-    addSquad(squadData);
+    addTeam(teamData);
     setIsCreateDialogOpen(false);
-    setNewSquadData({
+    setNewTeamData({
       name: '',
       description: '',
       type: 'project',
       status: 'planning',
-      capacity: 5,
+      capacity: 40,
       divisionId: '',
       projectIds: [],
       targetSkills: [],
@@ -162,50 +158,50 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
   };
 
   const handlePersonSelect = (person: UnmappedPerson) => {
-    if (!selectedSquad) {
-      // Create a new squad with this person
-      setNewSquadData(prev => ({ ...prev, name: `${person.name}'s Squad` }));
+    if (!selectedTeam) {
+      // Create a new team with this person
+      setNewTeamData(prev => ({ ...prev, name: `${person.name}'s Team` }));
       setIsCreateDialogOpen(true);
       return;
     }
 
-    // Add person to the selected squad
+    // Add person to the selected team
     const memberData = {
-      squadId: selectedSquad.id,
+      teamId: selectedTeam.id,
       personId: person.id,
-      role: 'member' as SquadMemberRole,
+      role: 'member' as TeamMember['role'],
       allocation: 100,
       startDate: new Date().toISOString().split('T')[0],
       isActive: true,
     };
 
-    addSquadMember(memberData);
+    addTeamMember(memberData);
   };
 
   const handleBulkAction = (action: string, people: UnmappedPerson[]) => {
     switch (action) {
-      case 'assign-to-squad':
-        if (!selectedSquad) return;
+      case 'assign-to-team':
+        if (!selectedTeam) return;
 
         people.forEach(person => {
           const memberData = {
-            squadId: selectedSquad.id,
+            teamId: selectedTeam.id,
             personId: person.id,
-            role: 'member' as SquadMemberRole,
+            role: 'member' as TeamMember['role'],
             allocation: 100,
             startDate: new Date().toISOString().split('T')[0],
             isActive: true,
           };
-          addSquadMember(memberData);
+          addTeamMember(memberData);
         });
         break;
 
-      case 'create-squad':
+      case 'create-team':
         if (people.length > 0) {
-          setNewSquadData(prev => ({
+          setNewTeamData(prev => ({
             ...prev,
             name: `${people[0].name}'s Team`,
-            capacity: people.length + 2, // Add some buffer
+            capacity: people.length * 40 + 40, // Add some buffer
           }));
           setIsCreateDialogOpen(true);
         }
@@ -214,7 +210,7 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
   };
 
   const handleRemoveMember = (memberId: string) => {
-    removeSquadMember(memberId);
+    removeTeamMember(memberId);
   };
 
   const getPersonName = (personId: string) => {
@@ -222,8 +218,8 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
     return person?.name || 'Unknown Person';
   };
 
-  const calculateSquadHealth = (squad: Squad) => {
-    const members = getSquadMembers(squad.id);
+  const calculateTeamHealth = (team: Team) => {
+    const members = getTeamMembers(team.id);
     const totalAllocation = members.reduce(
       (sum, member) => sum + member.allocation,
       0
@@ -232,7 +228,7 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
       members.length > 0 ? totalAllocation / members.length : 0;
 
     if (members.length === 0) return { score: 0, status: 'empty' };
-    if (members.length < squad.capacity * 0.5)
+    if (members.length * 40 < team.capacity * 0.5)
       return { score: 30, status: 'understaffed' };
     if (avgAllocation < 50) return { score: 50, status: 'underutilized' };
     if (avgAllocation > 90) return { score: 90, status: 'excellent' };
@@ -241,13 +237,13 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-      {/* Squad List */}
+      {/* Team List */}
       <Card className="lg:col-span-1">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center">
               <Target className="h-5 w-5 mr-2" />
-              Squads ({squads.length})
+              Teams ({teams.length})
             </CardTitle>
             <Dialog
               open={isCreateDialogOpen}
@@ -256,40 +252,41 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
               <DialogTrigger asChild>
                 <Button size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  New Squad
+                  New Team
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Create New Squad</DialogTitle>
+                  <DialogTitle>Create New Team</DialogTitle>
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Squad Name</Label>
+                    <Label htmlFor="name">Team Name</Label>
                     <Input
                       id="name"
-                      value={newSquadData.name}
+                      value={newTeamData.name}
                       onChange={e =>
-                        setNewSquadData(prev => ({
+                        setNewTeamData(prev => ({
                           ...prev,
                           name: e.target.value,
                         }))
                       }
-                      placeholder="Enter squad name"
+                      placeholder="Enter team name"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="type">Type</Label>
                     <Select
-                      value={newSquadData.type}
-                      onValueChange={(value: SquadType) =>
-                        setNewSquadData(prev => ({ ...prev, type: value }))
+                      value={newTeamData.type}
+                      onValueChange={(value: Team['type']) =>
+                        setNewTeamData(prev => ({ ...prev, type: value }))
                       }
                     >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="permanent">Permanent</SelectItem>
                         <SelectItem value="project">Project</SelectItem>
                         <SelectItem value="initiative">Initiative</SelectItem>
                         <SelectItem value="workstream">Workstream</SelectItem>
@@ -302,9 +299,9 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Select
-                      value={newSquadData.status}
-                      onValueChange={(value: SquadStatus) =>
-                        setNewSquadData(prev => ({ ...prev, status: value }))
+                      value={newTeamData.status}
+                      onValueChange={(value: Team['status']) =>
+                        setNewTeamData(prev => ({ ...prev, status: value }))
                       }
                     >
                       <SelectTrigger>
@@ -319,33 +316,33 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="capacity">Target Capacity</Label>
+                    <Label htmlFor="capacity">Weekly Capacity (hours)</Label>
                     <Input
                       id="capacity"
                       type="number"
-                      value={newSquadData.capacity}
+                      value={newTeamData.capacity}
                       onChange={e =>
-                        setNewSquadData(prev => ({
+                        setNewTeamData(prev => ({
                           ...prev,
                           capacity: parseInt(e.target.value) || 0,
                         }))
                       }
                       min="1"
-                      max="20"
+                      max="400"
                     />
                   </div>
                   <div className="col-span-2 space-y-2">
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
-                      value={newSquadData.description}
+                      value={newTeamData.description}
                       onChange={e =>
-                        setNewSquadData(prev => ({
+                        setNewTeamData(prev => ({
                           ...prev,
                           description: e.target.value,
                         }))
                       }
-                      placeholder="Describe the squad's purpose and goals"
+                      placeholder="Describe the team's purpose and goals"
                       rows={3}
                     />
                   </div>
@@ -354,9 +351,9 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
                     <Input
                       id="start-date"
                       type="date"
-                      value={newSquadData.duration.start}
+                      value={newTeamData.duration.start}
                       onChange={e =>
-                        setNewSquadData(prev => ({
+                        setNewTeamData(prev => ({
                           ...prev,
                           duration: { ...prev.duration, start: e.target.value },
                         }))
@@ -368,9 +365,9 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
                     <Input
                       id="end-date"
                       type="date"
-                      value={newSquadData.duration.end}
+                      value={newTeamData.duration.end}
                       onChange={e =>
-                        setNewSquadData(prev => ({
+                        setNewTeamData(prev => ({
                           ...prev,
                           duration: { ...prev.duration, end: e.target.value },
                         }))
@@ -385,41 +382,41 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleCreateSquad}>Create Squad</Button>
+                  <Button onClick={handleCreateTeam}>Create Team</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
         </CardHeader>
         <CardContent className="space-y-3 max-h-96 overflow-y-auto">
-          {squads.map(squad => {
-            const members = getSquadMembers(squad.id);
-            const health = calculateSquadHealth(squad);
-            const isSelected = selectedSquad?.id === squad.id;
+          {teams.map(team => {
+            const members = getTeamMembers(team.id);
+            const health = calculateTeamHealth(team);
+            const isSelected = selectedTeam?.id === team.id;
 
             return (
               <Card
-                key={squad.id}
+                key={team.id}
                 className={`p-3 cursor-pointer transition-all hover:shadow-md ${
                   isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
                 }`}
-                onClick={() => onSquadChange?.(squad)}
+                onClick={() => onTeamChange?.(team)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <span className="text-lg">
-                      {getSquadTypeIcon(squad.type)}
+                      {getTeamTypeIcon(team.type)}
                     </span>
                     <div>
-                      <h4 className="font-medium">{squad.name}</h4>
-                      <p className="text-xs text-gray-600">{squad.type}</p>
+                      <h4 className="font-medium">{team.name}</h4>
+                      <p className="text-xs text-gray-600">{team.type}</p>
                     </div>
                   </div>
                   <Badge
                     variant="secondary"
-                    className={`text-white ${getSquadStatusColor(squad.status)}`}
+                    className={`text-white ${getTeamStatusColor(team.status)}`}
                   >
-                    {squad.status}
+                    {team.status}
                   </Badge>
                 </div>
 
@@ -427,7 +424,7 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center">
                       <Users className="h-3 w-3 mr-1" />
-                      {members.length}/{squad.capacity}
+                      {members.length} members
                     </div>
                     <div className="flex items-center">
                       {health.status === 'excellent' && (
@@ -450,58 +447,58 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
             );
           })}
 
-          {squads.length === 0 && (
+          {teams.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No squads created yet</p>
+              <p>No teams created yet</p>
               <Button
                 variant="outline"
                 size="sm"
                 className="mt-2"
                 onClick={() => setIsCreateDialogOpen(true)}
               >
-                Create your first squad
+                Create your first team
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Squad Details */}
+      {/* Team Details */}
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle className="flex items-center">
-            {selectedSquad ? (
+            {selectedTeam ? (
               <>
                 <span className="text-lg mr-2">
-                  {getSquadTypeIcon(selectedSquad.type)}
+                  {getTeamTypeIcon(selectedTeam.type)}
                 </span>
-                {selectedSquad.name}
+                {selectedTeam.name}
               </>
             ) : (
               <>
                 <Users className="h-5 w-5 mr-2" />
-                Select a Squad
+                Select a Team
               </>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {selectedSquad ? (
+          {selectedTeam ? (
             <div className="space-y-4">
               <div>
                 <h4 className="font-medium mb-2">Description</h4>
                 <p className="text-sm text-gray-600">
-                  {selectedSquad.description || 'No description provided'}
+                  {selectedTeam.description || 'No description provided'}
                 </p>
               </div>
 
               <div>
                 <h4 className="font-medium mb-2">
-                  Squad Members ({currentSquadMembers.length})
+                  Team Members ({currentTeamMembers.length})
                 </h4>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {currentSquadMembers.map(member => (
+                  {currentTeamMembers.map(member => (
                     <div
                       key={member.id}
                       className="flex items-center justify-between p-2 border rounded"
@@ -527,7 +524,7 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
                     </div>
                   ))}
 
-                  {currentSquadMembers.length === 0 && (
+                  {currentTeamMembers.length === 0 && (
                     <div className="text-center py-4 text-gray-500">
                       <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">No members assigned</p>
@@ -539,21 +536,21 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
                 </div>
               </div>
 
-              {selectedSquad.duration?.start && (
+              {selectedTeam.duration?.start && (
                 <div>
                   <h4 className="font-medium mb-2">Timeline</h4>
                   <div className="flex items-center space-x-2 text-sm">
                     <Calendar className="h-4 w-4" />
                     <span>
                       {new Date(
-                        selectedSquad.duration.start
+                        selectedTeam.duration.start
                       ).toLocaleDateString()}
-                      {selectedSquad.duration.end && (
+                      {selectedTeam.duration.end && (
                         <>
                           {' '}
                           -{' '}
                           {new Date(
-                            selectedSquad.duration.end
+                            selectedTeam.duration.end
                           ).toLocaleDateString()}
                         </>
                       )}
@@ -565,25 +562,35 @@ const SquadBuilder: React.FC<SquadBuilderProps> = ({
           ) : (
             <div className="text-center py-8 text-gray-500">
               <Target className="h-16 w-16 mx-auto mb-4 opacity-30" />
-              <h3 className="text-lg font-medium mb-2">Select a Squad</h3>
+              <h3 className="text-lg font-medium mb-2">Select a Team</h3>
               <p className="text-sm">
-                Choose a squad from the list to view details and manage members
+                Choose a team from the list to view details and manage members
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Unmapped People */}
+      {/* People Assignment */}
       <div className="lg:col-span-1">
-        <UnmappedPeople
-          onPersonSelect={handlePersonSelect}
-          onBulkAction={handleBulkAction}
-          maxHeight="max-h-[600px]"
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <UserPlus className="h-5 w-5 mr-2" />
+              People Assignment
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8 text-muted-foreground">
+              <UserPlus className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>People mapping functionality</p>
+              <p className="text-sm">Consolidated into Team management</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
 
-export default SquadBuilder;
+export default TeamBuilder;

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import TeamTable from '@/components/teams/TeamTable';
 import TeamCards from '@/components/teams/TeamCards';
-import TeamDialog from '@/components/teams/TeamDialog';
+import EnhancedTeamDialog from '@/components/teams/TeamDialog';
 import CapacityOverview from '@/components/teams/CapacityOverview';
 import TeamSkillsSummary from '@/components/scenarios/TeamSkillsSummary';
 import TeamPortfolioOverview from '@/components/teams/TeamPortfolioOverview';
@@ -328,7 +328,7 @@ const Teams = () => {
         </TabsContent>
       </Tabs>
 
-      <TeamDialog
+      <EnhancedTeamDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         teamId={editingTeam}

@@ -25,11 +25,7 @@ import {
   Solution,
   ProjectSkill,
   ProjectSolution,
-  Squad,
-  SquadMember,
-  SquadSkillRequirement,
   UnmappedPerson,
-  SquadRecommendation,
 } from '@/types';
 import {
   Goal,
@@ -49,6 +45,19 @@ interface AppContextType {
   setRoles: (roles: Role[] | ((prev: Role[]) => Role[])) => void;
   teams: Team[];
   setTeams: (teams: Team[] | ((prev: Team[]) => Team[])) => void;
+  addTeam: (
+    teamData: Omit<Team, 'id' | 'createdDate' | 'lastModified'>
+  ) => void;
+  updateTeam: (teamId: string, teamData: Partial<Team>) => void;
+  deleteTeam: (teamId: string) => void;
+  teamMembers: TeamMember[];
+  setTeamMembers: (
+    teamMembers: TeamMember[] | ((prev: TeamMember[]) => TeamMember[])
+  ) => void;
+  addTeamMember: (memberData: Omit<TeamMember, 'id'>) => void;
+  updateTeamMember: (memberId: string, memberData: Partial<TeamMember>) => void;
+  removeTeamMember: (memberId: string) => void;
+  getTeamMembers: (teamId: string) => TeamMember[];
   divisions: Division[];
   setDivisions: (
     divisions: Division[] | ((prev: Division[]) => Division[])
@@ -97,33 +106,6 @@ interface AppContextType {
       | ((prev: ProjectSolution[]) => ProjectSolution[])
   ) => void;
 
-  // Squad Management
-  squads: Squad[];
-  setSquads: (squads: Squad[] | ((prev: Squad[]) => Squad[])) => void;
-  addSquad: (
-    squadData: Omit<Squad, 'id' | 'createdDate' | 'lastModified'>
-  ) => void;
-  updateSquad: (squadId: string, squadData: Partial<Squad>) => void;
-  deleteSquad: (squadId: string) => void;
-
-  squadMembers: SquadMember[];
-  setSquadMembers: (
-    members: SquadMember[] | ((prev: SquadMember[]) => SquadMember[])
-  ) => void;
-  addSquadMember: (memberData: Omit<SquadMember, 'id'>) => void;
-  updateSquadMember: (
-    memberId: string,
-    memberData: Partial<SquadMember>
-  ) => void;
-  removeSquadMember: (memberId: string) => void;
-
-  squadSkillRequirements: SquadSkillRequirement[];
-  setSquadSkillRequirements: (
-    requirements:
-      | SquadSkillRequirement[]
-      | ((prev: SquadSkillRequirement[]) => SquadSkillRequirement[])
-  ) => void;
-
   unmappedPeople: UnmappedPerson[];
   setUnmappedPeople: (
     people: UnmappedPerson[] | ((prev: UnmappedPerson[]) => UnmappedPerson[])
@@ -132,12 +114,6 @@ interface AppContextType {
     personData: Omit<UnmappedPerson, 'id' | 'importedDate'>
   ) => void;
   removeUnmappedPerson: (personId: string) => void;
-
-  // Squad utility functions
-  getSquadMembers: (squadId: string) => SquadMember[];
-  getPersonSquads: (personId: string) => Squad[];
-  getSquadSkillGaps: (squadId: string) => any[]; // Will implement proper type later
-  generateSquadRecommendations: (personId: string) => SquadRecommendation[];
 
   // Tracking data
   actualAllocations: ActualAllocation[];
@@ -223,6 +199,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Non-sensitive configuration data
   const [roles, setRoles] = useLocalStorage<Role[]>('planning-roles', []);
   const [teams, setTeams] = useLocalStorage<Team[]>('planning-teams', []);
+  const [teamMembers, setTeamMembers] = useLocalStorage<TeamMember[]>(
+    'planning-team-members',
+    []
+  );
   const [divisions, setDivisions] = useLocalStorage<Division[]>(
     'planning-divisions',
     []
@@ -269,17 +249,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     ProjectSolution[]
   >('planning-project-solutions', []);
 
-  // Squad Management data - using encrypted storage for sensitive squad information
-  const [squads, setSquads, isSquadsLoading] = useEncryptedLocalStorage<
-    Squad[]
-  >('planning-squads', []);
-  const [squadMembers, setSquadMembers] = useLocalStorage<SquadMember[]>(
-    'planning-squad-members',
-    []
-  );
-  const [squadSkillRequirements, setSquadSkillRequirements] = useLocalStorage<
-    SquadSkillRequirement[]
-  >('planning-squad-skill-requirements', []);
   const [unmappedPeople, setUnmappedPeople] = useLocalStorage<UnmappedPerson[]>(
     'planning-unmapped-people',
     []
@@ -340,61 +309,72 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
-  // Squad Management Helper Functions
-  const addSquad = (
-    squadData: Omit<Squad, 'id' | 'createdDate' | 'lastModified'>
+  // Team Management Functions
+  const addTeam = (
+    teamData: Omit<Team, 'id' | 'createdDate' | 'lastModified'>
   ) => {
     const now = new Date().toISOString();
-    const newSquad: Squad = {
-      ...squadData,
+    const newTeam: Team = {
+      ...teamData,
       id: Date.now().toString(),
       createdDate: now,
       lastModified: now,
+      type: teamData.type || 'permanent',
+      status: teamData.status || 'active',
+      targetSkills: teamData.targetSkills || [],
+      projectIds: teamData.projectIds || [],
     };
-    setSquads(prev => [...prev, newSquad]);
+    setTeams(prevTeams => [...prevTeams, newTeam]);
   };
 
-  const updateSquad = (squadId: string, squadData: Partial<Squad>) => {
-    setSquads(prev =>
-      prev.map(squad =>
-        squad.id === squadId
-          ? { ...squad, ...squadData, lastModified: new Date().toISOString() }
-          : squad
+  const updateTeam = (teamId: string, teamData: Partial<Team>) => {
+    setTeams(prevTeams =>
+      prevTeams.map(team =>
+        team.id === teamId
+          ? { ...team, ...teamData, lastModified: new Date().toISOString() }
+          : team
       )
     );
   };
 
-  const deleteSquad = (squadId: string) => {
-    setSquads(prev => prev.filter(squad => squad.id !== squadId));
-    // Also remove all squad members for this squad
-    setSquadMembers(prev => prev.filter(member => member.squadId !== squadId));
-    // Remove squad skill requirements
-    setSquadSkillRequirements(prev =>
-      prev.filter(req => req.squadId !== squadId)
+  const deleteTeam = (teamId: string) => {
+    setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
+    // Also remove associated team members
+    setTeamMembers(prevMembers =>
+      prevMembers.filter(member => member.teamId !== teamId)
     );
   };
 
-  const addSquadMember = (memberData: Omit<SquadMember, 'id'>) => {
-    const newMember: SquadMember = {
+  // TeamMember Management Functions
+  const addTeamMember = (memberData: Omit<TeamMember, 'id'>) => {
+    const newMember: TeamMember = {
       ...memberData,
       id: Date.now().toString(),
     };
-    setSquadMembers(prev => [...prev, newMember]);
+    setTeamMembers(prevMembers => [...prevMembers, newMember]);
   };
 
-  const updateSquadMember = (
+  const updateTeamMember = (
     memberId: string,
-    memberData: Partial<SquadMember>
+    memberData: Partial<TeamMember>
   ) => {
-    setSquadMembers(prev =>
-      prev.map(member =>
+    setTeamMembers(prevMembers =>
+      prevMembers.map(member =>
         member.id === memberId ? { ...member, ...memberData } : member
       )
     );
   };
 
-  const removeSquadMember = (memberId: string) => {
-    setSquadMembers(prev => prev.filter(member => member.id !== memberId));
+  const removeTeamMember = (memberId: string) => {
+    setTeamMembers(prevMembers =>
+      prevMembers.filter(member => member.id !== memberId)
+    );
+  };
+
+  const getTeamMembers = (teamId: string): TeamMember[] => {
+    return teamMembers.filter(
+      member => member.teamId === teamId && member.isActive
+    );
   };
 
   const addUnmappedPerson = (
@@ -410,56 +390,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const removeUnmappedPerson = (personId: string) => {
     setUnmappedPeople(prev => prev.filter(person => person.id !== personId));
-  };
-
-  // Squad Utility Functions
-  const getSquadMembers = (squadId: string): SquadMember[] => {
-    return squadMembers.filter(
-      member => member.squadId === squadId && member.isActive
-    );
-  };
-
-  const getPersonSquads = (personId: string): Squad[] => {
-    const personSquadIds = squadMembers
-      .filter(member => member.personId === personId && member.isActive)
-      .map(member => member.squadId);
-    return squads.filter(squad => personSquadIds.includes(squad.id));
-  };
-
-  const getSquadSkillGaps = (squadId: string) => {
-    // This is a placeholder - will implement proper skill gap analysis
-    const requirements = squadSkillRequirements.filter(
-      req => req.squadId === squadId
-    );
-    const members = getSquadMembers(squadId);
-
-    // For now, return basic structure
-    return requirements.map(req => ({
-      skillId: req.skillId,
-      required: req.requiredCount,
-      available: 0, // Will calculate based on member skills
-      gap: req.requiredCount,
-      priority: req.priority,
-    }));
-  };
-
-  const generateSquadRecommendations = (
-    personId: string
-  ): SquadRecommendation[] => {
-    // This is a placeholder - will implement proper recommendation engine
-    const person = people.find(p => p.id === personId);
-    if (!person) return [];
-
-    return squads.map(squad => ({
-      squadId: squad.id,
-      squadName: squad.name,
-      personId,
-      personName: person.name,
-      score: Math.floor(Math.random() * 100), // Placeholder scoring
-      reasons: ['Skills match', 'Availability'], // Placeholder reasons
-      skillMatches: [],
-      conflicts: [],
-    }));
   };
 
   const addGoal = (
@@ -495,8 +425,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     });
   };
 
-  const isDataLoading =
-    isPeopleLoading || isProjectsLoading || isGoalsLoading || isSquadsLoading;
+  const isDataLoading = isPeopleLoading || isProjectsLoading || isGoalsLoading;
 
   // Check if any significant data has been imported
   const hasImportedData =
@@ -918,9 +847,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     solutions,
     projectSkills,
     projectSolutions,
-    squads,
-    squadMembers,
-    squadSkillRequirements,
     unmappedPeople,
     actualAllocations,
     iterationReviews,
@@ -944,6 +870,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setRoles,
     teams,
     setTeams,
+    addTeam,
+    updateTeam,
+    deleteTeam,
+    teamMembers,
+    setTeamMembers,
+    addTeamMember,
+    updateTeamMember,
+    removeTeamMember,
+    getTeamMembers,
     divisions,
     setDivisions,
     projects,
@@ -969,27 +904,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setProjectSkills,
     projectSolutions,
     setProjectSolutions,
-    // Squad Management
-    squads,
-    setSquads,
-    addSquad,
-    updateSquad,
-    deleteSquad,
-    squadMembers,
-    setSquadMembers,
-    addSquadMember,
-    updateSquadMember,
-    removeSquadMember,
-    squadSkillRequirements,
-    setSquadSkillRequirements,
     unmappedPeople,
     setUnmappedPeople,
     addUnmappedPerson,
     removeUnmappedPerson,
-    getSquadMembers,
-    getPersonSquads,
-    getSquadSkillGaps,
-    generateSquadRecommendations,
     actualAllocations,
     setActualAllocations,
     iterationReviews,
