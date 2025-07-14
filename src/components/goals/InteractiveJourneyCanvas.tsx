@@ -151,7 +151,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
         width: 1400,
         height: 150,
         isUnassigned: true,
-      } as any,
+      } as Node['data'],
       draggable: false,
       selectable: false,
     });
@@ -471,7 +471,9 @@ const InteractiveJourneyCanvas: React.FC = () => {
           'InteractiveJourneyCanvas - Final goal data:',
           finalGoalData
         );
-        addGoal(finalGoalData as any);
+        addGoal(
+          finalGoalData as Omit<Goal, 'id' | 'createdDate' | 'updatedDate'>
+        );
       }
       setCreationModalOpen(false);
       setCreationPosition(null);
@@ -484,7 +486,7 @@ const InteractiveJourneyCanvas: React.FC = () => {
       console.log('handleGoalSplit called with:', subGoals);
       subGoals.forEach(subGoal => {
         console.log('Adding sub-goal:', subGoal);
-        addGoal(subGoal as any);
+        addGoal(subGoal as Omit<Goal, 'id' | 'createdDate' | 'updatedDate'>);
       });
       console.log('Sub-goals added, closing split dialog');
       setSplitDialogOpen(false);

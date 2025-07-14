@@ -131,7 +131,7 @@ const TeamPortfolioInsights = () => {
       },
       teamsRequiringAttention,
     };
-  }, [teams, people, divisions, allocations, cycles, epics, runWorkCategories]);
+  }, [teams, people, allocations, cycles]);
 
   const { summary, teamsRequiringAttention } = teamInsights;
 

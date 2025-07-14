@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useTeams } from '@/context/TeamContext';
+import { useSettings } from '@/context/SettingsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,8 @@ import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtiliz
 import EnterpriseTeamAnalytics from '@/components/teams/EnterpriseTeamAnalytics';
 
 const Teams = () => {
-  const { teams, people, divisions, isSetupComplete, setTeams } = useApp();
+  const { teams, people, divisions, setTeams } = useTeams();
+  const { isSetupComplete } = useSettings();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDivision, setSelectedDivision] = useState<string>('all');

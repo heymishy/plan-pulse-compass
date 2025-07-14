@@ -268,6 +268,7 @@ const QuarterAnalysisDashboard: React.FC<QuarterAnalysisDashboardProps> = ({
     selectedDivision,
     selectedTeam,
     people,
+    divisions,
   ]);
 
   const {

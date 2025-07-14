@@ -1,7 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { TeamProvider } from './context/TeamContext';
+import { ProjectProvider } from './context/ProjectContext';
+import { PlanningProvider } from './context/PlanningContext';
+import { SettingsProvider } from './context/SettingsContext';
+import { GoalProvider } from './context/GoalContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AppProvider } from './context/AppContext';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import Index from './pages/Index';
@@ -36,60 +41,94 @@ import './App.css';
 function App() {
   return (
     <ThemeProvider>
-      <AppProvider>
-        <Router>
-          <SidebarProvider>
-            <div className="flex min-h-screen bg-background">
-              <Sidebar>
-                <Navigation />
-              </Sidebar>
-              <SidebarInset>
-                <div className="flex flex-col min-h-screen">
-                  <main className="flex-1">
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/setup" element={<Setup />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/teams" element={<Teams />} />
-                      <Route path="/people" element={<People />} />
-                      <Route path="/skills" element={<Skills />} />
-                      <Route path="/projects" element={<Projects />} />
-                      <Route path="/epics" element={<Epics />} />
-                      <Route path="/milestones" element={<Milestones />} />
-                      <Route path="/planning" element={<Planning />} />
-                      <Route
-                        path="/advanced-planning"
-                        element={<AdvancedPlanning />}
-                      />
-                      <Route
-                        path="/journey-planning"
-                        element={<JourneyPlanning />}
-                      />
-                      <Route path="/allocations" element={<Allocations />} />
-                      <Route path="/tracking" element={<Tracking />} />
-                      <Route path="/financials" element={<Financials />} />
-                      <Route path="/reports" element={<Reports />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/canvas" element={<Canvas />} />
-                      <Route
-                        path="/scenario-analysis"
-                        element={<ScenarioAnalysis />}
-                      />
-                      <Route
-                        path="/squad-management"
-                        element={<TeamBuilder />}
-                      />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </main>
-                  <Footer />
-                </div>
-              </SidebarInset>
-            </div>
-            <Toaster />
-          </SidebarProvider>
-        </Router>
-      </AppProvider>
+      <SettingsProvider>
+        <TeamProvider>
+          <ProjectProvider>
+            <PlanningProvider>
+              <GoalProvider>
+                <AppProvider>
+                  <Router>
+                    <SidebarProvider>
+                      <div className="flex min-h-screen bg-background">
+                        <Sidebar>
+                          <Navigation />
+                        </Sidebar>
+                        <SidebarInset>
+                          <div className="flex flex-col min-h-screen">
+                            <main className="flex-1">
+                              <Routes>
+                                <Route path="/" element={<Index />} />
+                                <Route path="/setup" element={<Setup />} />
+                                <Route
+                                  path="/dashboard"
+                                  element={<Dashboard />}
+                                />
+                                <Route path="/teams" element={<Teams />} />
+                                <Route path="/people" element={<People />} />
+                                <Route path="/skills" element={<Skills />} />
+                                <Route
+                                  path="/projects"
+                                  element={<Projects />}
+                                />
+                                <Route path="/epics" element={<Epics />} />
+                                <Route
+                                  path="/milestones"
+                                  element={<Milestones />}
+                                />
+                                <Route
+                                  path="/planning"
+                                  element={<Planning />}
+                                />
+                                <Route
+                                  path="/advanced-planning"
+                                  element={<AdvancedPlanning />}
+                                />
+                                <Route
+                                  path="/journey-planning"
+                                  element={<JourneyPlanning />}
+                                />
+                                <Route
+                                  path="/allocations"
+                                  element={<Allocations />}
+                                />
+                                <Route
+                                  path="/tracking"
+                                  element={<Tracking />}
+                                />
+                                <Route
+                                  path="/financials"
+                                  element={<Financials />}
+                                />
+                                <Route path="/reports" element={<Reports />} />
+                                <Route
+                                  path="/settings"
+                                  element={<Settings />}
+                                />
+                                <Route path="/canvas" element={<Canvas />} />
+                                <Route
+                                  path="/scenario-analysis"
+                                  element={<ScenarioAnalysis />}
+                                />
+                                <Route
+                                  path="/squad-management"
+                                  element={<TeamBuilder />}
+                                />
+                                <Route path="*" element={<NotFound />} />
+                              </Routes>
+                            </main>
+                            <Footer />
+                          </div>
+                        </SidebarInset>
+                      </div>
+                      <Toaster />
+                    </SidebarProvider>
+                  </Router>
+                </AppProvider>
+              </GoalProvider>
+            </PlanningProvider>
+          </ProjectProvider>
+        </TeamProvider>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }

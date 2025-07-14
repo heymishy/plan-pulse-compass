@@ -166,8 +166,7 @@ const TeamCostVisualization: React.FC<CostVisualizationProps> = () => {
     const edges: Edge[] = [];
 
     // Color mapping functions
-    const getNodeColor = (team: any): string => {
-      // eslint-disable-line @typescript-eslint/no-explicit-any
+    const getNodeColor = (team: TeamNode['data']): string => {
       switch (colorCoding) {
         case 'division': {
           const divisionColors = [
@@ -204,8 +203,7 @@ const TeamCostVisualization: React.FC<CostVisualizationProps> = () => {
       }
     };
 
-    const getNodeSize = (team: any): number => {
-      // eslint-disable-line @typescript-eslint/no-explicit-any
+    const getNodeSize = (team: TeamNode['data']): number => {
       switch (nodeSizing) {
         case 'team-size':
           return Math.max(80, Math.min(200, team.memberCount * 15));

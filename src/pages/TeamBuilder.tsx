@@ -11,11 +11,13 @@ import {
   Download,
   Upload,
   Plus,
+  TrendingUp,
+  Network,
+  Import,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Team, TeamMember, UnmappedPerson } from '@/types';
 import TeamBuilder from '@/components/teams/TeamBuilder';
-// UnmappedPeople component was consolidated into Team functionality
 
 const TeamBuilderPage: React.FC = () => {
   const { teams, teamMembers, unmappedPeople, people, getTeamMembers } =
@@ -23,6 +25,9 @@ const TeamBuilderPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [canvasViewMode, setCanvasViewMode] = useState<
+    'teams' | 'skills' | 'network'
+  >('teams');
 
   // Calculate overview statistics
   const stats = {
@@ -185,10 +190,13 @@ const TeamBuilderPage: React.FC = () => {
 
       {/* Main Tabs Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="builder">Team Builder</TabsTrigger>
           <TabsTrigger value="mapping">People Mapping</TabsTrigger>
+          <TabsTrigger value="import">Import</TabsTrigger>
+          <TabsTrigger value="skills">Skills Analysis</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -372,6 +380,154 @@ const TeamBuilderPage: React.FC = () => {
               </div>
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="import" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Import className="h-5 w-5 mr-2" />
+                Team Data Import System
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12 text-muted-foreground">
+                <Import className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">Import Team Data</h3>
+                <p className="text-sm mb-6">
+                  Import team members, skills, and organizational data from CSV
+                  files
+                </p>
+                <div className="space-y-4">
+                  <Button className="w-full max-w-md">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import Team Members
+                  </Button>
+                  <Button variant="outline" className="w-full max-w-md">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Template
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="skills" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2" />
+                Team Skills Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12 text-muted-foreground">
+                <TrendingUp className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">
+                  Skills Gap Analysis
+                </h3>
+                <p className="text-sm mb-6">
+                  Analyze skill coverage across teams and identify gaps
+                </p>
+                {selectedTeam ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium">
+                        Analyzing: {selectedTeam.name}
+                      </h4>
+                      <p className="text-sm">
+                        Target Skills:{' '}
+                        {selectedTeam.targetSkills?.join(', ') ||
+                          'None defined'}
+                      </p>
+                    </div>
+                    <Button>Run Skills Analysis</Button>
+                  </div>
+                ) : (
+                  <p className="text-sm">
+                    Select a team from the Team Builder tab to analyze skills
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">
+                Team Analytics & Visualization
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Interactive canvas view of team relationships and structures
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">View:</span>
+              <Button
+                variant={canvasViewMode === 'teams' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setCanvasViewMode('teams')}
+              >
+                <Target className="h-4 w-4 mr-1" />
+                Teams
+              </Button>
+              <Button
+                variant={canvasViewMode === 'skills' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setCanvasViewMode('skills')}
+              >
+                <BarChart3 className="h-4 w-4 mr-1" />
+                Skills
+              </Button>
+              <Button
+                variant={canvasViewMode === 'network' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setCanvasViewMode('network')}
+              >
+                <Network className="h-4 w-4 mr-1" />
+                Network
+              </Button>
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center py-12 text-muted-foreground">
+                <Network className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">
+                  Team Analytics Canvas
+                </h3>
+                <p className="text-sm mb-4">
+                  Visualizing {canvasViewMode} relationships across your
+                  organization
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-md mx-auto">
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-lg font-bold">{teams.length}</div>
+                    <div className="text-xs">Teams</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-lg font-bold">
+                      {stats.totalMembers}
+                    </div>
+                    <div className="text-xs">Members</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-lg font-bold">
+                      {teams.reduce(
+                        (acc, team) => acc + (team.targetSkills?.length || 0),
+                        0
+                      )}
+                    </div>
+                    <div className="text-xs">Skills</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
