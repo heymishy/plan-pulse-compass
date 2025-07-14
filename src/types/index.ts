@@ -30,10 +30,33 @@ export interface Role {
 export interface Team {
   id: string;
   name: string;
+  description?: string;
+  type: 'permanent' | 'project' | 'initiative' | 'workstream' | 'feature-team';
+  status: 'planning' | 'active' | 'completed' | 'on-hold';
   divisionId?: string;
   divisionName?: string;
   productOwnerId?: string;
   capacity: number; // weekly capacity in hours
+  targetSkills: string[]; // Required skill IDs
+  projectIds?: string[]; // Associated projects
+  duration?: {
+    start: string;
+    end: string;
+  };
+  createdDate: string;
+  lastModified: string;
+}
+
+export interface TeamMember {
+  id: string;
+  teamId: string;
+  personId: string;
+  role: 'lead' | 'member' | 'advisor' | 'consultant' | 'product-owner';
+  allocation: number; // percentage (0-100)
+  startDate: string;
+  endDate?: string;
+  isActive: boolean;
+  notes?: string;
 }
 
 export interface Division {

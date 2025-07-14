@@ -49,6 +49,19 @@ interface AppContextType {
   setRoles: (roles: Role[] | ((prev: Role[]) => Role[])) => void;
   teams: Team[];
   setTeams: (teams: Team[] | ((prev: Team[]) => Team[])) => void;
+  addTeam: (
+    teamData: Omit<Team, 'id' | 'createdDate' | 'lastModified'>
+  ) => void;
+  updateTeam: (teamId: string, teamData: Partial<Team>) => void;
+  deleteTeam: (teamId: string) => void;
+  teamMembers: TeamMember[];
+  setTeamMembers: (
+    teamMembers: TeamMember[] | ((prev: TeamMember[]) => TeamMember[])
+  ) => void;
+  addTeamMember: (memberData: Omit<TeamMember, 'id'>) => void;
+  updateTeamMember: (memberId: string, memberData: Partial<TeamMember>) => void;
+  removeTeamMember: (memberId: string) => void;
+  getTeamMembers: (teamId: string) => TeamMember[];
   divisions: Division[];
   setDivisions: (
     divisions: Division[] | ((prev: Division[]) => Division[])
@@ -223,6 +236,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   // Non-sensitive configuration data
   const [roles, setRoles] = useLocalStorage<Role[]>('planning-roles', []);
   const [teams, setTeams] = useLocalStorage<Team[]>('planning-teams', []);
+  const [teamMembers, setTeamMembers] = useLocalStorage<TeamMember[]>(
+    'planning-team-members',
+    []
+  );
   const [divisions, setDivisions] = useLocalStorage<Division[]>(
     'planning-divisions',
     []
@@ -337,6 +354,74 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const updateProject = (projectId: string, updatedProject: Project) => {
     setProjects(prevProjects =>
       prevProjects.map(p => (p.id === projectId ? updatedProject : p))
+    );
+  };
+
+  // Team Management Functions
+  const addTeam = (
+    teamData: Omit<Team, 'id' | 'createdDate' | 'lastModified'>
+  ) => {
+    const now = new Date().toISOString();
+    const newTeam: Team = {
+      ...teamData,
+      id: Date.now().toString(),
+      createdDate: now,
+      lastModified: now,
+      type: teamData.type || 'permanent',
+      status: teamData.status || 'active',
+      targetSkills: teamData.targetSkills || [],
+      projectIds: teamData.projectIds || [],
+    };
+    setTeams(prevTeams => [...prevTeams, newTeam]);
+  };
+
+  const updateTeam = (teamId: string, teamData: Partial<Team>) => {
+    setTeams(prevTeams =>
+      prevTeams.map(team =>
+        team.id === teamId
+          ? { ...team, ...teamData, lastModified: new Date().toISOString() }
+          : team
+      )
+    );
+  };
+
+  const deleteTeam = (teamId: string) => {
+    setTeams(prevTeams => prevTeams.filter(team => team.id !== teamId));
+    // Also remove associated team members
+    setTeamMembers(prevMembers =>
+      prevMembers.filter(member => member.teamId !== teamId)
+    );
+  };
+
+  // TeamMember Management Functions
+  const addTeamMember = (memberData: Omit<TeamMember, 'id'>) => {
+    const newMember: TeamMember = {
+      ...memberData,
+      id: Date.now().toString(),
+    };
+    setTeamMembers(prevMembers => [...prevMembers, newMember]);
+  };
+
+  const updateTeamMember = (
+    memberId: string,
+    memberData: Partial<TeamMember>
+  ) => {
+    setTeamMembers(prevMembers =>
+      prevMembers.map(member =>
+        member.id === memberId ? { ...member, ...memberData } : member
+      )
+    );
+  };
+
+  const removeTeamMember = (memberId: string) => {
+    setTeamMembers(prevMembers =>
+      prevMembers.filter(member => member.id !== memberId)
+    );
+  };
+
+  const getTeamMembers = (teamId: string): TeamMember[] => {
+    return teamMembers.filter(
+      member => member.teamId === teamId && member.isActive
     );
   };
 
@@ -944,6 +1029,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     setRoles,
     teams,
     setTeams,
+    addTeam,
+    updateTeam,
+    deleteTeam,
+    teamMembers,
+    setTeamMembers,
+    addTeamMember,
+    updateTeamMember,
+    removeTeamMember,
+    getTeamMembers,
     divisions,
     setDivisions,
     projects,
