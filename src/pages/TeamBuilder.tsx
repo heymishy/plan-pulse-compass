@@ -10,43 +10,35 @@ import {
   BarChart3,
   Download,
   Upload,
-  Filter,
-  Search,
   Plus,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { Squad, SquadMember, UnmappedPerson } from '@/types';
-import SquadBuilder from '@/components/squad/SquadBuilder';
-import UnmappedPeople from '@/components/squad/UnmappedPeople';
-import SquadSkillsAnalyzer from '@/components/squad/SquadSkillsAnalyzer';
-import SquadImportSystem from '@/components/squad/SquadImportSystem';
-import SquadCanvas from '@/components/squad/SquadCanvas';
+import { Team, TeamMember, UnmappedPerson } from '@/types';
+import TeamBuilder from '@/components/teams/TeamBuilder';
+// UnmappedPeople component was consolidated into Team functionality
 
-const SquadManagement: React.FC = () => {
-  const { squads, squadMembers, unmappedPeople, people, teams, divisions } =
+const TeamBuilderPage: React.FC = () => {
+  const { teams, teamMembers, unmappedPeople, people, getTeamMembers } =
     useApp();
 
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(null);
-  const [canvasViewMode, setCanvasViewMode] = useState<
-    'squads' | 'skills' | 'network'
-  >('squads');
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
 
   // Calculate overview statistics
   const stats = {
-    totalSquads: squads.length,
-    activeSquads: squads.filter(s => s.status === 'active').length,
-    totalMembers: squadMembers.filter(m => m.isActive).length,
+    totalTeams: teams.length,
+    activeTeams: teams.filter(t => t.status === 'active').length,
+    totalMembers: teamMembers.filter(m => m.isActive).length,
     unmappedCount: unmappedPeople.length,
-    avgSquadSize:
-      squads.length > 0
+    avgTeamSize:
+      teams.length > 0
         ? Math.round(
-            (squadMembers.filter(m => m.isActive).length / squads.length) * 10
+            (teamMembers.filter(m => m.isActive).length / teams.length) * 10
           ) / 10
         : 0,
   };
 
-  const getSquadStatusColor = (status: Squad['status']) => {
+  const getTeamStatusColor = (status: Team['status']) => {
     switch (status) {
       case 'active':
         return 'bg-green-500';
@@ -61,7 +53,7 @@ const SquadManagement: React.FC = () => {
     }
   };
 
-  const getSquadTypeIcon = (type: Squad['type']) => {
+  const getTeamTypeIcon = (type: Team['type']) => {
     switch (type) {
       case 'project':
         return '🚀';
@@ -71,6 +63,8 @@ const SquadManagement: React.FC = () => {
         return '🔄';
       case 'feature-team':
         return '⚡';
+      case 'permanent':
+        return '🏢';
       default:
         return '👥';
     }
@@ -80,11 +74,9 @@ const SquadManagement: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Squad Management
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Team Builder</h1>
           <p className="text-muted-foreground">
-            Manage teams, map people to squads, and analyze skill coverage
+            Build teams, map people to teams, and analyze team composition
           </p>
         </div>
         <div className="flex space-x-2">
@@ -98,7 +90,7 @@ const SquadManagement: React.FC = () => {
           </Button>
           <Button size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            New Squad
+            New Team
           </Button>
         </div>
       </div>
@@ -109,13 +101,13 @@ const SquadManagement: React.FC = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center">
               <Target className="h-4 w-4 mr-2 text-blue-500" />
-              Total Squads
+              Total Teams
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSquads}</div>
+            <div className="text-2xl font-bold">{stats.totalTeams}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.activeSquads} active
+              {stats.activeTeams} active
             </p>
           </CardContent>
         </Card>
@@ -124,13 +116,13 @@ const SquadManagement: React.FC = () => {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center">
               <Users className="h-4 w-4 mr-2 text-green-500" />
-              Squad Members
+              Team Members
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalMembers}</div>
             <p className="text-xs text-muted-foreground">
-              Avg {stats.avgSquadSize} per squad
+              Avg {stats.avgTeamSize} per team
             </p>
           </CardContent>
         </Card>
@@ -145,7 +137,7 @@ const SquadManagement: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">{stats.unmappedCount}</div>
             <p className="text-xs text-muted-foreground">
-              Need squad assignment
+              Need team assignment
             </p>
           </CardContent>
         </Card>
@@ -164,7 +156,7 @@ const SquadManagement: React.FC = () => {
                 : 0}
               %
             </div>
-            <p className="text-xs text-muted-foreground">People in squads</p>
+            <p className="text-xs text-muted-foreground">People in teams</p>
           </CardContent>
         </Card>
 
@@ -177,10 +169,10 @@ const SquadManagement: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {squadMembers.length > 0
+              {teamMembers.length > 0
                 ? Math.round(
-                    (squadMembers.filter(m => m.allocation >= 80).length /
-                      squadMembers.length) *
+                    (teamMembers.filter(m => m.allocation >= 80).length /
+                      teamMembers.length) *
                       100
                   )
                 : 0}
@@ -193,63 +185,58 @@ const SquadManagement: React.FC = () => {
 
       {/* Main Tabs Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="squads">Squads</TabsTrigger>
+          <TabsTrigger value="builder">Team Builder</TabsTrigger>
           <TabsTrigger value="mapping">People Mapping</TabsTrigger>
-          <TabsTrigger value="import">Import</TabsTrigger>
-          <TabsTrigger value="skills">Skills Analysis</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Squads */}
+            {/* Recent Teams */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Recent Squads</CardTitle>
+                <CardTitle className="text-lg">Recent Teams</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {squads.slice(0, 5).map(squad => {
-                    const memberCount = squadMembers.filter(
-                      m => m.squadId === squad.id && m.isActive
-                    ).length;
+                  {teams.slice(0, 5).map(team => {
+                    const memberCount = getTeamMembers(team.id).length;
 
                     return (
                       <div
-                        key={squad.id}
+                        key={team.id}
                         className="flex items-center justify-between p-3 border rounded-lg"
                       >
                         <div className="flex items-center space-x-3">
                           <div className="text-lg">
-                            {getSquadTypeIcon(squad.type)}
+                            {getTeamTypeIcon(team.type)}
                           </div>
                           <div>
-                            <div className="font-medium">{squad.name}</div>
+                            <div className="font-medium">{team.name}</div>
                             <div className="text-sm text-muted-foreground">
-                              {memberCount} members • {squad.type}
+                              {memberCount} members • {team.type}
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Badge
                             variant="secondary"
-                            className={`text-white ${getSquadStatusColor(squad.status)}`}
+                            className={`text-white ${getTeamStatusColor(team.status)}`}
                           >
-                            {squad.status}
+                            {team.status}
                           </Badge>
                         </div>
                       </div>
                     );
                   })}
 
-                  {squads.length === 0 && (
+                  {teams.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
                       <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                      <p>No squads created yet</p>
+                      <p>No teams created yet</p>
                       <p className="text-sm">
-                        Create your first squad to get started
+                        Create your first team to get started
                       </p>
                     </div>
                   )}
@@ -282,7 +269,7 @@ const SquadManagement: React.FC = () => {
                         </div>
                       </div>
                       <Button variant="outline" size="sm">
-                        Map to Squad
+                        Map to Team
                       </Button>
                     </div>
                   ))}
@@ -291,7 +278,7 @@ const SquadManagement: React.FC = () => {
                     <div className="text-center py-8 text-muted-foreground">
                       <UserPlus className="h-12 w-12 mx-auto mb-3 opacity-50" />
                       <p>All people are mapped</p>
-                      <p className="text-sm">Great job on squad assignments!</p>
+                      <p className="text-sm">Great job on team assignments!</p>
                     </div>
                   )}
                 </div>
@@ -300,10 +287,10 @@ const SquadManagement: React.FC = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="squads" className="space-y-6">
-          <SquadBuilder
-            selectedSquad={selectedSquad}
-            onSquadChange={setSelectedSquad}
+        <TabsContent value="builder" className="space-y-6">
+          <TeamBuilder
+            selectedTeam={selectedTeam}
+            onTeamChange={setSelectedTeam}
           />
         </TabsContent>
 
@@ -311,58 +298,61 @@ const SquadManagement: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <h2 className="text-xl font-semibold mb-4">
-                People to Squad Mapping
+                People to Team Mapping
               </h2>
               <p className="text-sm text-muted-foreground mb-6">
-                Select people from the unmapped list and assign them to squads,
-                or create new squads.
+                Select people from the unmapped list and assign them to teams,
+                or create new teams.
               </p>
-              <UnmappedPeople
-                showBulkActions={true}
-                maxHeight="max-h-[500px]"
-              />
+              <div className="text-center py-8 text-muted-foreground">
+                <UserPlus className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>People mapping functionality</p>
+                <p className="text-sm">
+                  Use the Team Builder tab to assign people to teams
+                </p>
+              </div>
             </div>
             <div>
-              <h2 className="text-xl font-semibold mb-4">Squad Overview</h2>
+              <h2 className="text-xl font-semibold mb-4">Team Overview</h2>
               <p className="text-sm text-muted-foreground mb-6">
-                View existing squads and their current members.
+                View existing teams and their current members.
               </p>
               <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                {squads.map(squad => {
-                  const members = squadMembers.filter(
-                    m => m.squadId === squad.id && m.isActive
+                {teams.map(team => {
+                  const members = getTeamMembers(team.id);
+                  const memberCount = members.length;
+                  const capacityUsed = members.reduce(
+                    (sum, m) => sum + (m.allocation / 100) * 40,
+                    0
                   );
+
                   return (
-                    <Card key={squad.id} className="p-4">
+                    <Card key={team.id} className="p-4">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-2">
                           <span className="text-lg">
-                            {getSquadTypeIcon(squad.type)}
+                            {getTeamTypeIcon(team.type)}
                           </span>
                           <div>
-                            <h4 className="font-medium">{squad.name}</h4>
+                            <h4 className="font-medium">{team.name}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {squad.type}
+                              {team.type}
                             </p>
                           </div>
                         </div>
                         <Badge
                           variant="secondary"
-                          className={`text-white ${getSquadStatusColor(squad.status)}`}
+                          className={`text-white ${getTeamStatusColor(team.status)}`}
                         >
-                          {squad.status}
+                          {team.status}
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
                         <div className="flex items-center justify-between">
+                          <span>{memberCount} members</span>
                           <span>
-                            {members.length} / {squad.capacity} members
-                          </span>
-                          <span>
-                            {Math.round(
-                              (members.length / squad.capacity) * 100
-                            )}
-                            % capacity
+                            {Math.round((capacityUsed / team.capacity) * 100)}%
+                            capacity
                           </span>
                         </div>
                       </div>
@@ -370,12 +360,12 @@ const SquadManagement: React.FC = () => {
                   );
                 })}
 
-                {squads.length === 0 && (
+                {teams.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
                     <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No squads created yet</p>
+                    <p>No teams created yet</p>
                     <p className="text-sm">
-                      Go to the Squads tab to create your first squad
+                      Go to the Team Builder tab to create your first team
                     </p>
                   </div>
                 )}
@@ -383,62 +373,9 @@ const SquadManagement: React.FC = () => {
             </div>
           </div>
         </TabsContent>
-
-        <TabsContent value="import" className="space-y-6">
-          <SquadImportSystem />
-        </TabsContent>
-
-        <TabsContent value="skills" className="space-y-6">
-          <SquadSkillsAnalyzer selectedSquad={selectedSquad} />
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">
-                Squad Analytics & Visualization
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Interactive canvas view of squad relationships and structures
-              </p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">View:</span>
-              <Button
-                variant={canvasViewMode === 'squads' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setCanvasViewMode('squads')}
-              >
-                <Target className="h-4 w-4 mr-1" />
-                Squads
-              </Button>
-              <Button
-                variant={canvasViewMode === 'skills' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setCanvasViewMode('skills')}
-              >
-                <BarChart3 className="h-4 w-4 mr-1" />
-                Skills
-              </Button>
-              <Button
-                variant={canvasViewMode === 'network' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setCanvasViewMode('network')}
-              >
-                <Users className="h-4 w-4 mr-1" />
-                Network
-              </Button>
-            </div>
-          </div>
-
-          <SquadCanvas
-            selectedSquad={selectedSquad}
-            viewMode={canvasViewMode}
-          />
-        </TabsContent>
       </Tabs>
     </div>
   );
 };
 
-export default SquadManagement;
+export default TeamBuilderPage;
