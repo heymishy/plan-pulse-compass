@@ -116,14 +116,16 @@ export function useEncryptedLocalStorage<T>(
           console.log(`Successfully encrypted and saved data for key "${key}"`);
 
           // Trigger storage event for cross-component synchronization
-          window.dispatchEvent(
-            new StorageEvent('storage', {
-              key,
-              newValue: JSON.stringify(encrypted),
-              oldValue: null,
-              storageArea: window.localStorage,
-            })
-          );
+          if (typeof window !== 'undefined' && window.dispatchEvent) {
+            window.dispatchEvent(
+              new StorageEvent('storage', {
+                key,
+                newValue: JSON.stringify(encrypted),
+                oldValue: null,
+                storageArea: window.localStorage,
+              })
+            );
+          }
         } else {
           console.warn('localStorage is not available, data will not persist');
         }
@@ -173,14 +175,16 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         console.log(`Successfully saved data for key "${key}"`);
 
         // Trigger storage event for cross-component synchronization
-        window.dispatchEvent(
-          new StorageEvent('storage', {
-            key,
-            newValue: JSON.stringify(valueToStore),
-            oldValue: null,
-            storageArea: window.localStorage,
-          })
-        );
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+          window.dispatchEvent(
+            new StorageEvent('storage', {
+              key,
+              newValue: JSON.stringify(valueToStore),
+              oldValue: null,
+              storageArea: window.localStorage,
+            })
+          );
+        }
       } else {
         console.warn('localStorage is not available, data will not persist');
       }
