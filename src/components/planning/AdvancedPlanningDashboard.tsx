@@ -1,18 +1,36 @@
-
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Search, Target, Users, DollarSign, AlertTriangle, 
-  TrendingUp, Calendar, Zap, CheckCircle 
+import {
+  Search,
+  Target,
+  Users,
+  DollarSign,
+  AlertTriangle,
+  TrendingUp,
+  Calendar,
+  Zap,
+  CheckCircle,
 } from 'lucide-react';
-import { analyzeProjectsFeasibility, createPlanningScenario } from '@/utils/advancedPlanningEngine';
-import { ProjectFeasibilityAnalysis, PlanningFilters } from '@/types/planningTypes';
+import {
+  analyzeProjectsFeasibility,
+  createPlanningScenario,
+} from '@/utils/advancedPlanningEngine';
+import {
+  ProjectFeasibilityAnalysis,
+  PlanningFilters,
+} from '@/types/planningTypes';
 import ProjectFeasibilityCard from './ProjectFeasibilityCard';
 import TeamResourceAnalysis from './TeamResourceAnalysis';
 import BudgetImpactAnalyzer from './BudgetImpactAnalyzer';
@@ -20,8 +38,18 @@ import ScenarioComparison from './ScenarioComparison';
 
 const AdvancedPlanningDashboard = () => {
   const {
-    projects, teams, people, skills, personSkills, projectSkills,
-    projectSolutions, solutions, allocations, cycles, divisions, roles
+    projects,
+    teams,
+    people,
+    skills,
+    personSkills,
+    projectSkills,
+    projectSolutions,
+    solutions,
+    allocations,
+    cycles,
+    divisions,
+    roles,
   } = useApp();
 
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
@@ -30,33 +58,65 @@ const AdvancedPlanningDashboard = () => {
     projectStatus: ['planning'],
     divisionIds: [],
     skillCategories: [],
-    riskLevels: []
+    riskLevels: [],
   });
 
   // Get planning projects
   const planningProjects = useMemo(() => {
-    return projects.filter(p => 
-      filters.projectStatus.includes(p.status as any) &&
-      (filters.divisionIds.length === 0 || filters.divisionIds.some(divId => 
-        teams.some(t => t.divisionId === divId && 
-          allocations.some(a => a.teamId === t.id && 
-            projectSolutions.some(ps => ps.projectId === p.id)
-          )
-        )
-      ))
+    return projects.filter(
+      p =>
+        filters.projectStatus.includes(
+          p.status as PlanningFilters['projectStatus'][0]
+        ) &&
+        (filters.divisionIds.length === 0 ||
+          filters.divisionIds.some(divId =>
+            teams.some(
+              t =>
+                t.divisionId === divId &&
+                allocations.some(
+                  a =>
+                    a.teamId === t.id &&
+                    projectSolutions.some(ps => ps.projectId === p.id)
+                )
+            )
+          ))
     );
   }, [projects, filters, teams, allocations, projectSolutions]);
 
   // Analyze selected projects
   const feasibilityAnalyses = useMemo(() => {
     if (selectedProjects.length === 0) return [];
-    
+
     return analyzeProjectsFeasibility(selectedProjects, {
-      projects, teams, people, skills, personSkills, projectSkills,
-      projectSolutions, solutions, allocations, cycles, divisions, roles,
-      divisionBudgets: [] // TODO: Add division budgets to context
+      projects,
+      teams,
+      people,
+      skills,
+      personSkills,
+      projectSkills,
+      projectSolutions,
+      solutions,
+      allocations,
+      cycles,
+      divisions,
+      roles,
+      divisionBudgets: [], // TODO: Add division budgets to context
     });
-  }, [selectedProjects, projects, teams, people, skills, personSkills, projectSkills, projectSolutions, solutions, allocations, cycles, divisions, roles]);
+  }, [
+    selectedProjects,
+    projects,
+    teams,
+    people,
+    skills,
+    personSkills,
+    projectSkills,
+    projectSolutions,
+    solutions,
+    allocations,
+    cycles,
+    divisions,
+    roles,
+  ]);
 
   const handleProjectSelection = (projectId: string, checked: boolean) => {
     if (checked) {
@@ -77,18 +137,25 @@ const AdvancedPlanningDashboard = () => {
   const getOverviewStats = () => {
     const totalProjects = planningProjects.length;
     const selectedCount = selectedProjects.length;
-    const highFeasibility = feasibilityAnalyses.filter(a => a.feasibilityScore >= 70).length;
-    const criticalRisks = feasibilityAnalyses.reduce((sum, a) => 
-      sum + a.riskFactors.filter(r => r.severity === 'critical').length, 0
+    const highFeasibility = feasibilityAnalyses.filter(
+      a => a.feasibilityScore >= 70
+    ).length;
+    const criticalRisks = feasibilityAnalyses.reduce(
+      (sum, a) =>
+        sum + a.riskFactors.filter(r => r.severity === 'critical').length,
+      0
     );
-    const totalBudget = feasibilityAnalyses.reduce((sum, a) => sum + a.budgetRequirement, 0);
+    const totalBudget = feasibilityAnalyses.reduce(
+      (sum, a) => sum + a.budgetRequirement,
+      0
+    );
 
     return {
       totalProjects,
       selectedCount,
       highFeasibility,
       criticalRisks,
-      totalBudget
+      totalBudget,
     };
   };
 
@@ -98,8 +165,12 @@ const AdvancedPlanningDashboard = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Advanced Project Planning</h1>
-          <p className="text-gray-600">Analyze project feasibility, team allocation, and budget impact</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Advanced Project Planning
+          </h1>
+          <p className="text-gray-600">
+            Analyze project feasibility, team allocation, and budget impact
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleClearSelection}>
@@ -135,7 +206,9 @@ const AdvancedPlanningDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.selectedCount}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {stats.selectedCount}
+            </div>
             <p className="text-xs text-gray-500">Projects selected</p>
           </CardContent>
         </Card>
@@ -148,7 +221,9 @@ const AdvancedPlanningDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.highFeasibility}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {stats.highFeasibility}
+            </div>
             <p className="text-xs text-gray-500">≥70% feasibility score</p>
           </CardContent>
         </Card>
@@ -161,7 +236,9 @@ const AdvancedPlanningDashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.criticalRisks}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {stats.criticalRisks}
+            </div>
             <p className="text-xs text-gray-500">Require attention</p>
           </CardContent>
         </Card>
@@ -196,10 +273,14 @@ const AdvancedPlanningDashboard = () => {
               <label className="text-sm font-medium">Project Status</label>
               <Select
                 value={filters.projectStatus[0] || 'planning'}
-                onValueChange={(value) => setFilters(prev => ({
-                  ...prev,
-                  projectStatus: [value as any]
-                }))}
+                onValueChange={value =>
+                  setFilters(prev => ({
+                    ...prev,
+                    projectStatus: [
+                      value as PlanningFilters['projectStatus'][0],
+                    ],
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -215,10 +296,10 @@ const AdvancedPlanningDashboard = () => {
               <label className="text-sm font-medium">Division</label>
               <Select
                 value={filters.divisionIds[0] || 'all'}
-                onValueChange={(value) =>
+                onValueChange={value =>
                   setFilters(prev => ({
                     ...prev,
-                    divisionIds: value === 'all' ? [] : [value]
+                    divisionIds: value === 'all' ? [] : [value],
                   }))
                 }
               >
@@ -239,13 +320,15 @@ const AdvancedPlanningDashboard = () => {
 
           {/* Project Selection */}
           <div>
-            <label className="text-sm font-medium">Select Projects to Analyze</label>
+            <label className="text-sm font-medium">
+              Select Projects to Analyze
+            </label>
             <div className="mt-2 max-h-48 overflow-y-auto border rounded-md p-3 space-y-2">
               {planningProjects.map(project => (
                 <div key={project.id} className="flex items-center space-x-2">
                   <Checkbox
                     checked={selectedProjects.includes(project.id)}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={checked =>
                       handleProjectSelection(project.id, checked as boolean)
                     }
                   />
@@ -265,7 +348,11 @@ const AdvancedPlanningDashboard = () => {
 
       {/* Analysis Results */}
       {selectedProjects.length > 0 && (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList>
             <TabsTrigger value="overview">Project Overview</TabsTrigger>
             <TabsTrigger value="teams">Team Analysis</TabsTrigger>
@@ -285,7 +372,7 @@ const AdvancedPlanningDashboard = () => {
           </TabsContent>
 
           <TabsContent value="teams">
-            <TeamResourceAnalysis 
+            <TeamResourceAnalysis
               projectAnalyses={feasibilityAnalyses}
               teams={teams}
               people={people}
@@ -313,9 +400,12 @@ const AdvancedPlanningDashboard = () => {
         <Card>
           <CardContent className="text-center py-12">
             <Target className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Projects Selected</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No Projects Selected
+            </h3>
             <p className="text-gray-600 mb-4">
-              Select one or more projects to analyze their feasibility, team requirements, and budget impact.
+              Select one or more projects to analyze their feasibility, team
+              requirements, and budget impact.
             </p>
             <Button onClick={handleSelectAllProjects}>
               Select All Planning Projects
