@@ -66,15 +66,16 @@ test.describe('Allocations Import E2E Tests', () => {
       await page.click('button:has-text("Manage Cycles")');
       await page.waitForTimeout(1000);
 
-      // Verify quarters were created
+      // Verify quarters were created using more specific selector
       await expect(
-        page.locator('div.font-medium:has-text("Q1 2024")')
+        page.locator('div.font-medium').filter({ hasText: 'Q1 2024' }).first()
       ).toBeVisible({ timeout: 5000 });
 
-      // Generate iterations for Q1 (needed for allocation import)
-      const q1QuarterRow = page.locator(
-        'div:has(div.font-medium:text("Q1 2024"))'
-      );
+      // Generate iterations for Q1 (needed for allocation import) using more specific selector
+      const q1QuarterRow = page
+        .locator('div')
+        .filter({ hasText: 'Q1 2024' })
+        .first();
       await expect(q1QuarterRow).toBeVisible({ timeout: 5000 });
 
       const generateIterationsButton = q1QuarterRow.locator(

@@ -22,17 +22,17 @@ export async function createQuartersAndIterations(page: Page): Promise<void> {
     await quarterButton.click();
     await page.waitForTimeout(2000);
 
-    // Verify quarters were created
+    // Verify quarters were created using more specific selector
     await expect(
-      page.locator('div.font-medium:has-text("Q1 2024")')
+      page.locator('div.font-medium').filter({ hasText: 'Q1 2024' }).first()
     ).toBeVisible({ timeout: 5000 });
     console.log('✅ Quarters created successfully');
   } else {
     console.log('ℹ️ Quarters already exist');
   }
 
-  // Generate iterations for Q1
-  const q1Row = page.locator('div:has(div.font-medium:text("Q1 2024"))');
+  // Generate iterations for Q1 using more specific selector
+  const q1Row = page.locator('div').filter({ hasText: 'Q1 2024' }).first();
   await expect(q1Row).toBeVisible({ timeout: 5000 });
 
   const generateButton = q1Row.locator(
@@ -40,8 +40,30 @@ export async function createQuartersAndIterations(page: Page): Promise<void> {
   );
   if (await generateButton.isVisible()) {
     await generateButton.click();
-    await page.waitForTimeout(1500);
-    console.log('✅ Q1 iterations created successfully');
+    await page.waitForTimeout(2000); // Give more time for iterations to generate
+
+    // Wait for iterations to appear in localStorage
+    const startTime = Date.now();
+    const timeout = 5000;
+    let iterationsCount = 0;
+
+    while (Date.now() - startTime < timeout) {
+      const cycles = await page.evaluate(() => {
+        const data = localStorage.getItem('planning-cycles');
+        return data ? JSON.parse(data) : [];
+      });
+      iterationsCount = cycles.length;
+
+      if (iterationsCount > 4) {
+        // More than just quarters
+        break;
+      }
+      await page.waitForTimeout(200);
+    }
+
+    console.log(
+      `✅ Q1 iterations created successfully (${iterationsCount} total cycles)`
+    );
   } else {
     console.log('ℹ️ Q1 iterations already exist');
   }

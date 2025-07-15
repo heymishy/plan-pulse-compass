@@ -54,20 +54,30 @@ test.describe('Settings Page', () => {
         timeout: 5000,
       });
 
-      // Create iterations for Q1
-      const q1Row = page.locator('tr:has(td:text("Q1 2024"))');
-      await q1Row.locator('button:has-text("Generate Iterations")').click();
-      await page.waitForTimeout(2000); // Reduced wait time
+      // Create iterations for Q1 using more specific table row selector
+      const q1Row = page
+        .locator('table')
+        .locator('tr')
+        .filter({ hasText: 'Q1 2024' })
+        .first();
+      await q1Row
+        .locator('button:has-text("Generate Iterations")')
+        .click({ timeout: 5000 });
+      await page.waitForTimeout(1000); // Reduced wait time
 
       // Create iterations for Q2 for more comprehensive testing
-      const q2Row = page.locator('tr:has(td:text("Q2 2024"))');
+      const q2Row = page
+        .locator('table')
+        .locator('tr')
+        .filter({ hasText: 'Q2 2024' })
+        .first();
       if ((await q2Row.count()) > 0) {
         const q2Button = q2Row.locator(
           'button:has-text("Generate Iterations")'
         );
         if ((await q2Button.count()) > 0) {
-          await q2Button.click();
-          await page.waitForTimeout(3000);
+          await q2Button.click({ timeout: 5000 });
+          await page.waitForTimeout(1000); // Reduced wait time
         }
       }
 
