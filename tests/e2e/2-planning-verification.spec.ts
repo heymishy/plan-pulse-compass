@@ -25,10 +25,28 @@ test.describe('Planning Verification (depends on setup)', () => {
     // Should show the planning page without "Setup Required" message
     await expect(page.locator('text=Setup Required')).toHaveCount(0);
 
-    // Should show quarters in the dropdown
-    await expect(page.locator('text=Q1 2024').first()).toBeVisible({
+    // Should show quarters in the quarter dropdown
+    // The quarters should be loaded and the page should not show "Setup Required"
+    // This indicates quarters exist and are accessible to the planning page
+    const quarterDropdown = page
+      .locator('label:has-text("Quarter")')
+      .locator('..')
+      .locator('[role="combobox"]');
+    await expect(quarterDropdown).toBeVisible({ timeout: 5000 });
+
+    // Verify that the dropdown has options by clicking it
+    await quarterDropdown.click();
+    await page.waitForTimeout(1000);
+
+    // Should see Q1 2024 in the dropdown options
+    await expect(
+      page.locator('[role="option"]:has-text("Q1 2024")')
+    ).toBeVisible({
       timeout: 5000,
     });
+
+    // Close dropdown
+    await page.keyboard.press('Escape');
 
     // Should show iterations count > 0
     const iterationsText = page.locator('text=Total iterations');
@@ -106,9 +124,23 @@ test.describe('Planning Verification (depends on setup)', () => {
     await page.waitForLoadState('networkidle');
 
     // Should show quarters and iterations
-    await expect(page.locator('text=Q1 2024').first()).toBeVisible({
+    // Open the quarter dropdown to see available quarters
+    const quarterSelect = page
+      .locator('label:has-text("Quarter")')
+      .locator('..');
+    const quarterTrigger = quarterSelect.locator('[role="combobox"]');
+    await quarterTrigger.click();
+    await page.waitForTimeout(500);
+
+    // Should see Q1 2024 in the dropdown options
+    await expect(
+      page.locator('[role="option"]:has-text("Q1 2024")')
+    ).toBeVisible({
       timeout: 5000,
     });
+
+    // Close dropdown
+    await page.keyboard.press('Escape');
     await expect(page.locator('text=Team Allocation Matrix')).toBeVisible({
       timeout: 5000,
     });

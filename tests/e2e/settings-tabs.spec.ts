@@ -48,7 +48,9 @@ test.describe('Settings Page', () => {
       await page.waitForTimeout(5000);
 
       // Verify quarters created
-      await expect(page.locator('text=Q1 2024')).toBeVisible({
+      await expect(
+        page.locator('div.font-medium:has-text("Q1 2024")')
+      ).toBeVisible({
         timeout: 5000,
       });
 

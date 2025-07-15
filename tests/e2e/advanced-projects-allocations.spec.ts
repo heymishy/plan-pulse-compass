@@ -52,11 +52,19 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
       await page.click('button:has-text("Generate Standard Quarters")');
       await page.waitForTimeout(5000); // Give more time for quarters to be created
 
+      // Open cycle management dialog to verify quarters were created and generate iterations
+      await page.click('button:has-text("Manage Cycles")');
+      await page.waitForTimeout(1000);
+
       // Verify quarters were created
-      await expect(page.locator('text=Q1 2024')).toBeVisible({ timeout: 5000 });
+      await expect(
+        page.locator('div.font-medium:has-text("Q1 2024")')
+      ).toBeVisible({ timeout: 5000 });
 
       // Generate iterations for Q1 (needed for allocation import)
-      const q1QuarterRow = page.locator('tr:has(td:text("Q1 2024"))');
+      const q1QuarterRow = page.locator(
+        'div:has(div.font-medium:text("Q1 2024"))'
+      );
       await expect(q1QuarterRow).toBeVisible({ timeout: 5000 });
 
       const generateIterationsButton = q1QuarterRow.locator(
@@ -68,6 +76,10 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
 
       // Wait for iterations to be generated automatically by AppContext
       await page.waitForTimeout(2000);
+
+      // Close cycle management dialog
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(500);
 
       // Verify iterations were created by checking localStorage
       const iterationData = await page.evaluate(() => {
