@@ -278,7 +278,14 @@ const RecommendationsEngine: React.FC<RecommendationsEngineProps> = ({
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant={getPriorityColor(rec.priority) as any}>
+                    <Badge
+                      variant={
+                        getPriorityColor(rec.priority) as
+                          | 'destructive'
+                          | 'secondary'
+                          | 'outline'
+                      }
+                    >
                       {rec.priority}
                     </Badge>
                     <Badge variant="outline">{rec.timeline}</Badge>
