@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { closeCycleDialog } from './test-helpers';
 
 test.describe('Settings Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -85,7 +86,8 @@ test.describe('Settings Page', () => {
         }
       }
 
-      await page.keyboard.press('Escape');
+      // Close cycle management dialog properly like a real user would
+      await closeCycleDialog(page);
       console.log('✅ Cycles created for test suite');
     } else {
       console.log('Cycles already exist');

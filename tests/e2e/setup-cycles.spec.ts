@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { closeCycleDialog } from './test-helpers';
 
 test.describe('Setup Cycles E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
@@ -152,9 +153,8 @@ test.describe('Setup Cycles E2E Tests', () => {
         }
       }
 
-      // Close the dialog
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(1000);
+      // Close the dialog properly like a real user would
+      await closeCycleDialog(page);
     } else {
       console.log('Cycles already exist, skipping creation');
     }
@@ -193,8 +193,7 @@ test.describe('Setup Cycles E2E Tests', () => {
       await page.waitForTimeout(5000);
     }
 
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);
+    await closeCycleDialog(page);
 
     // Reload page and verify cycles persist
     await page.reload();
@@ -211,8 +210,8 @@ test.describe('Setup Cycles E2E Tests', () => {
       timeout: 5000,
     });
 
-    // Close dialog
-    await page.keyboard.press('Escape');
+    // Close dialog properly like a real user would
+    await closeCycleDialog(page);
 
     console.log('✅ Cycles persist correctly after reload');
   });
@@ -263,7 +262,7 @@ test.describe('Setup Cycles E2E Tests', () => {
         }
       }
 
-      await page.keyboard.press('Escape');
+      await closeCycleDialog(page);
       console.log('✅ Cycles created via Planning page from Settings test');
     }
   });

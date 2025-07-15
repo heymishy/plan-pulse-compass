@@ -116,11 +116,70 @@ export async function createQuartersAndIterations(page: Page): Promise<void> {
     );
   }
 
-  // Close cycle management dialog
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(500);
+  // Close cycle management dialog properly like a real user would
+  await closeCycleDialog(page);
 
   console.log('✅ Quarter and iteration setup completed');
+}
+
+/**
+ * Close the Manage Cycles dialog like a real user would
+ */
+export async function closeCycleDialog(page: Page): Promise<void> {
+  console.log('🔄 Closing cycle management dialog...');
+
+  const dialog = page
+    .locator('[role="dialog"]')
+    .filter({ hasText: 'Manage Cycles' });
+
+  // Try multiple close methods in order of user preference
+  try {
+    // Method 1: Use the X close button in the top-right corner (has sr-only "Close" text)
+    const xCloseButton = dialog
+      .locator('button')
+      .filter({ has: page.locator('span:has-text("Close")') })
+      .first();
+    if (await xCloseButton.isVisible({ timeout: 1000 })) {
+      await xCloseButton.click();
+      await page.waitForTimeout(500);
+      await expect(dialog).not.toBeVisible({ timeout: 3000 });
+      console.log('✅ Dialog closed with X button');
+      return;
+    }
+
+    // Method 2: Use the Close button in the dialog footer
+    const closeButton = dialog.locator('button:has-text("Close")');
+    if (await closeButton.isVisible({ timeout: 1000 })) {
+      await closeButton.click();
+      await page.waitForTimeout(500);
+      await expect(dialog).not.toBeVisible({ timeout: 3000 });
+      console.log('✅ Dialog closed with footer Close button');
+      return;
+    }
+
+    // Method 3: Click outside the dialog (on overlay)
+    const overlay = page.locator('[role="dialog"]').locator('..').first();
+    await overlay.click({ position: { x: 10, y: 10 } });
+    await page.waitForTimeout(500);
+    await expect(dialog).not.toBeVisible({ timeout: 2000 });
+    console.log('✅ Dialog closed by clicking outside');
+    return;
+  } catch (error) {
+    // Method 4: Fallback to Escape key
+    console.log(
+      '⚠️ All close methods failed, using Escape key as final fallback'
+    );
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(1000);
+
+    // Verify closure with Escape
+    try {
+      await expect(dialog).not.toBeVisible({ timeout: 2000 });
+      console.log('✅ Dialog closed with Escape key');
+    } catch {
+      console.log('⚠️ Dialog may still be open - continuing test anyway');
+    }
+  }
 }
 
 /**
