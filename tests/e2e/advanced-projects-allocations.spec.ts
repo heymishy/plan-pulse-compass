@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { createQuartersAndIterations } from './test-helpers';
 
 test.describe('Advanced Data Import - Projects with Epics & Planning Allocations', () => {
   test.beforeEach(async ({ page }) => {
@@ -35,84 +36,9 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
       await page.waitForLoadState('networkidle');
     }
 
-    // CRITICAL: Create quarters and iterations after setup
+    // CRITICAL: Create quarters and iterations after setup using test helper
     // Without this, planning allocations cannot be imported because there are no cycles
-    await page.goto('/planning');
-    await page.waitForLoadState('networkidle');
-
-    // Check if quarters already exist (in case of retry)
-    const existingQuarters = await page.locator('text=Q1 2024').count();
-
-    if (existingQuarters === 0) {
-      // Open cycle management dialog
-      await page.click('button:has-text("Manage Cycles")');
-      await page.waitForTimeout(2000);
-
-      // Generate standard quarters
-      await page.click('button:has-text("Generate Standard Quarters")');
-      await page.waitForTimeout(2000); // Reduced wait time for quarters
-
-      // Open cycle management dialog to verify quarters were created and generate iterations
-      await page.click('button:has-text("Manage Cycles")');
-      await page.waitForTimeout(1000);
-
-      // Verify quarters were created using more specific selector
-      await expect(
-        page.locator('div.font-medium').filter({ hasText: 'Q1 2024' }).first()
-      ).toBeVisible({ timeout: 5000 });
-
-      // Generate iterations for Q1 (needed for allocation import) using cycle dialog context
-      const cycleDialog = page
-        .locator('[role="dialog"]')
-        .filter({ hasText: 'Manage Cycles' });
-      const q1Quarter = cycleDialog
-        .locator('div')
-        .filter({ hasText: /Q1 2024/ })
-        .and(page.locator('div').filter({ hasText: /Jan.*Mar/ }))
-        .first();
-      await expect(q1Quarter).toBeVisible({ timeout: 5000 });
-
-      const generateIterationsButton = q1Quarter
-        .locator('button:has-text("Generate Iterations")')
-        .first();
-      await expect(generateIterationsButton).toBeVisible({ timeout: 5000 });
-      await generateIterationsButton.click();
-      await page.waitForTimeout(1000); // Reduced iteration button wait
-
-      // Wait for iterations to be generated automatically by AppContext
-      await page.waitForTimeout(1500); // Reduced generation wait
-
-      // Close cycle management dialog
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(500);
-
-      // Verify iterations were created by checking localStorage
-      const iterationData = await page.evaluate(() => {
-        const cycles = localStorage.getItem('planning-cycles');
-        if (!cycles) return null;
-        try {
-          const parsedCycles = JSON.parse(cycles);
-          const iterations = parsedCycles.filter(
-            (c: any) => c.type === 'iteration'
-          );
-          return { iterationCount: iterations.length };
-        } catch {
-          return null;
-        }
-      });
-
-      if (iterationData && iterationData.iterationCount > 0) {
-        console.log(
-          `✅ Found ${iterationData.iterationCount} iterations in localStorage`
-        );
-      } else {
-        console.log('⚠️ No iterations found in localStorage after generation');
-      }
-
-      // Close the dialog
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(1000);
-    }
+    await createQuartersAndIterations(page);
 
     // 3. Navigate to Import/Export for comprehensive testing
     await page.goto('/settings');
