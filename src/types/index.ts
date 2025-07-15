@@ -239,6 +239,7 @@ export interface Role {
 export interface Project {
   id: string;
   name: string;
+  shortname?: string;
   description: string;
   status: 'planning' | 'in-progress' | 'completed' | 'on-hold' | 'cancelled';
   startDate: string;
@@ -254,6 +255,7 @@ export interface Project {
 export interface Epic {
   id: string;
   name: string;
+  shortname?: string;
   description?: string;
   projectId: string;
   status: 'todo' | 'in-progress' | 'completed';

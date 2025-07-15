@@ -1,5 +1,6 @@
 import { Project, Epic, Milestone } from '@/types';
 import { parseDateString } from './dateUtils';
+import { generateShortname } from './shortnameUtils';
 
 export interface ProjectCSVRow {
   project_name: string;
@@ -101,6 +102,7 @@ export const parseProjectsCSV = (
     const project: Project = {
       id: projectId,
       name: rowData.project_name,
+      shortname: generateShortname(rowData.project_name),
       description: rowData.description || undefined,
       status: status,
       startDate:
@@ -109,6 +111,10 @@ export const parseProjectsCSV = (
       endDate: parseDateString(rowData.end_date),
       budget: rowData.budget ? parseFloat(rowData.budget) : undefined,
       milestones: [],
+      priority: 0,
+      ranking: 0,
+      createdDate: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
     };
 
     projects.push(project);
@@ -156,6 +162,9 @@ export const parseProjectsCSV = (
             project.endDate ||
             new Date().toISOString().split('T')[0],
           status: milestoneStatus,
+          isCompleted: milestoneStatus === 'completed',
+          createdDate: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
         };
 
         milestones.push(milestone);
@@ -206,10 +215,15 @@ export const parseEpicsCSV = (
         const newProject: Project = {
           id: projectId,
           name: rowData.project_name,
+          shortname: generateShortname(rowData.project_name),
           description: `Auto-created from epic import`,
           status: 'planning',
           startDate: new Date().toISOString().split('T')[0],
           milestones: [],
+          priority: 0,
+          ranking: 0,
+          createdDate: new Date().toISOString(),
+          lastModified: new Date().toISOString(),
         };
         projectsMap.set(projectId, newProject);
         projectsByName.set(newProject.name.toLowerCase(), newProject);
@@ -234,14 +248,18 @@ export const parseEpicsCSV = (
       id: `epic-${index + 1}`,
       projectId: projectId,
       name: rowData.epic_name,
+      shortname: generateShortname(rowData.epic_name),
       description: rowData.description || undefined,
       estimatedEffort: rowData.estimated_effort
         ? parseFloat(rowData.estimated_effort)
         : undefined,
       status: status,
       startDate: parseDateString(rowData.start_date),
-      targetEndDate: parseDateString(rowData.target_end_date),
-      actualEndDate: parseDateString(rowData.actual_end_date),
+      endDate: parseDateString(rowData.target_end_date),
+      priority: 'medium',
+      ranking: 0,
+      createdDate: new Date().toISOString(),
+      lastModified: new Date().toISOString(),
     };
 
     epics.push(epic);
@@ -296,6 +314,7 @@ export const parseCombinedProjectEpicCSV = (
       const project: Project = {
         id: projectId,
         name: projectName,
+        shortname: generateShortname(projectName),
         description: rowData.project_description || undefined,
         status: projectStatus,
         startDate:
@@ -306,6 +325,10 @@ export const parseCombinedProjectEpicCSV = (
           ? parseFloat(rowData.project_budget)
           : undefined,
         milestones: [],
+        priority: 0,
+        ranking: 0,
+        createdDate: new Date().toISOString(),
+        lastModified: new Date().toISOString(),
       };
 
       projectsMap.set(projectId, project);
@@ -317,12 +340,17 @@ export const parseCombinedProjectEpicCSV = (
         id: `epic-${index + 1}`,
         projectId: projectId,
         name: rowData.epic_name,
+        shortname: generateShortname(rowData.epic_name),
         description: rowData.epic_description || undefined,
         estimatedEffort: rowData.epic_effort
           ? parseFloat(rowData.epic_effort)
           : undefined,
-        status: 'not-started',
-        targetEndDate: parseDateString(rowData.epic_target_date),
+        status: 'todo',
+        endDate: parseDateString(rowData.epic_target_date),
+        priority: 'medium',
+        ranking: 0,
+        createdDate: new Date().toISOString(),
+        lastModified: new Date().toISOString(),
       };
 
       epics.push(epic);
@@ -338,6 +366,9 @@ export const parseCombinedProjectEpicCSV = (
           parseDateString(rowData.milestone_due_date) ||
           new Date().toISOString().split('T')[0],
         status: 'not-started',
+        isCompleted: false,
+        createdDate: new Date().toISOString(),
+        lastModified: new Date().toISOString(),
       };
 
       milestones.push(milestone);

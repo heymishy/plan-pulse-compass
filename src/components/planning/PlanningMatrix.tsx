@@ -22,6 +22,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
+import { getDisplayName } from '@/utils/shortnameUtils';
 import { BulkSelection } from './BulkOperationsPanel';
 import { ClipboardControls } from './AllocationClipboard';
 
@@ -102,7 +103,9 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
     const epic = epics.find(e => e.id === epicId);
     if (!epic) return 'Unknown Epic';
     const project = projects.find(p => p.id === epic.projectId);
-    return `${project?.name || 'Unknown'} - ${epic.name}`;
+    const projectName = project ? getDisplayName(project, true) : 'Unknown';
+    const epicName = getDisplayName(epic, true);
+    return `${projectName} - ${epicName}`;
   };
 
   const getRunWorkCategoryName = (categoryId: string) => {
