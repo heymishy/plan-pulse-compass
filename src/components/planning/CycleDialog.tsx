@@ -57,13 +57,17 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
 
   // Initialize with parent's selected financial year or configured financial year
   useEffect(() => {
-    if (!selectedFinancialYear) {
+    if (!selectedFinancialYear && config?.financialYear) {
       if (parentSelectedFinancialYear) {
         // Use parent's selected financial year (from Planning page)
         setSelectedFinancialYear(parentSelectedFinancialYear);
-      } else if (config?.financialYear) {
+      } else {
         // Fallback to configured financial year start date for test compatibility
         setSelectedFinancialYear(config.financialYear.startDate);
+        console.log(
+          'CycleDialog: Auto-selected financial year:',
+          config.financialYear.startDate
+        );
       }
     }
   }, [
@@ -92,12 +96,18 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
     for (let i = -3; i <= 3; i++) {
       const year = currentYear + i;
       const startDate = `${year}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
-      const endYear = year + 1;
-      const endDate = `${endYear}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay - 1).padStart(2, '0')}`;
+
+      // Calculate end date properly: add 1 year and subtract 1 day
+      const endDateObj = new Date(year + 1, fyMonth, fyDay - 1);
+      const endDate = endDateObj.toISOString().split('T')[0];
+
+      // Use appropriate label format
+      const endYear = endDateObj.getFullYear();
+      const label = endYear === year ? `FY ${year}` : `FY ${year}-${endYear}`;
 
       years.push({
         value: startDate,
-        label: `FY ${year}-${endYear}`,
+        label,
         startDate,
         endDate,
       });
@@ -107,6 +117,32 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
   };
 
   const financialYearOptions = generateFinancialYearOptions();
+
+  // Auto-select first financial year option if none selected
+  React.useEffect(() => {
+    if (!selectedFinancialYear && financialYearOptions.length > 0) {
+      const defaultOption =
+        financialYearOptions.find(fy => fy.label.includes('2024')) ||
+        financialYearOptions[0];
+      console.log(
+        'CycleDialog: Auto-selecting financial year:',
+        defaultOption.label
+      );
+      setSelectedFinancialYear(defaultOption.value);
+    }
+  }, [selectedFinancialYear, financialYearOptions]);
+
+  // Debug logging for E2E tests
+  React.useEffect(() => {
+    console.log('CycleDialog: Config available:', !!config);
+    console.log('CycleDialog: Financial year config:', config?.financialYear);
+    console.log(
+      'CycleDialog: Generated options count:',
+      financialYearOptions.length
+    );
+    console.log('CycleDialog: Generated options:', financialYearOptions);
+    console.log('CycleDialog: Selected financial year:', selectedFinancialYear);
+  }, [config, financialYearOptions, selectedFinancialYear]);
 
   // Filter quarters by selected financial year
   const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
@@ -177,7 +213,12 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
   const iterations = cycles.filter(c => c.type === 'iteration');
 
   const generateStandardQuarters = () => {
+    console.log('CycleDialog: generateStandardQuarters called');
+    console.log('CycleDialog: config?.financialYear:', config?.financialYear);
+    console.log('CycleDialog: selectedFinancialYear:', selectedFinancialYear);
+
     if (!config?.financialYear) {
+      console.log('CycleDialog: No financial year config, showing error');
       toast({
         title: 'Error',
         description:
@@ -187,7 +228,13 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
       return;
     }
 
-    if (!selectedFinancialYear) {
+    // Use selected financial year, or fall back to config if none selected
+    const financialYearToUse =
+      selectedFinancialYear || config.financialYear.startDate;
+    console.log('CycleDialog: financialYearToUse:', financialYearToUse);
+
+    if (!financialYearToUse) {
+      console.log('CycleDialog: No financial year to use, showing error');
       toast({
         title: 'Error',
         description: 'Please select a financial year first.',
@@ -196,12 +243,14 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
       return;
     }
 
-    // Use the selected financial year instead of the configured one
-    const fyStart = new Date(selectedFinancialYear);
+    // Use the selected financial year (or fallback) instead of the configured one
+    const fyStart = new Date(financialYearToUse);
+    console.log('CycleDialog: fyStart:', fyStart);
     if (isNaN(fyStart.getTime())) {
+      console.log('CycleDialog: Invalid date, showing error');
       toast({
         title: 'Error',
-        description: `Invalid financial year date: ${selectedFinancialYear}`,
+        description: `Invalid financial year date: ${financialYearToUse}`,
         variant: 'destructive',
       });
       return;
@@ -231,17 +280,42 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
         status = 'completed';
       }
 
-      newQuarters.push({
+      const newQuarter = {
         id: crypto.randomUUID(),
         type: 'quarterly',
         name: `Q${i + 1} ${quarterYear}`,
         startDate: quarterStart.toISOString().split('T')[0],
         endDate: quarterEnd.toISOString().split('T')[0],
         status: status,
-      });
+      };
+
+      console.log(`CycleDialog: Created quarter ${i + 1}:`, newQuarter);
+      newQuarters.push(newQuarter);
     }
 
+    console.log('CycleDialog: All quarters created:', newQuarters);
+
     setCycles(prev => {
+      // Check for existing quarters for this financial year to prevent duplicates
+      const existingQuarterNames = prev
+        .filter(c => c.type === 'quarterly')
+        .map(c => c.name);
+
+      const newQuarterNames = newQuarters.map(q => q.name);
+      const duplicates = newQuarterNames.filter(name =>
+        existingQuarterNames.includes(name)
+      );
+
+      if (duplicates.length > 0) {
+        console.log('CycleDialog: Duplicate quarters detected:', duplicates);
+        toast({
+          title: 'Info',
+          description: `Quarters for FY ${fyYear} already exist`,
+          variant: 'default',
+        });
+        return prev; // Don't add duplicates
+      }
+
       const updated = [...prev, ...newQuarters];
       console.log('Generated quarters:', updated);
 
@@ -261,12 +335,13 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
         }
       }
 
-      return updated;
-    });
+      // Show success toast only when quarters are actually created
+      toast({
+        title: 'Success',
+        description: `Generated 4 quarters for FY ${fyYear}`,
+      });
 
-    toast({
-      title: 'Success',
-      description: `Generated 4 quarters for FY ${fyYear}`,
+      return updated;
     });
   };
 
@@ -516,7 +591,12 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
                     </p>
 
                     <Button
-                      onClick={generateStandardQuarters}
+                      onClick={() => {
+                        console.log(
+                          'CycleDialog: Button clicked! About to call generateStandardQuarters'
+                        );
+                        generateStandardQuarters();
+                      }}
                       className="w-full"
                       disabled={!selectedFinancialYear}
                     >

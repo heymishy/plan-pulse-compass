@@ -142,17 +142,21 @@ const Planning = () => {
     for (let i = -3; i <= 3; i++) {
       const year = currentYear + i;
       const startDate = `${year}-${String(fyMonth + 1).padStart(2, '0')}-${String(fyDay).padStart(2, '0')}`;
-      const endYear = year + 1;
 
       // Calculate proper end date (day before FY starts next year)
-      const fyEndDate = new Date(endYear, fyMonth, fyDay);
+      const fyEndDate = new Date(year + 1, fyMonth, fyDay);
       fyEndDate.setDate(fyEndDate.getDate() - 1);
+      const endDate = fyEndDate.toISOString().split('T')[0];
+
+      // Use appropriate label format
+      const endYear = fyEndDate.getFullYear();
+      const label = endYear === year ? `FY ${year}` : `FY ${year}-${endYear}`;
 
       const fyOption = {
         value: startDate,
-        label: `FY ${year}-${endYear}`,
+        label,
         startDate,
-        endDate: fyEndDate.toISOString().split('T')[0],
+        endDate,
       };
 
       // Debug logging for current year

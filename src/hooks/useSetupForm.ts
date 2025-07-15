@@ -168,11 +168,14 @@ export const useSetupForm = () => {
         description: 'Your planning app is now ready to use!',
       });
 
-      // Small delay to ensure state is persisted and iterations are generated before navigation
-      setTimeout(() => {
-        console.log('Setup process finished, navigating to dashboard');
-        navigate('/dashboard');
-      }, 2000); // Extended delay for iteration generation
+      // Wait for state to be persisted before navigation
+      // Use requestAnimationFrame to ensure all state updates are flushed
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          console.log('Setup process finished, navigating to dashboard');
+          navigate('/dashboard');
+        }, 2000); // Extended delay for localStorage persistence
+      });
     } catch (error) {
       console.error('Setup completion error:', error);
       toast({
