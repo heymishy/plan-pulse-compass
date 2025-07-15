@@ -54,27 +54,31 @@ test.describe('Settings Page', () => {
         timeout: 5000,
       });
 
-      // Create iterations for Q1 using more specific table row selector
-      const q1Row = page
-        .locator('table')
-        .locator('tr')
-        .filter({ hasText: 'Q1 2024' })
+      // Create iterations for Q1 using cycle dialog context
+      const cycleDialog = page
+        .locator('[role="dialog"]')
+        .filter({ hasText: 'Manage Cycles' });
+      const q1Quarter = cycleDialog
+        .locator('div')
+        .filter({ hasText: /Q1 2024/ })
+        .and(page.locator('div').filter({ hasText: /Jan.*Mar/ }))
         .first();
-      await q1Row
+      await q1Quarter
         .locator('button:has-text("Generate Iterations")')
+        .first()
         .click({ timeout: 5000 });
       await page.waitForTimeout(1000); // Reduced wait time
 
       // Create iterations for Q2 for more comprehensive testing
-      const q2Row = page
-        .locator('table')
-        .locator('tr')
-        .filter({ hasText: 'Q2 2024' })
+      const q2Quarter = cycleDialog
+        .locator('div')
+        .filter({ hasText: /Q2 2024/ })
+        .and(page.locator('div').filter({ hasText: /Apr.*Jun/ }))
         .first();
-      if ((await q2Row.count()) > 0) {
-        const q2Button = q2Row.locator(
-          'button:has-text("Generate Iterations")'
-        );
+      if ((await q2Quarter.count()) > 0) {
+        const q2Button = q2Quarter
+          .locator('button:has-text("Generate Iterations")')
+          .first();
         if ((await q2Button.count()) > 0) {
           await q2Button.click({ timeout: 5000 });
           await page.waitForTimeout(1000); // Reduced wait time

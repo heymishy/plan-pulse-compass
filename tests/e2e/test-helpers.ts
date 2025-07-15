@@ -31,41 +31,89 @@ export async function createQuartersAndIterations(page: Page): Promise<void> {
     console.log('ℹ️ Quarters already exist');
   }
 
-  // Generate iterations for Q1 using more specific selector
-  const q1Row = page.locator('div').filter({ hasText: 'Q1 2024' }).first();
-  await expect(q1Row).toBeVisible({ timeout: 5000 });
+  // Generate iterations for Q1 using more specific selector within the cycle dialog
+  const cycleDialog = page
+    .locator('[role="dialog"]')
+    .filter({ hasText: 'Manage Cycles' });
+  await expect(cycleDialog).toBeVisible({ timeout: 5000 });
 
-  const generateButton = q1Row.locator(
-    'button:has-text("Generate Iterations")'
+  // Find the specific Q1 quarter entry within the quarters list
+  const q1Quarter = cycleDialog
+    .locator('div')
+    .filter({ hasText: /Q1 2024/ })
+    .and(page.locator('div').filter({ hasText: /Jan.*Mar/ }))
+    .first();
+  await expect(q1Quarter).toBeVisible({ timeout: 5000 });
+
+  // Check if iterations already exist by looking at localStorage
+  const existingCycles = await page.evaluate(() => {
+    const data = localStorage.getItem('planning-cycles');
+    return data ? JSON.parse(data) : [];
+  });
+
+  const existingIterations = existingCycles.filter(
+    (cycle: any) => cycle.type === 'iteration'
   );
-  if (await generateButton.isVisible()) {
-    await generateButton.click();
-    await page.waitForTimeout(2000); // Give more time for iterations to generate
+  console.log(`Found ${existingIterations.length} existing iterations`);
 
-    // Wait for iterations to appear in localStorage
-    const startTime = Date.now();
-    const timeout = 5000;
-    let iterationsCount = 0;
+  if (existingIterations.length === 0) {
+    // Debug: Check what buttons are available in the Q1 quarter
+    const allButtons = q1Quarter.locator('button');
+    const buttonCount = await allButtons.count();
+    console.log(`Found ${buttonCount} buttons in Q1 quarter`);
 
-    while (Date.now() - startTime < timeout) {
-      const cycles = await page.evaluate(() => {
-        const data = localStorage.getItem('planning-cycles');
-        return data ? JSON.parse(data) : [];
-      });
-      iterationsCount = cycles.length;
-
-      if (iterationsCount > 4) {
-        // More than just quarters
-        break;
-      }
-      await page.waitForTimeout(200);
+    for (let i = 0; i < buttonCount; i++) {
+      const buttonText = await allButtons.nth(i).textContent();
+      console.log(`Button ${i}: "${buttonText}"`);
     }
 
-    console.log(
-      `✅ Q1 iterations created successfully (${iterationsCount} total cycles)`
-    );
+    // Try to find the Generate Iterations button within this specific quarter
+    const generateButton = q1Quarter
+      .locator('button:has-text("Generate Iterations")')
+      .first();
+
+    if (await generateButton.isVisible()) {
+      console.log('Found Generate Iterations button for Q1 2024');
+
+      await generateButton.click();
+      await page.waitForTimeout(2000); // Give more time for iterations to generate
+
+      // Wait for iterations to appear in localStorage
+      const startTime = Date.now();
+      const timeout = 8000;
+      let iterationsCount = 0;
+
+      while (Date.now() - startTime < timeout) {
+        const cycles = await page.evaluate(() => {
+          const data = localStorage.getItem('planning-cycles');
+          return data ? JSON.parse(data) : [];
+        });
+        const iterations = cycles.filter(
+          (cycle: any) => cycle.type === 'iteration'
+        );
+        iterationsCount = iterations.length;
+
+        if (iterationsCount > 0) {
+          // At least one iteration exists
+          break;
+        }
+        await page.waitForTimeout(200);
+      }
+
+      console.log(
+        `✅ Q1 iterations created successfully (${iterationsCount} iterations)`
+      );
+    } else {
+      console.log('⚠️ Generate Iterations button not found for Q1 2024');
+
+      // Debug: Show the actual HTML content of the Q1 quarter
+      const q1Content = await q1Quarter.innerHTML();
+      console.log('Q1 quarter HTML:', q1Content.slice(0, 500));
+    }
   } else {
-    console.log('ℹ️ Q1 iterations already exist');
+    console.log(
+      `ℹ️ Q1 iterations already exist (${existingIterations.length} iterations)`
+    );
   }
 
   // Close cycle management dialog

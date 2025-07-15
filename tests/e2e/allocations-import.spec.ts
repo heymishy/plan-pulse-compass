@@ -71,16 +71,20 @@ test.describe('Allocations Import E2E Tests', () => {
         page.locator('div.font-medium').filter({ hasText: 'Q1 2024' }).first()
       ).toBeVisible({ timeout: 5000 });
 
-      // Generate iterations for Q1 (needed for allocation import) using more specific selector
-      const q1QuarterRow = page
+      // Generate iterations for Q1 (needed for allocation import) using cycle dialog context
+      const cycleDialog = page
+        .locator('[role="dialog"]')
+        .filter({ hasText: 'Manage Cycles' });
+      const q1Quarter = cycleDialog
         .locator('div')
-        .filter({ hasText: 'Q1 2024' })
+        .filter({ hasText: /Q1 2024/ })
+        .and(page.locator('div').filter({ hasText: /Jan.*Mar/ }))
         .first();
-      await expect(q1QuarterRow).toBeVisible({ timeout: 5000 });
+      await expect(q1Quarter).toBeVisible({ timeout: 5000 });
 
-      const generateIterationsButton = q1QuarterRow.locator(
-        'button:has-text("Generate Iterations")'
-      );
+      const generateIterationsButton = q1Quarter
+        .locator('button:has-text("Generate Iterations")')
+        .first();
       await expect(generateIterationsButton).toBeVisible({ timeout: 5000 });
       await generateIterationsButton.click();
       await page.waitForTimeout(1000); // Reduced iteration button wait
