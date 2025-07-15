@@ -50,7 +50,7 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
 
       // Generate standard quarters
       await page.click('button:has-text("Generate Standard Quarters")');
-      await page.waitForTimeout(5000); // Give more time for quarters to be created
+      await page.waitForTimeout(2000); // Reduced wait time for quarters
 
       // Open cycle management dialog to verify quarters were created and generate iterations
       await page.click('button:has-text("Manage Cycles")');
@@ -72,10 +72,10 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
       );
       await expect(generateIterationsButton).toBeVisible({ timeout: 5000 });
       await generateIterationsButton.click();
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(1000); // Reduced iteration button wait
 
       // Wait for iterations to be generated automatically by AppContext
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(1500); // Reduced generation wait
 
       // Close cycle management dialog
       await page.keyboard.press('Escape');

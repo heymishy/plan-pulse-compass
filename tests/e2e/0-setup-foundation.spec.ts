@@ -232,7 +232,7 @@ test.describe('Foundation Setup (runs first)', () => {
     const setupRequired = await page.locator('text=Setup Required').count();
     if (setupRequired > 0) {
       console.log('⚠️ Setup still required, waiting longer...');
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(2000); // Reduced from 5s to 2s
       await page.reload();
       await page.waitForLoadState('networkidle');
     }
@@ -449,98 +449,31 @@ test.describe('Foundation Setup (runs first)', () => {
         existingQuartersSection.locator('text=Q1 2024').first()
       ).toBeVisible({ timeout: 5000 });
 
-      // Wait for quarters to be saved in localStorage
-      await waitForLocalStorageData(page, 'planning-cycles', 4);
+      // Wait for quarters to be saved in localStorage (reduced timeout)
+      await waitForLocalStorageData(page, 'planning-cycles', 4, 8000); // Reduced timeout
       console.log('✅ Quarters created and saved');
     }
 
     // 5. CRITICAL: Generate iterations for Q1
-    // Try multiple selectors to find Q1 quarter row/section with better fallbacks
-    const q1Selectors = [
-      'tr:has(td:text("Q1 2024"))', // Table row with exact text
-      'tr:has(td:text("Q1"))', // Table row with partial text
-      'tr:has-text("Q1 2024")', // Table row containing text
-      'tr:has-text("Q1")', // Table row containing Q1
-      '[data-testid*="q1"]', // Data testid
-      'div:has-text("Q1 2024")', // Div container
-      'div:has-text("Q1")', // Div with Q1
-      '*:has-text("Q1 2024")', // Any element with full text
-      '*:has-text("Q1")', // Any element with Q1
-      'text=Q1 2024', // Direct text match
-      'text=Q1', // Partial text match
-    ];
+    // Use the correct selector for the cycle dialog structure (optimized)
+    const q1Element = page.locator('div:has(div.font-medium:text("Q1 2024"))');
+    await expect(q1Element).toBeVisible({ timeout: 5000 });
+    console.log(
+      '✅ Found Q1 element with selector: div:has(div.font-medium:text("Q1 2024"))'
+    );
 
-    let q1Element = null;
-    for (const selector of q1Selectors) {
-      const element = page.locator(selector).first();
-      if ((await element.count()) > 0) {
-        q1Element = element;
-        console.log(`✅ Found Q1 element with selector: ${selector}`);
-        break;
-      }
-    }
+    // Find Generate Iterations button for Q1 (optimized)
+    const iterationButton = q1Element.locator(
+      'button:has-text("Generate Iterations")'
+    );
+    await expect(iterationButton).toBeVisible({ timeout: 5000 });
+    await iterationButton.click();
+    console.log('✅ Clicked Generate Iterations button');
 
-    if (!q1Element) {
-      // Debug: log what elements are actually present
-      console.log('Available elements in dialog:');
-      const allText = await page.locator('*').allTextContents();
-      console.log('All text contents:', allText.slice(0, 20)); // First 20 elements
-      throw new Error('Could not find Q1 2024 element in any form');
-    }
+    await page.waitForTimeout(1000); // Reduced wait time
 
-    // Find Generate Iterations button for Q1 - try multiple approaches
-    const iterationButtonSelectors = [
-      // Within Q1 element/row
-      q1Element.locator('button:has-text("Generate Iterations")'),
-      q1Element.locator('button:has-text("Generate")'),
-      q1Element.locator('button').filter({ hasText: 'Iteration' }),
-      q1Element.locator('button').filter({ hasText: 'Generate' }),
-      // Look for button in same row as Q1
-      page
-        .locator('tr:has-text("Q1")')
-        .locator('button:has-text("Generate Iterations")'),
-      page.locator('tr:has-text("Q1")').locator('button:has-text("Generate")'),
-      // Anywhere in dialog with Generate Iterations text
-      page.locator('button:has-text("Generate Iterations")').first(),
-      page.locator('button').filter({ hasText: 'Generate Iterations' }).first(),
-      page.locator('button').filter({ hasText: 'Generate' }).first(),
-    ];
-
-    let iterationButtonFound = false;
-    for (const button of iterationButtonSelectors) {
-      try {
-        if ((await button.count()) > 0) {
-          await button.click();
-          iterationButtonFound = true;
-          console.log('✅ Clicked Generate Iterations button');
-          break;
-        }
-      } catch (error) {
-        // Continue to next selector
-        continue;
-      }
-    }
-
-    if (!iterationButtonFound) {
-      console.log(
-        '⚠️ Could not find Generate Iterations button, trying any Generate button'
-      );
-      const anyGenerateButton = page.locator('button:has-text("Generate")');
-      if ((await anyGenerateButton.count()) > 0) {
-        await anyGenerateButton.first().click();
-        console.log('✅ Clicked any Generate button as fallback');
-      } else {
-        // Debug: log available buttons
-        const allButtons = await page.locator('button').allTextContents();
-        console.log('Available buttons:', allButtons);
-        throw new Error('Could not find any Generate Iterations button');
-      }
-    }
-
-    await page.waitForTimeout(2000);
-
-    // Wait for iterations to be generated automatically by AppContext
-    await waitForIterationGeneration(page, 4, 20000);
+    // Wait for iterations to be generated automatically by AppContext (reduced timeout)
+    await waitForIterationGeneration(page, 4, 8000); // Further reduced to 8s
 
     // 6. Verify iterations were created
     // Check for iteration-related text or table rows
@@ -583,8 +516,8 @@ test.describe('Foundation Setup (runs first)', () => {
     // Wait for page to load and check final state
     await page.waitForTimeout(1000);
 
-    // Final verification - check localStorage has both quarters and iterations
-    const finalCyclesData = await waitForIterationGeneration(page, 4, 20000);
+    // Final verification - check localStorage has both quarters and iterations (quick check)
+    const finalCyclesData = await waitForIterationGeneration(page, 4, 5000); // Reduced from 20s to 5s
 
     // Should not show "no iterations found"
     const noIterationsMessage = page.locator('text=no iterations found');

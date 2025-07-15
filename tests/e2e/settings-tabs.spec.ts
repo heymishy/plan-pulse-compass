@@ -45,7 +45,7 @@ test.describe('Settings Page', () => {
 
       // Create quarters
       await page.click('button:has-text("Generate Standard Quarters")');
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(2000); // Reduced wait time
 
       // Verify quarters created
       await expect(
@@ -57,7 +57,7 @@ test.describe('Settings Page', () => {
       // Create iterations for Q1
       const q1Row = page.locator('tr:has(td:text("Q1 2024"))');
       await q1Row.locator('button:has-text("Generate Iterations")').click();
-      await page.waitForTimeout(5000);
+      await page.waitForTimeout(2000); // Reduced wait time
 
       // Create iterations for Q2 for more comprehensive testing
       const q2Row = page.locator('tr:has(td:text("Q2 2024"))');
