@@ -26,21 +26,186 @@ vi.mock('date-fns', () => ({
   format: vi.fn((date, formatStr) => {
     if (formatStr === 'MMM dd') return 'Jan 01';
     if (formatStr === 'MMM yyyy') return 'Jan 2024';
-    if (formatStr === 'yyyy-MM-dd') return '2024-01-01';
+    if (formatStr === 'yyyy-MM-dd') {
+      if (date instanceof Date) {
+        // Use local timezone instead of UTC to match the parse function
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+      return '2024-01-01';
+    }
     return '2024-01-15';
   }),
+  parse: vi.fn((dateString, formatStr, referenceDate) => {
+    // Handle various date formats for testing
+    try {
+      // ISO format yyyy-MM-dd
+      if (formatStr === 'yyyy-MM-dd') {
+        const match = dateString.match(/(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+          const year = parseInt(match[1]);
+          const month = parseInt(match[2]) - 1; // JS months are 0-indexed
+          const day = parseInt(match[3]);
+
+          // Reject invalid months (13, 14, etc.)
+          if (parseInt(match[2]) < 1 || parseInt(match[2]) > 12)
+            return new Date(NaN);
+
+          // Create date (JS Date constructor will auto-correct invalid days)
+          const date = new Date(year, month, day);
+
+          // Return the corrected date (this mimics date-fns behavior)
+          return date;
+        }
+      }
+
+      // US format MM/dd/yyyy
+      if (formatStr === 'MM/dd/yyyy') {
+        const match = dateString.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (match) {
+          const month = parseInt(match[1]) - 1; // JS months are 0-indexed
+          const day = parseInt(match[2]);
+          const year = parseInt(match[3]);
+
+          // Reject invalid months (13, 14, etc.)
+          if (parseInt(match[1]) < 1 || parseInt(match[1]) > 12)
+            return new Date(NaN);
+
+          // Create date (JS Date constructor will auto-correct invalid days)
+          const date = new Date(year, month, day);
+
+          return date;
+        }
+      }
+
+      // UK format dd/MM/yyyy
+      if (formatStr === 'dd/MM/yyyy') {
+        const match = dateString.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (match) {
+          const day = parseInt(match[1]);
+          const month = parseInt(match[2]) - 1; // JS months are 0-indexed
+          const year = parseInt(match[3]);
+
+          // Reject invalid months (13, 14, etc.)
+          if (parseInt(match[2]) < 1 || parseInt(match[2]) > 12)
+            return new Date(NaN);
+
+          // Create date (JS Date constructor will auto-correct invalid days)
+          const date = new Date(year, month, day);
+
+          return date;
+        }
+      }
+
+      // Short US format M/d/yyyy
+      if (formatStr === 'M/d/yyyy') {
+        const match = dateString.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (match) {
+          const month = parseInt(match[1]) - 1; // JS months are 0-indexed
+          const day = parseInt(match[2]);
+          const year = parseInt(match[3]);
+
+          // Reject invalid months (13, 14, etc.)
+          if (parseInt(match[1]) < 1 || parseInt(match[1]) > 12)
+            return new Date(NaN);
+
+          // Create date (JS Date constructor will auto-correct invalid days)
+          const date = new Date(year, month, day);
+
+          return date;
+        }
+      }
+
+      // Dot format yyyy.MM.dd
+      if (formatStr === 'yyyy.MM.dd') {
+        const match = dateString.match(/(\d{4})\.(\d{2})\.(\d{2})/);
+        if (match) {
+          const year = parseInt(match[1]);
+          const month = parseInt(match[2]) - 1; // JS months are 0-indexed
+          const day = parseInt(match[3]);
+
+          // Reject invalid months (13, 14, etc.)
+          if (parseInt(match[2]) < 1 || parseInt(match[2]) > 12)
+            return new Date(NaN);
+
+          // Create date (JS Date constructor will auto-correct invalid days)
+          const date = new Date(year, month, day);
+
+          return date;
+        }
+      }
+
+      // Dash format dd-MM-yyyy
+      if (formatStr === 'dd-MM-yyyy') {
+        const match = dateString.match(/(\d{2})-(\d{2})-(\d{4})/);
+        if (match) {
+          const day = parseInt(match[1]);
+          const month = parseInt(match[2]) - 1; // JS months are 0-indexed
+          const year = parseInt(match[3]);
+
+          // Reject invalid months (13, 14, etc.)
+          if (parseInt(match[2]) < 1 || parseInt(match[2]) > 12)
+            return new Date(NaN);
+
+          // Create date (JS Date constructor will auto-correct invalid days)
+          const date = new Date(year, month, day);
+
+          return date;
+        }
+      }
+
+      // Slash ISO format yyyy/MM/dd
+      if (formatStr === 'yyyy/MM/dd') {
+        const match = dateString.match(/(\d{4})\/(\d{2})\/(\d{2})/);
+        if (match) {
+          const year = parseInt(match[1]);
+          const month = parseInt(match[2]) - 1; // JS months are 0-indexed
+          const day = parseInt(match[3]);
+
+          // Reject invalid months (13, 14, etc.)
+          if (parseInt(match[2]) < 1 || parseInt(match[2]) > 12)
+            return new Date(NaN);
+
+          // Create date (JS Date constructor will auto-correct invalid days)
+          const date = new Date(year, month, day);
+
+          return date;
+        }
+      }
+
+      // Fallback - return invalid date
+      return new Date(NaN);
+    } catch (e) {
+      return new Date(NaN);
+    }
+  }),
   parseISO: vi.fn(() => new Date('2024-01-15')),
-  isValid: vi.fn(() => true),
+  isValid: vi.fn(date => date instanceof Date && !isNaN(date.getTime())),
   addDays: vi.fn(
     (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000)
   ),
+  addWeeks: vi.fn(
+    (date, weeks) => new Date(date.getTime() + weeks * 7 * 24 * 60 * 60 * 1000)
+  ),
+  addMonths: vi.fn((date, months) => {
+    const newDate = new Date(date);
+    newDate.setMonth(newDate.getMonth() + months);
+    return newDate;
+  }),
   differenceInDays: vi.fn(() => 30),
   startOfWeek: vi.fn(() => new Date('2024-01-15')),
   endOfWeek: vi.fn(() => new Date('2024-01-21')),
   startOfMonth: vi.fn(() => new Date('2024-01-01')),
   endOfMonth: vi.fn(() => new Date('2024-01-31')),
   startOfToday: vi.fn(() => new Date('2024-01-15')),
-  isWithinInterval: vi.fn(() => true),
+  isWithinInterval: vi.fn((date, interval) => {
+    const d = new Date(date);
+    const start = new Date(interval.start);
+    const end = new Date(interval.end);
+    return d >= start && d <= end;
+  }),
   isBefore: vi.fn(() => false),
   isToday: vi.fn(() => false),
   eachDayOfInterval: vi.fn(() => [
