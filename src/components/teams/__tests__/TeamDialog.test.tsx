@@ -95,7 +95,7 @@ describe('TeamDialog', () => {
 
   it('renders without crashing', () => {
     renderComponent();
-    expect(screen.getByText('Add New Team')).toBeInTheDocument();
+    expect(screen.getByText('Create New Team')).toBeInTheDocument();
   });
 
   it('renders edit mode when team is provided', () => {
@@ -106,10 +106,12 @@ describe('TeamDialog', () => {
   it('displays team form fields', () => {
     renderComponent();
 
-    expect(screen.getByLabelText('Team Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Team Name *')).toBeInTheDocument();
     expect(screen.getByLabelText('Description')).toBeInTheDocument();
     expect(screen.getByLabelText('Division')).toBeInTheDocument();
-    expect(screen.getByLabelText('Capacity')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Weekly Capacity (hours) *')
+    ).toBeInTheDocument();
     expect(screen.getByLabelText('Product Owner')).toBeInTheDocument();
   });
 
@@ -126,7 +128,7 @@ describe('TeamDialog', () => {
   it('handles team name change', async () => {
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Team Name');
+    const nameInput = screen.getByLabelText('Team Name *');
     fireEvent.change(nameInput, { target: { value: 'Backend Team' } });
 
     expect(nameInput).toHaveValue('Backend Team');
@@ -164,7 +166,7 @@ describe('TeamDialog', () => {
   it('handles capacity change', async () => {
     renderComponent();
 
-    const capacityInput = screen.getByLabelText('Capacity');
+    const capacityInput = screen.getByLabelText('Weekly Capacity (hours) *');
     fireEvent.change(capacityInput, { target: { value: '150' } });
 
     expect(capacityInput).toHaveValue('150');
@@ -239,10 +241,10 @@ describe('TeamDialog', () => {
   it('validates capacity value', async () => {
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Team Name');
+    const nameInput = screen.getByLabelText('Team Name *');
     fireEvent.change(nameInput, { target: { value: 'Test Team' } });
 
-    const capacityInput = screen.getByLabelText('Capacity');
+    const capacityInput = screen.getByLabelText('Weekly Capacity (hours) *');
     fireEvent.change(capacityInput, { target: { value: '-10' } });
 
     const saveButton = screen.getByText('Save Team');
@@ -258,7 +260,7 @@ describe('TeamDialog', () => {
   it('creates new team successfully', async () => {
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Team Name');
+    const nameInput = screen.getByLabelText('Team Name *');
     fireEvent.change(nameInput, { target: { value: 'New Team' } });
 
     const descriptionInput = screen.getByLabelText('Description');
@@ -266,7 +268,7 @@ describe('TeamDialog', () => {
       target: { value: 'New team description' },
     });
 
-    const capacityInput = screen.getByLabelText('Capacity');
+    const capacityInput = screen.getByLabelText('Weekly Capacity (hours) *');
     fireEvent.change(capacityInput, { target: { value: '80' } });
 
     // Select division
@@ -314,7 +316,7 @@ describe('TeamDialog', () => {
 
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Team Name');
+    const nameInput = screen.getByLabelText('Team Name *');
     fireEvent.change(nameInput, { target: { value: 'Test Team' } });
 
     const saveButton = screen.getByText('Save Team');

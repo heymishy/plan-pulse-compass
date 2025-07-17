@@ -345,7 +345,7 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
                         setFormData(prev => ({ ...prev, divisionId: value }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="division">
                         <SelectValue placeholder="Select division" />
                       </SelectTrigger>
                       <SelectContent>
@@ -375,7 +375,7 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
                         }))
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger id="productOwner">
                         <SelectValue placeholder="Select product owner" />
                       </SelectTrigger>
                       <SelectContent>
