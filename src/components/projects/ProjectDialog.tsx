@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project, Milestone, ProjectSolution, ProjectSkill } from '@/types';
@@ -33,14 +32,18 @@ interface ProjectDialogProps {
   project: Project | null;
 }
 
-const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project }) => {
-  const { 
-    projects, 
-    setProjects, 
-    projectSolutions, 
+const ProjectDialog: React.FC<ProjectDialogProps> = ({
+  isOpen,
+  onClose,
+  project,
+}) => {
+  const {
+    projects,
+    setProjects,
+    projectSolutions,
     setProjectSolutions,
     projectSkills,
-    setProjectSkills
+    setProjectSkills,
   } = useApp();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -52,8 +55,12 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
     budget: '',
   });
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [currentProjectSolutions, setCurrentProjectSolutions] = useState<ProjectSolution[]>([]);
-  const [currentProjectSkills, setCurrentProjectSkills] = useState<ProjectSkill[]>([]);
+  const [currentProjectSolutions, setCurrentProjectSolutions] = useState<
+    ProjectSolution[]
+  >([]);
+  const [currentProjectSkills, setCurrentProjectSkills] = useState<
+    ProjectSkill[]
+  >([]);
 
   useEffect(() => {
     if (project) {
@@ -66,10 +73,14 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
         budget: project.budget?.toString() || '',
       });
       setMilestones(project.milestones);
-      
+
       // Load existing project solutions and skills
-      setCurrentProjectSolutions(projectSolutions.filter(ps => ps.projectId === project.id));
-      setCurrentProjectSkills(projectSkills.filter(ps => ps.projectId === project.id));
+      setCurrentProjectSolutions(
+        projectSolutions.filter(ps => ps.projectId === project.id)
+      );
+      setCurrentProjectSkills(
+        projectSkills.filter(ps => ps.projectId === project.id)
+      );
     } else {
       setFormData({
         name: '',
@@ -101,10 +112,16 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
     setMilestones(prev => [...prev, newMilestone]);
   };
 
-  const updateMilestone = (index: number, field: keyof Milestone, value: string) => {
-    setMilestones(prev => prev.map((milestone, i) => 
-      i === index ? { ...milestone, [field]: value } : milestone
-    ));
+  const updateMilestone = (
+    index: number,
+    field: keyof Milestone,
+    value: string
+  ) => {
+    setMilestones(prev =>
+      prev.map((milestone, i) =>
+        i === index ? { ...milestone, [field]: value } : milestone
+      )
+    );
   };
 
   const removeMilestone = (index: number) => {
@@ -113,27 +130,27 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Project name is required",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Project name is required',
+        variant: 'destructive',
       });
       return;
     }
 
     if (!formData.startDate) {
       toast({
-        title: "Error",
-        description: "Start date is required",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Start date is required',
+        variant: 'destructive',
       });
       return;
     }
 
     const projectId = project?.id || crypto.randomUUID();
-    
+
     const projectData: Project = {
       id: projectId,
       name: formData.name.trim(),
@@ -147,7 +164,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
 
     // Update projects
     if (project) {
-      setProjects(prev => prev.map(p => p.id === project.id ? projectData : p));
+      setProjects(prev =>
+        prev.map(p => (p.id === project.id ? projectData : p))
+      );
     } else {
       setProjects(prev => [...prev, projectData]);
     }
@@ -155,18 +174,20 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
     // Update project solutions
     setProjectSolutions(prev => [
       ...prev.filter(ps => ps.projectId !== projectId),
-      ...currentProjectSolutions.map(ps => ({ ...ps, projectId }))
+      ...currentProjectSolutions.map(ps => ({ ...ps, projectId })),
     ]);
 
     // Update project skills
     setProjectSkills(prev => [
       ...prev.filter(ps => ps.projectId !== projectId),
-      ...currentProjectSkills.map(ps => ({ ...ps, projectId }))
+      ...currentProjectSkills.map(ps => ({ ...ps, projectId })),
     ]);
 
     toast({
-      title: "Success",
-      description: project ? "Project updated successfully" : "Project created successfully",
+      title: 'Success',
+      description: project
+        ? 'Project updated successfully'
+        : 'Project created successfully',
     });
 
     onClose();
@@ -197,7 +218,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onChange={e => handleInputChange('name', e.target.value)}
                     placeholder="Enter project name"
                     required
                   />
@@ -205,8 +226,11 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
 
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                    <SelectTrigger>
+                  <Select
+                    value={formData.status}
+                    onValueChange={value => handleInputChange('status', value)}
+                  >
+                    <SelectTrigger id="status">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -224,7 +248,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onChange={e =>
+                    handleInputChange('description', e.target.value)
+                  }
                   placeholder="Enter project description"
                   rows={3}
                 />
@@ -237,7 +263,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                     id="startDate"
                     type="date"
                     value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    onChange={e =>
+                      handleInputChange('startDate', e.target.value)
+                    }
                     required
                   />
                 </div>
@@ -248,7 +276,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                     id="endDate"
                     type="date"
                     value={formData.endDate}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
+                    onChange={e => handleInputChange('endDate', e.target.value)}
                   />
                 </div>
 
@@ -258,7 +286,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                     id="budget"
                     type="number"
                     value={formData.budget}
-                    onChange={(e) => handleInputChange('budget', e.target.value)}
+                    onChange={e => handleInputChange('budget', e.target.value)}
                     placeholder="0"
                     min="0"
                     step="0.01"
@@ -310,7 +338,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                       <Label>Name</Label>
                       <Input
                         value={milestone.name}
-                        onChange={(e) => updateMilestone(index, 'name', e.target.value)}
+                        onChange={e =>
+                          updateMilestone(index, 'name', e.target.value)
+                        }
                         placeholder="Milestone name"
                       />
                     </div>
@@ -320,7 +350,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                       <Input
                         type="date"
                         value={milestone.dueDate}
-                        onChange={(e) => updateMilestone(index, 'dueDate', e.target.value)}
+                        onChange={e =>
+                          updateMilestone(index, 'dueDate', e.target.value)
+                        }
                       />
                     </div>
                   </div>
@@ -329,7 +361,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                     <Label>Description</Label>
                     <Textarea
                       value={milestone.description || ''}
-                      onChange={(e) => updateMilestone(index, 'description', e.target.value)}
+                      onChange={e =>
+                        updateMilestone(index, 'description', e.target.value)
+                      }
                       placeholder="Milestone description"
                       rows={2}
                     />
@@ -339,7 +373,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ isOpen, onClose, project 
                     <Label>Status</Label>
                     <Select
                       value={milestone.status}
-                      onValueChange={(value) => updateMilestone(index, 'status', value)}
+                      onValueChange={value =>
+                        updateMilestone(index, 'status', value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
