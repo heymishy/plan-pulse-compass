@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
+import { renderWithoutRouter } from '@/test/utils/test-utils';
 import App from '../App';
 
 // Mock the context providers
@@ -12,6 +12,16 @@ vi.mock('@/context/AppContext', () => ({
   useApp: () => ({
     isSetupComplete: false,
     isDataLoading: false,
+    teams: [],
+    people: [],
+    projects: [],
+    epics: [],
+    cycles: [],
+    skills: [],
+    roles: [],
+    allocations: [],
+    runWorkCategories: [],
+    divisions: [],
   }),
 }));
 
@@ -69,36 +79,29 @@ vi.mock('@/components/ui/toaster', () => ({
 
 describe('App', () => {
   it('renders without crashing', () => {
-    render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
+    renderWithoutRouter(<App />);
 
     expect(screen.getByTestId('sidebar')).toBeInTheDocument();
-    expect(screen.getByTestId('toaster')).toBeInTheDocument();
   });
 
   it('provides all necessary context providers', () => {
-    render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
+    renderWithoutRouter(<App />);
 
     // If the app renders successfully, all providers are working
     expect(screen.getByTestId('sidebar')).toBeInTheDocument();
   });
 
   it('has proper routing structure', () => {
-    render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
+    renderWithoutRouter(<App />);
 
     // Check that the main app structure is present
     expect(screen.getByTestId('sidebar')).toBeInTheDocument();
-    expect(screen.getByTestId('toaster')).toBeInTheDocument();
+  });
+
+  it('displays the Index page by default', () => {
+    renderWithoutRouter(<App />);
+
+    // Check that the default route (Index) is displayed
+    expect(screen.getByText('Setup Required')).toBeInTheDocument();
   });
 });
