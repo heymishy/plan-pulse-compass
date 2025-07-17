@@ -111,10 +111,10 @@ describe('ProjectDialog', () => {
   it('displays project form fields', () => {
     renderComponent();
 
-    expect(screen.getByLabelText('Project Name * *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Project Name *')).toBeInTheDocument();
     expect(screen.getByLabelText('Description')).toBeInTheDocument();
     expect(screen.getByLabelText('Status')).toBeInTheDocument();
-    expect(screen.getByLabelText('Start Date * *')).toBeInTheDocument();
+    expect(screen.getByLabelText('Start Date *')).toBeInTheDocument();
     expect(screen.getByLabelText('End Date')).toBeInTheDocument();
     expect(screen.getByLabelText('Budget ($)')).toBeInTheDocument();
   });
@@ -141,7 +141,7 @@ describe('ProjectDialog', () => {
   it('handles form field changes', async () => {
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Project Name * *');
+    const nameInput = screen.getByLabelText('Project Name *');
     fireEvent.change(nameInput, { target: { value: 'New Project Name *' } });
 
     expect(nameInput).toHaveValue('New Project Name *');
