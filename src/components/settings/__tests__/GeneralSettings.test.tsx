@@ -1,13 +1,18 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import GeneralSettings from '../GeneralSettings';
-import { TestProviders } from '@/test/utils/test-utils';
+import { render } from '@/test/utils/test-utils';
 import { useSettings } from '@/context/SettingsContext';
+import { useApp } from '@/context/AppContext';
 
-// Mock the settings context
+// Mock the contexts
 vi.mock('@/context/SettingsContext', () => ({
   useSettings: vi.fn(),
+}));
+
+vi.mock('@/context/AppContext', () => ({
+  useApp: vi.fn(),
 }));
 
 // Mock the toast hook
@@ -40,14 +45,19 @@ describe('GeneralSettings', () => {
       updateConfig: mockUpdateConfig,
       isSetupComplete: true,
     });
+    vi.mocked(useApp).mockReturnValue({
+      teams: [],
+      people: [],
+      divisions: [],
+      skills: [],
+      roles: [],
+      projects: [],
+      allocations: [],
+    } as any);
   });
 
   const renderComponent = () => {
-    return render(
-      <TestProviders>
-        <GeneralSettings />
-      </TestProviders>
-    );
+    return render(<GeneralSettings />);
   };
 
   it('renders without crashing', () => {

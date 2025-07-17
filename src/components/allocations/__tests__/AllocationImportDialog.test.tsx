@@ -1,9 +1,10 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AllocationImportDialog from '../AllocationImportDialog';
-import { TestProviders } from '@/test/utils/test-utils';
+import { render } from '@/test/utils/test-utils';
 import * as allocationImportUtils from '@/utils/allocationImportUtils';
+import { useApp } from '@/context/AppContext';
 
 // Mock the utils module
 vi.mock('@/utils/allocationImportUtils', () => ({
@@ -11,6 +12,11 @@ vi.mock('@/utils/allocationImportUtils', () => ({
   validateAllocationImport: vi.fn(),
   convertImportToAllocations: vi.fn(),
   downloadAllocationSampleCSV: vi.fn(),
+}));
+
+// Mock the context
+vi.mock('@/context/AppContext', () => ({
+  useApp: vi.fn(),
 }));
 
 const mockOnImportComplete = vi.fn();
@@ -63,6 +69,15 @@ const mockAllocations = [
 
 describe('AllocationImportDialog', () => {
   beforeEach(() => {
+    vi.mocked(useApp).mockReturnValue({
+      teams: [],
+      people: [],
+      divisions: [],
+      skills: [],
+      roles: [],
+      projects: [],
+      allocations: [],
+    } as any);
     vi.clearAllMocks();
     vi.mocked(allocationImportUtils.parseAllocationCSV).mockReturnValue(
       mockAllocationData
@@ -77,9 +92,7 @@ describe('AllocationImportDialog', () => {
 
   const renderComponent = () => {
     return render(
-      <TestProviders>
-        <AllocationImportDialog onImportComplete={mockOnImportComplete} />
-      </TestProviders>
+      <AllocationImportDialog onImportComplete={mockOnImportComplete} />
     );
   };
 

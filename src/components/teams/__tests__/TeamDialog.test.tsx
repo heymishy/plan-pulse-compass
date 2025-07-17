@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import TeamDialog from '../TeamDialog';
-import { TestProviders } from '@/test/utils/test-utils';
+import { render } from '@/test/utils/test-utils';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,10 +60,20 @@ const mockSkills = [
 const mockAppData = {
   teams: [mockTeam],
   setTeams: mockSetTeams,
+  addTeam: vi.fn(),
+  updateTeam: vi.fn(),
   people: mockPeople,
   setPeople: mockSetPeople,
   divisions: mockDivisions,
   skills: mockSkills,
+  roles: [
+    { id: 'role1', name: 'Developer', baseSalary: 100000 },
+    { id: 'role2', name: 'Designer', baseSalary: 90000 },
+  ],
+  projects: [],
+  allocations: [],
+  teamMembers: [],
+  getTeamMembers: vi.fn(() => []),
 };
 
 describe('TeamDialog', () => {
@@ -77,14 +87,10 @@ describe('TeamDialog', () => {
     const defaultProps = {
       isOpen: true,
       onClose: vi.fn(),
-      team: null,
+      teamId: null,
     };
 
-    return render(
-      <TestProviders>
-        <TeamDialog {...defaultProps} {...props} />
-      </TestProviders>
-    );
+    return render(<TeamDialog {...defaultProps} {...props} />);
   };
 
   it('renders without crashing', () => {
@@ -93,7 +99,7 @@ describe('TeamDialog', () => {
   });
 
   it('renders edit mode when team is provided', () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
     expect(screen.getByText('Edit Team')).toBeInTheDocument();
   });
 
@@ -108,7 +114,7 @@ describe('TeamDialog', () => {
   });
 
   it('populates form fields when editing existing team', () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     expect(screen.getByDisplayValue('Frontend Team')).toBeInTheDocument();
     expect(
@@ -284,7 +290,7 @@ describe('TeamDialog', () => {
   });
 
   it('updates existing team successfully', async () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     const nameInput = screen.getByDisplayValue('Frontend Team');
     fireEvent.change(nameInput, { target: { value: 'Updated Team' } });
@@ -334,7 +340,7 @@ describe('TeamDialog', () => {
   });
 
   it('displays team statistics when editing', () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     expect(screen.getByText('Team Statistics')).toBeInTheDocument();
     expect(screen.getByText('Members: 2')).toBeInTheDocument();
@@ -343,7 +349,7 @@ describe('TeamDialog', () => {
   });
 
   it('shows team member management section', async () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     expect(screen.getByText('Team Members')).toBeInTheDocument();
     expect(screen.getByText('John Doe')).toBeInTheDocument();
@@ -351,7 +357,7 @@ describe('TeamDialog', () => {
   });
 
   it('allows removing team members', async () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     const removeMemberButton = screen.getByLabelText('Remove John Doe');
     fireEvent.click(removeMemberButton);
@@ -362,7 +368,7 @@ describe('TeamDialog', () => {
   });
 
   it('shows skills management section', async () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     expect(screen.getByText('Team Skills')).toBeInTheDocument();
     expect(screen.getByText('React')).toBeInTheDocument();
@@ -370,7 +376,7 @@ describe('TeamDialog', () => {
   });
 
   it('allows removing team skills', async () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     const removeSkillButton = screen.getByLabelText('Remove React skill');
     fireEvent.click(removeSkillButton);
@@ -404,14 +410,14 @@ describe('TeamDialog', () => {
   });
 
   it('calculates team capacity utilization', () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     expect(screen.getByText('Capacity Utilization')).toBeInTheDocument();
     expect(screen.getByText('85%')).toBeInTheDocument(); // Mock utilization
   });
 
   it('shows team performance metrics', () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     expect(screen.getByText('Performance Metrics')).toBeInTheDocument();
     expect(screen.getByText('Velocity: 42 points')).toBeInTheDocument();
@@ -419,7 +425,7 @@ describe('TeamDialog', () => {
   });
 
   it('handles team archival', async () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     const archiveButton = screen.getByText('Archive Team');
     fireEvent.click(archiveButton);
@@ -442,7 +448,7 @@ describe('TeamDialog', () => {
 
   it('prevents archival of active teams with assignments', async () => {
     const activeTeam = { ...mockTeam, hasActiveAssignments: true };
-    renderComponent({ team: activeTeam });
+    renderComponent({ teamId: activeTeam.id });
 
     const archiveButton = screen.getByText('Archive Team');
     fireEvent.click(archiveButton);
@@ -455,7 +461,7 @@ describe('TeamDialog', () => {
   });
 
   it('handles team duplication', async () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     const duplicateButton = screen.getByText('Duplicate Team');
     fireEvent.click(duplicateButton);
@@ -479,7 +485,7 @@ describe('TeamDialog', () => {
   });
 
   it('shows team history and audit trail', () => {
-    renderComponent({ team: mockTeam });
+    renderComponent({ teamId: mockTeam.id });
 
     fireEvent.click(screen.getByText('History'));
 

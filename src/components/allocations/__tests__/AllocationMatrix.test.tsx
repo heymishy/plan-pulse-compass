@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AllocationMatrix from '../AllocationMatrix';
-import { TestProviders } from '@/test/utils/test-utils';
+import { render } from '@/test/utils/test-utils';
 import { useToast } from '@/hooks/use-toast';
 
 // Mock the toast hook
@@ -89,11 +89,7 @@ describe('AllocationMatrix', () => {
       runWorkCategories: mockRunWorkCategories,
     };
 
-    return render(
-      <TestProviders>
-        <AllocationMatrix {...defaultProps} {...props} />
-      </TestProviders>
-    );
+    return render(<AllocationMatrix {...defaultProps} {...props} />);
   };
 
   it('renders without crashing', () => {

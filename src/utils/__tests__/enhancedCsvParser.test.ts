@@ -4,7 +4,7 @@ import {
   ParseOptions,
 } from '../enhancedCsvParser';
 
-describe.skip('EnhancedCSVParser - Advanced CSV Parsing', () => {
+describe('EnhancedCSVParser - Advanced CSV Parsing', () => {
   describe('parse', () => {
     it('should parse basic CSV with auto-detection', () => {
       const content = `name,email,role

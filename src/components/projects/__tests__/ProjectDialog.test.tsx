@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ProjectDialog from '../ProjectDialog';
-import { TestProviders } from '@/test/utils/test-utils';
+import { render } from '@/test/utils/test-utils';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -58,15 +58,17 @@ const mockProject = {
   status: 'active' as const,
   startDate: '2024-01-01',
   endDate: '2024-12-31',
-  priority: 1,
-  totalBudget: 100000,
-  spentBudget: 50000,
-  owner: 'John Doe',
-  teamIds: ['team1'],
-  tags: ['frontend', 'react'],
-  progress: 50,
-  created: '2024-01-01',
-  modified: '2024-01-01',
+  budget: 100000,
+  milestones: [
+    {
+      id: 'milestone1',
+      projectId: '1',
+      name: 'First Milestone',
+      dueDate: '2024-06-01',
+      status: 'not-started' as const,
+      description: 'First milestone description',
+    },
+  ],
 };
 
 const mockAppData = {
@@ -93,16 +95,12 @@ describe('ProjectDialog', () => {
       project: null,
     };
 
-    return render(
-      <TestProviders>
-        <ProjectDialog {...defaultProps} {...props} />
-      </TestProviders>
-    );
+    return render(<ProjectDialog {...defaultProps} {...props} />);
   };
 
   it('renders without crashing', () => {
     renderComponent();
-    expect(screen.getByText('Add New Project')).toBeInTheDocument();
+    expect(screen.getByText('Create New Project')).toBeInTheDocument();
   });
 
   it('renders edit mode when project is provided', () => {
@@ -113,22 +111,21 @@ describe('ProjectDialog', () => {
   it('displays project form fields', () => {
     renderComponent();
 
-    expect(screen.getByLabelText('Project Name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Project Name * *')).toBeInTheDocument();
     expect(screen.getByLabelText('Description')).toBeInTheDocument();
     expect(screen.getByLabelText('Status')).toBeInTheDocument();
-    expect(screen.getByLabelText('Start Date')).toBeInTheDocument();
+    expect(screen.getByLabelText('Start Date * *')).toBeInTheDocument();
     expect(screen.getByLabelText('End Date')).toBeInTheDocument();
-    expect(screen.getByLabelText('Priority')).toBeInTheDocument();
-    expect(screen.getByLabelText('Total Budget')).toBeInTheDocument();
+    expect(screen.getByLabelText('Budget ($)')).toBeInTheDocument();
   });
 
   it('displays tabs for different sections', () => {
     renderComponent();
 
-    expect(screen.getByText('General')).toBeInTheDocument();
+    expect(screen.getByText('Basic Info')).toBeInTheDocument();
     expect(screen.getByText('Skills')).toBeInTheDocument();
     expect(screen.getByText('Solutions')).toBeInTheDocument();
-    expect(screen.getByText('Timeline')).toBeInTheDocument();
+    expect(screen.getByText('Milestones')).toBeInTheDocument();
   });
 
   it('populates form fields when editing existing project', () => {
@@ -144,10 +141,10 @@ describe('ProjectDialog', () => {
   it('handles form field changes', async () => {
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Project Name');
-    fireEvent.change(nameInput, { target: { value: 'New Project Name' } });
+    const nameInput = screen.getByLabelText('Project Name * *');
+    fireEvent.change(nameInput, { target: { value: 'New Project Name *' } });
 
-    expect(nameInput).toHaveValue('New Project Name');
+    expect(nameInput).toHaveValue('New Project Name *');
   });
 
   it('handles status change', async () => {
@@ -157,29 +154,30 @@ describe('ProjectDialog', () => {
     fireEvent.click(statusSelect);
 
     await waitFor(() => {
-      expect(screen.getByText('In Progress')).toBeInTheDocument();
+      expect(screen.getByText('Active')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('In Progress'));
+    fireEvent.click(screen.getByText('Active'));
 
     await waitFor(() => {
-      expect(statusSelect).toHaveValue('in-progress');
+      expect(statusSelect).toHaveValue('active');
     });
   });
 
-  it('handles priority change', async () => {
-    renderComponent();
+  // Priority field doesn't exist in current component implementation
+  // it('handles priority change', async () => {
+  //   renderComponent();
 
-    const priorityInput = screen.getByLabelText('Priority');
-    fireEvent.change(priorityInput, { target: { value: '5' } });
+  //   const priorityInput = screen.getByLabelText('Priority');
+  //   fireEvent.change(priorityInput, { target: { value: '5' } });
 
-    expect(priorityInput).toHaveValue('5');
-  });
+  //   expect(priorityInput).toHaveValue('5');
+  // });
 
   it('handles budget changes', async () => {
     renderComponent();
 
-    const budgetInput = screen.getByLabelText('Total Budget');
+    const budgetInput = screen.getByLabelText('Budget ($)');
     fireEvent.change(budgetInput, { target: { value: '150000' } });
 
     expect(budgetInput).toHaveValue('150000');
@@ -188,7 +186,7 @@ describe('ProjectDialog', () => {
   it('handles date changes', async () => {
     renderComponent();
 
-    const startDateInput = screen.getByLabelText('Start Date');
+    const startDateInput = screen.getByLabelText('Start Date *');
     fireEvent.change(startDateInput, { target: { value: '2024-02-01' } });
 
     expect(startDateInput).toHaveValue('2024-02-01');
@@ -270,7 +268,7 @@ describe('ProjectDialog', () => {
     renderComponent();
 
     // Try to save without required fields
-    const saveButton = screen.getByText('Save Project');
+    const saveButton = screen.getByText('Create Project');
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -281,16 +279,16 @@ describe('ProjectDialog', () => {
   it('validates date range', async () => {
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Project Name');
+    const nameInput = screen.getByLabelText('Project Name *');
     fireEvent.change(nameInput, { target: { value: 'Test Project' } });
 
-    const startDateInput = screen.getByLabelText('Start Date');
+    const startDateInput = screen.getByLabelText('Start Date *');
     fireEvent.change(startDateInput, { target: { value: '2024-12-01' } });
 
     const endDateInput = screen.getByLabelText('End Date');
     fireEvent.change(endDateInput, { target: { value: '2024-01-01' } });
 
-    const saveButton = screen.getByText('Save Project');
+    const saveButton = screen.getByText('Create Project');
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -303,13 +301,13 @@ describe('ProjectDialog', () => {
   it('validates budget values', async () => {
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Project Name');
+    const nameInput = screen.getByLabelText('Project Name *');
     fireEvent.change(nameInput, { target: { value: 'Test Project' } });
 
     const budgetInput = screen.getByLabelText('Total Budget');
     fireEvent.change(budgetInput, { target: { value: '-1000' } });
 
-    const saveButton = screen.getByText('Save Project');
+    const saveButton = screen.getByText('Create Project');
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -322,7 +320,7 @@ describe('ProjectDialog', () => {
   it('creates new project successfully', async () => {
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Project Name');
+    const nameInput = screen.getByLabelText('Project Name *');
     fireEvent.change(nameInput, { target: { value: 'New Project' } });
 
     const descriptionInput = screen.getByLabelText('Description');
@@ -330,13 +328,13 @@ describe('ProjectDialog', () => {
       target: { value: 'New Description' },
     });
 
-    const startDateInput = screen.getByLabelText('Start Date');
+    const startDateInput = screen.getByLabelText('Start Date *');
     fireEvent.change(startDateInput, { target: { value: '2024-01-01' } });
 
     const endDateInput = screen.getByLabelText('End Date');
     fireEvent.change(endDateInput, { target: { value: '2024-12-31' } });
 
-    const saveButton = screen.getByText('Save Project');
+    const saveButton = screen.getByText('Create Project');
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -354,7 +352,7 @@ describe('ProjectDialog', () => {
     const nameInput = screen.getByDisplayValue('Test Project');
     fireEvent.change(nameInput, { target: { value: 'Updated Project' } });
 
-    const saveButton = screen.getByText('Save Project');
+    const saveButton = screen.getByText('Create Project');
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -373,10 +371,10 @@ describe('ProjectDialog', () => {
 
     renderComponent();
 
-    const nameInput = screen.getByLabelText('Project Name');
+    const nameInput = screen.getByLabelText('Project Name *');
     fireEvent.change(nameInput, { target: { value: 'Test Project' } });
 
-    const saveButton = screen.getByText('Save Project');
+    const saveButton = screen.getByText('Create Project');
     fireEvent.click(saveButton);
 
     await waitFor(() => {
@@ -413,25 +411,17 @@ describe('ProjectDialog', () => {
   it('resets form when dialog is closed and reopened', async () => {
     const { rerender } = renderComponent();
 
-    const nameInput = screen.getByLabelText('Project Name');
+    const nameInput = screen.getByLabelText('Project Name *');
     fireEvent.change(nameInput, { target: { value: 'Modified Name' } });
 
     // Close dialog
-    rerender(
-      <TestProviders>
-        <ProjectDialog isOpen={false} onClose={vi.fn()} project={null} />
-      </TestProviders>
-    );
+    rerender(<ProjectDialog isOpen={false} onClose={vi.fn()} project={null} />);
 
     // Reopen dialog
-    rerender(
-      <TestProviders>
-        <ProjectDialog isOpen={true} onClose={vi.fn()} project={null} />
-      </TestProviders>
-    );
+    rerender(<ProjectDialog isOpen={true} onClose={vi.fn()} project={null} />);
 
     // Form should be reset
-    expect(screen.getByLabelText('Project Name')).toHaveValue('');
+    expect(screen.getByLabelText('Project Name *')).toHaveValue('');
   });
 
   it('displays progress indicator when provided', () => {
@@ -443,10 +433,10 @@ describe('ProjectDialog', () => {
   it('handles milestone management', async () => {
     renderComponent();
 
-    fireEvent.click(screen.getByText('Timeline'));
+    fireEvent.click(screen.getByText('Milestones'));
 
     await waitFor(() => {
-      expect(screen.getByText('Milestones')).toBeInTheDocument();
+      expect(screen.getByText('Add Milestone')).toBeInTheDocument();
     });
 
     const addMilestoneButton = screen.getByText('Add Milestone');
