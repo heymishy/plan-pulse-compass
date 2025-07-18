@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import {
   Plus,
   Calendar,
@@ -816,7 +817,7 @@ const Planning = () => {
       allAllocations={allocations}
       selectedCycleId={selectedCycleId}
     >
-      <div className="p-6 space-y-6">
+      <div className="p-3 sm:p-4 md:p-6 3xl:p-8 space-y-4 md:space-y-6 max-w-full">
         <div className="flex items-center justify-between">
           <div>
             <h1
@@ -830,6 +831,7 @@ const Planning = () => {
             </p>
           </div>
           <div className="flex items-center space-x-2">
+            <SidebarTrigger className="xl:hidden mr-2" />
             <Button
               variant="outline"
               onClick={() => setIsCycleDialogOpen(true)}
@@ -884,7 +886,7 @@ const Planning = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Primary Filters Row */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-8 gap-4">
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-gray-700">
                       Financial Year
@@ -1090,7 +1092,7 @@ const Planning = () => {
             </Card>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6 gap-4">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium flex items-center">
@@ -1209,72 +1211,84 @@ const Planning = () => {
 
             {/* Planning Views */}
             {selectedCycleId && iterations.length > 0 && (
-              <>
-                {viewMode === 'matrix' && (
-                  <PlanningMatrix
-                    teams={filteredTeams}
-                    iterations={iterations}
-                    allocations={filteredData.allocations}
-                    onEditAllocation={handleEditAllocation}
-                    onCreateAllocation={handleCreateAllocationFromMatrix}
-                    projects={filteredData.projects}
-                    epics={filteredData.epics}
-                    runWorkCategories={runWorkCategories}
-                    hideEmptyRows={hideEmptyRows}
-                    bulkSelection={bulkSelection}
-                    onBulkSelectionChange={setBulkSelection}
-                    isBulkMode={isBulkMode}
-                  />
-                )}
+              <div className="w-full overflow-x-auto">
+                <div className="min-w-full">
+                  {viewMode === 'matrix' && (
+                    <div className="w-full max-w-none">
+                      <PlanningMatrix
+                        teams={filteredTeams}
+                        iterations={iterations}
+                        allocations={filteredData.allocations}
+                        onEditAllocation={handleEditAllocation}
+                        onCreateAllocation={handleCreateAllocationFromMatrix}
+                        projects={filteredData.projects}
+                        epics={filteredData.epics}
+                        runWorkCategories={runWorkCategories}
+                        hideEmptyRows={hideEmptyRows}
+                        bulkSelection={bulkSelection}
+                        onBulkSelectionChange={setBulkSelection}
+                        isBulkMode={isBulkMode}
+                      />
+                    </div>
+                  )}
 
-                {viewMode === 'heatmap' && (
-                  <HeatMapView
-                    teams={filteredTeams}
-                    iterations={iterations}
-                    allocations={filteredData.allocations}
-                    onEditAllocation={handleEditAllocation}
-                    onCreateAllocation={handleCreateAllocationFromMatrix}
-                    projects={filteredData.projects}
-                    epics={filteredData.epics}
-                    runWorkCategories={runWorkCategories}
-                    hideEmptyRows={hideEmptyRows}
-                  />
-                )}
+                  {viewMode === 'heatmap' && (
+                    <div className="w-full max-w-none">
+                      <HeatMapView
+                        teams={filteredTeams}
+                        iterations={iterations}
+                        allocations={filteredData.allocations}
+                        onEditAllocation={handleEditAllocation}
+                        onCreateAllocation={handleCreateAllocationFromMatrix}
+                        projects={filteredData.projects}
+                        epics={filteredData.epics}
+                        runWorkCategories={runWorkCategories}
+                        hideEmptyRows={hideEmptyRows}
+                      />
+                    </div>
+                  )}
 
-                {viewMode === 'bulk' && (
-                  <BulkAllocationGrid
-                    teams={teams}
-                    iterations={iterations}
-                    cycleId={selectedCycleId}
-                    projects={projects}
-                    epics={epics}
-                    runWorkCategories={runWorkCategories}
-                  />
-                )}
+                  {viewMode === 'bulk' && (
+                    <div className="w-full max-w-none">
+                      <BulkAllocationGrid
+                        teams={teams}
+                        iterations={iterations}
+                        cycleId={selectedCycleId}
+                        projects={projects}
+                        epics={epics}
+                        runWorkCategories={runWorkCategories}
+                      />
+                    </div>
+                  )}
 
-                {viewMode === 'timeline' && (
-                  <TimelineGanttView
-                    teams={filteredTeams}
-                    allocations={filteredData.allocations}
-                    iterations={iterations}
-                    epics={filteredData.epics}
-                    projects={filteredData.projects}
-                    selectedCycleId={selectedCycleId}
-                    onAllocationClick={handleEditAllocation}
-                  />
-                )}
+                  {viewMode === 'timeline' && (
+                    <div className="w-full max-w-none">
+                      <TimelineGanttView
+                        teams={filteredTeams}
+                        allocations={filteredData.allocations}
+                        iterations={iterations}
+                        epics={filteredData.epics}
+                        projects={filteredData.projects}
+                        selectedCycleId={selectedCycleId}
+                        onAllocationClick={handleEditAllocation}
+                      />
+                    </div>
+                  )}
 
-                {viewMode === 'dependencies' && (
-                  <DependenciesView
-                    teams={filteredTeams}
-                    projects={filteredData.projects}
-                    epics={filteredData.epics}
-                    allocations={filteredData.allocations}
-                    cycles={cycles}
-                    selectedCycleId={selectedCycleId}
-                  />
-                )}
-              </>
+                  {viewMode === 'dependencies' && (
+                    <div className="w-full max-w-none">
+                      <DependenciesView
+                        teams={filteredTeams}
+                        projects={filteredData.projects}
+                        epics={filteredData.epics}
+                        allocations={filteredData.allocations}
+                        cycles={cycles}
+                        selectedCycleId={selectedCycleId}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
             {selectedCycleId && iterations.length === 0 && (

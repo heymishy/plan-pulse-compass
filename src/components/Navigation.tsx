@@ -24,6 +24,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 
 const Navigation = () => {
@@ -57,6 +58,7 @@ const Navigation = () => {
           <h1 className="text-xl font-bold text-sidebar-foreground">
             Resource Planner
           </h1>
+          <SidebarTrigger className="md:hidden" />
         </div>
         <VersionInfo variant="compact" className="w-full justify-start" />
       </SidebarHeader>

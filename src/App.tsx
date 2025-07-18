@@ -48,14 +48,19 @@ function App() {
               <GoalProvider>
                 <AppProvider>
                   <Router>
-                    <SidebarProvider>
+                    <SidebarProvider defaultOpen={true}>
                       <div className="flex min-h-screen bg-background">
-                        <Sidebar>
+                        <Sidebar
+                          side="left"
+                          variant="sidebar"
+                          collapsible="icon"
+                          className="border-r"
+                        >
                           <Navigation />
                         </Sidebar>
-                        <SidebarInset>
-                          <div className="flex flex-col min-h-screen">
-                            <main className="flex-1">
+                        <SidebarInset className="flex-1 min-w-0">
+                          <div className="flex flex-col min-h-screen w-full">
+                            <main className="flex-1 w-full max-w-none">
                               <Routes>
                                 <Route path="/" element={<Index />} />
                                 <Route path="/setup" element={<Setup />} />
