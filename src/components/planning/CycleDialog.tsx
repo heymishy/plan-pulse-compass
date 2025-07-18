@@ -349,6 +349,47 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Calculate expected iteration count based on quarter duration and iteration length
+  const calculateExpectedIterationCount = (
+    startDate: Date,
+    endDate: Date,
+    iterationLength: string
+  ): number => {
+    const quarterDurationMs = endDate.getTime() - startDate.getTime();
+    const quarterDurationDays = Math.ceil(
+      quarterDurationMs / (1000 * 60 * 60 * 24)
+    );
+
+    let iterationDurationDays: number;
+    switch (iterationLength) {
+      case 'fortnightly':
+        iterationDurationDays = 14;
+        break;
+      case 'monthly':
+        iterationDurationDays = 30; // Approximate month
+        break;
+      case '6-weekly':
+        iterationDurationDays = 42;
+        break;
+      default:
+        iterationDurationDays = 14;
+    }
+
+    const expectedIterations = Math.ceil(
+      quarterDurationDays / iterationDurationDays
+    );
+
+    // For quarterly cycles, enforce reasonable limits based on common patterns
+    const maxIterationsPerQuarter =
+      iterationLength === 'monthly'
+        ? 3
+        : iterationLength === '6-weekly'
+          ? 2
+          : 6;
+
+    return Math.min(expectedIterations, maxIterationsPerQuarter);
+  };
+
   const generateIterations = (quarterCycle: Cycle) => {
     if (!config?.iterationLength) {
       console.error(
@@ -372,12 +413,26 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
 
     const startDate = new Date(quarterCycle.startDate);
     const endDate = new Date(quarterCycle.endDate);
-    const newIterations: Cycle[] = [];
 
+    // Calculate expected iteration count to prevent over-generation
+    const expectedIterationCount = calculateExpectedIterationCount(
+      startDate,
+      endDate,
+      config.iterationLength
+    );
+
+    console.log(
+      `Expected ${expectedIterationCount} iterations for ${quarterCycle.name} (${config.iterationLength})`
+    );
+
+    const newIterations: Cycle[] = [];
     let currentStart = startDate;
     let iterationNumber = 1;
 
-    while (currentStart < endDate) {
+    while (
+      currentStart < endDate &&
+      iterationNumber <= expectedIterationCount
+    ) {
       let currentEnd: Date;
 
       switch (config.iterationLength) {
@@ -471,7 +526,7 @@ const CycleDialog: React.FC<CycleDialogProps> = ({
 
     toast({
       title: 'Success',
-      description: `Generated ${newIterations.length} iterations for ${quarterCycle.name}`,
+      description: `Generated ${newIterations.length} of ${expectedIterationCount} expected iterations for ${quarterCycle.name} (${config.iterationLength})`,
     });
   };
 

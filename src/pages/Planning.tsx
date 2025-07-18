@@ -347,13 +347,84 @@ const Planning = () => {
     }
   }, [selectedFinancialYear, allQuarterCycles, selectedCycleId]);
 
+  // Calculate expected iteration count based on quarter duration and iteration length
+  const calculateExpectedIterationCount = React.useCallback(
+    (quarterCycle: Cycle, iterationLength: string): number => {
+      const startDate = new Date(quarterCycle.startDate);
+      const endDate = new Date(quarterCycle.endDate);
+      const quarterDurationMs = endDate.getTime() - startDate.getTime();
+      const quarterDurationDays = Math.ceil(
+        quarterDurationMs / (1000 * 60 * 60 * 24)
+      );
+
+      let iterationDurationDays: number;
+      switch (iterationLength) {
+        case 'fortnightly':
+          iterationDurationDays = 14;
+          break;
+        case 'monthly':
+          iterationDurationDays = 30;
+          break;
+        case '6-weekly':
+          iterationDurationDays = 42;
+          break;
+        default:
+          iterationDurationDays = 14;
+      }
+
+      const expectedIterations = Math.ceil(
+        quarterDurationDays / iterationDurationDays
+      );
+
+      // For quarterly cycles, enforce reasonable limits based on common patterns
+      const maxIterationsPerQuarter =
+        iterationLength === 'monthly'
+          ? 3
+          : iterationLength === '6-weekly'
+            ? 2
+            : 6;
+
+      return Math.min(expectedIterations, maxIterationsPerQuarter);
+    },
+    []
+  );
+
   // Get iterations for selected quarter
-  const iterations = cycles
+  const allIterations = cycles
     .filter(c => c.type === 'iteration' && c.parentCycleId === selectedCycleId)
     .sort(
       (a, b) =>
         new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     );
+
+  // Get expected iteration count for validation
+  const selectedQuarter = cycles.find(c => c.id === selectedCycleId);
+  const expectedIterationCount = React.useMemo(() => {
+    if (!selectedQuarter || !config?.iterationLength) return null;
+    return calculateExpectedIterationCount(
+      selectedQuarter,
+      config.iterationLength
+    );
+  }, [
+    selectedQuarter,
+    config?.iterationLength,
+    calculateExpectedIterationCount,
+  ]);
+
+  // Apply iteration limit enforcement
+  const iterations = React.useMemo(() => {
+    if (!expectedIterationCount) return allIterations;
+
+    // Log warning if we have more iterations than expected
+    if (allIterations.length > expectedIterationCount) {
+      console.warn(
+        `Planning: Found ${allIterations.length} iterations, expected ${expectedIterationCount} for ${selectedQuarter?.name}`
+      );
+    }
+
+    // Return limited iterations based on expected count
+    return allIterations.slice(0, expectedIterationCount);
+  }, [allIterations, expectedIterationCount, selectedQuarter?.name]);
 
   // Retry logic for iteration loading
   const [iterationRetryCount, setIterationRetryCount] = useState(0);
@@ -854,6 +925,19 @@ const Planning = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {/* Iteration Count Warning */}
+                    {allIterations.length > 0 &&
+                      expectedIterationCount &&
+                      allIterations.length > expectedIterationCount && (
+                        <div className="flex items-center space-x-1 text-amber-600 text-xs mt-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          <span>
+                            Found {allIterations.length} iterations, expected{' '}
+                            {expectedIterationCount} for{' '}
+                            {config?.iterationLength} cycles
+                          </span>
+                        </div>
+                      )}
                   </div>
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-gray-700">
