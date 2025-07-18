@@ -73,7 +73,12 @@ const renderWithoutRouter = (
 export * from '@testing-library/react';
 
 // Override render method
-export { customRender as render, renderWithSidebar, renderWithoutRouter };
+export {
+  customRender as render,
+  renderWithSidebar,
+  renderWithoutRouter,
+  NoRouterProviders,
+};
 
 // Helper function to create mock data
 export const createMockPerson = (overrides = {}) => ({

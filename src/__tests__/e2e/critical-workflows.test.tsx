@@ -24,11 +24,9 @@ describe('Critical Workflow E2E Tests', () => {
   describe('CSV Import to Planning Workflow', () => {
     it('should complete full CSV import and allocation planning workflow', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Step 1: Navigate to allocations page
@@ -93,11 +91,9 @@ Backend Team,Maintenance,Run Work,1,20,Q1 2024`;
 
     it('should handle CSV import validation errors gracefully', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Navigate to allocations page
@@ -139,11 +135,9 @@ Frontend Team,Invalid Epic,Project Epic,1,150,Q1 2024`;
   describe('Quarter/Iteration Setup Workflow', () => {
     it('should complete quarter and iteration setup workflow', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Step 1: Navigate to settings/setup
@@ -225,11 +219,9 @@ Frontend Team,Invalid Epic,Project Epic,1,150,Q1 2024`;
 
     it('should handle custom financial year configurations', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Navigate to quarter setup
@@ -270,11 +262,9 @@ Frontend Team,Invalid Epic,Project Epic,1,150,Q1 2024`;
   describe('Planning Allocation Workflow', () => {
     it('should complete full planning allocation workflow', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Step 1: Navigate to planning page
@@ -358,11 +348,9 @@ Frontend Team,Invalid Epic,Project Epic,1,150,Q1 2024`;
 
     it('should detect and warn about over-allocation', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Navigate to planning page
@@ -414,11 +402,9 @@ Frontend Team,Invalid Epic,Project Epic,1,150,Q1 2024`;
   describe('Integration Workflow Testing', () => {
     it('should complete full workflow from setup to allocation planning', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Step 1: Initial setup - create teams
@@ -533,11 +519,9 @@ Test Team,Bug Fixes,Run Work,1,20,Q1 2024`;
 
     it('should handle workflow with data validation errors', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Try to import CSV without teams/epics setup
@@ -585,11 +569,9 @@ Nonexistent Team,Nonexistent Epic,Project Epic,1,80,Q1 2024`;
   describe('Performance and Reliability', () => {
     it('should handle large datasets without performance degradation', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Generate large CSV dataset
@@ -628,11 +610,9 @@ Nonexistent Team,Nonexistent Epic,Project Epic,1,80,Q1 2024`;
 
     it('should maintain state consistency across navigation', async () => {
       render(
-        <BrowserRouter>
-          <NoRouterProviders>
-            <App />
-          </NoRouterProviders>
-        </BrowserRouter>
+        <NoRouterProviders>
+          <App />
+        </NoRouterProviders>
       );
 
       // Create allocation
