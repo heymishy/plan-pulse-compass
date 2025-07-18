@@ -29,6 +29,11 @@ vi.mock('@/context/SettingsContext', () => ({
   SettingsProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  useSettings: () => ({
+    isSetupComplete: false,
+    config: {},
+    setConfig: vi.fn(),
+  }),
 }));
 
 vi.mock('@/context/ProjectContext', () => ({
@@ -41,6 +46,14 @@ vi.mock('@/context/TeamContext', () => ({
   TeamProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  useTeams: () => ({
+    teams: [],
+    people: [],
+    divisions: [],
+    setTeams: vi.fn(),
+    setPeople: vi.fn(),
+    setDivisions: vi.fn(),
+  }),
 }));
 
 vi.mock('@/context/PlanningContext', () => ({
