@@ -9,6 +9,8 @@
  * - Auto-detection of CSV format (delimiter, quotes)
  */
 
+import { Team, Epic, RunWorkCategory, Cycle } from '@/types';
+
 export interface ParseResult<T> {
   data: T[];
   errors: ParseError[];
@@ -52,6 +54,29 @@ export interface ParseOptions {
   requiredFields?: string[];
 }
 
+export interface ProcessCSVResult {
+  success: boolean;
+  validRows: Record<string, string | number>[];
+  errors: Array<{ row: number; message: string; suggestions?: string[] }>;
+  warnings?: Array<{ row: number; message: string }>;
+  statistics: {
+    totalRows: number;
+    validRows: number;
+    errorRows: number;
+    teamsInvolved: number;
+    epicsInvolved: number;
+    quartersInvolved: number;
+  };
+  insights?: {
+    crossTeamEpics: string[];
+  };
+}
+
+export interface ProcessCSVOptions {
+  validateAllocationTotals?: boolean;
+  validateCrossTeamDependencies?: boolean;
+}
+
 /**
  * Enhanced CSV parser with auto-detection and error recovery
  */
@@ -62,7 +87,7 @@ export class EnhancedCSVParser {
   /**
    * Parse CSV content with enhanced error handling and validation
    */
-  static parse<T = Record<string, any>>(
+  static parse<T = Record<string, string | number>>(
     content: string,
     options: ParseOptions = {}
   ): ParseResult<T> {
@@ -309,7 +334,7 @@ export class EnhancedCSVParser {
       return null;
     }
 
-    const obj: Record<string, any> = {};
+    const obj: Record<string, string | number> = {};
 
     for (let i = 0; i < headers.length; i++) {
       const header = headers[i].trim();
@@ -376,7 +401,7 @@ export class EnhancedCSVParser {
   ): void {
     data.forEach((row, index) => {
       requiredFields.forEach(field => {
-        const value = (row as any)[field];
+        const value = (row as Record<string, string | number>)[field];
         if (!value || (typeof value === 'string' && !value.trim())) {
           errors.push({
             row: index + 2, // +1 for 0-based, +1 for headers
@@ -405,9 +430,309 @@ export class EnhancedCSVParser {
 /**
  * Utility function for backward compatibility with existing parsers
  */
-export function parseCSVEnhanced<T = Record<string, any>>(
+export function parseCSVEnhanced<T = Record<string, string | number>>(
   content: string,
   options?: ParseOptions
 ): ParseResult<T> {
   return EnhancedCSVParser.parse<T>(content, options);
+}
+
+/**
+ * Simple CSV parser for basic use cases
+ */
+export function parseCSV(content: string): Record<string, string>[] {
+  if (!content.trim()) return [];
+
+  const lines = content.trim().split('\n');
+  if (lines.length === 0) return [];
+
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const values = line.split(',').map(v => v.trim());
+    const obj: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      obj[header] = values[index] || '';
+    });
+    return obj;
+  });
+}
+
+/**
+ * Validate CSV data against business rules
+ */
+export function validateCSVData(
+  data: Record<string, string | number>[],
+  teams: Team[],
+  epics: Epic[],
+  runWorkCategories: RunWorkCategory[],
+  cycles: Cycle[]
+): {
+  valid: Record<string, string | number>[];
+  errors: string[];
+} {
+  const valid: Record<string, string | number>[] = [];
+  const errors: string[] = [];
+
+  data.forEach((row, index) => {
+    const rowErrors: string[] = [];
+
+    // Validate team exists
+    if (
+      row.teamName &&
+      !teams.find(t => t.name.toLowerCase() === row.teamName.toLowerCase())
+    ) {
+      rowErrors.push(`Row ${index + 2}: Team "${row.teamName}" not found`);
+    }
+
+    // Validate epic exists (if it's project work)
+    if (
+      row.epicName &&
+      row.epicType !== 'Run Work' &&
+      !epics.find(e => e.name.toLowerCase() === row.epicName.toLowerCase())
+    ) {
+      rowErrors.push(`Row ${index + 2}: Epic "${row.epicName}" not found`);
+    }
+
+    // Validate run work category (if it's run work)
+    if (
+      row.epicType === 'Run Work' &&
+      row.epicName &&
+      !runWorkCategories.find(
+        r => r.name.toLowerCase() === row.epicName.toLowerCase()
+      )
+    ) {
+      rowErrors.push(
+        `Row ${index + 2}: Run work category "${row.epicName}" not found`
+      );
+    }
+
+    // Validate quarter exists
+    if (
+      row.quarter &&
+      !cycles.find(c => c.name.toLowerCase() === row.quarter.toLowerCase())
+    ) {
+      rowErrors.push(`Row ${index + 2}: Quarter "${row.quarter}" not found`);
+    }
+
+    // Validate percentage
+    const percentage = parseFloat(row.percentage);
+    if (isNaN(percentage) || percentage <= 0 || percentage > 100) {
+      rowErrors.push(
+        `Row ${index + 2}: Invalid percentage ${row.percentage}. Must be between 1-100`
+      );
+    }
+
+    if (rowErrors.length === 0) {
+      valid.push(row);
+    } else {
+      errors.push(...rowErrors);
+    }
+  });
+
+  return { valid, errors };
+}
+
+/**
+ * Process CSV upload with comprehensive validation and error handling
+ */
+export async function processCSVUpload(
+  csvContent: string,
+  teams: Team[],
+  epics: Epic[],
+  runWorkCategories: RunWorkCategory[],
+  cycles: Cycle[],
+  options: ProcessCSVOptions = {}
+): Promise<ProcessCSVResult> {
+  if (!csvContent.trim()) {
+    return {
+      success: false,
+      validRows: [],
+      errors: [{ row: 0, message: 'CSV file is empty' }],
+      statistics: {
+        totalRows: 0,
+        validRows: 0,
+        errorRows: 1,
+        teamsInvolved: 0,
+        epicsInvolved: 0,
+        quartersInvolved: 0,
+      },
+    };
+  }
+
+  try {
+    const data = parseCSV(csvContent);
+
+    if (data.length === 0) {
+      return {
+        success: false,
+        validRows: [],
+        errors: [{ row: 0, message: 'No data rows found' }],
+        statistics: {
+          totalRows: 1,
+          validRows: 0,
+          errorRows: 1,
+          teamsInvolved: 0,
+          epicsInvolved: 0,
+          quartersInvolved: 0,
+        },
+      };
+    }
+
+    // Check for required columns
+    const requiredColumns = [
+      'teamName',
+      'epicName',
+      'epicType',
+      'sprintNumber',
+      'percentage',
+      'quarter',
+    ];
+    const firstRow = data[0];
+    const missingColumns = requiredColumns.filter(col => !(col in firstRow));
+
+    if (missingColumns.length > 0) {
+      return {
+        success: false,
+        validRows: [],
+        errors: [
+          {
+            row: 0,
+            message: `Missing required columns: ${missingColumns.join(', ')}`,
+          },
+        ],
+        statistics: {
+          totalRows: data.length,
+          validRows: 0,
+          errorRows: 1,
+          teamsInvolved: 0,
+          epicsInvolved: 0,
+          quartersInvolved: 0,
+        },
+      };
+    }
+
+    const validation = validateCSVData(
+      data,
+      teams,
+      epics,
+      runWorkCategories,
+      cycles
+    );
+
+    // Add suggestions for common errors
+    const errorsWithSuggestions = validation.errors.map(error => {
+      const suggestions: string[] = [];
+
+      if (error.includes('Team') && error.includes('not found')) {
+        const teamName = error.match(/Team "([^"]+)" not found/)?.[1];
+        const similarTeam = teams.find(t =>
+          t.name
+            .toLowerCase()
+            .includes(teamName?.toLowerCase().substring(0, 3) || '')
+        );
+        if (similarTeam) {
+          suggestions.push(`Did you mean "${similarTeam.name}"?`);
+        }
+      }
+
+      if (error.includes('Epic') && error.includes('not found')) {
+        const epicName = error.match(/Epic "([^"]+)" not found/)?.[1];
+        const similarEpic = epics.find(e =>
+          e.name
+            .toLowerCase()
+            .includes(epicName?.toLowerCase().substring(0, 3) || '')
+        );
+        if (similarEpic) {
+          suggestions.push(`Did you mean "${similarEpic.name}"?`);
+        }
+      }
+
+      return { row: 0, message: error, suggestions };
+    });
+
+    const teamsInvolved = new Set(validation.valid.map(row => row.teamName))
+      .size;
+    const epicsInvolved = new Set(validation.valid.map(row => row.epicName))
+      .size;
+    const quartersInvolved = new Set(validation.valid.map(row => row.quarter))
+      .size;
+
+    const result: ProcessCSVResult = {
+      success: validation.errors.length === 0,
+      validRows: validation.valid,
+      errors: errorsWithSuggestions,
+      statistics: {
+        totalRows: data.length,
+        validRows: validation.valid.length,
+        errorRows: validation.errors.length,
+        teamsInvolved,
+        epicsInvolved,
+        quartersInvolved,
+      },
+    };
+
+    // Add warnings for allocation totals if enabled
+    if (options.validateAllocationTotals) {
+      const warnings: Array<{ row: number; message: string }> = [];
+
+      // Group by team and sprint
+      const teamSprints = new Map<string, number>();
+      validation.valid.forEach((row, index) => {
+        const key = `${row.teamName}-${row.sprintNumber}`;
+        teamSprints.set(
+          key,
+          (teamSprints.get(key) || 0) + parseFloat(row.percentage)
+        );
+      });
+
+      teamSprints.forEach((total, key) => {
+        if (total > 100) {
+          warnings.push({
+            row: 0,
+            message: `Team ${key.split('-')[0]} Sprint ${key.split('-')[1]} allocation exceeds 100%: ${total}%`,
+          });
+        }
+      });
+
+      result.warnings = warnings;
+    }
+
+    // Add cross-team epic insights if enabled
+    if (options.validateCrossTeamDependencies) {
+      const epicTeams = new Map<string, Set<string>>();
+      validation.valid.forEach(row => {
+        if (!epicTeams.has(row.epicName)) {
+          epicTeams.set(row.epicName, new Set());
+        }
+        epicTeams.get(row.epicName)!.add(row.teamName);
+      });
+
+      const crossTeamEpics = Array.from(epicTeams.entries())
+        .filter(([, teams]) => teams.size > 1)
+        .map(([epic]) => epic);
+
+      result.insights = { crossTeamEpics };
+    }
+
+    return result;
+  } catch (error) {
+    return {
+      success: false,
+      validRows: [],
+      errors: [
+        {
+          row: 0,
+          message: `Failed to process CSV: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        },
+      ],
+      statistics: {
+        totalRows: 0,
+        validRows: 0,
+        errorRows: 1,
+        teamsInvolved: 0,
+        epicsInvolved: 0,
+        quartersInvolved: 0,
+      },
+    };
+  }
 }
