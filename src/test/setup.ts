@@ -260,6 +260,28 @@ Object.defineProperty(window, 'scrollTo', {
   value: vi.fn(),
 });
 
+// Mock URL.createObjectURL for file downloads in tests while preserving URL constructor
+const OriginalURL = global.URL;
+Object.defineProperty(global, 'URL', {
+  writable: true,
+  value: class URL extends OriginalURL {
+    static createObjectURL = vi.fn(() => 'mock-object-url');
+    static revokeObjectURL = vi.fn();
+  },
+});
+
+// Mock document.createElement for link download functionality
+const originalCreateElement = document.createElement;
+document.createElement = vi.fn((tagName: string) => {
+  if (tagName === 'a') {
+    const mockAnchor = originalCreateElement.call(document, 'a');
+    mockAnchor.click = vi.fn();
+    mockAnchor.remove = vi.fn();
+    return mockAnchor;
+  }
+  return originalCreateElement.call(document, tagName);
+});
+
 // Mock requestAnimationFrame
 global.requestAnimationFrame = vi.fn(callback => {
   setTimeout(callback, 0);

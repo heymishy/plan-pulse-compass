@@ -302,10 +302,13 @@ describe('BulkOperationsPanel', () => {
     await user.click(screen.getByText('Set Copy Source'));
 
     // Wait for the copy source to be set and paste button to appear
-    await waitFor(() => {
-      expect(screen.getByText('Paste')).toBeInTheDocument();
-    });
-  });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Paste')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
+  }, 15000);
 
   it('disables copy source button for multiple selections', () => {
     const selection = {

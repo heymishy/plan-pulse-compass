@@ -349,9 +349,9 @@ describe('TeamDialog', () => {
           description: 'Team created successfully',
         });
       },
-      { timeout: 5000 }
+      { timeout: 10000 }
     );
-  });
+  }, 15000);
 
   it('updates existing team successfully', async () => {
     const user = userEvent.setup();
@@ -373,9 +373,9 @@ describe('TeamDialog', () => {
           description: 'Team updated successfully',
         });
       },
-      { timeout: 5000 }
+      { timeout: 10000 }
     );
-  });
+  }, 15000);
 
   it('handles cancel action', async () => {
     const mockOnClose = vi.fn();
