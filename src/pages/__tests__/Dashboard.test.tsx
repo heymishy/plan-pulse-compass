@@ -108,7 +108,9 @@ describe('Dashboard', () => {
 
     expect(screen.getByText('Setup Required')).toBeInTheDocument();
     expect(
-      screen.getByText('Complete the initial setup to view your dashboard.')
+      screen.getByText(
+        'Please complete the initial setup to start using the planning app.'
+      )
     ).toBeInTheDocument();
     expect(screen.getByText('Go to Setup')).toBeInTheDocument();
   });
@@ -123,10 +125,8 @@ describe('Dashboard', () => {
 
     // Should show skeleton loading components
     expect(screen.getByTestId('dashboard-header')).toBeInTheDocument();
-    // Check for skeleton elements (they would be rendered by Skeleton component)
-    const skeletonElements = screen.getAllByTestId('skeleton', {
-      exact: false,
-    });
+    // Check for skeleton elements by their CSS class instead of testid
+    const skeletonElements = document.querySelectorAll('.animate-pulse');
     expect(skeletonElements.length).toBeGreaterThan(0);
   });
 
@@ -184,7 +184,9 @@ describe('Dashboard', () => {
     // Check for setup required card structure
     expect(screen.getByText('Setup Required')).toBeInTheDocument();
     expect(
-      screen.getByText('Complete the initial setup to view your dashboard.')
+      screen.getByText(
+        'Please complete the initial setup to start using the planning app.'
+      )
     ).toBeInTheDocument();
 
     // Check for setup button
