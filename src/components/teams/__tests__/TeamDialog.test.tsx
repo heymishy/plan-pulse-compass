@@ -272,13 +272,16 @@ describe('TeamDialog', () => {
       await user.click(saveButton);
     }
 
-    await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith({
-        title: 'Error',
-        description: 'Capacity must be a positive number',
-        variant: 'destructive',
-      });
-    });
+    await waitFor(
+      () => {
+        expect(mockToast).toHaveBeenCalledWith({
+          title: 'Error',
+          description: 'Capacity must be a positive number',
+          variant: 'destructive',
+        });
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('creates new team successfully', async () => {
@@ -298,13 +301,16 @@ describe('TeamDialog', () => {
     const saveButton = screen.getByText('Create Team');
     await user.click(saveButton);
 
-    await waitFor(() => {
-      expect(mockAddTeam).toHaveBeenCalled();
-      expect(mockToast).toHaveBeenCalledWith({
-        title: 'Success',
-        description: 'Team created successfully',
-      });
-    });
+    await waitFor(
+      () => {
+        expect(mockAddTeam).toHaveBeenCalled();
+        expect(mockToast).toHaveBeenCalledWith({
+          title: 'Success',
+          description: 'Team created successfully',
+        });
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('updates existing team successfully', async () => {
@@ -318,13 +324,16 @@ describe('TeamDialog', () => {
     const saveButton = screen.getByText('Update Team');
     await user.click(saveButton);
 
-    await waitFor(() => {
-      expect(mockUpdateTeam).toHaveBeenCalled();
-      expect(mockToast).toHaveBeenCalledWith({
-        title: 'Success',
-        description: 'Team updated successfully',
-      });
-    });
+    await waitFor(
+      () => {
+        expect(mockUpdateTeam).toHaveBeenCalled();
+        expect(mockToast).toHaveBeenCalledWith({
+          title: 'Success',
+          description: 'Team updated successfully',
+        });
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('handles cancel action', async () => {

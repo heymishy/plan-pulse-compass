@@ -269,9 +269,10 @@ describe('BulkOperationsPanel', () => {
 
     await user.click(screen.getByText('Set Copy Source'));
 
-    // Check that some source indication is present after setting copy source
-    // The exact format may vary, so just check for presence of copy/paste functionality
-    expect(screen.getByText('Paste')).toBeInTheDocument();
+    // Wait for the copy source to be set and paste button to appear
+    await waitFor(() => {
+      expect(screen.getByText('Paste')).toBeInTheDocument();
+    });
   });
 
   it('disables copy source button for multiple selections', () => {

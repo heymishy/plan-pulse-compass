@@ -436,6 +436,18 @@ describe('AllocationImportDialog', () => {
   });
 
   it('handles empty file selection', async () => {
+    // Clear any previous calls before this test
+    vi.clearAllMocks();
+    vi.mocked(allocationImportUtils.parseAllocationCSV).mockReturnValue(
+      mockAllocationData
+    );
+    vi.mocked(allocationImportUtils.validateAllocationImport).mockReturnValue(
+      mockValidationResult
+    );
+    vi.mocked(allocationImportUtils.convertImportToAllocations).mockReturnValue(
+      mockAllocations
+    );
+
     renderComponent();
 
     fireEvent.click(screen.getByText('Import Allocations'));
