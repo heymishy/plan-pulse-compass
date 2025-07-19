@@ -1,21 +1,22 @@
 import React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   describe,
   it,
   expect,
   vi,
+  beforeAll,
   beforeEach,
   afterEach,
-  beforeAll,
+  afterAll,
 } from 'vitest';
 import AllocationImportDialog from '../AllocationImportDialog';
 import { render } from '@/test/utils/test-utils';
 import * as allocationImportUtils from '@/utils/allocationImportUtils';
 import { useApp } from '@/context/AppContext';
 
-// Mock the utils module
+// Mock the utils module with enhanced cleanup
 vi.mock('@/utils/allocationImportUtils', () => ({
   parseAllocationCSV: vi.fn(),
   validateAllocationImport: vi.fn(),
@@ -23,7 +24,7 @@ vi.mock('@/utils/allocationImportUtils', () => ({
   downloadAllocationSampleCSV: vi.fn(),
 }));
 
-// Mock the context
+// Mock the context with enhanced cleanup
 vi.mock('@/context/AppContext', () => ({
   useApp: vi.fn(),
 }));
@@ -77,19 +78,22 @@ const mockAllocations = [
   },
 ];
 
-const mockAppData = {
-  teams: mockTeams,
-  epics: mockEpics,
-  runWorkCategories: mockRunWorkCategories,
-  cycles: mockCycles,
-  allocations: [],
-  setAllocations: vi.fn(),
-};
-
 describe('AllocationImportDialog', () => {
+  const mockAppData = {
+    teams: mockTeams,
+    epics: mockEpics,
+    runWorkCategories: mockRunWorkCategories,
+    cycles: mockCycles,
+    allocations: [],
+    isSetupComplete: true,
+    isDataLoading: false,
+    setAllocations: vi.fn(),
+  };
+
+  // Enhanced setup/teardown for better isolation
   beforeAll(() => {
-    // Reset all modules at the start of this test suite
     vi.resetModules();
+    vi.clearAllMocks();
   });
 
   beforeEach(() => {
@@ -107,7 +111,16 @@ describe('AllocationImportDialog', () => {
   });
 
   afterEach(() => {
+    // Clear mocks and timers, but don't let global setup clear DOM between tests in same file
     vi.clearAllMocks();
+    vi.clearAllTimers();
+    // Only cleanup React components, not the entire DOM
+    // cleanup(); // This is handled by global setup
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
   });
 
   const renderComponent = () => {
@@ -472,35 +485,45 @@ describe('AllocationImportDialog', () => {
   it('handles reset functionality', async () => {
     renderComponent();
 
+    // Open dialog
     fireEvent.click(screen.getByText('Import Allocations'));
 
+    // Wait for dialog to open
     await waitFor(() => {
-      const fileInput = screen.getByDisplayValue('');
-
-      const file = new File(
-        [
-          'teamName,epicName,epicType,sprintNumber,percentage,quarter\nTeam A,Epic 1,Project Epic,1,50,Q1 2024',
-        ],
-        'test.csv',
-        {
-          type: 'text/csv',
-        }
-      );
-
-      fireEvent.change(fileInput, { target: { files: [file] } });
+      expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
     });
 
+    // Upload file
+    const fileInput = screen.getByDisplayValue('');
+    const file = new File(
+      [
+        'teamName,epicName,epicType,sprintNumber,percentage,quarter\nTeam A,Epic 1,Project Epic,1,50,Q1 2024',
+      ],
+      'test.csv',
+      {
+        type: 'text/csv',
+      }
+    );
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    // Wait for data to be processed and preview to show
     await waitFor(() => {
       expect(screen.getByText('Data Preview (1 records)')).toBeInTheDocument();
+      // Ensure reset button is present
+      expect(screen.getByText('Reset')).toBeInTheDocument();
     });
 
     // Click reset
     fireEvent.click(screen.getByText('Reset'));
 
+    // Verify data preview is gone but dialog is still open
     await waitFor(() => {
       expect(
         screen.queryByText('Data Preview (1 records)')
       ).not.toBeInTheDocument();
+      // Dialog should still be open
+      expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
     });
   });
 

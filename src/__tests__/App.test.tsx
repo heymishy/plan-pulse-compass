@@ -1,6 +1,15 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { screen, cleanup } from '@testing-library/react';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'vitest';
 import { renderWithoutRouter } from '@/test/utils/test-utils';
 import App from '../App';
 
@@ -98,6 +107,27 @@ vi.mock('@/components/ui/toaster', () => ({
 }));
 
 describe('App', () => {
+  // Enhanced setup/teardown for better isolation
+  beforeAll(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Clear mocks and timers, rely on global setup for DOM cleanup
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
   it('renders without crashing', () => {
     renderWithoutRouter(<App />);
 

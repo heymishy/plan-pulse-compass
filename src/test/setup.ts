@@ -311,15 +311,16 @@ afterEach(() => {
     window.localStorage.clear();
   }
 
-  // Clear any DOM pollution
+  // Less aggressive DOM cleanup - only clear content, don't replace body
   if (typeof document !== 'undefined') {
-    // Reset document.body to clean state
+    // Only clear innerHTML, preserve body element for subsequent tests in same file
     document.body.innerHTML = '';
 
-    // Clear any event listeners that might persist
-    const newBody = document.createElement('body');
-    if (document.body && document.body.parentNode) {
-      document.body.parentNode.replaceChild(newBody, document.body);
+    // Clear any lingering attributes or classes on document elements
+    if (document.documentElement) {
+      document.documentElement.className = '';
+      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.removeAttribute('data-system-theme');
     }
   }
 });

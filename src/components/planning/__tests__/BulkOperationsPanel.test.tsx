@@ -1,7 +1,22 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@/test/utils/test-utils';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from '@/test/utils/test-utils';
 import userEvent from '@testing-library/user-event';
-import { vi } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'vitest';
 import BulkOperationsPanel, { BulkSelection } from '../BulkOperationsPanel';
 import { Team, Cycle, Epic, Project, RunWorkCategory } from '@/types';
 
@@ -76,8 +91,25 @@ const defaultProps = {
 };
 
 describe('BulkOperationsPanel', () => {
+  // Enhanced setup/teardown for better isolation
+  beforeAll(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Clear mocks and timers, rely on global setup for DOM cleanup
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
   });
 
   it('renders without crashing', () => {

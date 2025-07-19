@@ -1,6 +1,15 @@
 import React from 'react';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'vitest';
 import ProjectDialog from '../ProjectDialog';
 import { render } from '@/test/utils/test-utils';
 import { useApp } from '@/context/AppContext';
@@ -102,10 +111,27 @@ const mockAppData = {
 };
 
 describe('ProjectDialog', () => {
+  // Enhanced setup/teardown for better isolation
+  beforeAll(() => {
+    vi.resetModules();
+    vi.clearAllMocks();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useApp).mockReturnValue(mockAppData);
     vi.mocked(useToast).mockReturnValue({ toast: mockToast });
+  });
+
+  afterEach(() => {
+    // Clear mocks and timers, rely on global setup for DOM cleanup
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
   });
 
   const renderComponent = (props = {}) => {
