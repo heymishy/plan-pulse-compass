@@ -1,7 +1,15 @@
 import React from 'react';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+} from 'vitest';
 import AllocationImportDialog from '../AllocationImportDialog';
 import { render } from '@/test/utils/test-utils';
 import * as allocationImportUtils from '@/utils/allocationImportUtils';
@@ -79,6 +87,11 @@ const mockAppData = {
 };
 
 describe('AllocationImportDialog', () => {
+  beforeAll(() => {
+    // Reset all modules at the start of this test suite
+    vi.resetModules();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useApp).mockReturnValue(mockAppData);
@@ -436,22 +449,6 @@ describe('AllocationImportDialog', () => {
   });
 
   it('handles empty file selection', async () => {
-    // Reset and create fresh mocks for this test
-    vi.resetModules();
-    const parseCSVMock = vi.fn().mockReturnValue(mockAllocationData);
-    const validateMock = vi.fn().mockReturnValue(mockValidationResult);
-    const convertMock = vi.fn().mockReturnValue(mockAllocations);
-
-    vi.mocked(allocationImportUtils.parseAllocationCSV).mockImplementation(
-      parseCSVMock
-    );
-    vi.mocked(
-      allocationImportUtils.validateAllocationImport
-    ).mockImplementation(validateMock);
-    vi.mocked(
-      allocationImportUtils.convertImportToAllocations
-    ).mockImplementation(convertMock);
-
     renderComponent();
 
     fireEvent.click(screen.getByText('Import Allocations'));
@@ -461,8 +458,15 @@ describe('AllocationImportDialog', () => {
       fireEvent.change(fileInput, { target: { files: [] } });
     });
 
-    // Should not call parsing functions with fresh mock
-    expect(parseCSVMock).not.toHaveBeenCalled();
+    // Verify correct empty state UI appears
+    await waitFor(() => {
+      // Should show disabled import button with 0 records
+      const importButton = screen.getByText('Import 0 Records');
+      expect(importButton).toBeInTheDocument();
+      expect(importButton).toBeDisabled();
+      // Should not show data preview
+      expect(screen.queryByText('Data Preview')).not.toBeInTheDocument();
+    });
   });
 
   it('handles reset functionality', async () => {

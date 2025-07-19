@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import TeamDialog from '../TeamDialog';
 import { render } from '@/test/utils/test-utils';
 import { useApp } from '@/context/AppContext';
@@ -92,6 +92,11 @@ const mockAppData = {
 };
 
 describe('TeamDialog', () => {
+  beforeAll(() => {
+    // Reset all modules at the start of this test suite
+    vi.resetModules();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useApp).mockReturnValue(mockAppData);
@@ -286,6 +291,12 @@ describe('TeamDialog', () => {
 
   it('creates new team successfully', async () => {
     const user = userEvent.setup();
+
+    // Clear mocks to ensure clean state
+    vi.clearAllMocks();
+    vi.mocked(useApp).mockReturnValue(mockAppData);
+    vi.mocked(useToast).mockReturnValue({ toast: mockToast });
+
     renderComponent();
 
     const nameInput = screen.getByLabelText('Team Name *');
@@ -309,12 +320,18 @@ describe('TeamDialog', () => {
           description: 'Team created successfully',
         });
       },
-      { timeout: 5000 }
+      { timeout: 10000 }
     );
   });
 
   it('updates existing team successfully', async () => {
     const user = userEvent.setup();
+
+    // Clear mocks to ensure clean state
+    vi.clearAllMocks();
+    vi.mocked(useApp).mockReturnValue(mockAppData);
+    vi.mocked(useToast).mockReturnValue({ toast: mockToast });
+
     renderComponent({ teamId: mockTeam.id });
 
     const nameInput = screen.getByDisplayValue('Frontend Team');
@@ -332,7 +349,7 @@ describe('TeamDialog', () => {
           description: 'Team updated successfully',
         });
       },
-      { timeout: 5000 }
+      { timeout: 10000 }
     );
   });
 

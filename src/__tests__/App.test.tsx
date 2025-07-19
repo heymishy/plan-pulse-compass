@@ -72,6 +72,13 @@ vi.mock('@/context/ThemeContext', () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  useTheme: () => ({
+    theme: 'light',
+    setTheme: vi.fn(),
+    resolvedTheme: 'light',
+    themes: [],
+    isSystemTheme: false,
+  }),
 }));
 
 // Mock the Sidebar component
