@@ -436,17 +436,21 @@ describe('AllocationImportDialog', () => {
   });
 
   it('handles empty file selection', async () => {
-    // Clear any previous calls before this test
-    vi.clearAllMocks();
-    vi.mocked(allocationImportUtils.parseAllocationCSV).mockReturnValue(
-      mockAllocationData
+    // Reset and create fresh mocks for this test
+    vi.resetModules();
+    const parseCSVMock = vi.fn().mockReturnValue(mockAllocationData);
+    const validateMock = vi.fn().mockReturnValue(mockValidationResult);
+    const convertMock = vi.fn().mockReturnValue(mockAllocations);
+
+    vi.mocked(allocationImportUtils.parseAllocationCSV).mockImplementation(
+      parseCSVMock
     );
-    vi.mocked(allocationImportUtils.validateAllocationImport).mockReturnValue(
-      mockValidationResult
-    );
-    vi.mocked(allocationImportUtils.convertImportToAllocations).mockReturnValue(
-      mockAllocations
-    );
+    vi.mocked(
+      allocationImportUtils.validateAllocationImport
+    ).mockImplementation(validateMock);
+    vi.mocked(
+      allocationImportUtils.convertImportToAllocations
+    ).mockImplementation(convertMock);
 
     renderComponent();
 
@@ -457,8 +461,8 @@ describe('AllocationImportDialog', () => {
       fireEvent.change(fileInput, { target: { files: [] } });
     });
 
-    // Should not call parsing functions
-    expect(allocationImportUtils.parseAllocationCSV).not.toHaveBeenCalled();
+    // Should not call parsing functions with fresh mock
+    expect(parseCSVMock).not.toHaveBeenCalled();
   });
 
   it('handles reset functionality', async () => {
