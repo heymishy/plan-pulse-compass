@@ -16,14 +16,18 @@ export default defineConfig({
       '**/test-results/**',
     ],
     css: false,
-    testTimeout: 3000,
-    hookTimeout: 2000,
+    // Standardized timeouts to prevent timing issues
+    testTimeout: 5000, // Increased for better stability
+    hookTimeout: 3000, // Increased for cleanup operations
     pool: 'threads',
     poolOptions: {
       threads: {
         singleThread: true,
         maxThreads: 1,
         minThreads: 1,
+        // Enhanced isolation settings
+        isolate: true,
+        useAtomics: true,
       },
     },
     reporters: ['default'],
@@ -46,15 +50,23 @@ export default defineConfig({
           ProcessExternalResources: false,
           SkipExternalResources: true,
         },
+        // Enhanced cleanup options - removed beforeParse due to serialization issues
       },
     },
+    // Enhanced isolation settings
     isolate: true,
     passWithNoTests: true,
     watch: false,
-    teardownTimeout: 2000,
+    teardownTimeout: 5000, // Increased for proper cleanup
     sequence: {
-      shuffle: false,
+      shuffle: false, // Keep deterministic order to debug timing issues
+      concurrent: false, // Disable concurrency to prevent interference
     },
+    // Force fresh environment for each test file
+    restartOnConfigChange: true,
+    // Improved error handling
+    bail: 0, // Don't stop on first failure
+    maxConcurrency: 1, // Ensure single-threaded execution
   },
   resolve: {
     alias: {

@@ -288,21 +288,78 @@ global.console = {
   // error: vi.fn(),
 };
 
-// Cleanup after each test to prevent hanging
+// Enhanced cleanup for test isolation
+import { cleanup } from '@testing-library/react';
+
+// Cleanup after each test to prevent hanging and state pollution
 afterEach(() => {
+  // Clear all mocks and timers
   vi.clearAllMocks();
   vi.clearAllTimers();
+
+  // Cleanup DOM elements created by React Testing Library
+  cleanup();
 
   // Clear any remaining timers
   if (typeof window !== 'undefined') {
     window.clearTimeout = vi.fn();
     window.clearInterval = vi.fn();
   }
+
+  // Reset localStorage to clean state
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.clear();
+  }
+
+  // Clear any DOM pollution
+  if (typeof document !== 'undefined') {
+    // Reset document.body to clean state
+    document.body.innerHTML = '';
+
+    // Clear any event listeners that might persist
+    const newBody = document.createElement('body');
+    if (document.body && document.body.parentNode) {
+      document.body.parentNode.replaceChild(newBody, document.body);
+    }
+  }
 });
 
-// Final cleanup after all tests
+// Comprehensive cleanup between test files to prevent interference
 afterAll(() => {
+  // Restore all mocks to original state
   vi.restoreAllMocks();
+
+  // Reset all modules to clean state
+  vi.resetModules();
+
+  // Clear all timers and use real timers
+  vi.clearAllTimers();
+  vi.useRealTimers();
+
+  // Final DOM cleanup
+  if (typeof document !== 'undefined') {
+    document.body.innerHTML = '';
+
+    // Reset document title
+    document.title = '';
+
+    // Clear any global CSS classes that might persist
+    if (document.documentElement) {
+      document.documentElement.className = '';
+      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.removeAttribute('data-system-theme');
+    }
+  }
+
+  // Clear localStorage completely
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.clear();
+  }
+
+  // Clear sessionStorage
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    window.sessionStorage.clear();
+  }
 
   // Force garbage collection if available
   if (global.gc) {

@@ -1,13 +1,22 @@
 import React from 'react';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'vitest';
 import TeamDialog from '../TeamDialog';
 import { render } from '@/test/utils/test-utils';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock the hooks
+// Mock the hooks with enhanced cleanup
 vi.mock('@/context/AppContext', () => ({
   useApp: vi.fn(),
 }));
@@ -16,91 +25,113 @@ vi.mock('@/hooks/use-toast', () => ({
   useToast: vi.fn(),
 }));
 
-const mockToast = vi.fn();
-const mockAddTeam = vi.fn();
-const mockUpdateTeam = vi.fn();
-
-const mockTeam = {
-  id: 'team1',
-  name: 'Frontend Team',
-  description: 'Frontend development team',
-  type: 'permanent',
-  status: 'active',
-  divisionId: 'div1',
-  capacity: 100,
-  productOwnerId: 'person1',
-  targetSkills: ['React', 'TypeScript'],
-  projectIds: ['project1'],
-  duration: { start: '2024-01-01', end: '2024-12-31' },
-};
-
-const mockDivisions = [
-  { id: 'div1', name: 'Engineering', description: 'Engineering Division' },
-  { id: 'div2', name: 'Product', description: 'Product Division' },
-];
-
-const mockPeople = [
-  {
-    id: 'person1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    roleId: 'role1',
-  },
-  {
-    id: 'person2',
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    roleId: 'role2',
-  },
-];
-
-const mockProjects = [
-  { id: 'project1', name: 'Project Alpha', description: 'Test project' },
-  { id: 'project2', name: 'Project Beta', description: 'Another project' },
-];
-
-const mockTeamMembers = [
-  {
-    id: 'member1',
-    teamId: 'team1',
-    personId: 'person1',
-    role: 'lead',
-    allocation: 100,
-  },
-  {
-    id: 'member2',
-    teamId: 'team1',
-    personId: 'person2',
-    role: 'developer',
-    allocation: 80,
-  },
-];
-
-const mockAppData = {
-  teams: [mockTeam],
-  addTeam: mockAddTeam,
-  updateTeam: mockUpdateTeam,
-  people: mockPeople,
-  divisions: mockDivisions,
-  roles: [
-    { id: 'role1', name: 'Developer', baseSalary: 100000 },
-    { id: 'role2', name: 'Designer', baseSalary: 90000 },
-  ],
-  projects: mockProjects,
-  teamMembers: mockTeamMembers,
-  getTeamMembers: vi.fn(() => mockTeamMembers),
-};
-
 describe('TeamDialog', () => {
+  const mockAppData = {
+    teams: [
+      {
+        id: 'team1',
+        name: 'Frontend Team',
+        description: 'Frontend development team',
+        type: 'permanent',
+        status: 'active',
+        divisionId: 'div1',
+        capacity: 100,
+        productOwnerId: 'person1',
+        targetSkills: ['React', 'TypeScript'],
+        projectIds: ['project1'],
+        duration: { start: '2024-01-01', end: '2024-12-31' },
+      },
+    ],
+    people: [
+      {
+        id: 'person1',
+        name: 'John Doe',
+        email: 'john@example.com',
+        roleId: 'role1',
+        skills: [],
+      },
+      {
+        id: 'person2',
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        roleId: 'role2',
+        skills: [],
+      },
+    ],
+    divisions: [
+      { id: 'div1', name: 'Engineering', description: 'Engineering Division' },
+      { id: 'div2', name: 'Product', description: 'Product Division' },
+    ],
+    projects: [
+      { id: 'project1', name: 'Project Alpha', description: 'Test project' },
+      { id: 'project2', name: 'Project Beta', description: 'Another project' },
+    ],
+    roles: [
+      { id: 'role1', name: 'Developer', baseSalary: 100000 },
+      { id: 'role2', name: 'Designer', baseSalary: 90000 },
+    ],
+    teamMembers: [
+      {
+        id: 'member1',
+        teamId: 'team1',
+        personId: 'person1',
+        role: 'lead',
+        allocation: 100,
+      },
+      {
+        id: 'member2',
+        teamId: 'team1',
+        personId: 'person2',
+        role: 'developer',
+        allocation: 80,
+      },
+    ],
+    isSetupComplete: true,
+    isDataLoading: false,
+    addTeam: vi.fn(),
+    updateTeam: vi.fn(),
+    getTeamMembers: vi.fn(() => [
+      {
+        id: 'member1',
+        teamId: 'team1',
+        personId: 'person1',
+        role: 'lead',
+        allocation: 100,
+      },
+      {
+        id: 'member2',
+        teamId: 'team1',
+        personId: 'person2',
+        role: 'developer',
+        allocation: 80,
+      },
+    ]),
+  };
+
+  const mockToastData = {
+    toast: vi.fn(),
+  };
+
+  // Enhanced setup/teardown for better isolation
   beforeAll(() => {
-    // Reset all modules at the start of this test suite
     vi.resetModules();
+    vi.clearAllMocks();
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useApp).mockReturnValue(mockAppData);
-    vi.mocked(useToast).mockReturnValue({ toast: mockToast });
+    vi.mocked(useToast).mockReturnValue(mockToastData);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+  });
+
+  afterAll(() => {
+    vi.restoreAllMocks();
+    vi.resetModules();
   });
 
   const renderComponent = (props = {}) => {
@@ -119,7 +150,7 @@ describe('TeamDialog', () => {
   });
 
   it('renders edit mode when team is provided', () => {
-    renderComponent({ teamId: mockTeam.id });
+    renderComponent({ teamId: 'team1' });
     expect(screen.getByText('Edit Team')).toBeInTheDocument();
   });
 
@@ -136,7 +167,7 @@ describe('TeamDialog', () => {
   });
 
   it('populates form fields when editing existing team', () => {
-    renderComponent({ teamId: mockTeam.id });
+    renderComponent({ teamId: 'team1' });
 
     expect(screen.getByDisplayValue('Frontend Team')).toBeInTheDocument();
     expect(
@@ -175,7 +206,7 @@ describe('TeamDialog', () => {
   });
 
   it('displays team tabs correctly', () => {
-    renderComponent({ teamId: mockTeam.id });
+    renderComponent({ teamId: 'team1' });
 
     // Check that the tabs are rendered
     expect(screen.getByText('Basic Info')).toBeInTheDocument();
@@ -215,7 +246,7 @@ describe('TeamDialog', () => {
 
   it('handles members tab functionality', async () => {
     const user = userEvent.setup();
-    renderComponent({ teamId: mockTeam.id });
+    renderComponent({ teamId: 'team1' });
 
     // Navigate to Members tab
     const membersTab = screen.getByText(/Members \(\d+\)/);
@@ -248,13 +279,16 @@ describe('TeamDialog', () => {
       await user.click(saveButton);
     }
 
-    await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith({
-        title: 'Error',
-        description: 'Team name is required',
-        variant: 'destructive',
-      });
-    });
+    await waitFor(
+      () => {
+        expect(mockToastData.toast).toHaveBeenCalledWith({
+          title: 'Error',
+          description: 'Team name is required',
+          variant: 'destructive',
+        });
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('validates capacity value', async () => {
@@ -279,7 +313,7 @@ describe('TeamDialog', () => {
 
     await waitFor(
       () => {
-        expect(mockToast).toHaveBeenCalledWith({
+        expect(mockToastData.toast).toHaveBeenCalledWith({
           title: 'Error',
           description: 'Capacity must be a positive number',
           variant: 'destructive',
@@ -291,11 +325,6 @@ describe('TeamDialog', () => {
 
   it('creates new team successfully', async () => {
     const user = userEvent.setup();
-
-    // Clear mocks to ensure clean state
-    vi.clearAllMocks();
-    vi.mocked(useApp).mockReturnValue(mockAppData);
-    vi.mocked(useToast).mockReturnValue({ toast: mockToast });
 
     renderComponent();
 
@@ -314,25 +343,20 @@ describe('TeamDialog', () => {
 
     await waitFor(
       () => {
-        expect(mockAddTeam).toHaveBeenCalled();
-        expect(mockToast).toHaveBeenCalledWith({
+        expect(mockAppData.addTeam).toHaveBeenCalled();
+        expect(mockToastData.toast).toHaveBeenCalledWith({
           title: 'Success',
           description: 'Team created successfully',
         });
       },
-      { timeout: 10000 }
+      { timeout: 5000 }
     );
   });
 
   it('updates existing team successfully', async () => {
     const user = userEvent.setup();
 
-    // Clear mocks to ensure clean state
-    vi.clearAllMocks();
-    vi.mocked(useApp).mockReturnValue(mockAppData);
-    vi.mocked(useToast).mockReturnValue({ toast: mockToast });
-
-    renderComponent({ teamId: mockTeam.id });
+    renderComponent({ teamId: 'team1' });
 
     const nameInput = screen.getByDisplayValue('Frontend Team');
     await user.clear(nameInput);
@@ -343,13 +367,13 @@ describe('TeamDialog', () => {
 
     await waitFor(
       () => {
-        expect(mockUpdateTeam).toHaveBeenCalled();
-        expect(mockToast).toHaveBeenCalledWith({
+        expect(mockAppData.updateTeam).toHaveBeenCalled();
+        expect(mockToastData.toast).toHaveBeenCalledWith({
           title: 'Success',
           description: 'Team updated successfully',
         });
       },
-      { timeout: 10000 }
+      { timeout: 5000 }
     );
   });
 
@@ -365,7 +389,7 @@ describe('TeamDialog', () => {
 
   it('shows team member management section', async () => {
     const user = userEvent.setup();
-    renderComponent({ teamId: mockTeam.id });
+    renderComponent({ teamId: 'team1' });
 
     // Navigate to Members tab
     const membersTab = screen.getByText(/Members \(\d+\)/);
@@ -380,7 +404,7 @@ describe('TeamDialog', () => {
 
   it('allows switching between tabs', async () => {
     const user = userEvent.setup();
-    renderComponent({ teamId: mockTeam.id });
+    renderComponent({ teamId: 'team1' });
 
     // Click on Skills & Goals tab
     await user.click(screen.getByText('Skills & Goals'));
