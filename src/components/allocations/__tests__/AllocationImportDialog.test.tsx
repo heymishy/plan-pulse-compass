@@ -1,7 +1,7 @@
 import React from 'react';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import AllocationImportDialog from '../AllocationImportDialog';
 import { render } from '@/test/utils/test-utils';
 import * as allocationImportUtils from '@/utils/allocationImportUtils';
@@ -80,8 +80,8 @@ const mockAppData = {
 
 describe('AllocationImportDialog', () => {
   beforeEach(() => {
-    vi.mocked(useApp).mockReturnValue(mockAppData);
     vi.clearAllMocks();
+    vi.mocked(useApp).mockReturnValue(mockAppData);
     vi.mocked(allocationImportUtils.parseAllocationCSV).mockReturnValue(
       mockAllocationData
     );
@@ -91,6 +91,10 @@ describe('AllocationImportDialog', () => {
     vi.mocked(allocationImportUtils.convertImportToAllocations).mockReturnValue(
       mockAllocations
     );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   const renderComponent = () => {
