@@ -48,6 +48,7 @@ const Navigation = () => {
     { path: '/financials', icon: DollarSign, label: 'Financials' },
     { path: '/skills', icon: Target, label: 'Skills' },
     { path: '/canvas', icon: Network, label: 'Canvas' },
+    { path: '/ocr', icon: Search, label: 'OCR' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 

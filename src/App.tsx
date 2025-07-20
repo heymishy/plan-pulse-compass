@@ -136,6 +136,7 @@ function App() {
                                     path="/squad-management"
                                     element={<TeamBuilder />}
                                   />
+                                  <Route path="/ocr" element={<OCRPage />} />
                                   <Route path="*" element={<NotFound />} />
                                 </Routes>
                               </main>
