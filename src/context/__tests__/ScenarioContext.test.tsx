@@ -229,7 +229,17 @@ describe('ScenarioContext', () => {
       wrapper: AllProviders,
     });
 
-    // Create a scenario with past expiration date
+    // Create a scenario with future expiration date first
+    await act(async () => {
+      await result.current.createScenario({
+        name: 'Test Scenario',
+        expiresAt: new Date(Date.now() + 60000).toISOString(), // Future date
+      });
+    });
+
+    expect(result.current.scenarios).toHaveLength(1);
+
+    // Now create an expired scenario (this tests the actual expiration logic)
     await act(async () => {
       await result.current.createScenario({
         name: 'Expired Scenario',
@@ -237,14 +247,16 @@ describe('ScenarioContext', () => {
       });
     });
 
-    expect(result.current.scenarios).toHaveLength(1);
+    // Should have 2 scenarios (auto-cleanup ran but expired one was added after)
+    expect(result.current.scenarios).toHaveLength(2);
 
-    // Run cleanup - should remove expired scenario
+    // Run cleanup manually - should remove only the expired scenario
     await act(async () => {
       await result.current.cleanupExpiredScenarios();
     });
 
-    expect(result.current.scenarios).toHaveLength(0);
+    expect(result.current.scenarios).toHaveLength(1);
+    expect(result.current.scenarios[0].name).toBe('Test Scenario');
   });
 
   it('should generate scenario comparison', async () => {
