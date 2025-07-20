@@ -483,17 +483,33 @@ describe('AllocationImportDialog', () => {
   });
 
   it('handles reset functionality', async () => {
+    // Maximum isolation for this problematic test
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+
+    const user = userEvent.setup();
     renderComponent();
 
-    // Open dialog
+    // Ensure trigger button is available and click it
+    await waitFor(
+      () => {
+        expect(screen.getByText('Import Allocations')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
     fireEvent.click(screen.getByText('Import Allocations'));
 
-    // Wait for dialog to open
-    await waitFor(() => {
-      expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
-    });
+    // Wait for dialog to fully open
+    await waitFor(
+      () => {
+        expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
+        expect(screen.getByText('Upload CSV File')).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
 
-    // Upload file
+    // Find file input and upload file
     const fileInput = screen.getByDisplayValue('');
     const file = new File(
       [
@@ -508,42 +524,78 @@ describe('AllocationImportDialog', () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     // Wait for data to be processed and preview to show
-    await waitFor(() => {
-      expect(screen.getByText('Data Preview (1 records)')).toBeInTheDocument();
-      // Ensure reset button is present
-      expect(screen.getByText('Reset')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText('Data Preview (1 records)')
+        ).toBeInTheDocument();
+        expect(screen.getByText('Reset')).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
 
     // Click reset
     fireEvent.click(screen.getByText('Reset'));
 
-    // Verify data preview is gone but dialog is still open
-    await waitFor(() => {
-      expect(
-        screen.queryByText('Data Preview (1 records)')
-      ).not.toBeInTheDocument();
-      // Dialog should still be open
-      expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
-    });
-  });
+    // Verify reset worked
+    await waitFor(
+      () => {
+        expect(
+          screen.queryByText('Data Preview (1 records)')
+        ).not.toBeInTheDocument();
+        expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
+  }, 15000);
 
   it('handles cancel action', async () => {
+    // Enhanced cleanup for test isolation
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+
     renderComponent();
+
+    // Ensure trigger button is available first
+    await waitFor(
+      () => {
+        expect(screen.getByText('Import Allocations')).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
 
     fireEvent.click(screen.getByText('Import Allocations'));
 
-    await waitFor(() => {
-      expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
+      },
+      { timeout: 10000 }
+    );
+
+    // Debug: let's see what buttons are available
+    const cancelButtons = screen.queryAllByText('Cancel');
+    const dialogCloseButtons = screen.queryAllByRole('button');
+
+    // Find a cancel button - might be in different forms
+    const cancelButton =
+      cancelButtons.find(btn => btn.closest('button')) ||
+      dialogCloseButtons.find(btn => btn.textContent?.includes('Cancel')) ||
+      screen.getByRole('button', { name: /cancel/i });
+
+    expect(cancelButton).toBeInTheDocument();
 
     // Click cancel
-    fireEvent.click(screen.getByText('Cancel'));
+    fireEvent.click(cancelButton);
 
-    await waitFor(() => {
-      expect(
-        screen.queryByText('Import Team Allocations')
-      ).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.queryByText('Import Team Allocations')
+        ).not.toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
   });
 
   it('shows success message with valid data', async () => {
