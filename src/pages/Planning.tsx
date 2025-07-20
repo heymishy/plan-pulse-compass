@@ -35,6 +35,7 @@ import {
   Filter,
   Network,
   AlertTriangle,
+  GitBranch,
 } from 'lucide-react';
 import PlanningMatrix from '@/components/planning/PlanningMatrix';
 import BulkAllocationGrid from '@/components/planning/BulkAllocationGrid';
@@ -48,6 +49,7 @@ import BulkOperationsPanel, {
   BulkSelection,
 } from '@/components/planning/BulkOperationsPanel';
 import HeatMapView from '@/components/planning/HeatMapView';
+import { ScenarioManagement } from '@/components/scenarios/ScenarioManagement';
 import ProgressIndicators from '@/components/planning/ProgressIndicators';
 import SearchAndFilter, {
   SearchFilters,
@@ -92,7 +94,7 @@ const Planning = () => {
     'matrix' | 'bulk' | 'heatmap' | 'timeline' | 'dependencies'
   >('matrix');
   const [activeTab, setActiveTab] = useState<
-    'planning' | 'analysis' | 'advanced'
+    'planning' | 'analysis' | 'advanced' | 'scenarios'
   >('planning');
   const [hideEmptyRows, setHideEmptyRows] = useState<boolean>(false);
   const [isAllocationDialogOpen, setIsAllocationDialogOpen] = useState(false);
@@ -854,7 +856,9 @@ const Planning = () => {
         <Tabs
           value={activeTab}
           onValueChange={value =>
-            setActiveTab(value as 'planning' | 'analysis' | 'advanced')
+            setActiveTab(
+              value as 'planning' | 'analysis' | 'advanced' | 'scenarios'
+            )
           }
           className="space-y-6"
         >
@@ -867,6 +871,10 @@ const Planning = () => {
             <TabsTrigger value="advanced">
               <Zap className="h-4 w-4 mr-2" />
               Advanced Planning
+            </TabsTrigger>
+            <TabsTrigger value="scenarios">
+              <GitBranch className="h-4 w-4 mr-2" />
+              Scenarios
             </TabsTrigger>
           </TabsList>
 
@@ -1524,6 +1532,10 @@ const Planning = () => {
 
           <TabsContent value="advanced">
             <AdvancedPlanningDashboard />
+          </TabsContent>
+
+          <TabsContent value="scenarios">
+            <ScenarioManagement />
           </TabsContent>
         </Tabs>
 
