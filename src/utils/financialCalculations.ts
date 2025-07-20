@@ -1,6 +1,15 @@
-import { Person, Role, Allocation, Epic, Project, Cycle, Team, AppConfig } from '@/types';
+import {
+  Person,
+  Role,
+  Allocation,
+  Epic,
+  Project,
+  Cycle,
+  Team,
+  AppConfig,
+} from '@/types';
 
-
+const WORKING_DAYS_PER_MONTH = 22; // Default working days per month
 
 export interface PersonCostCalculation {
   personId: string;
@@ -14,24 +23,36 @@ export interface PersonCostCalculation {
   rateType: 'hourly' | 'daily' | 'annual';
 }
 
-export const calculatePersonCost = (person: Person, role: Role, config: AppConfig): PersonCostCalculation => {
-  const { workingHoursPerDay, workingDaysPerYear, workingDaysPerWeek, workingDaysPerMonth } = config;
+export const calculatePersonCost = (
+  person: Person,
+  role: Role,
+  config: AppConfig
+): PersonCostCalculation => {
+  const {
+    workingHoursPerDay,
+    workingDaysPerYear,
+    workingDaysPerWeek,
+    workingDaysPerMonth,
+  } = config;
   let costPerHour = 0;
-  let rateSource: 'personal' | 'role-default' | 'legacy-fallback' = 'legacy-fallback';
+  let rateSource: 'personal' | 'role-default' | 'legacy-fallback' =
+    'legacy-fallback';
   let effectiveRate = 0;
   let rateType: 'hourly' | 'daily' | 'annual' = 'hourly';
 
   if (person.employmentType === 'permanent') {
     // Priority 1: Individual salary
     if (person.annualSalary && person.annualSalary > 0) {
-      costPerHour = person.annualSalary / (workingDaysPerYear * workingHoursPerDay);
+      costPerHour =
+        person.annualSalary / (workingDaysPerYear * workingHoursPerDay);
       rateSource = 'personal';
       effectiveRate = person.annualSalary;
       rateType = 'annual';
     }
     // Priority 2: Role default annual salary
     else if (role.defaultAnnualSalary && role.defaultAnnualSalary > 0) {
-      costPerHour = role.defaultAnnualSalary / (workingDaysPerYear * workingHoursPerDay);
+      costPerHour =
+        role.defaultAnnualSalary / (workingDaysPerYear * workingHoursPerDay);
       rateSource = 'role-default';
       effectiveRate = role.defaultAnnualSalary;
       rateType = 'annual';
@@ -45,12 +66,18 @@ export const calculatePersonCost = (person: Person, role: Role, config: AppConfi
     }
   } else if (person.employmentType === 'contractor') {
     // Priority 1: Individual contract rates
-    if (person.contractDetails?.hourlyRate && person.contractDetails.hourlyRate > 0) {
+    if (
+      person.contractDetails?.hourlyRate &&
+      person.contractDetails.hourlyRate > 0
+    ) {
       costPerHour = person.contractDetails.hourlyRate;
       rateSource = 'personal';
       effectiveRate = person.contractDetails.hourlyRate;
       rateType = 'hourly';
-    } else if (person.contractDetails?.dailyRate && person.contractDetails.dailyRate > 0) {
+    } else if (
+      person.contractDetails?.dailyRate &&
+      person.contractDetails.dailyRate > 0
+    ) {
       costPerHour = person.contractDetails.dailyRate / 8;
       rateSource = 'personal';
       effectiveRate = person.contractDetails.dailyRate;
@@ -154,7 +181,8 @@ export const calculateAllocationCost = (
   config: AppConfig
 ): number => {
   const cycleDurationInDays = Math.ceil(
-    (new Date(cycle.endDate).getTime() - new Date(cycle.startDate).getTime()) / (1000 * 60 * 60 * 24)
+    (new Date(cycle.endDate).getTime() - new Date(cycle.startDate).getTime()) /
+      (1000 * 60 * 60 * 24)
   );
 
   let totalCost = 0;
@@ -164,7 +192,10 @@ export const calculateAllocationCost = (
     if (!role) return;
 
     const personCost = calculatePersonCost(person, role, config);
-    const allocationCost = personCost.costPerDay * cycleDurationInDays * (allocation.percentage / 100);
+    const allocationCost =
+      personCost.costPerDay *
+      cycleDurationInDays *
+      (allocation.percentage / 100);
     totalCost += allocationCost;
   });
 
@@ -180,15 +211,51 @@ export const calculateProjectCost = (
   roles: Role[],
   teams: Team[],
   config: AppConfig
-): { totalCost: number; breakdown: any[]; teamBreakdown: any[]; monthlyBurnRate: number; totalDurationInDays: number; } => {
+): {
+  totalCost: number;
+  breakdown: Array<{
+    personId: string;
+    personName: string;
+    totalCost: number;
+    allocations: Array<{
+      allocationId: string;
+      cycleName: string;
+      percentage: number;
+      cost: number;
+    }>;
+    rateSource: string;
+    effectiveRate: number;
+    rateType: string;
+  }>;
+  teamBreakdown: Array<{ teamName: string; totalCost: number }>;
+  monthlyBurnRate: number;
+  totalDurationInDays: number;
+} => {
   const projectEpics = epics.filter(epic => epic.projectId === project.id);
-  const projectAllocations = allocations.filter(allocation => 
-    allocation.epicId && projectEpics.some(epic => epic.id === allocation.epicId)
+  const projectAllocations = allocations.filter(
+    allocation =>
+      allocation.epicId &&
+      projectEpics.some(epic => epic.id === allocation.epicId)
   );
 
   let totalCost = 0;
-  const breakdown: any[] = [];
-  const teamBreakdown: { [teamId: string]: { teamName: string; totalCost: number } } = {};
+  const breakdown: Array<{
+    personId: string;
+    personName: string;
+    totalCost: number;
+    allocations: Array<{
+      allocationId: string;
+      cycleName: string;
+      percentage: number;
+      cost: number;
+    }>;
+    rateSource: string;
+    effectiveRate: number;
+    rateType: string;
+  }> = [];
+  const teamBreakdown: {
+    [teamId: string]: { teamName: string; totalCost: number };
+  } = {};
 
   let minStartDate: Date | null = null;
   let maxEndDate: Date | null = null;
@@ -199,11 +266,12 @@ export const calculateProjectCost = (
 
     const cycleStartDate = new Date(cycle.startDate);
     const cycleEndDate = new Date(cycle.endDate);
-    if (!minStartDate || cycleStartDate < minStartDate) minStartDate = cycleStartDate;
+    if (!minStartDate || cycleStartDate < minStartDate)
+      minStartDate = cycleStartDate;
     if (!maxEndDate || cycleEndDate > maxEndDate) maxEndDate = cycleEndDate;
 
-    const teamMembers = people.filter(person => 
-      person.teamId === allocation.teamId && person.isActive
+    const teamMembers = people.filter(
+      person => person.teamId === allocation.teamId && person.isActive
     );
 
     teamMembers.forEach(person => {
@@ -212,10 +280,15 @@ export const calculateProjectCost = (
 
       const personCost = calculatePersonCost(person, role, config);
       const cycleDurationInDays = Math.ceil(
-        (new Date(cycle.endDate).getTime() - new Date(cycle.startDate).getTime()) / (1000 * 60 * 60 * 24)
+        (new Date(cycle.endDate).getTime() -
+          new Date(cycle.startDate).getTime()) /
+          (1000 * 60 * 60 * 24)
       );
-      
-      const allocationCost = personCost.costPerDay * cycleDurationInDays * (allocation.percentage / 100);
+
+      const allocationCost =
+        personCost.costPerDay *
+        cycleDurationInDays *
+        (allocation.percentage / 100);
       totalCost += allocationCost;
 
       // Find existing breakdown entry or create new one
@@ -228,7 +301,7 @@ export const calculateProjectCost = (
           allocations: [],
           rateSource: personCost.rateSource,
           effectiveRate: personCost.effectiveRate,
-          rateType: personCost.rateType
+          rateType: personCost.rateType,
         };
         breakdown.push(breakdownEntry);
       }
@@ -238,7 +311,7 @@ export const calculateProjectCost = (
         allocationId: allocation.id,
         cycleName: cycle.name,
         percentage: allocation.percentage,
-        cost: allocationCost
+        cost: allocationCost,
       });
 
       // Update team breakdown
@@ -252,18 +325,27 @@ export const calculateProjectCost = (
     });
   });
 
-  const totalDurationInDays = minStartDate && maxEndDate
-    ? Math.ceil((maxEndDate.getTime() - minStartDate.getTime()) / (1000 * 60 * 60 * 24))
-    : 0;
-  
-  const monthlyBurnRate = totalDurationInDays > 0 ? (totalCost / totalDurationInDays) * WORKING_DAYS_PER_MONTH : 0;
+  const totalDurationInDays =
+    minStartDate && maxEndDate
+      ? Math.ceil(
+          (maxEndDate.getTime() - minStartDate.getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : 0;
 
-  return { 
-    totalCost, 
-    breakdown, 
-    teamBreakdown: Object.values(teamBreakdown).sort((a, b) => b.totalCost - a.totalCost),
+  const monthlyBurnRate =
+    totalDurationInDays > 0
+      ? (totalCost / totalDurationInDays) * WORKING_DAYS_PER_MONTH
+      : 0;
+
+  return {
+    totalCost,
+    breakdown,
+    teamBreakdown: Object.values(teamBreakdown).sort(
+      (a, b) => b.totalCost - a.totalCost
+    ),
     monthlyBurnRate,
-    totalDurationInDays
+    totalDurationInDays,
   };
 };
 
@@ -276,7 +358,10 @@ export const calculateProjectCostForYear = (
   roles: Role[],
   teams: Team[],
   config: AppConfig
-): { totalAnnualCost: number; quarterlyCosts: { [quarterName: string]: number } } => {
+): {
+  totalAnnualCost: number;
+  quarterlyCosts: { [quarterName: string]: number };
+} => {
   const { quarters } = config;
   const quarterlyCosts: { [quarterName: string]: number } = {};
   let totalAnnualCost = 0;
@@ -303,16 +388,24 @@ export const calculateProjectCostForYear = (
         const match = cycleName.match(/\d+$/);
         return match ? parseInt(match[0], 10) : null;
       };
-      
+
       const iterationCycle = iterationsInQuarter.find(
         iter => getIterationNumberFromName(iter.name) === alloc.iterationNumber
       );
 
       if (iterationCycle) {
-        const teamMembers = people.filter(p => p.teamId === alloc.teamId && p.isActive);
+        const teamMembers = people.filter(
+          p => p.teamId === alloc.teamId && p.isActive
+        );
         // calculateAllocationCost requires all team members, not just active ones for historical cost.
         const allTeamMembers = people.filter(p => p.teamId === alloc.teamId);
-        const costOfAllocation = calculateAllocationCost(alloc, iterationCycle, allTeamMembers, roles, config);
+        const costOfAllocation = calculateAllocationCost(
+          alloc,
+          iterationCycle,
+          allTeamMembers,
+          roles,
+          config
+        );
         quarterCost += costOfAllocation;
       }
     });
@@ -324,7 +417,10 @@ export const calculateProjectCostForYear = (
   return { totalAnnualCost, quarterlyCosts };
 };
 
-export const validateRateConfiguration = (person: Person, role: Role): {
+export const validateRateConfiguration = (
+  person: Person,
+  role: Role
+): {
   isValid: boolean;
   warnings: string[];
   suggestions: string[];
@@ -334,18 +430,27 @@ export const validateRateConfiguration = (person: Person, role: Role): {
   let isValid = true;
 
   if (person.employmentType === 'permanent') {
-    if (!person.annualSalary && !role.defaultAnnualSalary && !role.defaultRate) {
+    if (
+      !person.annualSalary &&
+      !role.defaultAnnualSalary &&
+      !role.defaultRate
+    ) {
       warnings.push('No salary information available');
-      suggestions.push('Set either personal annual salary or role default salary');
+      suggestions.push(
+        'Set either personal annual salary or role default salary'
+      );
       isValid = false;
     }
   } else if (person.employmentType === 'contractor') {
-    const hasPersonalRate = person.contractDetails?.hourlyRate || person.contractDetails?.dailyRate;
+    const hasPersonalRate =
+      person.contractDetails?.hourlyRate || person.contractDetails?.dailyRate;
     const hasRoleDefault = role.defaultHourlyRate || role.defaultDailyRate;
-    
+
     if (!hasPersonalRate && !hasRoleDefault && !role.defaultRate) {
       warnings.push('No contractor rate information available');
-      suggestions.push('Set either personal hourly/daily rate or role default rates');
+      suggestions.push(
+        'Set either personal hourly/daily rate or role default rates'
+      );
       isValid = false;
     }
   }
