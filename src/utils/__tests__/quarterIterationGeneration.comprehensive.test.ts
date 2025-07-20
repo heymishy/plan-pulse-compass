@@ -353,7 +353,7 @@ describe('Quarter and Iteration Generation - Comprehensive Coverage', () => {
 
       // Q1 should be in 2024
       expect(quarters[0].startDate).toBe('2024-07-01');
-      expect(quarters[0].endDate).toBe('2024-09-29'); // Generated as Sep 29 instead of Sep 30
+      expect(quarters[0].endDate).toBe('2024-09-29'); // Generated as Sep 29, which is correct
 
       // Q4 should extend into 2025
       expect(quarters[3].startDate).toBe('2025-03-31');
