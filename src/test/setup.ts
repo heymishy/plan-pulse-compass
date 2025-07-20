@@ -299,6 +299,74 @@ if (typeof HTMLElement !== 'undefined') {
   HTMLElement.prototype.scrollIntoView = vi.fn();
 }
 
+// Mock PDF.js for OCR tests
+vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: {
+    workerSrc: 'mock-worker.js',
+  },
+  getDocument: vi.fn(() =>
+    Promise.resolve({
+      promise: Promise.resolve({
+        numPages: 1,
+        getPage: vi.fn(() =>
+          Promise.resolve({
+            getViewport: vi.fn(() => ({ width: 612, height: 792 })),
+            render: vi.fn(() => ({
+              promise: Promise.resolve(),
+            })),
+          })
+        ),
+      }),
+    })
+  ),
+  version: '3.11.174',
+}));
+
+// Mock Tesseract.js for OCR tests
+vi.mock('tesseract.js', () => ({
+  recognize: vi.fn(() =>
+    Promise.resolve({
+      data: {
+        text: 'Mock OCR text extracted from document',
+        confidence: 85,
+      },
+    })
+  ),
+  createWorker: vi.fn(() => ({
+    loadLanguage: vi.fn(() => Promise.resolve()),
+    initialize: vi.fn(() => Promise.resolve()),
+    setParameters: vi.fn(() => Promise.resolve()),
+    recognize: vi.fn(() =>
+      Promise.resolve({
+        data: {
+          text: 'Mock OCR text extracted from document',
+          confidence: 85,
+        },
+      })
+    ),
+    terminate: vi.fn(() => Promise.resolve()),
+  })),
+}));
+
+// Mock DOMMatrix for PDF.js canvas operations
+global.DOMMatrix = vi.fn().mockImplementation(() => ({
+  a: 1,
+  b: 0,
+  c: 0,
+  d: 1,
+  e: 0,
+  f: 0,
+  is2D: true,
+  isIdentity: true,
+  translate: vi.fn().mockReturnThis(),
+  scale: vi.fn().mockReturnThis(),
+  rotate: vi.fn().mockReturnThis(),
+  flipX: vi.fn().mockReturnThis(),
+  flipY: vi.fn().mockReturnThis(),
+  inverse: vi.fn().mockReturnThis(),
+  toString: vi.fn(() => 'matrix(1, 0, 0, 1, 0, 0)'),
+}));
+
 // Reduce console noise in tests
 global.console = {
   ...console,

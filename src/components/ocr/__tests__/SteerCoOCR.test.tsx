@@ -18,6 +18,7 @@ vi.mock('tesseract.js', () => ({
 }));
 
 vi.mock('pdfjs-dist', () => ({
+  version: '3.11.174',
   GlobalWorkerOptions: { workerSrc: '' },
   getDocument: vi.fn(),
 }));

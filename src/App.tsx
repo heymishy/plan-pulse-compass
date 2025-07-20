@@ -32,6 +32,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Canvas from './pages/Canvas';
 import ScenarioAnalysis from './pages/ScenarioAnalysis';
+import OCRPage from './pages/OCRPage';
 import NotFound from './pages/NotFound';
 import { Toaster } from '@/components/ui/toaster';
 import {
