@@ -46,6 +46,14 @@ import {
 import { useImportMappings } from '@/hooks/useImportMappings';
 import { useValueMappings } from '@/hooks/useValueMappings';
 import { ValueMappingStep } from './ValueMappingStep';
+import { JQLGenerator } from './JQLGenerator';
+import {
+  parseJiraCSV,
+  transformJiraToEpics,
+  validateJiraImportData,
+  type JiraImportConfig,
+  type JQLConfig,
+} from '@/utils/jiraImportUtils';
 
 const IMPORT_TYPES = {
   'projects-epics': {
@@ -392,6 +400,104 @@ const IMPORT_TYPES = {
       { id: 'notes', label: 'Notes', required: false, type: 'text' },
     ],
   },
+  'jira-import': {
+    label: 'Jira Import (Epics)',
+    fields: [
+      {
+        id: 'epic_key',
+        label: 'Epic Key/ID',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'epic_name',
+        label: 'Epic Name/Summary',
+        required: true,
+        type: 'text',
+      },
+      {
+        id: 'epic_description',
+        label: 'Epic Description',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'epic_story_points',
+        label: 'Story Points',
+        required: false,
+        type: 'number',
+      },
+      {
+        id: 'epic_assignee',
+        label: 'Assignee',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'epic_status',
+        label: 'Status',
+        required: false,
+        type: 'select',
+        options: ['To Do', 'In Progress', 'Done', 'Completed', 'Closed'],
+      },
+      {
+        id: 'epic_priority',
+        label: 'Priority',
+        required: false,
+        type: 'select',
+        options: ['Low', 'Medium', 'High', 'Critical', 'Blocker'],
+      },
+      {
+        id: 'epic_project',
+        label: 'Project',
+        required: false,
+        type: 'select',
+        options: [],
+      },
+      {
+        id: 'epic_labels',
+        label: 'Labels',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'epic_components',
+        label: 'Components',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'epic_sprint',
+        label: 'Sprint',
+        required: false,
+        type: 'text',
+      },
+      {
+        id: 'epic_start_date',
+        label: 'Start Date',
+        required: false,
+        type: 'date',
+      },
+      {
+        id: 'epic_end_date',
+        label: 'End Date',
+        required: false,
+        type: 'date',
+      },
+      {
+        id: 'epic_created',
+        label: 'Created Date',
+        required: false,
+        type: 'date',
+      },
+      {
+        id: 'epic_updated',
+        label: 'Updated Date',
+        required: false,
+        type: 'date',
+      },
+    ],
+  },
 };
 
 const SKIP_MAPPING = '__SKIP_MAPPING__';
@@ -429,6 +535,21 @@ const AdvancedDataImport = () => {
   const [valueMappings, setValueMappings] = useState<
     Record<string, Record<string, string | number>>
   >({});
+  const [jiraStep, setJiraStep] = useState<
+    'jql' | 'upload' | 'mapping' | 'value-mapping'
+  >('jql');
+  const [generatedJQL, setGeneratedJQL] = useState('');
+  const [jqlConfig, setJQLConfig] = useState<JQLConfig | null>(null);
+  const [jiraImportConfig, setJiraImportConfig] = useState<JiraImportConfig>({
+    mode: 'full-sync',
+    rollupStrategy: 'sum',
+    createMissingPeople: true,
+    createMissingTeams: true,
+    mapProjectsToTeams: true,
+    autoDetectSprints: true,
+    defaultEpicType: 'project',
+    epicHierarchySupport: true,
+  });
 
   const methods = useForm();
   const { handleSubmit, control, trigger, formState, reset, watch } = methods;
@@ -450,6 +571,13 @@ const AdvancedDataImport = () => {
     'status',
     'data_type',
     'project_status',
+    'epic_assignee',
+    'epic_project',
+    'epic_status',
+    'epic_priority',
+    'epic_labels',
+    'epic_components',
+    'epic_sprint',
   ];
 
   // Get available options for select fields
@@ -543,6 +671,23 @@ const AdvancedDataImport = () => {
         case 'project_status': {
           // Return predefined project status options
           return ['planning', 'active', 'completed', 'cancelled'];
+        }
+        case 'epic_project': {
+          return projects
+            .map(project => project.name)
+            .filter(name => name && name.trim() !== '');
+        }
+        case 'epic_assignee': {
+          // For text fields, return existing people as suggestions but don't restrict
+          return [];
+        }
+        case 'epic_status': {
+          // Return predefined Jira status options
+          return ['To Do', 'In Progress', 'Done', 'Completed', 'Closed'];
+        }
+        case 'epic_priority': {
+          // Return predefined Jira priority options
+          return ['Low', 'Medium', 'High', 'Critical', 'Blocker'];
         }
         default:
           return [];
@@ -920,6 +1065,63 @@ const AdvancedDataImport = () => {
             setIterationReviews(result.iterationReviews);
           break;
 
+        case 'jira-import': {
+          // Parse Jira CSV
+          const jiraData = parseJiraCSV(fileContent);
+
+          // Validate Jira data
+          const validationErrors = validateJiraImportData(
+            jiraData,
+            jiraImportConfig
+          );
+          if (validationErrors.length > 0) {
+            throw new Error(
+              `Jira import validation failed: ${validationErrors.join(', ')}`
+            );
+          }
+
+          // Transform Jira data to Plan Pulse Compass entities
+          const transformResult = transformJiraToEpics(
+            jiraData,
+            jiraImportConfig,
+            projects,
+            [], // existing people - would need to get from context
+            runWorkCategories
+          );
+
+          // Import epics
+          if (transformResult.epics && transformResult.epics.length > 0) {
+            setEpics([...epics, ...transformResult.epics.filter(e => e.id)]);
+          }
+
+          // Create new people if configured
+          if (
+            transformResult.newPeople &&
+            transformResult.newPeople.length > 0
+          ) {
+            // Would need to add people to context - skipping for now
+            console.log('New people to create:', transformResult.newPeople);
+          }
+
+          // Handle project-team mappings
+          if (
+            transformResult.projectTeamMappings &&
+            transformResult.projectTeamMappings.length > 0
+          ) {
+            console.log(
+              'Project-team mappings:',
+              transformResult.projectTeamMappings
+            );
+          }
+
+          result = {
+            epics: transformResult.epics,
+            newPeople: transformResult.newPeople,
+            projectTeamMappings: transformResult.projectTeamMappings,
+          };
+          break;
+        }
+
         default:
           throw new Error(`Unknown import type: ${importType}`);
       }
@@ -946,6 +1148,9 @@ const AdvancedDataImport = () => {
           importedCount =
             (result.actualAllocations?.length || 0) +
             (result.iterationReviews?.length || 0);
+          break;
+        case 'jira-import':
+          importedCount = result.epics?.length || 0;
           break;
         default:
           importedCount = 0;
@@ -984,7 +1189,20 @@ const AdvancedDataImport = () => {
     setValidationErrors([]);
     setValueMappings({});
     setStatus({ type: null, message: '' });
+    setJiraStep('jql');
+    setGeneratedJQL('');
+    setJQLConfig(null);
     reset({});
+  };
+
+  // Jira-specific handlers
+  const handleJQLGenerated = (jql: string, config: JQLConfig) => {
+    setGeneratedJQL(jql);
+    setJQLConfig(config);
+  };
+
+  const handleJQLNext = () => {
+    setJiraStep('upload');
   };
 
   const config = IMPORT_TYPES[importType];
@@ -1001,37 +1219,94 @@ const AdvancedDataImport = () => {
         {/* Progress indicator */}
         <div className="flex items-center justify-center mb-6">
           <div className="flex items-center space-x-2">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step >= 1
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-500'
-              }`}
-            >
-              1
-            </div>
-            <div className="w-12 h-0.5 bg-gray-300"></div>
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step >= 2
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-500'
-              }`}
-            >
-              2
-            </div>
-            {hasUnmappedValues(methods.getValues()) && (
+            {importType === 'jira-import' ? (
               <>
+                {/* Jira Import Progress */}
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    jiraStep === 'jql' ||
+                    jiraStep === 'upload' ||
+                    jiraStep === 'mapping' ||
+                    jiraStep === 'value-mapping'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  1
+                </div>
                 <div className="w-12 h-0.5 bg-gray-300"></div>
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step >= 3
+                    jiraStep === 'upload' ||
+                    jiraStep === 'mapping' ||
+                    jiraStep === 'value-mapping'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  2
+                </div>
+                <div className="w-12 h-0.5 bg-gray-300"></div>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step >= 2
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-200 text-gray-500'
                   }`}
                 >
                   3
                 </div>
+                {hasUnmappedValues(methods.getValues()) && (
+                  <>
+                    <div className="w-12 h-0.5 bg-gray-300"></div>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        step >= 3
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-200 text-gray-500'
+                      }`}
+                    >
+                      4
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Regular Import Progress */}
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step >= 1
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  1
+                </div>
+                <div className="w-12 h-0.5 bg-gray-300"></div>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step >= 2
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
+                >
+                  2
+                </div>
+                {hasUnmappedValues(methods.getValues()) && (
+                  <>
+                    <div className="w-12 h-0.5 bg-gray-300"></div>
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        step >= 3
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-200 text-gray-500'
+                      }`}
+                    >
+                      3
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -1059,7 +1334,7 @@ const AdvancedDataImport = () => {
           </Alert>
         )}
 
-        {step === 1 && (
+        {step === 1 && importType !== 'jira-import' && (
           <div className="space-y-4">
             <div>
               <Label htmlFor="import-type">Select data type to import</Label>
@@ -1095,6 +1370,68 @@ const AdvancedDataImport = () => {
               map your file's columns to the application's fields in the next
               step.
             </p>
+          </div>
+        )}
+
+        {/* Jira Import Flow */}
+        {step === 1 && importType === 'jira-import' && (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="import-type">Select data type to import</Label>
+              <Select
+                value={importType}
+                onValueChange={(v: keyof typeof IMPORT_TYPES) =>
+                  setImportType(v)
+                }
+              >
+                <SelectTrigger id="import-type">
+                  <SelectValue placeholder="Select type..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(IMPORT_TYPES).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {jiraStep === 'jql' && (
+              <JQLGenerator
+                onGenerateJQL={handleJQLGenerated}
+                onNext={handleJQLNext}
+              />
+            )}
+
+            {jiraStep === 'upload' && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="jira-csv-file">Upload Jira CSV Export</Label>
+                  <Input
+                    id="jira-csv-file"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                  />
+                </div>
+                <p className="text-sm text-gray-500">
+                  Upload the CSV file exported from Jira using the generated JQL
+                  query. You will be able to map your file's columns to the
+                  application's fields in the next step.
+                </p>
+                {generatedJQL && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="text-sm font-medium text-blue-700 mb-2">
+                      Generated JQL:
+                    </div>
+                    <code className="text-xs bg-white p-2 rounded border block">
+                      {generatedJQL}
+                    </code>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
