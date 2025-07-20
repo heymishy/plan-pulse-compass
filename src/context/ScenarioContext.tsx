@@ -112,14 +112,20 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
   // Create a new scenario
   const createScenario = useCallback(
     async (params: CreateScenarioParams): Promise<string> => {
-      const { name, description, templateId, templateParameters } = params;
+      const {
+        name,
+        description,
+        templateId,
+        templateParameters,
+        expiresAt: customExpiresAt,
+      } = params;
 
       try {
         const scenarioId = crypto.randomUUID();
         const now = new Date().toISOString();
-        const expiresAt = new Date(
-          Date.now() + 60 * 24 * 60 * 60 * 1000
-        ).toISOString(); // 60 days from now
+        const expiresAt =
+          customExpiresAt ||
+          new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(); // 60 days from now or custom date
 
         const scenarioData = cloneCurrentState();
         const modifications: ScenarioModification[] = [];

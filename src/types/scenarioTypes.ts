@@ -303,6 +303,7 @@ export interface CreateScenarioParams {
   description?: string;
   templateId?: string;
   templateParameters?: Record<string, any>;
+  expiresAt?: string;
 }
 
 /**

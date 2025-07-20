@@ -120,15 +120,22 @@ describe('ScenarioContext', () => {
 
     let scenarioId: string;
 
-    // Create and switch to a scenario
+    // Create a scenario
     await act(async () => {
       scenarioId = await result.current.createScenario({
         name: 'Test Scenario',
       });
+    });
+
+    expect(result.current.scenarios).toHaveLength(1);
+
+    // Switch to the scenario
+    await act(async () => {
       await result.current.switchToScenario(scenarioId);
     });
 
     expect(result.current.isInScenarioMode).toBe(true);
+    expect(result.current.activeScenarioId).toBe(scenarioId);
 
     // Switch back to live mode
     await act(async () => {
@@ -224,21 +231,15 @@ describe('ScenarioContext', () => {
 
     // Create a scenario with past expiration date
     await act(async () => {
-      const scenarioId = await result.current.createScenario({
+      await result.current.createScenario({
         name: 'Expired Scenario',
+        expiresAt: new Date(Date.now() - 1000).toISOString(), // Already expired
       });
-
-      // Manually set expiration date to past
-      const scenarios = result.current.scenarios;
-      const expiredScenario = scenarios.find(s => s.id === scenarioId);
-      if (expiredScenario) {
-        expiredScenario.expiresAt = new Date(Date.now() - 1000).toISOString();
-      }
     });
 
     expect(result.current.scenarios).toHaveLength(1);
 
-    // Run cleanup
+    // Run cleanup - should remove expired scenario
     await act(async () => {
       await result.current.cleanupExpiredScenarios();
     });
