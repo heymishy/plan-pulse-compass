@@ -13,17 +13,17 @@
  */
 
 import React from 'react';
-import { describe, it, expect, beforeEach, vi, beforeAll } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  vi,
+  beforeAll,
+  afterEach,
+} from 'vitest';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { TeamProvider } from '../context/TeamContext';
-import { ProjectProvider } from '../context/ProjectContext';
-import { PlanningProvider } from '../context/PlanningContext';
-import { SettingsProvider } from '../context/SettingsContext';
-import { GoalProvider } from '../context/GoalContext';
-import { ThemeProvider } from '../context/ThemeContext';
-import { AppProvider } from '../context/AppContext';
-import { ScenarioProvider } from '../context/ScenarioContext';
 import { Routes, Route } from 'react-router-dom';
 import {
   SidebarProvider,
@@ -32,6 +32,14 @@ import {
 } from '@/components/ui/sidebar';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { TeamProvider } from '../context/TeamContext';
+import { ProjectProvider } from '../context/ProjectContext';
+import { PlanningProvider } from '../context/PlanningContext';
+import { SettingsProvider } from '../context/SettingsContext';
+import { GoalProvider } from '../context/GoalContext';
+import { ThemeProvider } from '../context/ThemeContext';
+import { AppProvider } from '../context/AppContext';
+import { ScenarioProvider } from '../context/ScenarioContext';
 import { ScenarioBanner } from '../components/scenarios/ScenarioBanner';
 import { ScenarioSwitcher } from '../components/scenarios/ScenarioSwitcher';
 import Index from '../pages/Index';
@@ -175,6 +183,118 @@ const TestApp: React.FC = () => {
 const originalConsoleError = console.error;
 let consoleErrors: string[] = [];
 
+// Mock all context providers before any tests run
+vi.mock('@/context/AppContext', () => ({
+  AppProvider: ({ children }: { children: React.ReactNode }) => children,
+  useApp: () => ({
+    teams: [],
+    people: [],
+    projects: [],
+    epics: [],
+    cycles: [],
+    divisions: [],
+    roles: [],
+    allocations: [],
+    runWorkCategories: [],
+    skills: [],
+    teamMembers: [],
+    isSetupComplete: true,
+    isDataLoading: false,
+    addTeam: vi.fn(),
+    updateTeam: vi.fn(),
+    deleteTeam: vi.fn(),
+    setTeams: vi.fn(),
+    setPeople: vi.fn(),
+    setProjects: vi.fn(),
+    setEpics: vi.fn(),
+    setCycles: vi.fn(),
+    setDivisions: vi.fn(),
+    setRoles: vi.fn(),
+    setAllocations: vi.fn(),
+    setRunWorkCategories: vi.fn(),
+    setSkills: vi.fn(),
+    setTeamMembers: vi.fn(),
+    getTeamMembers: vi.fn(() => []),
+  }),
+}));
+
+vi.mock('@/context/ThemeContext', () => ({
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
+  useTheme: () => ({
+    theme: 'light' as const,
+    setTheme: vi.fn(),
+    resolvedTheme: 'light' as const,
+    themes: [],
+    isSystemTheme: false,
+  }),
+}));
+
+vi.mock('@/context/SettingsContext', () => ({
+  SettingsProvider: ({ children }: { children: React.ReactNode }) => children,
+  useSettings: () => ({
+    isSetupComplete: true,
+    config: {},
+    setConfig: vi.fn(),
+  }),
+}));
+
+vi.mock('@/context/TeamContext', () => ({
+  TeamProvider: ({ children }: { children: React.ReactNode }) => children,
+  useTeams: () => ({
+    teams: [],
+    people: [],
+    divisions: [],
+    setTeams: vi.fn(),
+    setPeople: vi.fn(),
+    setDivisions: vi.fn(),
+  }),
+}));
+
+vi.mock('@/context/ProjectContext', () => ({
+  ProjectProvider: ({ children }: { children: React.ReactNode }) => children,
+  useProjects: () => ({
+    projects: [],
+    epics: [],
+    setProjects: vi.fn(),
+    setEpics: vi.fn(),
+  }),
+}));
+
+vi.mock('@/context/PlanningContext', () => ({
+  PlanningProvider: ({ children }: { children: React.ReactNode }) => children,
+  usePlanning: () => ({
+    allocations: [],
+    cycles: [],
+    setAllocations: vi.fn(),
+    setCycles: vi.fn(),
+  }),
+}));
+
+vi.mock('@/context/GoalContext', () => ({
+  GoalProvider: ({ children }: { children: React.ReactNode }) => children,
+  useGoals: () => ({
+    goals: [],
+    setGoals: vi.fn(),
+  }),
+}));
+
+vi.mock('@/context/ScenarioContext', () => ({
+  ScenarioProvider: ({ children }: { children: React.ReactNode }) => children,
+  useScenarios: () => ({
+    scenarios: [],
+    templates: [], // Add templates to prevent undefined .reduce error
+    activeScenario: null,
+    setScenarios: vi.fn(),
+    setActiveScenario: vi.fn(),
+    createScenario: vi.fn(),
+    createScenarioFromTemplate: vi.fn(),
+    updateScenario: vi.fn(),
+    deleteScenario: vi.fn(),
+    switchToScenario: vi.fn(),
+    generateComparison: vi.fn(),
+  }),
+}));
+
 beforeAll(() => {
   console.error = vi.fn((...args) => {
     consoleErrors.push(args.join(' '));
@@ -195,15 +315,21 @@ const renderPageAndVerify = async (
 ) => {
   const { timeout = 3000 } = options;
 
-  render(
-    <MemoryRouter initialEntries={[path]}>
-      <TestApp />
-    </MemoryRouter>
-  );
+  let component: any;
+
+  await act(async () => {
+    component = render(
+      <MemoryRouter initialEntries={[path]}>
+        <TestApp />
+      </MemoryRouter>
+    );
+  });
 
   // For regression testing, we primarily care that the page renders without throwing errors
   // We'll use a simple timeout and check for any critical console errors
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second for initial render
+  await act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second for initial render
+  });
 
   // Verify no critical console errors occurred during render
   const criticalErrors = consoleErrors.filter(
@@ -370,37 +496,51 @@ describe('Page Load Regression Tests', () => {
 
     it('should handle navigation between multiple pages without errors', async () => {
       // Test sequential page loads to catch state pollution issues
-      const { rerender } = render(
-        <MemoryRouter initialEntries={['/']}>
-          <TestApp />
-        </MemoryRouter>
-      );
+      let component: any;
+
+      await act(async () => {
+        component = render(
+          <MemoryRouter initialEntries={['/']}>
+            <TestApp />
+          </MemoryRouter>
+        );
+      });
 
       // Verify home page loads
-      await waitFor(() => {
-        expect(screen.getByText(/Plan Pulse Compass/i)).toBeInTheDocument();
+      await act(async () => {
+        await waitFor(() => {
+          expect(screen.getByText(/Plan Pulse Compass/i)).toBeInTheDocument();
+        });
       });
 
       // Navigate to dashboard
-      rerender(
-        <MemoryRouter initialEntries={['/dashboard']}>
-          <TestApp />
-        </MemoryRouter>
-      );
+      await act(async () => {
+        component.rerender(
+          <MemoryRouter initialEntries={['/dashboard']}>
+            <TestApp />
+          </MemoryRouter>
+        );
+      });
 
-      await waitFor(() => {
-        expect(screen.getByText(/Dashboard|Overview/i)).toBeInTheDocument();
+      await act(async () => {
+        await waitFor(() => {
+          expect(screen.getByText(/Dashboard|Overview/i)).toBeInTheDocument();
+        });
       });
 
       // Navigate to teams
-      rerender(
-        <MemoryRouter initialEntries={['/teams']}>
-          <TestApp />
-        </MemoryRouter>
-      );
+      await act(async () => {
+        component.rerender(
+          <MemoryRouter initialEntries={['/teams']}>
+            <TestApp />
+          </MemoryRouter>
+        );
+      });
 
-      await waitFor(() => {
-        expect(screen.getByText(/Teams/i)).toBeInTheDocument();
+      await act(async () => {
+        await waitFor(() => {
+          expect(screen.getByText(/Teams/i)).toBeInTheDocument();
+        });
       });
 
       // Verify no critical errors during navigation
@@ -429,18 +569,24 @@ describe('Page Load Regression Tests', () => {
       for (const path of criticalPages) {
         const startTime = Date.now();
 
-        render(
-          <MemoryRouter initialEntries={[path]}>
-            <TestApp />
-          </MemoryRouter>
-        );
+        await act(async () => {
+          render(
+            <MemoryRouter initialEntries={[path]}>
+              <TestApp />
+            </MemoryRouter>
+          );
+        });
 
-        await waitFor(
-          () => {
-            expect(screen.getByText(/Plan Pulse Compass/i)).toBeInTheDocument();
-          },
-          { timeout: 3000 }
-        ); // 3 second timeout for critical pages
+        await act(async () => {
+          await waitFor(
+            () => {
+              expect(
+                screen.getByText(/Plan Pulse Compass/i)
+              ).toBeInTheDocument();
+            },
+            { timeout: 3000 }
+          ); // 3 second timeout for critical pages
+        });
 
         const loadTime = Date.now() - startTime;
         expect(loadTime).toBeLessThan(3000); // Should load within 3 seconds
@@ -455,18 +601,26 @@ describe('Page Load Regression Tests', () => {
       const pages = ['/', '/dashboard', '/teams', '/projects'];
 
       for (let i = 0; i < pages.length; i++) {
-        const { unmount } = render(
-          <MemoryRouter initialEntries={[pages[i]]}>
-            <TestApp />
-          </MemoryRouter>
-        );
+        let component: any;
 
-        await waitFor(() => {
-          expect(screen.getByText(/Plan Pulse Compass/i)).toBeInTheDocument();
+        await act(async () => {
+          component = render(
+            <MemoryRouter initialEntries={[pages[i]]}>
+              <TestApp />
+            </MemoryRouter>
+          );
+        });
+
+        await act(async () => {
+          await waitFor(() => {
+            expect(screen.getByText(/Plan Pulse Compass/i)).toBeInTheDocument();
+          });
         });
 
         // Unmount to test cleanup
-        unmount();
+        await act(async () => {
+          component.unmount();
+        });
       }
 
       // Verify no critical errors during rapid transitions
