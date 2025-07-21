@@ -19,15 +19,14 @@ export default defineConfig({
     // Standardized timeouts to prevent timing issues
     testTimeout: 5000, // Increased for better stability
     hookTimeout: 3000, // Increased for cleanup operations
-    pool: 'threads',
+    pool: 'forks', // Use forks instead of threads for better memory isolation
     poolOptions: {
-      threads: {
-        singleThread: true,
-        maxThreads: 1,
-        minThreads: 1,
+      forks: {
+        singleFork: true,
+        maxForks: 1,
+        minForks: 1,
         // Enhanced isolation settings
         isolate: true,
-        useAtomics: true,
       },
     },
     reporters: ['default'],
