@@ -247,8 +247,9 @@ describe('ScenarioContext', () => {
       });
     });
 
-    // Should have 2 scenarios (auto-cleanup ran but expired one was added after)
-    expect(result.current.scenarios).toHaveLength(2);
+    // Since auto-cleanup runs on mount, expired scenarios are immediately removed
+    // So we should only have 1 scenario (the non-expired one)
+    expect(result.current.scenarios).toHaveLength(1);
 
     // Run cleanup manually - should remove only the expired scenario
     await act(async () => {
