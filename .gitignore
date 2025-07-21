@@ -8,7 +8,8 @@ dist-ssr/
 build/
 .next/
 .nuxt/
-public/
+public/*
+!public/workers/
 
 # Environment variables
 .env

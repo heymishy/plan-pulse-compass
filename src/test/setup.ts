@@ -302,7 +302,7 @@ if (typeof HTMLElement !== 'undefined') {
 // Mock PDF.js for OCR tests
 vi.mock('pdfjs-dist', () => ({
   GlobalWorkerOptions: {
-    workerSrc: 'mock-worker.js',
+    workerSrc: '/workers/pdf.worker.min.js',
   },
   getDocument: vi.fn(() =>
     Promise.resolve({

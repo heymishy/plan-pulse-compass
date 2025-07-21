@@ -30,10 +30,7 @@ import Tesseract from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Configure PDF.js worker - use local worker to avoid CORS issues in corporate networks
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url
-).toString();
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';
 
 const SteerCoOCR: React.FC = () => {
   const {
