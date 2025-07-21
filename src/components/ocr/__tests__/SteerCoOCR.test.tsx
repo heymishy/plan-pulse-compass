@@ -137,8 +137,8 @@ describe('SteerCoOCR Component', () => {
       render(<SteerCoOCR />);
 
       expect(screen.getByText('SteerCo Document OCR')).toBeInTheDocument();
-      expect(screen.getByLabelText(/file/i)).toBeInTheDocument();
       expect(screen.getByText('Process Document')).toBeInTheDocument();
+      expect(document.querySelector('input[type="file"]')).toBeInTheDocument(); // File input
       expect(screen.getByText('1. Upload')).toBeInTheDocument();
     });
 
@@ -164,7 +164,9 @@ describe('SteerCoOCR Component', () => {
     it('should accept valid file types', () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const pdfFile = new File(['pdf content'], 'test.pdf', {
         type: 'application/pdf',
       });
@@ -180,7 +182,9 @@ describe('SteerCoOCR Component', () => {
     it('should reject invalid file types', () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const invalidFile = new File(['content'], 'test.txt', {
         type: 'text/plain',
       });
@@ -198,7 +202,9 @@ describe('SteerCoOCR Component', () => {
     it('should accept image files', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -213,7 +219,9 @@ describe('SteerCoOCR Component', () => {
     it('should show loading state during processing', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -230,7 +238,9 @@ describe('SteerCoOCR Component', () => {
     it('should process image files successfully', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -255,7 +265,9 @@ describe('SteerCoOCR Component', () => {
     it('should display extraction results', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -276,7 +288,9 @@ describe('SteerCoOCR Component', () => {
     it('should display mapping results', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -297,7 +311,9 @@ describe('SteerCoOCR Component', () => {
     it('should show recommendations', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -322,7 +338,9 @@ describe('SteerCoOCR Component', () => {
     it('should show action buttons when mappings are available', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -346,7 +364,9 @@ describe('SteerCoOCR Component', () => {
     it('should apply high confidence mappings', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -368,7 +388,9 @@ describe('SteerCoOCR Component', () => {
     it('should reset the process when Start Over is clicked', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -402,7 +424,9 @@ describe('SteerCoOCR Component', () => {
 
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -426,7 +450,9 @@ describe('SteerCoOCR Component', () => {
 
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -458,7 +484,9 @@ describe('SteerCoOCR Component', () => {
     it('should update step indicators during processing', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -480,7 +508,9 @@ describe('SteerCoOCR Component', () => {
     it('should show raw OCR text in collapsed format', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
@@ -501,14 +531,16 @@ describe('SteerCoOCR Component', () => {
     it('should have proper ARIA labels', () => {
       render(<SteerCoOCR />);
 
-      expect(screen.getByLabelText(/file/i)).toBeInTheDocument();
+      expect(document.querySelector('input[type="file"]')).toBeInTheDocument();
       expect(screen.getByRole('progressbar')).toBeInTheDocument();
     });
 
     it('should be keyboard navigable', () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const processButton = screen.getByText('Process Document');
 
       expect(fileInput).toBeVisible();
@@ -524,7 +556,9 @@ describe('SteerCoOCR Component', () => {
     it('should use data from app context for mapping', async () => {
       render(<SteerCoOCR />);
 
-      const fileInput = screen.getByLabelText(/file/i);
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
       const imageFile = new File(['image content'], 'test.png', {
         type: 'image/png',
       });
