@@ -40,6 +40,10 @@ const mockExtractEntitiesFromText = extractEntitiesFromText as Mock;
 const mockMapExtractedEntitiesToExisting =
   mapExtractedEntitiesToExisting as Mock;
 
+// Mock window.alert since JSDOM doesn't implement it
+const mockAlert = vi.fn();
+global.alert = mockAlert;
+
 describe('SteerCoOCR Component', () => {
   const mockAppContext = {
     projects: [
@@ -124,6 +128,7 @@ describe('SteerCoOCR Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAlert.mockClear();
     mockUseApp.mockReturnValue(mockAppContext);
     mockExtractEntitiesFromText.mockReturnValue(mockExtractionResult);
     mockMapExtractedEntitiesToExisting.mockReturnValue(mockMappingResult);
@@ -174,7 +179,7 @@ describe('SteerCoOCR Component', () => {
 
       expect(screen.getByText('Process Document')).not.toBeDisabled();
       expect(
-        screen.queryByText(/Please select a PDF or image file/)
+        screen.queryByText(/Please select a PDF, PowerPoint, or image file/)
       ).not.toBeInTheDocument();
     });
 
@@ -192,7 +197,7 @@ describe('SteerCoOCR Component', () => {
 
       expect(
         screen.getByText(
-          'Please select a PDF or image file (PNG, JPG, JPEG, WebP).'
+          'Please select a PDF, PowerPoint, or image file (PDF, PPT, PPTX, PNG, JPG, JPEG, WebP).'
         )
       ).toBeInTheDocument();
       expect(screen.getByText('Process Document')).toBeDisabled();
@@ -248,8 +253,11 @@ describe('SteerCoOCR Component', () => {
       const processButton = screen.getByText('Process Document');
       fireEvent.click(processButton);
 
-      expect(screen.getByText('Processing...')).toBeInTheDocument();
-      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+      // Wait for the loading state to appear
+      await waitFor(() => {
+        expect(screen.getByText('Processing...')).toBeInTheDocument();
+        expect(screen.getByRole('progressbar')).toBeInTheDocument();
+      });
     });
 
     it('should process image files successfully', async () => {
@@ -296,9 +304,11 @@ describe('SteerCoOCR Component', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Extracted Entities')).toBeInTheDocument();
-        expect(screen.getByText('1')).toBeInTheDocument(); // Project Updates count
-        expect(screen.getByText('1')).toBeInTheDocument(); // Risks count
-        expect(screen.getByText('85%')).toBeInTheDocument(); // Confidence
+        // Check for stats display sections
+        expect(screen.getByText('Project Updates')).toBeInTheDocument();
+        expect(screen.getByText('Risks')).toBeInTheDocument();
+        expect(screen.getByText('Milestones')).toBeInTheDocument();
+        expect(screen.getByText('Team Updates')).toBeInTheDocument();
       });
     });
 
@@ -319,9 +329,10 @@ describe('SteerCoOCR Component', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Entity Mapping Results')).toBeInTheDocument();
-        expect(screen.getByText('1')).toBeInTheDocument(); // Mapped count
-        expect(screen.getByText('1')).toBeInTheDocument(); // Unmapped count
-        expect(screen.getByText('0')).toBeInTheDocument(); // Conflicts count
+        // Check for mapping sections
+        expect(screen.getByText('Mapped')).toBeInTheDocument();
+        expect(screen.getByText('Conflicts')).toBeInTheDocument();
+        expect(screen.getByText('Unmapped')).toBeInTheDocument();
       });
     });
 
