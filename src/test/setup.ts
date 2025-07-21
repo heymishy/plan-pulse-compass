@@ -214,16 +214,40 @@ vi.mock('date-fns', () => ({
   ]),
 }));
 
-// Mock localStorage
+// Mock localStorage with proper Storage interface
 const localStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
+  length: 0,
+  key: vi.fn(),
 };
+
+// Make it behave like Storage for StorageEvent compatibility
+Object.setPrototypeOf(localStorageMock, Storage.prototype);
+
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
+
+// Mock StorageEvent to prevent JSDOM constructor issues
+global.StorageEvent = class MockStorageEvent extends Event {
+  key: string | null;
+  newValue: string | null;
+  oldValue: string | null;
+  storageArea: Storage | null;
+  url: string;
+
+  constructor(type: string, eventInitDict?: StorageEventInit) {
+    super(type);
+    this.key = eventInitDict?.key || null;
+    this.newValue = eventInitDict?.newValue || null;
+    this.oldValue = eventInitDict?.oldValue || null;
+    this.storageArea = eventInitDict?.storageArea || null;
+    this.url = eventInitDict?.url || '';
+  }
+};
 
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
