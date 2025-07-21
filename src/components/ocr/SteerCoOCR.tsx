@@ -291,38 +291,55 @@ const SteerCoOCR: React.FC = () => {
       );
 
       // Apply updates to contexts
-      if (updates.projects.length !== projects.length) {
+      if (
+        updates?.projects &&
+        projects &&
+        updates.projects.length !== projects.length
+      ) {
         setProjects(updates.projects);
       }
 
-      if (updates.epics.length !== epics.length) {
+      if (updates?.epics && epics && updates.epics.length !== epics.length) {
         setEpics(updates.epics);
       }
 
       // Note: Milestones would need to be handled if they were part of a context
       // For now, we'll just note that they would be updated
 
-      if (updates.actualAllocations.length !== actualAllocations.length) {
+      if (
+        updates?.actualAllocations &&
+        actualAllocations &&
+        updates.actualAllocations.length !== actualAllocations.length
+      ) {
         setActualAllocations(updates.actualAllocations);
       }
 
       // Create summary of what was updated
-      const updatedProjects = updates.projects.filter(
-        (proj, index) =>
-          JSON.stringify(proj) !== JSON.stringify(projects[index])
-      );
-      const updatedEpics = updates.epics.filter(
-        (epic, index) => JSON.stringify(epic) !== JSON.stringify(epics[index])
-      );
+      const updatedProjects =
+        updates?.projects && projects
+          ? updates.projects.filter(
+              (proj, index) =>
+                JSON.stringify(proj) !== JSON.stringify(projects[index])
+            )
+          : [];
+      const updatedEpics =
+        updates?.epics && epics
+          ? updates.epics.filter(
+              (epic, index) =>
+                JSON.stringify(epic) !== JSON.stringify(epics[index])
+            )
+          : [];
 
       const summary = [
         updatedProjects.length > 0
           ? `${updatedProjects.length} projects updated`
           : null,
         updatedEpics.length > 0 ? `${updatedEpics.length} epics updated` : null,
-        updates.newRisks.length > 0
+        (updates?.newRisks?.length || 0) > 0
           ? `${updates.newRisks.length} new risks identified`
           : null,
+        updates?.actualAllocations &&
+        actualAllocations &&
         updates.actualAllocations.length - actualAllocations.length > 0
           ? `${updates.actualAllocations.length - actualAllocations.length} new allocations added`
           : null,
@@ -454,25 +471,25 @@ const SteerCoOCR: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">
-                      {extractionResult.projectStatuses.length}
+                      {extractionResult.projectStatuses?.length || 0}
                     </div>
                     <div className="text-sm text-gray-600">Project Updates</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-red-600">
-                      {extractionResult.risks.length}
+                      {extractionResult.risks?.length || 0}
                     </div>
                     <div className="text-sm text-gray-600">Risks</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      {extractionResult.milestones.length}
+                      {extractionResult.milestones?.length || 0}
                     </div>
                     <div className="text-sm text-gray-600">Milestones</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">
-                      {extractionResult.teamUpdates.length}
+                      {extractionResult.teamUpdates?.length || 0}
                     </div>
                     <div className="text-sm text-gray-600">Team Updates</div>
                   </div>
@@ -482,12 +499,14 @@ const SteerCoOCR: React.FC = () => {
                   <div className="text-sm">
                     <strong>Confidence:</strong>{' '}
                     {Math.round(
-                      extractionResult.extractionMetadata.totalConfidence * 100
+                      (extractionResult.extractionMetadata?.totalConfidence ||
+                        0) * 100
                     )}
                     % |<strong>Processing:</strong>{' '}
-                    {extractionResult.extractionMetadata.processingTime}ms |
-                    <strong>Total Entities:</strong>{' '}
-                    {extractionResult.extractionMetadata.extractedEntities}
+                    {extractionResult.extractionMetadata?.processingTime || 0}ms
+                    |<strong>Total Entities:</strong>{' '}
+                    {extractionResult.extractionMetadata?.extractedEntities ||
+                      0}
                   </div>
                 </div>
               </div>

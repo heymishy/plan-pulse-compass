@@ -212,6 +212,11 @@ vi.mock('date-fns', () => ({
     new Date('2024-01-01'),
     new Date('2024-01-02'),
   ]),
+  eachMonthOfInterval: vi.fn(() => [
+    new Date('2024-01-01'),
+    new Date('2024-02-01'),
+    new Date('2024-03-01'),
+  ]),
 }));
 
 // Mock localStorage with proper Storage interface

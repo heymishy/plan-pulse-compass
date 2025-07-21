@@ -30,7 +30,7 @@ import { Epic } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
 const Epics = () => {
-  const { epics, setEpics, projects, releases } = useApp();
+  const { epics, setEpics, projects, releases, divisions, teams } = useApp();
   const { toast } = useToast();
 
   const [selectedEpics, setSelectedEpics] = useState<string[]>([]);
