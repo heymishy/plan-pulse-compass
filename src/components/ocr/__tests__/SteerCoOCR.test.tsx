@@ -212,6 +212,24 @@ describe('SteerCoOCR Component', () => {
 
       expect(screen.getByText('Process Document')).not.toBeDisabled();
     });
+
+    it('should accept PowerPoint files', async () => {
+      render(<SteerCoOCR />);
+
+      const fileInput = document.querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
+      const pptxFile = new File(['pptx content'], 'presentation.pptx', {
+        type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      });
+
+      fireEvent.change(fileInput, { target: { files: [pptxFile] } });
+
+      expect(screen.getByText('Process Document')).not.toBeDisabled();
+      expect(
+        screen.queryByText(/Please select a PDF, PowerPoint, or image file/)
+      ).not.toBeInTheDocument();
+    });
   });
 
   describe('OCR Processing', () => {

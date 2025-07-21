@@ -28,9 +28,52 @@ import type {
 } from '@/types/ocrTypes';
 import Tesseract from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
+// @ts-expect-error - no types available for pptx2json
+import { parse as parsePPTX } from 'pptx2json';
 
 // Configure PDF.js worker - use local worker to avoid CORS issues in corporate networks
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';
+
+// Helper function to extract text from PowerPoint slide content
+const extractTextFromSlideContent = (content: unknown): string => {
+  let text = '';
+
+  if (typeof content === 'string') {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    content.forEach(item => {
+      text += extractTextFromSlideContent(item) + ' ';
+    });
+  } else if (content && typeof content === 'object') {
+    // Extract text from common PowerPoint content properties
+    const obj = content as Record<string, unknown>;
+    if (typeof obj.text === 'string') {
+      text += obj.text + ' ';
+    }
+    if (typeof obj.value === 'string') {
+      text += obj.value + ' ';
+    }
+    if (obj.content) {
+      text += extractTextFromSlideContent(obj.content) + ' ';
+    }
+    if (obj.children) {
+      text += extractTextFromSlideContent(obj.children) + ' ';
+    }
+
+    // Recursively check all object properties
+    Object.values(obj).forEach(value => {
+      if (typeof value === 'string') {
+        text += value + ' ';
+      } else if (value && typeof value === 'object') {
+        text += extractTextFromSlideContent(value) + ' ';
+      }
+    });
+  }
+
+  return text.trim();
+};
 
 const SteerCoOCR: React.FC = () => {
   const {
@@ -64,6 +107,8 @@ const SteerCoOCR: React.FC = () => {
       const file = event.target.files[0];
       const allowedTypes = [
         'application/pdf',
+        'application/vnd.ms-powerpoint', // .ppt
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
         'image/png',
         'image/jpeg',
         'image/jpg',
@@ -74,7 +119,9 @@ const SteerCoOCR: React.FC = () => {
         setSelectedFile(file);
         setError(null);
       } else {
-        setError('Please select a PDF or image file (PNG, JPG, JPEG, WebP).');
+        setError(
+          'Please select a PDF, PowerPoint, or image file (PDF, PPT, PPTX, PNG, JPG, JPEG, WebP).'
+        );
         setSelectedFile(null);
       }
     }
@@ -92,7 +139,52 @@ const SteerCoOCR: React.FC = () => {
     setProgress(0);
 
     try {
-      if (selectedFile.type === 'application/pdf') {
+      if (
+        selectedFile.type === 'application/vnd.ms-powerpoint' ||
+        selectedFile.type ===
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+      ) {
+        // Handle PowerPoint files
+        const reader = new FileReader();
+        reader.onload = async e => {
+          try {
+            setCurrentStep('ocr');
+            setProgress(25);
+
+            // Parse PowerPoint content
+            const pptxData = new Uint8Array(e.target?.result as ArrayBuffer);
+            const pptxContent = await parsePPTX(pptxData);
+
+            setProgress(50);
+
+            // Extract text content from slides
+            let fullText = '';
+            if (pptxContent && pptxContent.slides) {
+              for (let i = 0; i < pptxContent.slides.length; i++) {
+                const slide = pptxContent.slides[i];
+                setProgress(50 + (i / pptxContent.slides.length) * 30);
+
+                // Extract text from slide content
+                if (slide.content) {
+                  const slideText = extractTextFromSlideContent(slide.content);
+                  fullText += `\nSlide ${i + 1}:\n${slideText}\n`;
+                }
+              }
+            }
+
+            setProgress(80);
+            setOcrResult(fullText);
+            setCurrentStep('extraction');
+            await processExtraction(fullText);
+          } catch (pptxError) {
+            console.error('PowerPoint parsing error:', pptxError);
+            setError(
+              'Error processing PowerPoint file. Please try exporting as PDF or contact support.'
+            );
+          }
+        };
+        reader.readAsArrayBuffer(selectedFile);
+      } else if (selectedFile.type === 'application/pdf') {
         // Handle PDF
         const reader = new FileReader();
         reader.onload = async e => {

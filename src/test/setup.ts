@@ -322,6 +322,26 @@ vi.mock('pdfjs-dist', () => ({
   version: '3.11.174',
 }));
 
+// Mock pptx2json for PowerPoint parsing
+vi.mock('pptx2json', () => ({
+  parse: vi.fn(() =>
+    Promise.resolve({
+      slides: [
+        {
+          content: {
+            text: 'Mock PowerPoint slide 1 content',
+          },
+        },
+        {
+          content: {
+            text: 'Mock PowerPoint slide 2 content',
+          },
+        },
+      ],
+    })
+  ),
+}));
+
 // Mock Tesseract.js for OCR tests
 vi.mock('tesseract.js', () => ({
   default: {
