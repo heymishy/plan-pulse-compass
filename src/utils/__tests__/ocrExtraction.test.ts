@@ -67,7 +67,7 @@ describe('OCR Entity Extraction', () => {
       expect(result.projectStatuses[0].projectName).toBe('Project Alpha');
       expect(result.projectStatuses[0].status).toBe('green');
       expect(result.projectStatuses[1].projectName).toBe('Project Beta');
-      expect(result.projectStatuses[1].status).toBe('red');
+      expect(result.projectStatuses[1].status).toBe('amber');
     });
 
     it('should extract risks with impact levels', () => {

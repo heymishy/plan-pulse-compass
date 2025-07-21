@@ -130,23 +130,28 @@ export const BUILTIN_STEERCO_TEMPLATES: SteerCoTemplate[] = [
     description: 'Generic steering committee presentation format',
     patterns: {
       projectStatus: [
-        /(?:project|epic)\s*:?\s*([^\\n]+?)(?:\\s|\\n)*(?:status|rag)\s*:?\s*(red|amber|green|blue|complete)/gi,
-        /([^\\n]+?)\s*-\s*(red|amber|green|blue|complete)/gi,
+        /(?:project|epic)\s*:?\s*([^\n]+?)(?:\s|\n)*(?:status|rag)\s*:?\s*(red|amber|green|blue|complete)/gi,
+        /([^\n]+?)\s*-\s*(red|amber|green|blue|complete)/gi,
+        /([^:]+?):\s*(red|amber|green|blue|complete)\s*-/gi,
       ],
       risks: [
-        /risk\s*:?\s*([^\\n]+?)(?:\\n|impact|probability)/gi,
-        /(?:risk|issue|blocker)\s*-\s*([^\\n]+)/gi,
+        /risk\s*:?\s*([^\n]+?)(?:\n|impact|probability)/gi,
+        /(?:risk|issue|blocker)\s*-\s*([^\n]+)/gi,
+        /(?:risk|issue):\s*([^-]+?)\s*-\s*(high|medium|low)\s*impact/gi,
       ],
       financials: [
-        /budget\s*:?\s*[$£€]?(\\d+(?:,\\d{3})*(?:\\.\\d{2})?)/gi,
-        /forecast\s*:?\s*[$£€]?(\\d+(?:,\\d{3})*(?:\\.\\d{2})?)/gi,
-        /variance\s*:?\s*([-+]?[$£€]?\\d+(?:,\\d{3})*(?:\\.\\d{2})?)/gi,
+        /budget\s*:?\s*[$£€]?(\d+(?:,\d{3})*(?:\.\d{2})?)/gi,
+        /forecast\s*:?\s*[$£€]?(\d+(?:,\d{3})*(?:\.\d{2})?)/gi,
+        /variance\s*:?\s*([-+]?[$£€]?\d+(?:,\d{3})*(?:\.\d{2})?)/gi,
+        /(\w+\s+\w+)\s+budget:\s*([$£€]?\d+(?:,\d{3})*)/gi,
       ],
       milestones: [
-        /milestone\s*:?\s*([^\\n]+?)(?:\\s|\\n)*(?:due|target|actual)\s*:?\s*(\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4})/gi,
+        /milestone\s*:?\s*([^\n]+?)(?:\s|\n)*(?:due|target|actual)\s*:?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})/gi,
+        /milestone:\s*([^\n]+?)\s+due\s+(\d{4}-\d{2}-\d{2})/gi,
       ],
       teamUpdates: [
-        /team\s*:?\s*([^\\n]+?)(?:\\s|\\n)*(?:utilization|capacity)\s*:?\s*(\\d+%?)/gi,
+        /team\s*:?\s*([^\n]+?)(?:\s|\n)*(?:utilization|capacity)\s*:?\s*(\d+%?)/gi,
+        /(team\s+[^:]+?):\s*(\d+%)\s*utilization/gi,
       ],
     },
     sections: [
