@@ -464,7 +464,7 @@ describe('OCR Entity Mapping', () => {
             extractedEntity: mockExtractionResult.milestones[0],
             existingEntityId: 'milestone-1',
             existingEntityType: 'milestone' as const,
-            matchConfidence: 0.8,
+            matchConfidence: 0.9,
             mappingReason: 'Milestone name match',
             conflictLevel: 'low' as const,
           },

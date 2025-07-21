@@ -28,8 +28,6 @@ import type {
 } from '@/types/ocrTypes';
 import Tesseract from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
-// @ts-expect-error - no types available for pptx2json
-import { parse as parsePPTX } from 'pptx2json';
 
 // Configure PDF.js worker - use local worker to avoid CORS issues in corporate networks
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';
@@ -153,7 +151,9 @@ const SteerCoOCR: React.FC = () => {
 
             // Parse PowerPoint content
             const pptxData = new Uint8Array(e.target?.result as ArrayBuffer);
-            const pptxContent = await parsePPTX(pptxData);
+            const pptx2json = await import('pptx2json');
+            const Parser = pptx2json.default || pptx2json;
+            const pptxContent = await new Parser().parse(pptxData);
 
             setProgress(50);
 
@@ -443,7 +443,7 @@ const SteerCoOCR: React.FC = () => {
 
         {/* Raw OCR Result */}
         {ocrResult && currentStep !== 'upload' && (
-          <Card className="mt-4">
+          <Card className="mt-4" data-testid="ocr-result">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <FileText className="h-5 w-5" />

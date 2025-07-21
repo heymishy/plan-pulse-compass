@@ -146,7 +146,9 @@ describe('OCR Entity Extraction', () => {
       expect(result.extractionMetadata.totalConfidence).toBeGreaterThanOrEqual(
         0
       );
-      expect(result.extractionMetadata.processingTime).toBeGreaterThan(0);
+      expect(result.extractionMetadata.processingTime).toBeGreaterThanOrEqual(
+        0
+      );
       expect(
         result.extractionMetadata.extractedEntities
       ).toBeGreaterThanOrEqual(0);

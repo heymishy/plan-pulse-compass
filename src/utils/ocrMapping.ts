@@ -228,14 +228,15 @@ function mapMilestone(
     milestone
   );
 
-  return {
+  const mappingResult = {
     extractedEntity: milestone,
     existingEntityId: existingMilestone.id,
-    existingEntityType: 'milestone',
+    existingEntityType: 'milestone' as const,
     matchConfidence: bestMatch.score,
     mappingReason: `Matched "${milestone.milestoneName}" to milestone "${existingMilestone.name}" (${Math.round(bestMatch.score * 100)}% confidence)`,
     conflictLevel,
   };
+  return mappingResult;
 }
 
 /**
@@ -383,8 +384,8 @@ function findBestTextMatch(
   let bestMatch: TextMatchResult | null = null;
 
   for (const entity of entities) {
-    const entityText = entity[propertyName];
-    if (!entityText) continue;
+    const entityText = (entity as any)[propertyName];
+    if (!entityText || typeof entityText !== 'string') continue;
 
     const score = calculateSimilarity(searchText, entityText);
     if (!bestMatch || score > bestMatch.score) {
@@ -405,20 +406,28 @@ function calculateSimilarity(text1: string, text2: string): number {
   // Contains match
   if (str1.includes(str2) || str2.includes(str1)) return 0.8;
 
-  // Word overlap
-  const words1 = str1.split(/\\s+/);
-  const words2 = str2.split(/\\s+/);
+  // Word overlap - require at least 2 words in common or high word match ratio
+  const words1 = str1.split(/\\s+/).filter(word => word.length > 2); // Filter short words
+  const words2 = str2.split(/\\s+/).filter(word => word.length > 2);
   const commonWords = words1.filter(word => words2.includes(word));
-  const overlapRatio =
-    (commonWords.length * 2) / (words1.length + words2.length);
+
+  // Require either multiple matching words or high proportion of words matching
+  if (commonWords.length >= 2) {
+    const overlapRatio =
+      (commonWords.length * 2) / (words1.length + words2.length);
+    if (overlapRatio > 0.6) return overlapRatio;
+  }
 
   // Levenshtein distance for character-level similarity
   const distance = levenshteinDistance(str1, str2);
   const maxLength = Math.max(str1.length, str2.length);
   const characterSimilarity = 1 - distance / maxLength;
 
-  // Combine word overlap and character similarity
-  return Math.max(overlapRatio, characterSimilarity * 0.7);
+  // Only return high character similarity if it's really close
+  if (characterSimilarity > 0.8) return characterSimilarity;
+
+  // For weak matches, return low score
+  return Math.min(characterSimilarity * 0.5, 0.3);
 }
 
 function levenshteinDistance(str1: string, str2: string): number {
@@ -504,8 +513,22 @@ function determineMilestoneConflictLevel(
     return 'high';
   }
 
-  // Check status conflicts
+  // Check status conflicts - only consider severe conflicts as medium/high
   if (existingMilestone.status !== extractedMilestone.status) {
+    // Status progression is usually acceptable (in-progress -> completed)
+    if (
+      existingMilestone.status === 'in-progress' &&
+      extractedMilestone.status === 'completed'
+    ) {
+      return 'low'; // Normal progression
+    }
+    if (
+      existingMilestone.status === 'not-started' &&
+      extractedMilestone.status === 'in-progress'
+    ) {
+      return 'low'; // Normal progression
+    }
+    // Other status changes are medium conflict
     return 'medium';
   }
 
