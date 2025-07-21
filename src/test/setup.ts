@@ -324,18 +324,7 @@ vi.mock('pdfjs-dist', () => ({
 
 // Mock Tesseract.js for OCR tests
 vi.mock('tesseract.js', () => ({
-  recognize: vi.fn(() =>
-    Promise.resolve({
-      data: {
-        text: 'Mock OCR text extracted from document',
-        confidence: 85,
-      },
-    })
-  ),
-  createWorker: vi.fn(() => ({
-    loadLanguage: vi.fn(() => Promise.resolve()),
-    initialize: vi.fn(() => Promise.resolve()),
-    setParameters: vi.fn(() => Promise.resolve()),
+  default: {
     recognize: vi.fn(() =>
       Promise.resolve({
         data: {
@@ -344,8 +333,21 @@ vi.mock('tesseract.js', () => ({
         },
       })
     ),
-    terminate: vi.fn(() => Promise.resolve()),
-  })),
+    createWorker: vi.fn(() => ({
+      loadLanguage: vi.fn(() => Promise.resolve()),
+      initialize: vi.fn(() => Promise.resolve()),
+      setParameters: vi.fn(() => Promise.resolve()),
+      recognize: vi.fn(() =>
+        Promise.resolve({
+          data: {
+            text: 'Mock OCR text extracted from document',
+            confidence: 85,
+          },
+        })
+      ),
+      terminate: vi.fn(() => Promise.resolve()),
+    })),
+  },
 }));
 
 // Mock DOMMatrix for PDF.js canvas operations
