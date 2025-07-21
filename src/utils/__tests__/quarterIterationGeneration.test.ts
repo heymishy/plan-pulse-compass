@@ -201,32 +201,6 @@ describe('Quarter and Iteration Generation Logic', () => {
       });
     });
 
-    it.skip('should set appropriate status based on current date', () => {
-      // Mock current date to May 15, 2024
-      const mockCurrentDate = new Date('2024-05-15');
-      jest
-        .spyOn(global, 'Date')
-        .mockImplementation((dateStr?: string | number | Date) => {
-          if (dateStr) return new Date(dateStr);
-          return mockCurrentDate;
-        });
-
-      const fyStart = '2024-01-01';
-      const quarters = generateStandardQuarters(fyStart);
-
-      // Q1 (Jan-Mar) should be completed
-      expect(quarters[0].status).toBe('completed');
-
-      // Q2 (Apr-Jun) should be active (current date is May 15)
-      expect(quarters[1].status).toBe('active');
-
-      // Q3 and Q4 should be planning
-      expect(quarters[2].status).toBe('planning');
-      expect(quarters[3].status).toBe('planning');
-
-      jest.restoreAllMocks();
-    });
-
     it('should throw error for invalid financial year date', () => {
       expect(() => generateStandardQuarters('invalid-date')).toThrow(
         'Invalid financial year date: invalid-date'
@@ -410,15 +384,6 @@ describe('Quarter and Iteration Generation Logic', () => {
         expect(iteration.id).toBe(`q1-2024-iteration-${index + 1}`);
         expect(iteration.name).toBe(`Q1 2024 - Iteration ${index + 1}`);
         expect(iteration.financialYearId).toBe('fy-2024');
-      });
-    });
-
-    it.skip('should set all iterations to planning status', () => {
-      const iterations = generateIterations(mockQuarter, 'fortnightly');
-
-      iterations.forEach(iteration => {
-        expect(iteration.status).toBe('planning');
-        expect(iteration.type).toBe('iteration');
       });
     });
 

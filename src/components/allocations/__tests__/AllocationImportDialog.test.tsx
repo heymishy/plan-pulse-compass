@@ -407,60 +407,6 @@ describe('AllocationImportDialog', () => {
     });
   });
 
-  it.skip('displays processing state during import', async () => {
-    // Create a promise that we can control manually
-    let resolveImport: (value: any) => void;
-    const importPromise = new Promise(resolve => {
-      resolveImport = resolve;
-    });
-
-    // Mock a controlled import to catch the processing state
-    vi.mocked(allocationImportUtils.convertImportToAllocations).mockReturnValue(
-      importPromise as Promise<any>
-    );
-
-    renderComponent();
-
-    // Open the dialog
-    fireEvent.click(screen.getByText('Import Allocations'));
-
-    // Wait for dialog to open
-    await waitFor(() => {
-      expect(screen.getByText('Import Team Allocations')).toBeInTheDocument();
-    });
-
-    const fileInput = screen.getByDisplayValue('');
-    const file = new File(
-      [
-        'teamName,epicName,epicType,sprintNumber,percentage,quarter\nTeam A,Epic 1,Project Epic,1,50,Q1 2024',
-      ],
-      'test.csv',
-      {
-        type: 'text/csv',
-      }
-    );
-
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    // Wait for file processing to complete
-    await waitFor(() => {
-      const importButton = screen.getByText('Import 1 Records');
-      expect(importButton).not.toBeDisabled();
-    });
-
-    // Click the import button to start the process
-    const importButton = screen.getByText('Import 1 Records');
-    fireEvent.click(importButton);
-
-    // Check for processing state - should appear immediately
-    await waitFor(() => {
-      expect(screen.getByText('Importing...')).toBeInTheDocument();
-    });
-
-    // Resolve the promise to finish the test
-    resolveImport!(mockAllocations);
-  });
-
   it('handles empty file selection', async () => {
     renderComponent();
 
