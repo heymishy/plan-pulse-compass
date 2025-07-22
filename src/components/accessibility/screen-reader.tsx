@@ -81,43 +81,7 @@ export const LiveRegion: React.FC<LiveRegionProps> = ({
   );
 };
 
-// Hook for announcing messages to screen readers
-export const useScreenReaderAnnouncement = () => {
-  const [announcement, setAnnouncement] = useState('');
-  const [politeness, setPoliteness] = useState<'polite' | 'assertive'>(
-    'polite'
-  );
-
-  const announce = (
-    message: string,
-    options: {
-      politeness?: 'polite' | 'assertive';
-      clearAfter?: number;
-    } = {}
-  ) => {
-    const { politeness: level = 'polite', clearAfter = 1000 } = options;
-
-    setPoliteness(level);
-    setAnnouncement(message);
-
-    if (clearAfter > 0) {
-      setTimeout(() => {
-        setAnnouncement('');
-      }, clearAfter);
-    }
-  };
-
-  const LiveRegionComponent = () => (
-    <LiveRegion
-      politeness={politeness}
-      clearAfter={0} // We handle clearing manually
-    >
-      {announcement}
-    </LiveRegion>
-  );
-
-  return { announce, LiveRegion: LiveRegionComponent };
-};
+// Hook moved to @/hooks/useScreenReaderAnnouncement for react-refresh compliance
 
 // Enhanced form field with proper labeling
 export interface AccessibleFormFieldProps {
@@ -307,11 +271,4 @@ export const AccessibleProgress: React.FC<AccessibleProgressProps> = ({
   );
 };
 
-export {
-  ScreenReaderOnly,
-  LiveRegion,
-  useScreenReaderAnnouncement,
-  AccessibleFormField,
-  AccessibleHeading,
-  AccessibleProgress,
-};
+// Export removed - useScreenReaderAnnouncement is now in @/hooks/useScreenReaderAnnouncement

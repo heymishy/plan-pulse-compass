@@ -1,5 +1,8 @@
 import React, { ReactElement } from 'react';
-import { render, RenderOptions, cleanup } from '@testing-library/react';
+import { render, RenderOptions, cleanup, screen } from '@testing-library/react';
+
+// Export screen for easy access
+export { screen };
 import { BrowserRouter } from 'react-router-dom';
 import { vi, afterEach } from 'vitest';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -130,25 +133,34 @@ export const createMockEpic = (overrides = {}) => ({
 });
 
 // Helper functions for common test patterns
-export const getByTextFirst = (screen: any, text: string | RegExp) => {
-  const elements = screen.getAllByText(text);
+type ScreenType = typeof screen;
+
+export const getByTextFirst = (
+  screenObj: ScreenType,
+  text: string | RegExp
+) => {
+  const elements = screenObj.getAllByText(text);
   return elements[0];
 };
 
-export const getByRoleFirst = (screen: any, role: string, options?: any) => {
-  const elements = screen.getAllByRole(role, options);
+export const getByRoleFirst = (
+  screenObj: ScreenType,
+  role: string,
+  options?: object
+) => {
+  const elements = screenObj.getAllByRole(role, options);
   return elements[0];
 };
 
 export const waitForTextToAppear = (
-  screen: any,
+  screenObj: ScreenType,
   text: string | RegExp,
   timeout = 1000
 ) => {
-  return screen.findByText(text, {}, { timeout });
+  return screenObj.findByText(text, {}, { timeout });
 };
 
-export const getSelectByIndex = (screen: any, index: number) => {
-  const comboboxes = screen.getAllByRole('combobox');
+export const getSelectByIndex = (screenObj: ScreenType, index: number) => {
+  const comboboxes = screenObj.getAllByRole('combobox');
   return comboboxes[index];
 };

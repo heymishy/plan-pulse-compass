@@ -52,7 +52,7 @@ export async function createQuartersAndIterations(page: Page): Promise<void> {
   });
 
   const existingIterations = existingCycles.filter(
-    (cycle: any) => cycle.type === 'iteration'
+    (cycle: { type: string }) => cycle.type === 'iteration'
   );
   console.log(`Found ${existingIterations.length} existing iterations`);
 
@@ -89,7 +89,7 @@ export async function createQuartersAndIterations(page: Page): Promise<void> {
           return data ? JSON.parse(data) : [];
         });
         const iterations = cycles.filter(
-          (cycle: any) => cycle.type === 'iteration'
+          (cycle: { type: string }) => cycle.type === 'iteration'
         );
         iterationsCount = iterations.length;
 

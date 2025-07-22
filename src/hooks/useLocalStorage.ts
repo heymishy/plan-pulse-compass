@@ -94,7 +94,7 @@ export function useEncryptedLocalStorage<T>(
     return () => {
       isMounted = false;
     };
-  }, [key, encryptionKey]);
+  }, [key, encryptionKey, initialValue]);
 
   const setValue = useCallback(
     async (value: T | ((val: T) => T)) => {

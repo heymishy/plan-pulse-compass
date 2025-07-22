@@ -45,37 +45,14 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { spacing, typography, colors } from '@/design-tokens';
-
-// Shortcut definition interface
-export interface KeyboardShortcut {
-  id: string;
-  keys: string[];
-  label: string;
-  description: string;
-  category: string;
-  action: () => void;
-  context?: string | string[];
-  enabled?: boolean;
-  icon?: React.ComponentType<{ className?: string }>;
-}
-
-// Shortcut categories
-export const SHORTCUT_CATEGORIES = {
-  navigation: 'Navigation',
-  actions: 'Actions',
-  views: 'Views',
-  editing: 'Editing',
-  global: 'Global',
-} as const;
-
-// Platform detection for key display
-const isMac =
-  typeof navigator !== 'undefined'
-    ? navigator.platform.toUpperCase().indexOf('MAC') >= 0
-    : false;
-
-const modifierKey = isMac ? 'cmd' : 'ctrl';
-const modifierSymbol = isMac ? '⌘' : 'Ctrl';
+import {
+  KeyboardShortcut,
+  SHORTCUT_CATEGORIES,
+  isMac,
+  modifierKey,
+  formatKeys as formatKeysUtil,
+  matchesKeyCombo,
+} from '@/utils/keyboard-shortcuts-constants';
 
 interface KeyboardShortcutsProviderProps {
   children: React.ReactNode;
@@ -231,26 +208,9 @@ export function KeyboardShortcutsProvider({
   const showHelp = useCallback(() => setIsHelpOpen(true), []);
   const hideHelp = useCallback(() => setIsHelpOpen(false), []);
 
-  // Key combination matching
-  const matchesKeyCombo = useCallback(
-    (event: KeyboardEvent, keys: string[]): boolean => {
-      const eventKeys = [];
-
-      if (event.ctrlKey) eventKeys.push('ctrl');
-      if (event.metaKey) eventKeys.push('cmd');
-      if (event.shiftKey) eventKeys.push('shift');
-      if (event.altKey) eventKeys.push('alt');
-
-      const key = event.key.toLowerCase();
-      if (!['control', 'meta', 'shift', 'alt'].includes(key)) {
-        eventKeys.push(key);
-      }
-
-      return (
-        keys.length === eventKeys.length &&
-        keys.every(k => eventKeys.includes(k.toLowerCase()))
-      );
-    },
+  // Key combination matching (using imported utility)
+  const keyComboMatcher = useCallback(
+    (event: KeyboardEvent, keys: string[]) => matchesKeyCombo(event, keys),
     []
   );
 
@@ -284,7 +244,7 @@ export function KeyboardShortcutsProvider({
             if (!contexts.includes(currentContext)) return false;
           }
 
-          return matchesKeyCombo(event, shortcut.keys);
+          return keyComboMatcher(event, shortcut.keys);
         }
       );
 
@@ -299,7 +259,7 @@ export function KeyboardShortcutsProvider({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [shortcuts, isHelpOpen, matchesKeyCombo]);
+  }, [shortcuts, isHelpOpen, keyComboMatcher]);
 
   // Filter shortcuts for help display
   const filteredShortcuts = useMemo(() => {
@@ -327,39 +287,11 @@ export function KeyboardShortcutsProvider({
     return grouped;
   }, [filteredShortcuts]);
 
-  // Format key combination for display
-  const formatKeys = useCallback((keys: string[]): string => {
-    return keys
-      .map(key => {
-        switch (key.toLowerCase()) {
-          case 'cmd':
-            return isMac ? '⌘' : 'Ctrl';
-          case 'ctrl':
-            return isMac ? '⌃' : 'Ctrl';
-          case 'shift':
-            return '⇧';
-          case 'alt':
-            return isMac ? '⌥' : 'Alt';
-          case 'meta':
-            return isMac ? '⌘' : 'Win';
-          case 'enter':
-            return '↵';
-          case 'escape':
-            return 'Esc';
-          case 'backspace':
-            return '⌫';
-          case 'delete':
-            return 'Del';
-          case 'tab':
-            return '⇥';
-          case ' ':
-            return 'Space';
-          default:
-            return key.length === 1 ? key.toUpperCase() : key;
-        }
-      })
-      .join(isMac ? '' : '+');
-  }, []);
+  // Use imported format keys utility
+  const formatKeysForDisplay = useCallback(
+    (keys: string[]) => formatKeysUtil(keys),
+    []
+  );
 
   const contextValue: KeyboardShortcutsContextValue = {
     registerShortcut,
@@ -457,7 +389,7 @@ export function KeyboardShortcutsProvider({
                                   variant="secondary"
                                   className="px-2 py-1 text-xs font-mono"
                                 >
-                                  {formatKeys([key])}
+                                  {formatKeysForDisplay([key])}
                                 </Badge>
                               ))}
                             </div>
@@ -522,31 +454,12 @@ interface ShortcutHintProps {
 }
 
 export function ShortcutHint({ keys, className }: ShortcutHintProps) {
-  const formatKeys = useCallback((keys: string[]): string => {
-    return keys
-      .map(key => {
-        switch (key.toLowerCase()) {
-          case 'cmd':
-            return isMac ? '⌘' : 'Ctrl';
-          case 'ctrl':
-            return isMac ? '⌃' : 'Ctrl';
-          case 'shift':
-            return '⇧';
-          case 'alt':
-            return isMac ? '⌥' : 'Alt';
-          default:
-            return key.length === 1 ? key.toUpperCase() : key;
-        }
-      })
-      .join(isMac ? '' : '+');
-  }, []);
-
   return (
     <Badge
       variant="outline"
       className={cn('px-2 py-1 text-xs font-mono opacity-60', className)}
     >
-      {formatKeys(keys)}
+      {formatKeysUtil(keys)}
     </Badge>
   );
 }

@@ -139,6 +139,7 @@ export const FocusTrap: React.FC<FocusTrapProps> = ({
   }, [
     active,
     initialFocus,
+    clickOutsideDeactivates,
     getFocusableElements,
     handleKeyDown,
     handleEscape,
