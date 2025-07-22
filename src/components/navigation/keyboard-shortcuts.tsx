@@ -336,13 +336,7 @@ export function KeyboardShortcutsProvider({
               {Object.entries(shortcutsByCategory).map(
                 ([category, shortcuts]) => (
                   <div key={category} className="space-y-3">
-                    <h3
-                      className={cn(
-                        'font-semibold text-foreground',
-                        `font-size: ${typography.textStyles['heading-sm'].fontSize}`,
-                        `line-height: ${typography.textStyles['heading-sm'].lineHeight}`
-                      )}
-                    >
+                    <h3 className="font-semibold text-foreground text-lg leading-6">
                       {category}
                     </h3>
 

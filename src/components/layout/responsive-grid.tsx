@@ -13,7 +13,8 @@ type GridCols = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 // Gap sizes using design tokens
 type GridGap = keyof typeof spacing.grid.gap;
 
-export interface ResponsiveGridProps {
+export interface ResponsiveGridProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   /** Grid columns configuration */
   cols?: {
@@ -52,6 +53,7 @@ const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   className,
   autoFit,
   dense = false,
+  ...props
 }) => {
   // Build responsive grid classes
   const gridClasses = cn(
@@ -75,11 +77,16 @@ const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
     className
   );
 
-  return <div className={gridClasses}>{children}</div>;
+  return (
+    <div className={gridClasses} {...props}>
+      {children}
+    </div>
+  );
 };
 
 // Specialized grid layouts
-export interface DashboardGridProps {
+export interface DashboardGridProps
+  extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
 }
@@ -88,6 +95,7 @@ export interface DashboardGridProps {
 export const DashboardGrid: React.FC<DashboardGridProps> = ({
   children,
   className,
+  ...props
 }) => (
   <ResponsiveGrid
     cols={{
@@ -98,6 +106,7 @@ export const DashboardGrid: React.FC<DashboardGridProps> = ({
     }}
     gap="lg"
     className={className}
+    {...props}
   >
     {children}
   </ResponsiveGrid>
@@ -107,6 +116,7 @@ export const DashboardGrid: React.FC<DashboardGridProps> = ({
 export const CardGrid: React.FC<DashboardGridProps> = ({
   children,
   className,
+  ...props
 }) => (
   <ResponsiveGrid
     autoFit={{
@@ -115,13 +125,14 @@ export const CardGrid: React.FC<DashboardGridProps> = ({
     }}
     gap="md"
     className={cn('items-start', className)}
+    {...props}
   >
     {children}
   </ResponsiveGrid>
 );
 
 // Form grid for structured layouts
-export interface FormGridProps {
+export interface FormGridProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   fields?: 'single' | 'double' | 'triple';
   className?: string;
@@ -131,6 +142,7 @@ export const FormGrid: React.FC<FormGridProps> = ({
   children,
   fields = 'single',
   className,
+  ...props
 }) => {
   const fieldConfigs = {
     single: { default: 1 },
@@ -139,7 +151,12 @@ export const FormGrid: React.FC<FormGridProps> = ({
   };
 
   return (
-    <ResponsiveGrid cols={fieldConfigs[fields]} gap="md" className={className}>
+    <ResponsiveGrid
+      cols={fieldConfigs[fields]}
+      gap="md"
+      className={className}
+      {...props}
+    >
       {children}
     </ResponsiveGrid>
   );
@@ -149,6 +166,7 @@ export const FormGrid: React.FC<FormGridProps> = ({
 export const ListGrid: React.FC<DashboardGridProps> = ({
   children,
   className,
+  ...props
 }) => (
   <ResponsiveGrid
     cols={{
@@ -157,6 +175,7 @@ export const ListGrid: React.FC<DashboardGridProps> = ({
     }}
     gap="sm"
     className={className}
+    {...props}
   >
     {children}
   </ResponsiveGrid>
@@ -166,6 +185,7 @@ export const ListGrid: React.FC<DashboardGridProps> = ({
 export const MasonryGrid: React.FC<DashboardGridProps> = ({
   children,
   className,
+  ...props
 }) => (
   <ResponsiveGrid
     cols={{
@@ -177,13 +197,14 @@ export const MasonryGrid: React.FC<DashboardGridProps> = ({
     gap="md"
     dense
     className={cn('[&>*]:break-inside-avoid', className)}
+    {...props}
   >
     {children}
   </ResponsiveGrid>
 );
 
 // Grid item with span controls
-export interface GridItemProps {
+export interface GridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   /** Column span configuration */
   colSpan?: {
@@ -211,6 +232,7 @@ export const GridItem: React.FC<GridItemProps> = ({
   colSpan,
   rowSpan,
   className,
+  ...props
 }) => {
   const spanClasses = cn(
     // Column spans
@@ -232,7 +254,11 @@ export const GridItem: React.FC<GridItemProps> = ({
     className
   );
 
-  return <div className={spanClasses}>{children}</div>;
+  return (
+    <div className={spanClasses} {...props}>
+      {children}
+    </div>
+  );
 };
 
 export { ResponsiveGrid };

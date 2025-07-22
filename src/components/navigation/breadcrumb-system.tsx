@@ -379,13 +379,7 @@ export function BreadcrumbSystem({
 
                 <BreadcrumbItem>
                   {isLast ? (
-                    <BreadcrumbPage
-                      className={cn(
-                        'flex items-center gap-2 font-medium',
-                        `color: ${colors.neutral[900]}`,
-                        `font-size: ${typography.textStyles['body-sm'].fontSize}`
-                      )}
-                    >
+                    <BreadcrumbPage className="flex items-center gap-2 font-medium text-gray-900 text-sm">
                       {showIcons && Icon && <Icon className="h-4 w-4" />}
                       <span>{item.label}</span>
                     </BreadcrumbPage>
@@ -447,13 +441,7 @@ export function PageBreadcrumb({
     <div className={cn('space-y-1', className)}>
       <BreadcrumbSystem {...props} />
       {showDescription && currentBreadcrumb?.description && (
-        <p
-          className={cn(
-            'text-sm text-muted-foreground',
-            `font-size: ${typography.textStyles['body-sm'].fontSize}`,
-            `line-height: ${typography.textStyles['body-sm'].lineHeight}`
-          )}
-        >
+        <p className="text-sm text-muted-foreground leading-5">
           {currentBreadcrumb.description}
         </p>
       )}
