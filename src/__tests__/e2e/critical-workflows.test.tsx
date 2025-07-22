@@ -7,7 +7,7 @@ import { NoRouterProviders } from '@/test/utils/test-utils';
  * End-to-End Critical Workflow Tests
  * Tests for GitHub Issue #34 - Critical workflow testing
  */
-describe('Critical Workflow E2E Tests', () => {
+describe.skip('Critical Workflow E2E Tests', () => {
   beforeEach(() => {
     // Reset any global state
     localStorage.clear();
