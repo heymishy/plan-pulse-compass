@@ -43,7 +43,13 @@ const SidebarProviders = ({ children }: { children: React.ReactNode }) => {
 };
 
 // Wrapper for components that already have a router (like App component)
-const NoRouterProviders = ({ children }: { children: React.ReactNode }) => {
+const NoRouterProviders = ({
+  children,
+  skipRouter = false,
+}: {
+  children: React.ReactNode;
+  skipRouter?: boolean;
+}) => {
   return (
     <ThemeProvider>
       <TooltipProvider>{children}</TooltipProvider>

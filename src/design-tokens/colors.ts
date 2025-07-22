@@ -4,22 +4,22 @@
  */
 
 export const colors = {
-  // Brand Colors
+  // Brand Colors (WCAG AA compliant)
   primary: {
     50: '#f0f9ff',
     100: '#e0f2fe',
     200: '#bae6fd',
     300: '#7dd3fc',
     400: '#38bdf8',
-    500: '#0ea5e9',
-    600: '#0284c7',
-    700: '#0369a1',
-    800: '#075985',
-    900: '#0c4a6e',
-    950: '#082f49',
+    500: '#0369a1', // Darker blue for AA compliance (was #0ea5e9, then #0284c7)
+    600: '#075985',
+    700: '#075985',
+    800: '#0c4a6e',
+    900: '#082f49',
+    950: '#041f2e',
   },
 
-  // Semantic Colors
+  // Semantic Colors (WCAG AA compliant)
   semantic: {
     success: {
       50: '#f0fdf4',
@@ -27,11 +27,11 @@ export const colors = {
       200: '#bbf7d0',
       300: '#86efac',
       400: '#4ade80',
-      500: '#22c55e',
-      600: '#16a34a',
-      700: '#15803d',
-      800: '#166534',
-      900: '#14532d',
+      500: '#15803d', // Darker green for AA compliance (was #22c55e, then #16a34a)
+      600: '#166534',
+      700: '#166534',
+      800: '#14532d',
+      900: '#052e16',
     },
     warning: {
       50: '#fffbeb',
@@ -39,11 +39,11 @@ export const colors = {
       200: '#fde68a',
       300: '#fcd34d',
       400: '#fbbf24',
-      500: '#f59e0b',
-      600: '#d97706',
-      700: '#b45309',
-      800: '#92400e',
-      900: '#78350f',
+      500: '#b45309', // Darker orange for AA compliance (was #f59e0b, then #d97706)
+      600: '#92400e',
+      700: '#92400e',
+      800: '#78350f',
+      900: '#451a03',
     },
     error: {
       50: '#fef2f2',
@@ -51,11 +51,11 @@ export const colors = {
       200: '#fecaca',
       300: '#fca5a5',
       400: '#f87171',
-      500: '#ef4444',
-      600: '#dc2626',
-      700: '#b91c1c',
-      800: '#991b1b',
-      900: '#7f1d1d',
+      500: '#dc2626', // Darker red for better contrast (was #ef4444)
+      600: '#b91c1c',
+      700: '#991b1b',
+      800: '#7f1d1d',
+      900: '#450a0a',
     },
     info: {
       50: '#eff6ff',
@@ -63,11 +63,11 @@ export const colors = {
       200: '#bfdbfe',
       300: '#93c5fd',
       400: '#60a5fa',
-      500: '#3b82f6',
-      600: '#2563eb',
-      700: '#1d4ed8',
-      800: '#1e40af',
-      900: '#1e3a8a',
+      500: '#2563eb', // Darker blue for better contrast (was #3b82f6)
+      600: '#1d4ed8',
+      700: '#1e40af',
+      800: '#1e3a8a',
+      900: '#1e1b4b',
     },
   },
 
@@ -87,30 +87,30 @@ export const colors = {
     1000: '#000000',
   },
 
-  // Planning-specific colors
+  // Planning-specific colors (WCAG AA compliant)
   planning: {
-    allocated: '#22c55e',
-    overAllocated: '#ef4444',
-    underAllocated: '#f59e0b',
-    unallocated: '#94a3b8',
+    allocated: '#15803d', // Darker green for AA compliance
+    overAllocated: '#dc2626', // Darker red (was #ef4444)
+    underAllocated: '#b45309', // Darker orange for AA compliance
+    unallocated: '#64748b', // Darker gray (was #94a3b8)
   },
 
-  // Status colors
+  // Status colors (WCAG AA compliant)
   status: {
-    onTrack: '#22c55e',
-    atRisk: '#f59e0b',
-    offTrack: '#ef4444',
-    notStarted: '#94a3b8',
-    completed: '#6366f1',
+    onTrack: '#15803d', // Darker green for AA compliance
+    atRisk: '#b45309', // Darker orange for AA compliance
+    offTrack: '#dc2626', // Darker red (was #ef4444)
+    notStarted: '#64748b', // Darker gray (was #94a3b8)
+    completed: '#4338ca', // Darker purple for better contrast (was #6366f1)
   },
 
-  // Chart colors
+  // Chart colors (WCAG AA compliant)
   chart: {
-    primary: '#0ea5e9',
-    secondary: '#6366f1',
-    tertiary: '#22c55e',
-    quaternary: '#f59e0b',
-    quinary: '#ef4444',
+    primary: '#0369a1', // Darker blue for AA compliance
+    secondary: '#4338ca', // Darker purple (was #6366f1)
+    tertiary: '#15803d', // Darker green for AA compliance
+    quaternary: '#b45309', // Darker orange for AA compliance
+    quinary: '#dc2626', // Darker red (was #ef4444)
     background: '#f8fafc',
     gridLines: '#e2e8f0',
   },

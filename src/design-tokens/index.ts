@@ -3,6 +3,11 @@
  * Centralized design token system for Plan Pulse Compass
  */
 
+import { colors, cssVariables as colorCssVariables } from './colors';
+import { typography, typographyCssVariables } from './typography';
+import { spacing, spacingCssVariables } from './spacing';
+import { shadows, shadowsCssVariables } from './shadows';
+
 export {
   colors,
   cssVariables,
@@ -37,7 +42,7 @@ export {
 // Combined CSS variables for global theming
 export const designTokenCssVariables = {
   // Colors
-  ...cssVariables,
+  ...colorCssVariables,
 
   // Typography
   ...typographyCssVariables,
