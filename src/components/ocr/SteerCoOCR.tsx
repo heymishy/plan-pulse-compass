@@ -26,8 +26,20 @@ import type {
   MappingCandidate,
   ExtractedEntity,
 } from '@/types/ocrTypes';
-import Tesseract from 'tesseract.js';
-import * as pdfjsLib from 'pdfjs-dist';
+// Heavy libraries - loaded dynamically
+type TesseractType = typeof import('tesseract.js');
+type PDFJSType = typeof import('pdfjs-dist');
+
+// Lazy loaded imports
+const loadTesseract = async (): Promise<TesseractType> => {
+  const tesseractModule = await import('tesseract.js');
+  return tesseractModule;
+};
+
+const loadPDFJS = async (): Promise<PDFJSType> => {
+  const pdfjsModule = await import('pdfjs-dist');
+  return pdfjsModule;
+};
 
 // Configure PDF.js worker - use local worker to avoid CORS issues in corporate networks
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';

@@ -1,14 +1,18 @@
-import React, { useMemo, useState } from 'react';
-import {
-  ReactFlow,
-  Node,
-  Edge,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  Position,
-} from '@xyflow/react';
+import React, { useMemo, useState, Suspense, lazy } from 'react';
+
+// Lazy load ReactFlow to reduce initial bundle size
+const ReactFlowComponent = lazy(() =>
+  import('@xyflow/react').then(module => ({
+    default: ({ children, ...props }) => {
+      const { ReactFlow, Controls, Background, useNodesState, useEdgesState } =
+        module;
+      return React.createElement(ReactFlow, props, children);
+    },
+  }))
+);
+
+// Type imports can still be synchronous
+import type { Node, Edge, Position } from '@xyflow/react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

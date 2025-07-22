@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { TeamProvider } from './context/TeamContext';
 import { ProjectProvider } from './context/ProjectContext';
@@ -12,27 +12,30 @@ import Navigation from './components/Navigation';
 import Footer from './components/Footer';
 import { ScenarioBanner } from './components/scenarios/ScenarioBanner';
 import { ScenarioSwitcher } from './components/scenarios/ScenarioSwitcher';
+// Core pages (loaded immediately)
 import Index from './pages/Index';
 import Setup from './pages/Setup';
 import Dashboard from './pages/Dashboard';
 import Teams from './pages/Teams';
 import People from './pages/People';
-import Skills from './pages/Skills';
-import Projects from './pages/Projects';
-import Epics from './pages/Epics';
-import Milestones from './pages/Milestones';
-import Planning from './pages/Planning';
-import AdvancedPlanning from './pages/AdvancedPlanning';
-import JourneyPlanning from './pages/JourneyPlanning';
-import Allocations from './pages/Allocations';
-import Tracking from './pages/Tracking';
-import Financials from './pages/Financials';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import Canvas from './pages/Canvas';
-import ScenarioAnalysis from './pages/ScenarioAnalysis';
-import OCRPage from './pages/OCRPage';
 import NotFound from './pages/NotFound';
+
+// Heavy pages (lazy loaded)
+const Skills = lazy(() => import('./pages/Skills'));
+const Projects = lazy(() => import('./pages/Projects'));
+const Epics = lazy(() => import('./pages/Epics'));
+const Milestones = lazy(() => import('./pages/Milestones'));
+const Planning = lazy(() => import('./pages/Planning'));
+const AdvancedPlanning = lazy(() => import('./pages/AdvancedPlanning'));
+const JourneyPlanning = lazy(() => import('./pages/JourneyPlanning'));
+const Allocations = lazy(() => import('./pages/Allocations'));
+const Tracking = lazy(() => import('./pages/Tracking'));
+const Financials = lazy(() => import('./pages/Financials'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Canvas = lazy(() => import('./pages/Canvas'));
+const ScenarioAnalysis = lazy(() => import('./pages/ScenarioAnalysis'));
+const OCRPage = lazy(() => import('./pages/OCRPage'));
 import { Toaster } from '@/components/ui/toaster';
 import {
   SidebarProvider,
@@ -76,65 +79,85 @@ function App() {
                                 </div>
                               </div>
                               <main className="flex-1 w-full max-w-none">
-                                <Routes>
-                                  <Route path="/" element={<Index />} />
-                                  <Route path="/setup" element={<Setup />} />
-                                  <Route
-                                    path="/dashboard"
-                                    element={<Dashboard />}
-                                  />
-                                  <Route path="/teams" element={<Teams />} />
-                                  <Route path="/people" element={<People />} />
-                                  <Route path="/skills" element={<Skills />} />
-                                  <Route
-                                    path="/projects"
-                                    element={<Projects />}
-                                  />
-                                  <Route path="/epics" element={<Epics />} />
-                                  <Route
-                                    path="/milestones"
-                                    element={<Milestones />}
-                                  />
-                                  <Route
-                                    path="/planning"
-                                    element={<Planning />}
-                                  />
-                                  <Route
-                                    path="/advanced-planning"
-                                    element={<AdvancedPlanning />}
-                                  />
-                                  <Route
-                                    path="/journey-planning"
-                                    element={<JourneyPlanning />}
-                                  />
-                                  <Route
-                                    path="/allocations"
-                                    element={<Allocations />}
-                                  />
-                                  <Route
-                                    path="/tracking"
-                                    element={<Tracking />}
-                                  />
-                                  <Route
-                                    path="/financials"
-                                    element={<Financials />}
-                                  />
-                                  <Route
-                                    path="/reports"
-                                    element={<Reports />}
-                                  />
-                                  <Route
-                                    path="/settings"
-                                    element={<Settings />}
-                                  />
-                                  <Route path="/canvas" element={<Canvas />} />
-                                  <Route
-                                    path="/scenario-analysis"
-                                    element={<ScenarioAnalysis />}
-                                  />
-                                  <Route path="/ocr" element={<OCRPage />} />
-                                  <Route path="*" element={<NotFound />} />
-                                </Routes>
+                                <Suspense
+                                  fallback={
+                                    <div className="flex items-center justify-center h-64">
+                                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                      <span className="ml-2 text-gray-600">
+                                        Loading...
+                                      </span>
+                                    </div>
+                                  }
+                                >
+                                  <Routes>
+                                    <Route path="/" element={<Index />} />
+                                    <Route path="/setup" element={<Setup />} />
+                                    <Route
+                                      path="/dashboard"
+                                      element={<Dashboard />}
+                                    />
+                                    <Route path="/teams" element={<Teams />} />
+                                    <Route
+                                      path="/people"
+                                      element={<People />}
+                                    />
+                                    <Route
+                                      path="/skills"
+                                      element={<Skills />}
+                                    />
+                                    <Route
+                                      path="/projects"
+                                      element={<Projects />}
+                                    />
+                                    <Route path="/epics" element={<Epics />} />
+                                    <Route
+                                      path="/milestones"
+                                      element={<Milestones />}
+                                    />
+                                    <Route
+                                      path="/planning"
+                                      element={<Planning />}
+                                    />
+                                    <Route
+                                      path="/advanced-planning"
+                                      element={<AdvancedPlanning />}
+                                    />
+                                    <Route
+                                      path="/journey-planning"
+                                      element={<JourneyPlanning />}
+                                    />
+                                    <Route
+                                      path="/allocations"
+                                      element={<Allocations />}
+                                    />
+                                    <Route
+                                      path="/tracking"
+                                      element={<Tracking />}
+                                    />
+                                    <Route
+                                      path="/financials"
+                                      element={<Financials />}
+                                    />
+                                    <Route
+                                      path="/reports"
+                                      element={<Reports />}
+                                    />
+                                    <Route
+                                      path="/settings"
+                                      element={<Settings />}
+                                    />
+                                    <Route
+                                      path="/canvas"
+                                      element={<Canvas />}
+                                    />
+                                    <Route
+                                      path="/scenario-analysis"
+                                      element={<ScenarioAnalysis />}
+                                    />
+                                    <Route path="/ocr" element={<OCRPage />} />
+                                    <Route path="*" element={<NotFound />} />
+                                  </Routes>
+                                </Suspense>
                               </main>
                               <Footer />
                             </div>

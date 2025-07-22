@@ -1,16 +1,50 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  TooltipProps,
-} from 'recharts';
+
+// Lazy load Recharts components
+const LazyBarChart = lazy(() =>
+  import('recharts').then(module => ({
+    default: module.BarChart,
+  }))
+);
+const LazyBar = lazy(() =>
+  import('recharts').then(module => ({
+    default: module.Bar,
+  }))
+);
+const LazyXAxis = lazy(() =>
+  import('recharts').then(module => ({
+    default: module.XAxis,
+  }))
+);
+const LazyYAxis = lazy(() =>
+  import('recharts').then(module => ({
+    default: module.YAxis,
+  }))
+);
+const LazyCartesianGrid = lazy(() =>
+  import('recharts').then(module => ({
+    default: module.CartesianGrid,
+  }))
+);
+const LazyTooltip = lazy(() =>
+  import('recharts').then(module => ({
+    default: module.Tooltip,
+  }))
+);
+const LazyResponsiveContainer = lazy(() =>
+  import('recharts').then(module => ({
+    default: module.ResponsiveContainer,
+  }))
+);
+const LazyLegend = lazy(() =>
+  import('recharts').then(module => ({
+    default: module.Legend,
+  }))
+);
+
+// Type imports
+import type { TooltipProps } from 'recharts';
 import { Team, Cycle, Allocation } from '@/types';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
 

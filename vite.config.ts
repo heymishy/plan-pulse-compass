@@ -53,9 +53,14 @@ export default defineConfig(({ mode }) => ({
         open: false,
         gzipSize: true,
         brotliSize: true,
+        template: 'treemap', // Better visualization
       }),
     versionPlugin(),
   ].filter(Boolean),
+  // Add polyfills for Node.js modules in browser
+  define: {
+    global: 'globalThis',
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -64,17 +69,52 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    chunkSizeWarningLimit: 600, // Increase limit for main chunk
+    target: 'esnext', // Modern build target for better optimization
     rollupOptions: {
+      // Define which modules should be treated as external
+      external: id => {
+        // Externalize Node.js modules that should not be bundled for browser
+        const nodeModules = [
+          'fs',
+          'path',
+          'os',
+          'events',
+          'stream',
+          'buffer',
+          'assert',
+          'timers',
+          'crypto',
+          'util',
+        ];
+        return nodeModules.includes(id);
+      },
       output: {
         manualChunks: {
+          // Core dependencies
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
+
+          // UI framework chunks
           ui: [
             '@radix-ui/react-dialog',
             '@radix-ui/react-dropdown-menu',
             '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-accordion',
+            '@radix-ui/react-toast',
           ],
+
+          // Heavy feature chunks
+          charts: ['recharts'],
+          canvas: ['@xyflow/react'],
+          ocr: ['tesseract.js', 'pptx2json', 'mammoth'],
+          pdf: ['pdfjs-dist'],
+
+          // Utility chunks
           utils: ['date-fns', 'clsx', 'tailwind-merge'],
+          forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
+          dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
         },
       },
     },
