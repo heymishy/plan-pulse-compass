@@ -3,7 +3,14 @@ import {
   useEncryptedLocalStorage,
   useLocalStorage,
 } from '@/hooks/useLocalStorage';
-import { Person, Role, Team, Division, UnmappedPerson } from '@/types';
+import {
+  Person,
+  Role,
+  Team,
+  TeamMember,
+  Division,
+  UnmappedPerson,
+} from '@/types';
 
 interface TeamContextType {
   people: Person[];
@@ -19,6 +26,17 @@ interface TeamContextType {
   ) => void;
   updateTeam: (teamId: string, teamData: Partial<Team>) => void;
   deleteTeam: (teamId: string) => void;
+  teamMembers: TeamMember[];
+  setTeamMembers: (
+    teamMembers: TeamMember[] | ((prev: TeamMember[]) => TeamMember[])
+  ) => void;
+  addTeamMember: (teamMemberData: Omit<TeamMember, 'id'>) => void;
+  updateTeamMember: (
+    teamMemberId: string,
+    teamMemberData: Partial<TeamMember>
+  ) => void;
+  removeTeamMember: (teamMemberId: string) => void;
+  getTeamMembers: (teamId: string) => TeamMember[];
   divisions: Division[];
   setDivisions: (
     divisions: Division[] | ((prev: Division[]) => Division[])
@@ -58,6 +76,10 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   );
   const [unmappedPeople, setUnmappedPeople] = useLocalStorage<UnmappedPerson[]>(
     'planning-unmapped-people',
+    []
+  );
+  const [teamMembers, setTeamMembers] = useLocalStorage<TeamMember[]>(
+    'planning-team-members',
     []
   );
 
@@ -123,6 +145,35 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     setUnmappedPeople(prev => prev.filter(person => person.id !== personId));
   };
 
+  const addTeamMember = (teamMemberData: Omit<TeamMember, 'id'>) => {
+    const newTeamMember: TeamMember = {
+      ...teamMemberData,
+      id: crypto.randomUUID(),
+    };
+    setTeamMembers(prev => [...prev, newTeamMember]);
+  };
+
+  const updateTeamMember = (
+    teamMemberId: string,
+    teamMemberData: Partial<TeamMember>
+  ) => {
+    setTeamMembers(prev =>
+      prev.map(member =>
+        member.id === teamMemberId ? { ...member, ...teamMemberData } : member
+      )
+    );
+  };
+
+  const removeTeamMember = (teamMemberId: string) => {
+    setTeamMembers(prev => prev.filter(member => member.id !== teamMemberId));
+  };
+
+  const getTeamMembers = (teamId: string) => {
+    return teamMembers.filter(
+      member => member.teamId === teamId && member.isActive
+    );
+  };
+
   const value: TeamContextType = {
     people,
     setPeople,
@@ -135,6 +186,12 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     addTeam,
     updateTeam,
     deleteTeam,
+    teamMembers,
+    setTeamMembers,
+    addTeamMember,
+    updateTeamMember,
+    removeTeamMember,
+    getTeamMembers,
     divisions,
     setDivisions,
     unmappedPeople,

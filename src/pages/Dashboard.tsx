@@ -32,18 +32,7 @@ const Dashboard = () => {
   } = useApp();
 
   const dashboardData = useMemo(() => {
-    console.log('Dashboard: Computing dashboard data', {
-      isSetupComplete,
-      isDataLoading,
-      cyclesLength: cycles.length,
-      projectsLength: projects.length,
-      epicsLength: epics.length,
-    });
-
     if (!isSetupComplete || isDataLoading) {
-      console.log(
-        'Dashboard: Skipping dashboard data computation - setup incomplete or data loading'
-      );
       return null;
     }
 
@@ -56,10 +45,9 @@ const Dashboard = () => {
         projects,
         epics
       );
-      console.log('Dashboard: Successfully computed dashboard data', data);
       return data;
     } catch (error) {
-      console.error('Dashboard: Error computing dashboard data', error);
+      // Log errors to monitoring service in production
       return null;
     }
   }, [

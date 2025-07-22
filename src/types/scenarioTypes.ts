@@ -94,8 +94,8 @@ export interface ScenarioModification {
   // Store the change details for delta view
   changes?: {
     field: string;
-    oldValue: any;
-    newValue: any;
+    oldValue: unknown;
+    newValue: unknown;
   }[];
 }
 

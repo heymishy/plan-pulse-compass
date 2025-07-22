@@ -16,7 +16,6 @@ import Index from './pages/Index';
 import Setup from './pages/Setup';
 import Dashboard from './pages/Dashboard';
 import Teams from './pages/Teams';
-import TeamBuilder from './pages/TeamBuilder';
 import People from './pages/People';
 import Skills from './pages/Skills';
 import Projects from './pages/Projects';
@@ -132,10 +131,6 @@ function App() {
                                   <Route
                                     path="/scenario-analysis"
                                     element={<ScenarioAnalysis />}
-                                  />
-                                  <Route
-                                    path="/squad-management"
-                                    element={<TeamBuilder />}
                                   />
                                   <Route path="/ocr" element={<OCRPage />} />
                                   <Route path="*" element={<NotFound />} />

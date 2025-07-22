@@ -105,7 +105,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
       goalEpics: structuredClone(appContext.goalEpics),
       goalMilestones: structuredClone(appContext.goalMilestones),
       goalTeams: structuredClone(appContext.goalTeams),
-      config: structuredClone(appContext.config || ({} as any)),
+      config: structuredClone(appContext.config || {}),
     };
   }, [appContext]);
 

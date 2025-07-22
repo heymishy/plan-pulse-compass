@@ -221,6 +221,18 @@ export interface Team {
   lastModified: string;
 }
 
+export interface TeamMember {
+  id: string;
+  teamId: string;
+  personId: string;
+  role: 'lead' | 'member' | 'advisor' | 'consultant' | 'product-owner';
+  allocation: number; // percentage (0-100)
+  startDate: string;
+  endDate?: string;
+  isActive: boolean;
+  notes?: string;
+}
+
 export interface Division {
   id: string;
   name: string;

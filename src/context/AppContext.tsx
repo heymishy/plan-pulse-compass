@@ -7,6 +7,7 @@ import { useGoals } from './GoalContext';
 import {
   Person,
   Team,
+  TeamMember,
   Division,
   Role,
   Project,
@@ -51,6 +52,17 @@ export interface AppContextType {
   ) => void;
   updateTeam: (teamId: string, teamData: Partial<Team>) => void;
   deleteTeam: (teamId: string) => void;
+  teamMembers: TeamMember[];
+  setTeamMembers: (
+    teamMembers: TeamMember[] | ((prev: TeamMember[]) => TeamMember[])
+  ) => void;
+  addTeamMember: (teamMemberData: Omit<TeamMember, 'id'>) => void;
+  updateTeamMember: (
+    teamMemberId: string,
+    teamMemberData: Partial<TeamMember>
+  ) => void;
+  removeTeamMember: (teamMemberId: string) => void;
+  getTeamMembers: (teamId: string) => TeamMember[];
   divisions: Division[];
   setDivisions: (
     divisions: Division[] | ((prev: Division[]) => Division[])
