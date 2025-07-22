@@ -1,8 +1,5 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions, cleanup, screen } from '@testing-library/react';
-
-// Export screen for easy access
-export { screen };
 import { BrowserRouter } from 'react-router-dom';
 import { vi, afterEach } from 'vitest';
 import { SidebarProvider } from '@/components/ui/sidebar';
