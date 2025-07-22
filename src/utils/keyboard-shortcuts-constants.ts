@@ -28,10 +28,16 @@ export const SHORTCUT_CATEGORIES = {
 } as const;
 
 // Platform detection for key display
-export const isMac =
-  typeof navigator !== 'undefined'
-    ? navigator.platform.toUpperCase().indexOf('MAC') >= 0
-    : false;
+export const isMac = (() => {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.platform) {
+      return navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+})();
 
 export const modifierKey = isMac ? 'cmd' : 'ctrl';
 export const modifierSymbol = isMac ? '⌘' : 'Ctrl';

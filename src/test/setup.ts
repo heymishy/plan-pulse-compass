@@ -289,6 +289,44 @@ Object.defineProperty(window, 'scrollTo', {
   value: vi.fn(),
 });
 
+// Mock navigator for platform detection tests
+Object.defineProperty(global, 'navigator', {
+  value: {
+    platform: 'Linux x86_64',
+    userAgent: 'test-agent',
+    vendor: '',
+    language: 'en-US',
+    languages: ['en-US'],
+    cookieEnabled: true,
+    onLine: true,
+    doNotTrack: null,
+    hardwareConcurrency: 4,
+    maxTouchPoints: 0,
+    webdriver: false,
+  },
+  writable: true,
+  configurable: true,
+});
+
+// Mock window.navigator as well for compatibility
+Object.defineProperty(window, 'navigator', {
+  value: {
+    platform: 'Linux x86_64',
+    userAgent: 'test-agent',
+    vendor: '',
+    language: 'en-US',
+    languages: ['en-US'],
+    cookieEnabled: true,
+    onLine: true,
+    doNotTrack: null,
+    hardwareConcurrency: 4,
+    maxTouchPoints: 0,
+    webdriver: false,
+  },
+  writable: true,
+  configurable: true,
+});
+
 // Mock URL.createObjectURL for file downloads in tests while preserving URL constructor
 const OriginalURL = global.URL;
 Object.defineProperty(global, 'URL', {

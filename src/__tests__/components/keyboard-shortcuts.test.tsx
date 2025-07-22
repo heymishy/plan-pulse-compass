@@ -158,7 +158,7 @@ describe('KeyboardShortcutsProvider', () => {
   describe('Custom Shortcut Registration', () => {
     it('registers custom shortcuts', async () => {
       const user = userEvent.setup();
-      const mockAction = jest.fn();
+      const mockAction = vi.fn();
 
       const TestComponent = () => {
         const { registerShortcut } = useKeyboardShortcuts();
@@ -194,7 +194,7 @@ describe('KeyboardShortcutsProvider', () => {
     });
 
     it('unregisters shortcuts', async () => {
-      const mockAction = jest.fn();
+      const mockAction = vi.fn();
 
       const TestComponent = () => {
         const { registerShortcut, unregisterShortcut } = useKeyboardShortcuts();
@@ -253,7 +253,7 @@ describe('KeyboardShortcutsProvider', () => {
 
   describe('Context Awareness', () => {
     it('ignores shortcuts when typing in input fields', () => {
-      const mockAction = jest.fn();
+      const mockAction = vi.fn();
 
       const TestComponent = () => {
         const { registerShortcut } = useKeyboardShortcuts();
@@ -424,7 +424,7 @@ describe('KeyboardShortcutsProvider', () => {
 
   describe('Key Combination Matching', () => {
     it('matches single key combinations', () => {
-      const mockAction = jest.fn();
+      const mockAction = vi.fn();
 
       const TestComponent = () => {
         const { registerShortcut } = useKeyboardShortcuts();
@@ -454,7 +454,7 @@ describe('KeyboardShortcutsProvider', () => {
     });
 
     it('matches modifier key combinations', () => {
-      const mockAction = jest.fn();
+      const mockAction = vi.fn();
 
       const TestComponent = () => {
         const { registerShortcut } = useKeyboardShortcuts();
@@ -544,13 +544,23 @@ describe('ShortcutHint', () => {
 
   it('formats modifier keys for Mac', () => {
     // Mock Mac platform
+    const originalPlatform = navigator.platform;
+
     Object.defineProperty(navigator, 'platform', {
       value: 'MacIntel',
       configurable: true,
+      writable: true,
     });
 
     render(<ShortcutHint keys={['cmd', 'k']} />);
 
-    expect(screen.getByText(/⌘.*K/)).toBeInTheDocument();
+    expect(screen.getByText('⌘K')).toBeInTheDocument();
+
+    // Restore original platform
+    Object.defineProperty(navigator, 'platform', {
+      value: originalPlatform,
+      configurable: true,
+      writable: true,
+    });
   });
 });
