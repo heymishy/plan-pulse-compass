@@ -38,11 +38,10 @@ const loadTesseract = async (): Promise<TesseractType> => {
 
 const loadPDFJS = async (): Promise<PDFJSType> => {
   const pdfjsModule = await import('pdfjs-dist');
+  // Configure PDF.js worker - use local worker to avoid CORS issues in corporate networks
+  pdfjsModule.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';
   return pdfjsModule;
 };
-
-// Configure PDF.js worker - use local worker to avoid CORS issues in corporate networks
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.js';
 
 // Helper function to extract text from PowerPoint slide content
 const extractTextFromSlideContent = (content: unknown): string => {
@@ -108,6 +107,8 @@ const SteerCoOCR: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<string>('');
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState<
     'upload' | 'ocr' | 'extraction' | 'mapping' | 'review'
   >('upload');
@@ -200,50 +201,96 @@ const SteerCoOCR: React.FC = () => {
         // Handle PDF
         const reader = new FileReader();
         reader.onload = async e => {
-          const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
-          const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-          let fullText = '';
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            if (context) {
-              await page.render({ canvasContext: context, viewport: viewport })
-                .promise;
-              const {
-                data: { text },
-              } = await Tesseract.recognize(canvas, 'eng', {
-                logger: m => {
-                  if (m.status === 'recognizing text') {
-                    setProgress(Math.round(m.progress * 100));
-                  }
-                },
-              });
-              fullText += text + '\n';
+          try {
+            setCurrentStep('ocr');
+            setProgress(10);
+
+            // Load PDF.js dynamically
+            const pdfjsLib = await loadPDFJS();
+            const Tesseract = await loadTesseract();
+
+            setProgress(20);
+
+            const pdfData = new Uint8Array(e.target?.result as ArrayBuffer);
+            const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+            let fullText = '';
+
+            setProgress(30);
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const viewport = page.getViewport({ scale: 1.5 });
+              const canvas = document.createElement('canvas');
+              const context = canvas.getContext('2d');
+              canvas.height = viewport.height;
+              canvas.width = viewport.width;
+
+              if (context) {
+                await page.render({
+                  canvasContext: context,
+                  viewport: viewport,
+                }).promise;
+                const pageProgressBase = 30 + ((i - 1) / pdf.numPages) * 50;
+
+                const {
+                  data: { text },
+                } = await Tesseract.recognize(canvas, 'eng', {
+                  logger: m => {
+                    if (m.status === 'recognizing text') {
+                      setProgress(
+                        Math.round(
+                          pageProgressBase + (m.progress * 50) / pdf.numPages
+                        )
+                      );
+                    }
+                  },
+                });
+                fullText += `\nPage ${i}:\n${text}\n`;
+              }
             }
+
+            setOcrResult(fullText);
+            setCurrentStep('extraction');
+            await processExtraction(fullText);
+          } catch (pdfError) {
+            console.error('PDF processing error:', pdfError);
+            setError(
+              'Error processing PDF file. Please try a different file or contact support.'
+            );
           }
-          setOcrResult(fullText);
-          setCurrentStep('extraction');
-          await processExtraction(fullText);
         };
         reader.readAsArrayBuffer(selectedFile);
       } else {
         // Handle Image
-        const {
-          data: { text },
-        } = await Tesseract.recognize(selectedFile, 'eng', {
-          logger: m => {
-            if (m.status === 'recognizing text') {
-              setProgress(Math.round(m.progress * 100));
-            }
-          },
-        });
-        setOcrResult(text);
-        setCurrentStep('extraction');
-        await processExtraction(text);
+        try {
+          setCurrentStep('ocr');
+          setProgress(10);
+
+          // Load Tesseract dynamically
+          const Tesseract = await loadTesseract();
+
+          setProgress(20);
+
+          const {
+            data: { text },
+          } = await Tesseract.recognize(selectedFile, 'eng', {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                setProgress(20 + Math.round(m.progress * 60));
+              }
+            },
+          });
+
+          setProgress(90);
+          setOcrResult(text);
+          setCurrentStep('extraction');
+          await processExtraction(text);
+        } catch (imageError) {
+          console.error('Image OCR error:', imageError);
+          setError(
+            'Error processing image file. Please try a different image or contact support.'
+          );
+        }
       }
     } catch (err) {
       setError('An error occurred during OCR processing.');
@@ -255,7 +302,17 @@ const SteerCoOCR: React.FC = () => {
 
   const processExtraction = async (rawText: string) => {
     try {
+      setProcessingStatus('Extracting entities from text...');
       setProgress(50);
+
+      // Validate raw text
+      if (!rawText || rawText.trim().length < 50) {
+        setWarnings(prev => [
+          ...prev,
+          'OCR text appears to be very short. Results may be limited.',
+        ]);
+      }
+
       const result = extractEntitiesFromText(rawText, {
         documentType: 'steering-committee',
         extractionMode: 'comprehensive',
@@ -263,7 +320,8 @@ const SteerCoOCR: React.FC = () => {
       });
 
       setExtractionResult(result);
-      setCurrentStep('mapping');
+      setProgress(70);
+      setProcessingStatus('Mapping entities to existing data...');
 
       // Perform mapping to existing data
       const mapping = mapExtractedEntitiesToExisting(result, {
@@ -277,9 +335,28 @@ const SteerCoOCR: React.FC = () => {
       setMappingResult(mapping);
       setCurrentStep('review');
       setProgress(100);
+      setProcessingStatus('Processing complete!');
+
+      // Add warnings for low extraction results
+      const totalEntities = result.extractionMetadata?.extractedEntities || 0;
+      if (totalEntities < 3) {
+        setWarnings(prev => [
+          ...prev,
+          'Few entities were extracted. Consider checking document quality or format.',
+        ]);
+      }
+
+      if ((result.extractionMetadata?.totalConfidence || 0) < 0.7) {
+        setWarnings(prev => [
+          ...prev,
+          'Low confidence in extracted entities. Please review results carefully.',
+        ]);
+      }
     } catch (err) {
-      setError('Error during entity extraction and mapping.');
-      console.error(err);
+      const errorMessage =
+        err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(`Error during entity extraction and mapping: ${errorMessage}`);
+      console.error('OCR Processing Error:', err);
     }
   };
 
@@ -376,6 +453,9 @@ const SteerCoOCR: React.FC = () => {
     setCurrentStep('upload');
     setProgress(0);
     setError(null);
+    setProcessingStatus('');
+    setWarnings([]);
+    setIsLoading(false);
   };
 
   const getEntityDisplayName = (entity: ExtractedEntity): string => {
@@ -420,11 +500,33 @@ const SteerCoOCR: React.FC = () => {
         >
           {isLoading ? 'Processing...' : 'Process Document'}
         </Button>
-        {isLoading && <Progress value={progress} className="w-full mt-4" />}
+        {isLoading && (
+          <div className="mt-4">
+            <Progress value={progress} className="w-full" />
+            {processingStatus && (
+              <div className="text-sm text-muted-foreground mt-2">
+                {processingStatus}
+              </div>
+            )}
+          </div>
+        )}
         {error && (
           <Alert variant="destructive" className="mt-4">
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {warnings.length > 0 && (
+          <Alert className="mt-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Warnings</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc list-inside space-y-1">
+                {warnings.map((warning, index) => (
+                  <li key={index}>{warning}</li>
+                ))}
+              </ul>
+            </AlertDescription>
           </Alert>
         )}
 

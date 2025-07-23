@@ -315,6 +315,8 @@ function extractCommentary(
 function normalizeStatus(
   status: string
 ): 'red' | 'amber' | 'green' | 'blue' | 'complete' | null {
+  const cleanStatus = status.toLowerCase().trim().replace(/[\s-]/g, '');
+
   const statusMap: Record<
     string,
     'red' | 'amber' | 'green' | 'blue' | 'complete'
@@ -322,14 +324,21 @@ function normalizeStatus(
     red: 'red',
     amber: 'amber',
     yellow: 'amber',
+    orange: 'amber',
     green: 'green',
     blue: 'blue',
     complete: 'complete',
     completed: 'complete',
     done: 'complete',
+    finished: 'complete',
+    ontrack: 'green',
+    atrisk: 'amber',
+    delayed: 'red',
+    blocked: 'red',
+    critical: 'red',
   };
 
-  return statusMap[status] || null;
+  return statusMap[cleanStatus] || null;
 }
 
 function calculateConfidence(matchText: string, entityType: string): number {

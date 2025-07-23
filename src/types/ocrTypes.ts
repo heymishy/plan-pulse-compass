@@ -130,9 +130,13 @@ export const BUILTIN_STEERCO_TEMPLATES: SteerCoTemplate[] = [
     description: 'Generic steering committee presentation format',
     patterns: {
       projectStatus: [
-        /(?:project|epic)\s*:?\s*([^\n]+?)(?:\s|\n)*(?:status|rag)\s*:?\s*(red|amber|green|blue|complete)/gi,
-        /([^\n]+?)\s*-\s*(red|amber|green|blue|complete)/gi,
-        /([^:]+?):\s*(red|amber|green|blue|complete)\s*-/gi,
+        // Standard format: \"Project Name: Status\" or \"Project Name - Status\"
+        /(?:project|epic)\s*:?\s*([^\n:]+?)(?:\s|\n)*(?:status|rag)\s*[:-]?\s*(red|amber|green|blue|complete|on[\s-]?track|at[\s-]?risk)/gi,
+        /([^\n:-]+?)\s*[-:]\s*(red|amber|green|blue|complete|on[\s-]?track|at[\s-]?risk)/gi,
+        // Table format: \"Project | Status\"
+        /([^\n|]+?)\s*\|\s*(red|amber|green|blue|complete|on[\s-]?track|at[\s-]?risk)/gi,
+        // Bullet format: \"• Project: Status\"
+        /[\u2022*-]\s*([^\n:]+?):\s*(red|amber|green|blue|complete|on[\s-]?track|at[\s-]?risk)/gi,
       ],
       risks: [
         /risk\s*:?\s*([^\n]+?)(?:\n|impact|probability)/gi,
