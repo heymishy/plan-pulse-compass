@@ -75,6 +75,8 @@ const FinancialSettings = () => {
       ('fortnightly' as 'fortnightly' | 'monthly' | '6-weekly'),
     workingDaysPerWeek: config?.workingDaysPerWeek || 5,
     workingHoursPerDay: config?.workingHoursPerDay || 8,
+    workingDaysPerYear: config?.workingDaysPerYear || 260,
+    workingDaysPerMonth: config?.workingDaysPerMonth || 22,
     currencySymbol: config?.currencySymbol || '$',
   });
 
@@ -140,6 +142,8 @@ const FinancialSettings = () => {
         iterationLength: fySettings.iterationLength,
         workingDaysPerWeek: fySettings.workingDaysPerWeek,
         workingHoursPerDay: fySettings.workingHoursPerDay,
+        workingDaysPerYear: fySettings.workingDaysPerYear,
+        workingDaysPerMonth: fySettings.workingDaysPerMonth,
         currencySymbol: fySettings.currencySymbol,
       };
       setConfig(updatedConfig);
@@ -243,6 +247,39 @@ const FinancialSettings = () => {
                   setFySettings(prev => ({
                     ...prev,
                     workingHoursPerDay: Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="workingDaysPerYear">Working Days Per Year</Label>
+              <Input
+                id="workingDaysPerYear"
+                type="number"
+                value={fySettings.workingDaysPerYear}
+                onChange={e =>
+                  setFySettings(prev => ({
+                    ...prev,
+                    workingDaysPerYear: Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="workingDaysPerMonth">
+                Working Days Per Month
+              </Label>
+              <Input
+                id="workingDaysPerMonth"
+                type="number"
+                value={fySettings.workingDaysPerMonth}
+                onChange={e =>
+                  setFySettings(prev => ({
+                    ...prev,
+                    workingDaysPerMonth: Number(e.target.value),
                   }))
                 }
               />

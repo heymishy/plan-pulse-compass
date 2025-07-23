@@ -50,7 +50,10 @@ import {
   Plus,
   Minus,
 } from 'lucide-react';
-import { calculatePersonCost } from '@/utils/financialCalculations';
+import {
+  calculatePersonCost,
+  getDefaultConfig,
+} from '@/utils/financialCalculations';
 
 interface TeamAnalytics {
   teamId: string;
@@ -78,7 +81,8 @@ interface TeamAnalytics {
 }
 
 const EnterpriseTeamAnalytics = () => {
-  const { teams, people, divisions, roles, allocations, cycles } = useApp();
+  const { teams, people, divisions, roles, allocations, cycles, config } =
+    useApp();
   const [selectedDivision, setSelectedDivision] = useState<string>('all');
   const [timeFrame, setTimeFrame] = useState<
     'current' | 'quarterly' | 'yearly'
@@ -104,7 +108,11 @@ const EnterpriseTeamAnalytics = () => {
       teamMembers.forEach(person => {
         const role = roles.find(r => r.id === person.roleId);
         if (role) {
-          const costCalc = calculatePersonCost(person, role);
+          const costCalc = calculatePersonCost(
+            person,
+            role,
+            config || getDefaultConfig()
+          );
           totalCost += costCalc.costPerYear;
           if (person.annualSalary) {
             totalSalary += person.annualSalary;
@@ -243,7 +251,7 @@ const EnterpriseTeamAnalytics = () => {
       team =>
         selectedDivision === 'all' || team.divisionName === selectedDivision
     );
-  }, [teams, people, divisions, roles, selectedDivision]);
+  }, [teams, people, divisions, roles, selectedDivision, config]);
 
   // Portfolio-level metrics
   const portfolioMetrics = useMemo(() => {

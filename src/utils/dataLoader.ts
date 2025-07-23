@@ -619,6 +619,11 @@ const generateSampleConfig = (): AppConfig => {
         status: 'planning',
       },
     ],
+    workingDaysPerWeek: 5,
+    workingHoursPerDay: 8,
+    workingDaysPerYear: 260,
+    workingDaysPerMonth: 22,
+    currencySymbol: '$',
   };
 };
 

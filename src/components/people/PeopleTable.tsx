@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Person } from '@/types';
@@ -25,18 +24,19 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Edit2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { calculatePersonCost } from '@/utils/financialCalculations';
+import {
+  calculatePersonCost,
+  getDefaultConfig,
+} from '@/utils/financialCalculations';
 
 interface PeopleTableProps {
   people: Person[];
   onEditPerson: (personId: string) => void;
 }
 
-const PeopleTable: React.FC<PeopleTableProps> = ({
-  people,
-  onEditPerson
-}) => {
-  const { setPeople, teams, roles, divisions, skills, personSkills } = useApp();
+const PeopleTable: React.FC<PeopleTableProps> = ({ people, onEditPerson }) => {
+  const { setPeople, teams, roles, divisions, skills, personSkills, config } =
+    useApp();
   const { toast } = useToast();
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -60,12 +60,12 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
   };
 
   const handleBulkDelete = () => {
-    setPeople(prevPeople => 
+    setPeople(prevPeople =>
       prevPeople.filter(person => !selectedPeople.has(person.id))
     );
 
     toast({
-      title: "People Deleted",
+      title: 'People Deleted',
       description: `Successfully deleted ${selectedPeople.size} person${selectedPeople.size !== 1 ? 's' : ''}`,
     });
 
@@ -91,22 +91,30 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
   };
 
   const getPersonSkills = (personId: string) => {
-    const personSkillsList = personSkills.filter(ps => ps.personId === personId);
-    return personSkillsList.map(ps => {
-      const skill = skills.find(s => s.id === ps.skillId);
-      return {
-        name: skill?.name || 'Unknown',
-        proficiency: ps.proficiencyLevel,
-      };
-    }).slice(0, 3); // Show max 3 skills
+    const personSkillsList = personSkills.filter(
+      ps => ps.personId === personId
+    );
+    return personSkillsList
+      .map(ps => {
+        const skill = skills.find(s => s.id === ps.skillId);
+        return {
+          name: skill?.name || 'Unknown',
+          proficiency: ps.proficiencyLevel,
+        };
+      })
+      .slice(0, 3); // Show max 3 skills
   };
 
   const getPersonCostInfo = (person: Person) => {
     const role = roles.find(r => r.id === person.roleId);
     if (!role) return '-';
 
-    const costCalc = calculatePersonCost(person, role);
-    
+    const costCalc = calculatePersonCost(
+      person,
+      role,
+      config || getDefaultConfig()
+    );
+
     if (person.employmentType === 'permanent') {
       const annualSalary = person.annualSalary || role.defaultAnnualSalary || 0;
       return `$${annualSalary.toLocaleString()}/year`;
@@ -126,22 +134,29 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
 
   const getProficiencyColor = (level: string) => {
     switch (level) {
-      case 'expert': return 'bg-green-100 text-green-800';
-      case 'advanced': return 'bg-blue-100 text-blue-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'beginner': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'expert':
+        return 'bg-green-100 text-green-800';
+      case 'advanced':
+        return 'bg-blue-100 text-blue-800';
+      case 'intermediate':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'beginner':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const isAllSelected = people.length > 0 && selectedPeople.size === people.length;
+  const isAllSelected =
+    people.length > 0 && selectedPeople.size === people.length;
 
   return (
     <div className="space-y-4">
       {selectedPeople.size > 0 && (
         <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg">
           <span className="text-sm text-blue-700">
-            {selectedPeople.size} person{selectedPeople.size !== 1 ? 's' : ''} selected
+            {selectedPeople.size} person{selectedPeople.size !== 1 ? 's' : ''}{' '}
+            selected
           </span>
           <Button
             variant="destructive"
@@ -178,15 +193,17 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {people.map((person) => {
+            {people.map(person => {
               const personSkillsList = getPersonSkills(person.id);
-              
+
               return (
                 <TableRow key={person.id}>
                   <TableCell>
                     <Checkbox
                       checked={selectedPeople.has(person.id)}
-                      onCheckedChange={(checked) => handleSelectPerson(person.id, checked as boolean)}
+                      onCheckedChange={checked =>
+                        handleSelectPerson(person.id, checked as boolean)
+                      }
                       aria-label={`Select ${person.name}`}
                     />
                   </TableCell>
@@ -210,15 +227,24 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
                       ) : (
                         <span className="text-xs text-gray-500">No skills</span>
                       )}
-                      {personSkills.filter(ps => ps.personId === person.id).length > 3 && (
+                      {personSkills.filter(ps => ps.personId === person.id)
+                        .length > 3 && (
                         <Badge variant="outline" className="text-xs">
-                          +{personSkills.filter(ps => ps.personId === person.id).length - 3}
+                          +
+                          {personSkills.filter(ps => ps.personId === person.id)
+                            .length - 3}
                         </Badge>
                       )}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={person.employmentType === 'permanent' ? 'default' : 'secondary'}>
+                    <Badge
+                      variant={
+                        person.employmentType === 'permanent'
+                          ? 'default'
+                          : 'secondary'
+                      }
+                    >
                       {person.employmentType}
                     </Badge>
                   </TableCell>
@@ -244,7 +270,10 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
             })}
             {people.length === 0 && (
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={11}
+                  className="text-center py-8 text-gray-500"
+                >
                   No people found
                 </TableCell>
               </TableRow>
@@ -258,13 +287,17 @@ const PeopleTable: React.FC<PeopleTableProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete People</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedPeople.size} person{selectedPeople.size !== 1 ? 's' : ''}? 
-              This action cannot be undone.
+              Are you sure you want to delete {selectedPeople.size} person
+              {selectedPeople.size !== 1 ? 's' : ''}? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

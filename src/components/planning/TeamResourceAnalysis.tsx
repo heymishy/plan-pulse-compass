@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Users, Clock, DollarSign, Zap } from 'lucide-react';
 import { ProjectFeasibilityAnalysis } from '@/types/planningTypes';
-import { Team, Person, Role } from '@/types';
+import { Team, Person, Role, AppConfig } from '@/types';
 import { calculatePersonCost } from '@/utils/financialCalculations';
 
 interface TeamResourceAnalysisProps {
@@ -12,6 +12,7 @@ interface TeamResourceAnalysisProps {
   teams: Team[];
   people: Person[];
   roles: Role[];
+  config: AppConfig;
 }
 
 const TeamResourceAnalysis: React.FC<TeamResourceAnalysisProps> = ({
@@ -19,6 +20,7 @@ const TeamResourceAnalysis: React.FC<TeamResourceAnalysisProps> = ({
   teams,
   people,
   roles,
+  config,
 }) => {
   // Get all unique teams from recommendations
   const allRecommendedTeams = React.useMemo(() => {
@@ -49,7 +51,7 @@ const TeamResourceAnalysis: React.FC<TeamResourceAnalysisProps> = ({
     teamMembers.forEach(person => {
       const role = roles.find(r => r.id === person.roleId);
       if (role) {
-        const personCost = calculatePersonCost(person, role);
+        const personCost = calculatePersonCost(person, role, config);
         totalCost += personCost.costPerMonth;
       }
     });

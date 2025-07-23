@@ -4,6 +4,8 @@ export interface AppConfig {
   quarters: Cycle[];
   workingDaysPerWeek: number; // e.g., 5 for a standard work week
   workingHoursPerDay: number; // e.g., 8 for a standard workday
+  workingDaysPerYear: number; // e.g., 260 for typical business year
+  workingDaysPerMonth: number; // e.g., 22 for typical business month
   currencySymbol: string; // e.g., '$', '€', '£'
 }
 

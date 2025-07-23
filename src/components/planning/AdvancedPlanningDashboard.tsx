@@ -27,6 +27,7 @@ import {
   analyzeProjectsFeasibility,
   createPlanningScenario,
 } from '@/utils/advancedPlanningEngine';
+import { getDefaultConfig } from '@/utils/financialCalculations';
 import {
   ProjectFeasibilityAnalysis,
   PlanningFilters,
@@ -50,6 +51,7 @@ const AdvancedPlanningDashboard = () => {
     cycles,
     divisions,
     roles,
+    config,
   } = useApp();
 
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
@@ -101,6 +103,7 @@ const AdvancedPlanningDashboard = () => {
       divisions,
       roles,
       divisionBudgets: [], // TODO: Add division budgets to context
+      config: config || getDefaultConfig(),
     });
   }, [
     selectedProjects,
@@ -116,6 +119,7 @@ const AdvancedPlanningDashboard = () => {
     cycles,
     divisions,
     roles,
+    config,
   ]);
 
   const handleProjectSelection = (projectId: string, checked: boolean) => {
@@ -377,6 +381,7 @@ const AdvancedPlanningDashboard = () => {
               teams={teams}
               people={people}
               roles={roles}
+              config={config || getDefaultConfig()}
             />
           </TabsContent>
 

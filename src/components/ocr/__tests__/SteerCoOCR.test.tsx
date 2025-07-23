@@ -20,6 +20,12 @@ vi.mock('tesseract.js', () => ({
       },
     }),
   },
+  recognize: vi.fn().mockResolvedValue({
+    data: {
+      text: 'Sample OCR text from image',
+      confidence: 85,
+    },
+  }),
 }));
 
 vi.mock('pdfjs-dist', () => ({
@@ -473,7 +479,7 @@ describe('SteerCoOCR Component', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText('Error during entity extraction and mapping.')
+          screen.getByText(/Error during entity extraction and mapping/)
         ).toBeInTheDocument();
       });
     });

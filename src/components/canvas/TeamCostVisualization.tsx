@@ -1,17 +1,13 @@
-import React, { useMemo, useState, Suspense, lazy } from 'react';
+import React, { useMemo, useState } from 'react';
+import {
+  ReactFlow,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+} from '@xyflow/react';
 
-// Lazy load ReactFlow to reduce initial bundle size
-const ReactFlowComponent = lazy(() =>
-  import('@xyflow/react').then(module => ({
-    default: ({ children, ...props }) => {
-      const { ReactFlow, Controls, Background, useNodesState, useEdgesState } =
-        module;
-      return React.createElement(ReactFlow, props, children);
-    },
-  }))
-);
-
-// Type imports can still be synchronous
+// Type imports
 import type { Node, Edge, Position } from '@xyflow/react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +22,10 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { calculatePersonCost } from '@/utils/financialCalculations';
+import {
+  calculatePersonCost,
+  getDefaultConfig,
+} from '@/utils/financialCalculations';
 import {
   Users,
   DollarSign,
@@ -37,6 +36,23 @@ import {
   Layers,
   Filter,
 } from 'lucide-react';
+
+interface TeamMetrics {
+  teamId: string;
+  teamName: string;
+  divisionName: string;
+  divisionId: string;
+  memberCount: number;
+  permanentCount: number;
+  contractorCount: number;
+  totalCost: number;
+  avgSalary: number;
+  riskScore: number;
+  utilization: number;
+  costPerHour: number;
+  contractorRatio: number;
+  projects: string[];
+}
 
 interface TeamNode extends Node {
   data: {
@@ -71,7 +87,8 @@ type ColorCoding =
   | 'risk-level';
 
 const TeamCostVisualization: React.FC<CostVisualizationProps> = () => {
-  const { teams, people, divisions, roles, projects, allocations } = useApp();
+  const { teams, people, divisions, roles, projects, allocations, config } =
+    useApp();
   const [viewMode, setViewMode] = useState<ViewMode>('hierarchy');
   const [nodeSizing, setNodeSizing] = useState<NodeSizing>('team-size');
   const [colorCoding, setColorCoding] = useState<ColorCoding>('division');
@@ -105,7 +122,11 @@ const TeamCostVisualization: React.FC<CostVisualizationProps> = () => {
       teamMembers.forEach(person => {
         const role = roles.find(r => r.id === person.roleId);
         if (role) {
-          const costCalc = calculatePersonCost(person, role);
+          const costCalc = calculatePersonCost(
+            person,
+            role,
+            config || getDefaultConfig()
+          );
           totalCost += costCalc.costPerYear;
           if (person.annualSalary) {
             totalSalary += person.annualSalary;
@@ -225,7 +246,7 @@ const TeamCostVisualization: React.FC<CostVisualizationProps> = () => {
     switch (viewMode) {
       case 'hierarchy': {
         // Hierarchical layout by division
-        const divisionGroups = new Map<string, any[]>(); // eslint-disable-line @typescript-eslint/no-explicit-any
+        const divisionGroups = new Map<string, TeamMetrics[]>();
         filteredTeams.forEach(team => {
           const divisionName = team.divisionName;
           if (!divisionGroups.has(divisionName)) {
@@ -538,6 +559,7 @@ const TeamCostVisualization: React.FC<CostVisualizationProps> = () => {
     selectedDivision,
     allocations,
     projects,
+    config,
   ]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);

@@ -11,6 +11,18 @@ import {
 
 const WORKING_DAYS_PER_MONTH = 22; // Default working days per month
 
+// Default config for when config is not available
+export const getDefaultConfig = (): AppConfig => ({
+  workingHoursPerDay: 8,
+  workingDaysPerWeek: 5,
+  workingDaysPerYear: 260,
+  workingDaysPerMonth: 22,
+  currencySymbol: '$',
+  financialYear: { id: 'default', name: 'Default', startDate: '', endDate: '' },
+  iterationLength: 'fortnightly',
+  quarters: [],
+});
+
 export interface PersonCostCalculation {
   personId: string;
   costPerHour: number;

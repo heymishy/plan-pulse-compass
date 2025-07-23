@@ -39,6 +39,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
       quarters: [],
       workingDaysPerWeek: 5,
       workingHoursPerDay: 8,
+      workingDaysPerYear: 260,
+      workingDaysPerMonth: 22,
       currencySymbol: '$',
     }
   );

@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { Role } from '@/types';
+import { Role, AppConfig } from '@/types';
 import { calculatePersonCost } from '@/utils/financialCalculations';
 
 interface PersonEmploymentFormProps {
@@ -14,6 +13,7 @@ interface PersonEmploymentFormProps {
   dailyRate?: number;
   contractRateType: 'hourly' | 'daily';
   selectedRole?: Role;
+  config: AppConfig;
   onEmploymentTypeChange: (type: 'permanent' | 'contractor') => void;
   onAnnualSalaryChange: (salary: number | undefined) => void;
   onHourlyRateChange: (rate: number | undefined) => void;
@@ -28,28 +28,29 @@ const PersonEmploymentForm: React.FC<PersonEmploymentFormProps> = ({
   dailyRate,
   contractRateType,
   selectedRole,
+  config,
   onEmploymentTypeChange,
   onAnnualSalaryChange,
   onHourlyRateChange,
   onDailyRateChange,
-  onContractRateTypeChange
+  onContractRateTypeChange,
 }) => {
   const getPlaceholderText = () => {
-    if (!selectedRole) return "Select a role first";
-    
+    if (!selectedRole) return 'Select a role first';
+
     if (employmentType === 'permanent') {
-      return selectedRole.defaultAnnualSalary ? 
-        `Default: $${selectedRole.defaultAnnualSalary.toLocaleString()}/year` : 
-        "Enter annual salary";
+      return selectedRole.defaultAnnualSalary
+        ? `Default: $${selectedRole.defaultAnnualSalary.toLocaleString()}/year`
+        : 'Enter annual salary';
     } else {
       if (contractRateType === 'hourly') {
-        return selectedRole.defaultHourlyRate ? 
-          `Default: $${selectedRole.defaultHourlyRate}/hour` : 
-          `Fallback: $${selectedRole.defaultRate}/hour`;
+        return selectedRole.defaultHourlyRate
+          ? `Default: $${selectedRole.defaultHourlyRate}/hour`
+          : `Fallback: $${selectedRole.defaultRate}/hour`;
       } else {
-        return selectedRole.defaultDailyRate ? 
-          `Default: $${selectedRole.defaultDailyRate}/day` : 
-          "Enter daily rate";
+        return selectedRole.defaultDailyRate
+          ? `Default: $${selectedRole.defaultDailyRate}/day`
+          : 'Enter daily rate';
       }
     }
   };
@@ -68,17 +69,21 @@ const PersonEmploymentForm: React.FC<PersonEmploymentFormProps> = ({
       employmentType,
       startDate: new Date().toISOString().split('T')[0],
       annualSalary: employmentType === 'permanent' ? annualSalary : undefined,
-      contractDetails: employmentType === 'contractor' ? {
-        hourlyRate: contractRateType === 'hourly' ? hourlyRate : undefined,
-        dailyRate: contractRateType === 'daily' ? dailyRate : undefined,
-      } : undefined,
+      contractDetails:
+        employmentType === 'contractor'
+          ? {
+              hourlyRate:
+                contractRateType === 'hourly' ? hourlyRate : undefined,
+              dailyRate: contractRateType === 'daily' ? dailyRate : undefined,
+            }
+          : undefined,
     };
 
-    const costCalc = calculatePersonCost(mockPerson, selectedRole);
-    
+    const costCalc = calculatePersonCost(mockPerson, selectedRole, config);
+
     let rateText = '';
     let badgeVariant: 'default' | 'secondary' | 'destructive' = 'default';
-    
+
     switch (costCalc.rateSource) {
       case 'personal':
         rateText = `Using personal rate: $${costCalc.effectiveRate}${costCalc.rateType === 'annual' ? '/year' : costCalc.rateType === 'daily' ? '/day' : '/hour'}`;
@@ -148,7 +153,9 @@ const PersonEmploymentForm: React.FC<PersonEmploymentFormProps> = ({
               type="number"
               placeholder={getPlaceholderText()}
               value={annualSalary || ''}
-              onChange={(e) => onAnnualSalaryChange(Number(e.target.value) || undefined)}
+              onChange={e =>
+                onAnnualSalaryChange(Number(e.target.value) || undefined)
+              }
               className="pl-7"
             />
           </div>
@@ -188,7 +195,9 @@ const PersonEmploymentForm: React.FC<PersonEmploymentFormProps> = ({
                   step="0.01"
                   placeholder={getPlaceholderText()}
                   value={hourlyRate || ''}
-                  onChange={(e) => onHourlyRateChange(Number(e.target.value) || undefined)}
+                  onChange={e =>
+                    onHourlyRateChange(Number(e.target.value) || undefined)
+                  }
                   className="pl-7"
                 />
               </div>
@@ -204,13 +213,15 @@ const PersonEmploymentForm: React.FC<PersonEmploymentFormProps> = ({
                   step="0.01"
                   placeholder={getPlaceholderText()}
                   value={dailyRate || ''}
-                  onChange={(e) => onDailyRateChange(Number(e.target.value) || undefined)}
+                  onChange={e =>
+                    onDailyRateChange(Number(e.target.value) || undefined)
+                  }
                   className="pl-7"
                 />
               </div>
             </div>
           )}
-          
+
           <p className="text-xs text-gray-500">
             Leave empty to use role default rate
           </p>
