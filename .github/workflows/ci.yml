@@ -442,22 +442,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: github.event_name == 'pull_request'
-    needs: [build]
+    needs: [quick-validate]
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: build-artifacts
-          path: .
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Deploy to Vercel (Preview)
         run: |
           npm i -g vercel@latest
-          vercel --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+          vercel --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -468,23 +468,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: github.ref == 'refs/heads/main'
-    needs: [build, security-audit]
+    needs: [quick-validate, security-audit]
     environment: production
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: build-artifacts
-          path: .
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Deploy to Vercel (Production)
         run: |
           npm i -g vercel@latest
-          vercel --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+          vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
