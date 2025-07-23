@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useMemo,
   useEffect,
+  useRef,
 } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useApp } from './AppContext';
@@ -470,14 +471,25 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
     setTemplates(builtinTemplates);
   }, [templates, setTemplates]);
 
+  // Use ref to store the latest cleanup function to avoid stale closures
+  const cleanupRef = useRef(cleanupExpiredScenarios);
+  cleanupRef.current = cleanupExpiredScenarios;
+
   // Auto-cleanup on mount and periodically
   useEffect(() => {
-    cleanupExpiredScenarios();
+    // Initial cleanup on mount
+    cleanupRef.current();
 
     // Set up periodic cleanup (every hour)
-    const interval = setInterval(cleanupExpiredScenarios, 60 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        cleanupRef.current();
+      },
+      60 * 60 * 1000
+    );
+
     return () => clearInterval(interval);
-  }, [cleanupExpiredScenarios]);
+  }, []); // Empty dependency array - only run once on mount
 
   const value: ScenarioContextType = {
     // State
