@@ -1,10 +1,12 @@
 {
-  "version": 2,
-  "framework": null,
   "installCommand": "npm install",
   "buildCommand": "chmod +x vercel-build-script.sh && ./vercel-build-script.sh",
   "outputDirectory": "dist",
-  "functions": {},
+  "functions": {
+    "app/api/**/*.{js,ts}": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
