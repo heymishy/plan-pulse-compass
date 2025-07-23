@@ -130,6 +130,84 @@ jobs:
             test-results/
           retention-days: 7
 
+  # Console Error Monitoring (runs on all pushes and PRs)
+  console-error-monitoring:
+    name: Console Error Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [quick-validate]
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Cache dependencies and Playwright
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            playwright/.cache
+          key: ${{ runner.os }}-deps-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-playwright-
+            ${{ runner.os }}-deps-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npm run test:e2e:install
+
+      - name: Run Console Error Monitoring Tests
+        run: npm run test:console-errors:ci
+        env:
+          CI: true
+
+      - name: Upload Console Error Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: console-error-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: Add Console Error Summary to GitHub Actions
+        if: always()
+        run: |
+          echo "## 🧪 Console Error Monitoring Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if there's a test results directory
+          if [ -d "test-results" ]; then
+            FAILED_TESTS=$(find test-results -name "*.xml" | xargs grep -l "failure" | wc -l 2>/dev/null || echo "0")
+            TOTAL_TESTS=$(find test-results -name "*.xml" | wc -l 2>/dev/null || echo "0")
+            
+            if [ "$FAILED_TESTS" -eq "0" ]; then
+              echo "✅ **All pages passed console error checks!**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "📊 **Results**: $TOTAL_TESTS pages tested, 0 console errors found" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Console errors detected on some pages**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "📊 **Results**: $TOTAL_TESTS pages tested, $FAILED_TESTS pages with errors" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ **Test results unavailable**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 **Detailed Report**: Check the uploaded artifacts for full test results" >> $GITHUB_STEP_SUMMARY
+
   # E2E Tests (only on main branch or manual trigger)
   e2e-tests:
     name: E2E Tests
@@ -482,7 +560,14 @@ jobs:
     runs-on: ubuntu-latest
     if: failure()
     needs:
-      [quick-validate, comprehensive-tests, e2e-tests, build, security-audit]
+      [
+        quick-validate,
+        comprehensive-tests,
+        console-error-monitoring,
+        e2e-tests,
+        build,
+        security-audit,
+      ]
 
     steps:
       - name: Notify failure

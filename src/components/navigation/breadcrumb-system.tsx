@@ -328,90 +328,95 @@ export function BreadcrumbSystem({
             const showEllipsis =
               hiddenItems.length > 0 && index === 1 && !isFirst;
 
-            return (
-              <React.Fragment key={item.id}>
-                {showEllipsis && (
-                  <>
-                    <BreadcrumbItem>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-auto p-1"
-                            aria-label="Show hidden breadcrumb items"
-                          >
-                            <BreadcrumbEllipsis className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          {hiddenItems.map(hiddenItem => {
-                            const HiddenIcon = hiddenItem.icon;
-                            return (
-                              <DropdownMenuItem
-                                key={hiddenItem.id}
-                                onClick={() =>
-                                  handleNavigation(hiddenItem.path)
-                                }
-                                className="cursor-pointer"
-                              >
-                                <div className="flex items-center gap-2">
-                                  {showIcons && HiddenIcon && (
-                                    <HiddenIcon className="h-4 w-4" />
-                                  )}
-                                  <span>{hiddenItem.label}</span>
-                                </div>
-                              </DropdownMenuItem>
-                            );
-                          })}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator>
-                      {separator === 'chevron' ? (
-                        <ChevronRight className="h-4 w-4" />
-                      ) : (
-                        '/'
-                      )}
-                    </BreadcrumbSeparator>
-                  </>
-                )}
+            const elements = [];
 
-                <BreadcrumbItem>
-                  {isLast ? (
-                    <BreadcrumbPage className="flex items-center gap-2 font-medium text-gray-900 text-sm">
+            if (showEllipsis) {
+              elements.push(
+                <BreadcrumbItem key={`ellipsis-${item.id}`}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto p-1"
+                        aria-label="Show hidden breadcrumb items"
+                      >
+                        <BreadcrumbEllipsis className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {hiddenItems.map(hiddenItem => {
+                        const HiddenIcon = hiddenItem.icon;
+                        return (
+                          <DropdownMenuItem
+                            key={hiddenItem.id}
+                            onClick={() => handleNavigation(hiddenItem.path)}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2">
+                              {showIcons && HiddenIcon && (
+                                <HiddenIcon className="h-4 w-4" />
+                              )}
+                              <span>{hiddenItem.label}</span>
+                            </div>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </BreadcrumbItem>
+              );
+
+              elements.push(
+                <BreadcrumbSeparator key={`ellipsis-sep-${item.id}`}>
+                  {separator === 'chevron' ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    '/'
+                  )}
+                </BreadcrumbSeparator>
+              );
+            }
+
+            elements.push(
+              <BreadcrumbItem key={`item-${item.id}`}>
+                {isLast ? (
+                  <BreadcrumbPage className="flex items-center gap-2 font-medium text-gray-900 text-sm">
+                    {showIcons && Icon && <Icon className="h-4 w-4" />}
+                    <span>{item.label}</span>
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink
+                    asChild
+                    className="flex items-center gap-2 hover:text-foreground transition-colors"
+                  >
+                    <Link
+                      to={item.path}
+                      className="flex items-center gap-2"
+                      onKeyDown={e => handleKeyDown(e, item.path)}
+                      title={item.description}
+                    >
                       {showIcons && Icon && <Icon className="h-4 w-4" />}
                       <span>{item.label}</span>
-                    </BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink
-                      asChild
-                      className="flex items-center gap-2 hover:text-foreground transition-colors"
-                    >
-                      <Link
-                        to={item.path}
-                        className="flex items-center gap-2"
-                        onKeyDown={e => handleKeyDown(e, item.path)}
-                        title={item.description}
-                      >
-                        {showIcons && Icon && <Icon className="h-4 w-4" />}
-                        <span>{item.label}</span>
-                      </Link>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-
-                {!isLast && (
-                  <BreadcrumbSeparator>
-                    {separator === 'chevron' ? (
-                      <ChevronRight className="h-4 w-4" />
-                    ) : (
-                      '/'
-                    )}
-                  </BreadcrumbSeparator>
+                    </Link>
+                  </BreadcrumbLink>
                 )}
-              </React.Fragment>
+              </BreadcrumbItem>
             );
+
+            if (!isLast) {
+              elements.push(
+                <BreadcrumbSeparator key={`sep-${item.id}`}>
+                  {separator === 'chevron' ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    '/'
+                  )}
+                </BreadcrumbSeparator>
+              );
+            }
+
+            return elements;
           })}
         </BreadcrumbList>
       </Breadcrumb>

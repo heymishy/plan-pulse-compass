@@ -35,6 +35,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:install": "playwright install",
+    "test:console-errors": "playwright test tests/e2e/page-console-errors.spec.ts",
+    "test:console-errors:ci": "playwright test tests/e2e/page-console-errors.spec.ts --reporter=html,github",
     "typecheck": "tsc --noEmit",
     "audit": "npm audit --audit-level=high",
     "audit:fix": "npm audit fix",
