@@ -1,19 +1,32 @@
-
 import React from 'react';
-import { Team, Person, Role } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
+import { Team, Person, Role, AppConfig } from '@/types';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
   calculateTeamWeeklyCost,
   calculateTeamMonthlyCost,
   calculateTeamQuarterlyCost,
-  calculateTeamAnnualCost
+  calculateTeamAnnualCost,
 } from '@/utils/financialCalculations';
 
 interface TeamFinancialsTableProps {
   teams: Team[];
   people: Person[];
   roles: Role[];
+  config: AppConfig;
 }
 
 interface TeamFinancialData {
@@ -25,29 +38,40 @@ interface TeamFinancialData {
   annualCost: number;
 }
 
-const TeamFinancialsTable: React.FC<TeamFinancialsTableProps> = ({ teams, people, roles }) => {
-  
+const TeamFinancialsTable: React.FC<TeamFinancialsTableProps> = ({
+  teams,
+  people,
+  roles,
+  config,
+}) => {
   const financialData: TeamFinancialData[] = teams.map(team => {
     const teamMembers = people.filter(p => p.teamId === team.id && p.isActive);
     return {
       id: team.id,
       name: team.name,
-      weeklyCost: calculateTeamWeeklyCost(teamMembers, roles),
-      monthlyCost: calculateTeamMonthlyCost(teamMembers, roles),
-      quarterlyCost: calculateTeamQuarterlyCost(teamMembers, roles),
-      annualCost: calculateTeamAnnualCost(teamMembers, roles),
+      weeklyCost: calculateTeamWeeklyCost(teamMembers, roles, config),
+      monthlyCost: calculateTeamMonthlyCost(teamMembers, roles, config),
+      quarterlyCost: calculateTeamQuarterlyCost(teamMembers, roles, config),
+      annualCost: calculateTeamAnnualCost(teamMembers, roles, config),
     };
   });
-  
+
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
-  }
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Team Cost Analysis</CardTitle>
-        <CardDescription>A summary of forecasted costs for each team.</CardDescription>
+        <CardDescription>
+          A summary of forecasted costs for each team.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -65,10 +89,18 @@ const TeamFinancialsTable: React.FC<TeamFinancialsTableProps> = ({ teams, people
               financialData.map(item => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.weeklyCost)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.monthlyCost)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.quarterlyCost)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.annualCost)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.weeklyCost)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.monthlyCost)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.quarterlyCost)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.annualCost)}
+                  </TableCell>
                 </TableRow>
               ))
             ) : (

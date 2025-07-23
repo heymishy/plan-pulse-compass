@@ -175,7 +175,7 @@ const createZodSchema = (
           }
         );
       } else if (field.type === 'multiselect') {
-        fieldSchema = (fieldSchema as z.ZodArray<any>).min(
+        fieldSchema = (fieldSchema as z.ZodArray<z.ZodString>).min(
           1,
           `${field.label} is required`
         );
