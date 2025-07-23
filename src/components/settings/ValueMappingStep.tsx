@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -118,28 +118,31 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
   };
 
   // Smart suggestions for mapping
-  const suggestMapping = (
-    csvValue: string,
-    options: (string | number)[]
-  ): string | number | null => {
-    const normalizedCsvValue = csvValue.toLowerCase().trim();
+  const suggestMapping = useCallback(
+    (
+      csvValue: string,
+      options: (string | number)[]
+    ): string | number | null => {
+      const normalizedCsvValue = csvValue.toLowerCase().trim();
 
-    // Exact match
-    const exactMatch = options.find(
-      option => String(option).toLowerCase().trim() === normalizedCsvValue
-    );
-    if (exactMatch) return exactMatch;
+      // Exact match
+      const exactMatch = options.find(
+        option => String(option).toLowerCase().trim() === normalizedCsvValue
+      );
+      if (exactMatch) return exactMatch;
 
-    // Partial match
-    const partialMatch = options.find(
-      option =>
-        String(option).toLowerCase().includes(normalizedCsvValue) ||
-        normalizedCsvValue.includes(String(option).toLowerCase())
-    );
-    if (partialMatch) return partialMatch;
+      // Partial match
+      const partialMatch = options.find(
+        option =>
+          String(option).toLowerCase().includes(normalizedCsvValue) ||
+          normalizedCsvValue.includes(String(option).toLowerCase())
+      );
+      if (partialMatch) return partialMatch;
 
-    return null;
-  };
+      return null;
+    },
+    []
+  );
 
   // Initialize value mappings with saved mappings and suggestions
   useEffect(() => {
@@ -313,7 +316,7 @@ export const ValueMappingStep: React.FC<ValueMappingStepProps> = ({
     });
 
     return summary;
-  }, [csvValuesByField, valueMappings, systemOptions]);
+  }, [csvData.length, csvValuesByField, valueMappings, systemOptions]);
 
   return (
     <div className="space-y-6">

@@ -176,16 +176,7 @@ const TeamPortfolioOverview = () => {
         healthyTeams,
       },
     };
-  }, [
-    teams,
-    people,
-    divisions,
-    allocations,
-    cycles,
-    epics,
-    runWorkCategories,
-    projects,
-  ]);
+  }, [teams, people, divisions, allocations, cycles]);
 
   const { teamMetrics, divisionRollups, portfolio } = portfolioData;
 

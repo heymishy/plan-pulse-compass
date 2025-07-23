@@ -239,9 +239,7 @@ const RunWorkAllocationView = () => {
     divisions,
     allocations,
     cycles,
-    epics,
     runWorkCategories,
-    projects,
     selectedDivision,
   ]);
 

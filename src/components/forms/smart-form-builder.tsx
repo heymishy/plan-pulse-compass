@@ -86,26 +86,26 @@ export interface FormFieldConfig {
   /** Options for select/radio fields */
   options?: SelectOption[];
   /** Default value */
-  defaultValue?: any;
+  defaultValue?: string | number | boolean | Date | string[];
   /** Field dependencies (show/hide based on other fields) */
   dependencies?: string[];
   /** Conditional visibility function */
-  conditional?: (values: Record<string, any>) => boolean;
+  conditional?: (values: Record<string, unknown>) => boolean;
   /** Field width (grid columns) */
   width?: 'full' | 'half' | 'third' | 'quarter';
   /** Disabled state */
   disabled?: boolean;
   /** Custom field props */
-  fieldProps?: Record<string, any>;
+  fieldProps?: Record<string, unknown>;
 }
 
 export interface SmartFormProps {
   /** Form field configuration */
   schema: FormFieldConfig[];
   /** Initial form values */
-  initialValues?: Record<string, any>;
+  initialValues?: Record<string, unknown>;
   /** Form submission handler */
-  onSubmit: (values: Record<string, any>) => Promise<void>;
+  onSubmit: (values: Record<string, unknown>) => Promise<void>;
   /** Cancel handler */
   onCancel?: () => void;
   /** Submit button text */
@@ -125,7 +125,9 @@ export interface SmartFormProps {
 }
 
 // Create Zod schema from field configurations
-const createZodSchema = (fields: FormFieldConfig[]): z.ZodObject<any> => {
+const createZodSchema = (
+  fields: FormFieldConfig[]
+): z.ZodObject<Record<string, unknown>> => {
   const schemaFields: Record<string, z.ZodSchema> = {};
 
   fields.forEach(field => {

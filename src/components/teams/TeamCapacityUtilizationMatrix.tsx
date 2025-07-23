@@ -230,17 +230,7 @@ const TeamCapacityUtilizationMatrix = () => {
       },
       divisionCapacityRollups,
     };
-  }, [
-    teams,
-    people,
-    divisions,
-    allocations,
-    cycles,
-    epics,
-    runWorkCategories,
-    projects,
-    selectedDivision,
-  ]);
+  }, [teams, people, divisions, allocations, cycles, selectedDivision]);
 
   const { teamCapacityMetrics, summary, divisionCapacityRollups } =
     capacityData;

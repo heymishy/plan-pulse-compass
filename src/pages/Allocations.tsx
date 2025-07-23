@@ -119,7 +119,7 @@ const Allocations = () => {
       }
     });
     return projects.filter(p => teamAllocationProjectIds.has(p.id));
-  }, [selectedTeamId, allocations, epics, projects]);
+  }, [epics, projects, filteredAllocations]);
 
   if (!config) {
     return (
