@@ -100,7 +100,8 @@ export function useEncryptedLocalStorage<T>(
     return () => {
       isMounted = false;
     };
-  }, [key, encryptionKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, encryptionKey]); // initialValue intentionally excluded to prevent infinite re-renders
 
   const setValue = useCallback(
     async (value: T | ((val: T) => T)) => {
