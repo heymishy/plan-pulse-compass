@@ -196,7 +196,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
   const createScenarioFromTemplate = useCallback(
     async (
       templateId: string,
-      parameters: Record<string, any>
+      parameters: Record<string, unknown>
     ): Promise<string> => {
       const template = templates.find(t => t.id === templateId);
       if (!template) {

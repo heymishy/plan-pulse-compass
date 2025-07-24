@@ -253,8 +253,8 @@ describe('OCRPerformanceMonitor', () => {
   });
 
   describe('alerting system', () => {
-    let alertSpy: any;
-    let consoleWarnSpy: any;
+    let alertSpy: ReturnType<typeof vi.fn>;
+    let consoleWarnSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
       alertSpy = vi.fn();

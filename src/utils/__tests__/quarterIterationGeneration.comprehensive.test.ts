@@ -732,7 +732,7 @@ describe('Quarter and Iteration Generation - Comprehensive Coverage', () => {
     });
 
     it('should optimize memory usage for large datasets', () => {
-      const initialMemory = process.memoryUsage().heapUsed;
+      const initialMemory = process.memoryUsage()?.heapUsed || 0;
 
       // Generate large dataset
       const largeQuarters = Array.from({ length: 100 }, (_, i) => ({
@@ -751,7 +751,7 @@ describe('Quarter and Iteration Generation - Comprehensive Coverage', () => {
         })
       );
 
-      const finalMemory = process.memoryUsage().heapUsed;
+      const finalMemory = process.memoryUsage()?.heapUsed || 0;
       const memoryIncrease = finalMemory - initialMemory;
       const memoryIncreaseInMB = memoryIncrease / (1024 * 1024);
 

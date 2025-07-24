@@ -275,7 +275,7 @@ describe('ScenarioContext', () => {
     });
 
     // Get comparison
-    let comparison: any;
+    let comparison: unknown;
     await act(async () => {
       comparison = await result.current.getScenarioComparison(scenarioId);
     });

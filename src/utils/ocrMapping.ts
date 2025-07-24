@@ -395,7 +395,7 @@ function findBestTextMatch(
   let bestMatch: TextMatchResult | null = null;
 
   for (const entity of entities) {
-    const entityText = (entity as any)[propertyName];
+    const entityText = (entity as Record<string, unknown>)[propertyName];
     if (!entityText || typeof entityText !== 'string') continue;
 
     const score = calculateSimilarity(searchText, entityText);
