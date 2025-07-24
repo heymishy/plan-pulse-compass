@@ -28,16 +28,16 @@ describe('Quarter and Iteration Generation Logic', () => {
         quarterEnd.setMonth(quarterEnd.getMonth() + 3);
         quarterEnd.setDate(quarterEnd.getDate() - 1); // Last day of the quarter
 
-        // Use the financial year start date for consistent naming
-        const fyYear = fyStart.getFullYear();
+        // Use the actual year from the quarter start date for proper naming
+        const quarterYear = quarterStart.getFullYear();
 
         const newQuarter: Cycle = {
-          id: `quarter-${i + 1}-${fyYear}`,
+          id: `quarter-${i + 1}-${quarterYear}`,
           type: 'quarterly',
-          name: `Q${i + 1} ${fyYear}`,
+          name: `Q${i + 1} ${quarterYear}`,
           startDate: quarterStart.toISOString().split('T')[0],
           endDate: quarterEnd.toISOString().split('T')[0],
-          financialYearId: `fy-${fyYear}`,
+          financialYearId: `fy-${fyStart.getFullYear()}`,
         };
 
         newQuarters.push(newQuarter);
@@ -103,7 +103,7 @@ describe('Quarter and Iteration Generation Logic', () => {
       });
 
       expect(quarters[3]).toMatchObject({
-        name: 'Q4 2024', // Uses FY start year for consistency
+        name: 'Q4 2025', // Uses actual quarter start year
         startDate: '2025-01-01',
         endDate: '2025-03-31',
       });
@@ -128,13 +128,13 @@ describe('Quarter and Iteration Generation Logic', () => {
       });
 
       expect(quarters[2]).toMatchObject({
-        name: 'Q3 2024',
+        name: 'Q3 2025',
         startDate: '2024-12-31',
         endDate: '2025-03-30',
       });
 
       expect(quarters[3]).toMatchObject({
-        name: 'Q4 2024',
+        name: 'Q4 2025',
         startDate: '2025-03-31',
         endDate: '2025-06-30',
       });
@@ -153,19 +153,19 @@ describe('Quarter and Iteration Generation Logic', () => {
       });
 
       expect(quarters[1]).toMatchObject({
-        name: 'Q2 2024',
+        name: 'Q2 2025',
         startDate: '2025-01-01',
         endDate: '2025-03-31',
       });
 
       expect(quarters[2]).toMatchObject({
-        name: 'Q3 2024',
+        name: 'Q3 2025',
         startDate: '2025-04-01',
         endDate: '2025-06-30',
       });
 
       expect(quarters[3]).toMatchObject({
-        name: 'Q4 2024',
+        name: 'Q4 2025',
         startDate: '2025-07-01',
         endDate: '2025-09-30',
       });

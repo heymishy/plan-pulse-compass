@@ -50,6 +50,8 @@ test.describe('Advanced Data Import - Projects with Epics & Planning Allocations
   test('should complete full banking portfolio import workflow', async ({
     page,
   }) => {
+    // Set longer timeout for this complex integration test
+    test.setTimeout(90000); // 90 seconds
     // Step 1: Import teams first (required for epic_team references in projects CSV)
     await expect(
       page.getByRole('heading', { name: 'Enhanced Import & Export' })

@@ -87,7 +87,7 @@ describe('Quarter and Iteration Generation - Comprehensive Coverage', () => {
 
       const quarterEnd = new Date(quarterStart);
       quarterEnd.setMonth(quarterEnd.getMonth() + customQuarterLength);
-      quarterEnd.setDate(0); // Last day of previous month
+      quarterEnd.setDate(quarterEnd.getDate() - 1); // Last day of the quarter
 
       // Don't let quarter extend beyond financial year
       if (quarterEnd > fyEnd) {
