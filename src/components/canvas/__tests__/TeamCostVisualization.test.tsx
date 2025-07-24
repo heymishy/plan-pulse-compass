@@ -147,6 +147,13 @@ describe('TeamCostVisualization', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useApp).mockReturnValue(mockAppData);
+    // Ensure Position is available globally
+    (global as any).Position = {
+      Top: 'top',
+      Bottom: 'bottom',
+      Left: 'left',
+      Right: 'right',
+    };
   });
 
   const renderComponent = () => {

@@ -124,9 +124,9 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
       try {
         const scenarioId = crypto.randomUUID();
         const now = new Date().toISOString();
+        const sixtyDaysInMs = 60 * 24 * 60 * 60 * 1000; // 60 days in milliseconds
         const expiresAt =
-          customExpiresAt ||
-          new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(); // 60 days from now or custom date
+          customExpiresAt || new Date(Date.now() + sixtyDaysInMs).toISOString();
 
         const scenarioData = cloneCurrentState();
         const modifications: ScenarioModification[] = [];

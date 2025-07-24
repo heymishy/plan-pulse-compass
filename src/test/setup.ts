@@ -358,6 +358,28 @@ global.requestAnimationFrame = vi.fn(callback => {
 // Mock cancelAnimationFrame
 global.cancelAnimationFrame = vi.fn();
 
+// Mock performance.now() to fix processingTime NaN issues
+let mockPerformanceNow = 0;
+Object.defineProperty(global, 'performance', {
+  writable: true,
+  value: {
+    now: vi.fn(() => {
+      mockPerformanceNow += 1; // Increment by 1ms each call
+      return mockPerformanceNow;
+    }),
+    mark: vi.fn(),
+    measure: vi.fn(),
+    clearMarks: vi.fn(),
+    clearMeasures: vi.fn(),
+    getEntriesByName: vi.fn(() => []),
+    getEntriesByType: vi.fn(() => []),
+  },
+});
+
+// Mock Date.now() to fix ScenarioContext date calculation issues
+const originalDateNow = Date.now;
+Date.now = vi.fn(() => new Date('2024-01-15T00:00:00.000Z').getTime());
+
 // Mock pointer capture methods and scrollIntoView for JSDOM
 if (typeof HTMLElement !== 'undefined') {
   HTMLElement.prototype.hasPointerCapture = vi.fn(() => false);
@@ -475,6 +497,9 @@ afterEach(() => {
   // Clear all mocks and timers
   vi.clearAllMocks();
   vi.clearAllTimers();
+
+  // Reset performance mock counter
+  mockPerformanceNow = 0;
 
   // Cleanup DOM elements created by React Testing Library
   cleanup();
