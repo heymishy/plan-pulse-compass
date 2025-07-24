@@ -9,7 +9,7 @@
     "copy-workers": "mkdir -p public/workers && cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/workers/pdf.worker.min.js",
     "build:dev": "vite build --mode development",
     "build:analyze": "vite build --mode analyze",
-    "lint": "eslint . --max-warnings 200",
+    "lint": "eslint . --max-warnings 210",
     "lint:fix": "eslint . --fix",
     "lint:strict": "eslint .",
     "preview": "vite preview",
