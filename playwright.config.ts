@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : '50%', // Use more workers for parallel execution
-  reporter: process.env.CI ? ['html', 'github'] : 'html',
+  reporter: process.env.CI ? [['html'], ['github']] : 'html',
   timeout: 30000, // Reduced from 60s to 30s for faster feedback
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
