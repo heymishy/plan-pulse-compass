@@ -32,6 +32,17 @@ vi.mock('@/utils/financialCalculations', () => ({
     costPerMonth: (person.annualSalary || 100000) / 12,
     costPerDay: (person.annualSalary || 100000) / 260,
   })),
+  getDefaultConfig: vi.fn(() => ({
+    companyName: 'Test Company',
+    currency: 'USD',
+    vacationDays: 20,
+    sickDays: 10,
+    holidays: 10,
+    workingDaysPerYear: 260,
+    workingHoursPerDay: 8,
+    benefitsMultiplier: 1.3,
+    overheadMultiplier: 1.2,
+  })),
 }));
 
 // Mock the useApp hook
