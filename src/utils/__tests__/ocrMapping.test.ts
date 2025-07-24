@@ -184,10 +184,13 @@ describe('OCR Entity Mapping', () => {
       });
 
       // Should map "Alpha Project" to existing "Alpha Project"
+      // Filter specifically for project status entities, not milestones
       const alphaMappings = result.mappings.filter(
         m =>
+          m.existingEntityType === 'project' &&
+          'status' in m.extractedEntity &&
           (m.extractedEntity as ExtractedProjectStatus).projectName ===
-          'Alpha Project'
+            'Alpha Project'
       );
 
       expect(alphaMappings).toHaveLength(1);

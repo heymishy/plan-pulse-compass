@@ -28,6 +28,15 @@ Object.defineProperty(global, 'performance', {
 const mockDateNow = vi.fn();
 Date.now = mockDateNow;
 
+// Mock process.memoryUsage for consistent memory testing
+const mockProcessMemoryUsage = vi.fn();
+Object.defineProperty(global, 'process', {
+  value: {
+    memoryUsage: mockProcessMemoryUsage,
+  },
+  writable: true,
+});
+
 describe('OCRPerformanceMonitor', () => {
   let monitor: OCRPerformanceMonitor;
   let mockTime: number;
@@ -39,6 +48,15 @@ describe('OCRPerformanceMonitor', () => {
 
     mockPerformanceNow.mockImplementation(() => mockTime);
     mockDateNow.mockImplementation(() => mockTimestamp);
+
+    // Set up low memory usage for normal conditions (10MB)
+    mockProcessMemoryUsage.mockReturnValue({
+      heapUsed: 10 * 1024 * 1024, // 10MB - well below threshold
+      heapTotal: 50 * 1024 * 1024,
+      external: 0,
+      arrayBuffers: 0,
+      rss: 100 * 1024 * 1024,
+    });
 
     // Clear the global monitor instance
     setGlobalMonitor(null);

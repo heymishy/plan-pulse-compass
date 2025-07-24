@@ -316,12 +316,23 @@ export function generateContextUpdates(
         if (milestoneIndex >= 0 && isMilestoneMapping(mapping)) {
           const extractedMilestone =
             mapping.extractedEntity as ExtractedMilestone;
+
+          // If milestone is completed and has a target date, use it as actual date
+          let actualDate =
+            extractedMilestone.actualDate ||
+            updates.milestones[milestoneIndex].actualDate;
+          if (
+            extractedMilestone.status === 'completed' &&
+            extractedMilestone.targetDate &&
+            !actualDate
+          ) {
+            actualDate = extractedMilestone.targetDate;
+          }
+
           updates.milestones[milestoneIndex] = {
             ...updates.milestones[milestoneIndex],
             status: extractedMilestone.status,
-            actualDate:
-              extractedMilestone.actualDate ||
-              updates.milestones[milestoneIndex].actualDate,
+            actualDate,
           };
         }
         break;
@@ -461,6 +472,20 @@ function determineStatusConflictLevel(
   const extractedStatusMapped = mapRAGStatusToProjectStatus(
     extractedStatus.status
   );
+
+  // Special handling for RAG status conflicts
+  // Red/amber status should be flagged as conflict even if mapped status matches
+  if (extractedStatus.status === 'red') {
+    if (existingStatus === 'completed') {
+      return 'high'; // Red status on completed project is a major concern
+    }
+    if (existingStatus === 'in-progress') {
+      return 'high'; // Red status indicates serious issues
+    }
+  }
+  if (extractedStatus.status === 'amber' && existingStatus === 'in-progress') {
+    return 'medium'; // Amber status indicates caution
+  }
 
   if (existingStatus === extractedStatusMapped) return 'none';
 

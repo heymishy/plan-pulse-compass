@@ -521,6 +521,24 @@ afterEach(() => {
   // Reset performance mock counter
   mockPerformanceNow = 0;
 
+  // Reset Date mock to ensure consistent behavior across tests
+  global.Date = class MockDate extends originalDate {
+    constructor(...args: any[]) {
+      if (args.length === 0) {
+        // new Date() without arguments should use our mock time
+        super('2024-01-15T00:00:00.000Z');
+      } else {
+        // new Date(arg) with arguments should work normally
+        super(...args);
+      }
+    }
+
+    // Preserve all static methods
+    static now = Date.now;
+    static parse = originalDate.parse;
+    static UTC = originalDate.UTC;
+  } as any;
+
   // Cleanup DOM elements created by React Testing Library
   cleanup();
 

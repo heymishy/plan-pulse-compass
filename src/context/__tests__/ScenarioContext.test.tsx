@@ -233,7 +233,7 @@ describe('ScenarioContext', () => {
     await act(async () => {
       await result.current.createScenario({
         name: 'Test Scenario',
-        expiresAt: new Date(Date.now() + 60000).toISOString(), // Future date
+        expiresAt: '2024-01-16T00:00:00.000Z', // Future date (after mock date)
       });
     });
 
@@ -243,13 +243,13 @@ describe('ScenarioContext', () => {
     await act(async () => {
       await result.current.createScenario({
         name: 'Expired Scenario',
-        expiresAt: new Date(Date.now() - 1000).toISOString(), // Already expired
+        expiresAt: '2024-01-14T00:00:00.000Z', // Already expired (before mock date)
       });
     });
 
-    // Since auto-cleanup runs on mount, expired scenarios are immediately removed
-    // So we should only have 1 scenario (the non-expired one)
-    expect(result.current.scenarios).toHaveLength(1);
+    // At this point we should have 2 scenarios (one expired, one not expired)
+    // Auto-cleanup only runs on mount, not after each scenario creation
+    expect(result.current.scenarios).toHaveLength(2);
 
     // Run cleanup manually - should remove only the expired scenario
     await act(async () => {
