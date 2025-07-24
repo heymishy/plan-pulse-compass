@@ -190,7 +190,7 @@ describe('CanvasStats', () => {
       teams: 2,
       projects: 3,
       // Missing epics, allocations, people
-    } as any;
+    } as Partial<AppContextType>;
 
     renderComponent(incompleteStats);
 

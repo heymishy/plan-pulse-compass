@@ -2,18 +2,22 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: false, // Disable parallel execution to ensure setup runs first
+  fullyParallel: true, // Enable parallel execution for better performance
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1, // Use single worker to ensure test order
-  reporter: 'html',
-  timeout: 60000, // 60 seconds per test
+  workers: process.env.CI ? 2 : '50%', // Use more workers for parallel execution
+  reporter: process.env.CI ? ['html', 'github'] : 'html',
+  timeout: 30000, // Reduced from 60s to 30s for faster feedback
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: process.env.CI ? 'only-on-failure' : 'only-on-failure',
     video: process.env.CI ? 'retain-on-failure' : 'retain-on-failure',
-    actionTimeout: 10000, // 10 seconds max for individual actions
+    actionTimeout: 5000, // Reduced to 5s for faster failure feedback
+    navigationTimeout: 10000, // 10s for page navigation
+    expect: {
+      timeout: 5000, // 5s for assertions
+    },
   },
 
   projects: [

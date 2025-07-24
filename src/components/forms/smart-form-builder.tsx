@@ -199,8 +199,8 @@ const createZodSchema = (
 // Field renderer component
 const FormFieldRenderer: React.FC<{
   field: FormFieldConfig;
-  form: any;
-  allValues: Record<string, any>;
+  form: UseFormReturn<Record<string, unknown>>;
+  allValues: Record<string, unknown>;
 }> = ({ field, form, allValues }) => {
   const renderField = () => {
     switch (field.type) {
