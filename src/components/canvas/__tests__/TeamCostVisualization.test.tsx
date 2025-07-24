@@ -15,8 +15,8 @@ vi.mock('@xyflow/react', () => ({
   ),
   Controls: () => <div data-testid="react-flow-controls">Controls</div>,
   Background: () => <div data-testid="react-flow-background">Background</div>,
-  useNodesState: (initialNodes: any[]) => [initialNodes, vi.fn(), vi.fn()],
-  useEdgesState: (initialEdges: any[]) => [initialEdges, vi.fn(), vi.fn()],
+  useNodesState: (initialNodes: unknown[]) => [initialNodes, vi.fn(), vi.fn()],
+  useEdgesState: (initialEdges: unknown[]) => [initialEdges, vi.fn(), vi.fn()],
   Position: {
     Top: 'top',
     Bottom: 'bottom',
@@ -148,7 +148,7 @@ describe('TeamCostVisualization', () => {
     vi.clearAllMocks();
     vi.mocked(useApp).mockReturnValue(mockAppData);
     // Ensure Position is available globally
-    (global as any).Position = {
+    (global as Record<string, unknown>).Position = {
       Top: 'top',
       Bottom: 'bottom',
       Left: 'left',
