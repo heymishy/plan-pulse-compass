@@ -11,7 +11,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.performance.ts'], // Optimized setup
+    setupFiles: ['./src/test/setup.ts'], // Use standard setup for compatibility
     exclude: [
       '**/node_modules/**',
       '**/tests/e2e/**',

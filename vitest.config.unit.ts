@@ -11,22 +11,14 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.unit.ts'],
-
-    // Include only unit test patterns
-    include: [
-      'src/components/**/__tests__/*.test.{ts,tsx}',
-      'src/hooks/**/__tests__/*.test.{ts,tsx}',
-      'src/utils/**/__tests__/*.test.{ts,tsx}',
-      'src/lib/**/__tests__/*.test.{ts,tsx}',
-    ],
+    setupFiles: ['./src/test/setup.ts'],
 
     exclude: [
       '**/node_modules/**',
       '**/tests/e2e/**',
       '**/*.spec.ts',
-      '**/integration.test.*',
-      '**/e2e.test.*',
+      '**/playwright-report/**',
+      '**/test-results/**',
     ],
 
     css: false,

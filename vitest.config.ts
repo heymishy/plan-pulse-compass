@@ -22,10 +22,9 @@ export default defineConfig({
     pool: 'forks', // Use forks instead of threads for better memory isolation
     poolOptions: {
       forks: {
-        singleFork: true,
-        maxForks: 1,
+        singleFork: false,
+        maxForks: 4,
         minForks: 1,
-        // Enhanced isolation settings
         isolate: true,
       },
     },
@@ -58,14 +57,14 @@ export default defineConfig({
     watch: false,
     teardownTimeout: 5000, // Increased for proper cleanup
     sequence: {
-      shuffle: false, // Keep deterministic order to debug timing issues
-      concurrent: false, // Disable concurrency to prevent interference
+      shuffle: false,
+      concurrent: false,
     },
     // Force fresh environment for each test file
     restartOnConfigChange: true,
     // Improved error handling
     bail: 0, // Don't stop on first failure
-    maxConcurrency: 1, // Ensure single-threaded execution
+    maxConcurrency: 4, // Allow reasonable concurrency
   },
   resolve: {
     alias: {
