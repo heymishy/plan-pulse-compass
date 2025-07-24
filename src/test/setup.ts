@@ -376,9 +376,29 @@ Object.defineProperty(global, 'performance', {
   },
 });
 
-// Mock Date.now() to fix ScenarioContext date calculation issues
+// Mock Date.now() and Date constructor to fix ScenarioContext date calculation issues
 const originalDateNow = Date.now;
+const originalDate = Date;
 Date.now = vi.fn(() => new Date('2024-01-15T00:00:00.000Z').getTime());
+
+// Mock Date constructor for consistent timestamps in tests
+// Only mock new Date() without arguments, preserve normal date operations
+global.Date = class MockDate extends originalDate {
+  constructor(...args: any[]) {
+    if (args.length === 0) {
+      // new Date() without arguments should use our mock time
+      super('2024-01-15T00:00:00.000Z');
+    } else {
+      // new Date(arg) with arguments should work normally
+      super(...args);
+    }
+  }
+
+  // Preserve all static methods
+  static now = Date.now;
+  static parse = originalDate.parse;
+  static UTC = originalDate.UTC;
+} as any;
 
 // Mock pointer capture methods and scrollIntoView for JSDOM
 if (typeof HTMLElement !== 'undefined') {

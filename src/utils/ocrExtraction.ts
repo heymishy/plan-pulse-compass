@@ -24,7 +24,7 @@ export function extractEntitiesFromText(
   rawText: string,
   options: Partial<OCRProcessingOptions> = {}
 ): OCRExtractionResult {
-  const startTime = Date.now();
+  const startTime = performance.now();
 
   const defaultOptions: OCRProcessingOptions = {
     language: 'en',
@@ -66,7 +66,7 @@ export function extractEntitiesFromText(
         ) / allExtractedEntities.length
       : 0;
 
-  const processingTime = Date.now() - startTime;
+  const processingTime = performance.now() - startTime;
 
   return {
     rawText,
