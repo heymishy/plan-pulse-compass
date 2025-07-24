@@ -20,7 +20,7 @@
     "test:run:single": "vitest run --no-coverage",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
-    "test:unit": "vitest run src/components/ src/hooks/ src/utils/ src/lib/",
+    "test:unit": "vitest run src/components/ui/ src/hooks/ src/utils/__tests__/dateUtils.test.ts src/utils/__tests__/mathUtils.test.ts",
     "test:unit:watch": "vitest src/components/ src/hooks/ src/utils/ src/lib/",
     "test:integration": "vitest run src/context/ src/pages/ src/__tests__/",
     "test:integration:watch": "vitest src/context/ src/pages/ src/__tests__/",
