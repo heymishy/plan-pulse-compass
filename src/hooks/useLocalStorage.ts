@@ -51,9 +51,15 @@ export function useEncryptedLocalStorage<T>(
             if (isMounted) {
               setStoredValue(JSON.parse(decrypted));
             }
-            console.log(
-              `Successfully loaded and decrypted data for key "${key}"`
-            );
+            // Only log for development or smaller datasets to prevent console spam
+            if (
+              process.env.NODE_ENV === 'development' ||
+              JSON.stringify(decrypted).length < 50000
+            ) {
+              console.log(
+                `Successfully loaded and decrypted data for key "${key}"`
+              );
+            }
           } else {
             // Data is unencrypted (old format), migrate it
             console.log(
@@ -94,7 +100,7 @@ export function useEncryptedLocalStorage<T>(
     return () => {
       isMounted = false;
     };
-  }, [key, encryptionKey, initialValue]);
+  }, [key, encryptionKey]);
 
   const setValue = useCallback(
     async (value: T | ((val: T) => T)) => {
@@ -113,7 +119,15 @@ export function useEncryptedLocalStorage<T>(
             derivedKey
           );
           window.localStorage.setItem(key, JSON.stringify(encrypted));
-          console.log(`Successfully encrypted and saved data for key "${key}"`);
+          // Only log for development or smaller datasets to prevent console spam
+          if (
+            process.env.NODE_ENV === 'development' ||
+            JSON.stringify(valueToStore).length < 50000
+          ) {
+            console.log(
+              `Successfully encrypted and saved data for key "${key}"`
+            );
+          }
 
           // Trigger storage event for cross-component synchronization
           if (typeof window !== 'undefined' && window.dispatchEvent) {
@@ -153,7 +167,13 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       const item = window.localStorage.getItem(key);
       if (item) {
         const parsed = JSON.parse(item);
-        console.log(`Successfully loaded data for key "${key}"`);
+        // Only log for development or smaller datasets to prevent console spam
+        if (
+          process.env.NODE_ENV === 'development' ||
+          JSON.stringify(parsed).length < 50000
+        ) {
+          console.log(`Successfully loaded data for key "${key}"`);
+        }
         return parsed;
       }
       console.log(`No stored data found for key "${key}", using initial value`);
@@ -172,7 +192,13 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
 
       if (isLocalStorageAvailable()) {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
-        console.log(`Successfully saved data for key "${key}"`);
+        // Only log for development or smaller datasets to prevent console spam
+        if (
+          process.env.NODE_ENV === 'development' ||
+          JSON.stringify(valueToStore).length < 50000
+        ) {
+          console.log(`Successfully saved data for key "${key}"`);
+        }
 
         // Trigger storage event for cross-component synchronization
         if (typeof window !== 'undefined' && window.dispatchEvent) {
@@ -202,7 +228,13 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       if (item) {
         const parsed = JSON.parse(item);
         setStoredValue(parsed);
-        console.log(`Synced data for key "${key}" on mount`);
+        // Only log for development or smaller datasets to prevent console spam
+        if (
+          process.env.NODE_ENV === 'development' ||
+          JSON.stringify(parsed).length < 50000
+        ) {
+          console.log(`Synced data for key "${key}" on mount`);
+        }
       }
     } catch (error) {
       console.error(`Error syncing from localStorage key "${key}":`, error);
@@ -214,7 +246,13 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         try {
           const parsed = JSON.parse(e.newValue);
           setStoredValue(parsed);
-          console.log(`Synced data for key "${key}" from storage event`);
+          // Only log for development or smaller datasets to prevent console spam
+          if (
+            process.env.NODE_ENV === 'development' ||
+            JSON.stringify(parsed).length < 50000
+          ) {
+            console.log(`Synced data for key "${key}" from storage event`);
+          }
         } catch (error) {
           console.error(`Error parsing storage event for key "${key}":`, error);
         }
