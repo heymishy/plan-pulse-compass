@@ -74,6 +74,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
   const [divisionFilter, setDivisionFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState('all');
   const [skillsFilter, setSkillsFilter] = useState('');
+  const [showLargeTeams, setShowLargeTeams] = useState(false);
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [newTeamData, setNewTeamData] = useState({
     name: '',
@@ -278,7 +279,11 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     if (!selectedTeam || selectedPeople.size === 0) return;
 
     const today = new Date().toISOString().split('T')[0];
-    selectedPeople.forEach(personId => {
+    const peopleToAssign = Array.from(selectedPeople);
+
+    // Process all assignments
+    peopleToAssign.forEach(personId => {
+      // Create TeamMember record
       const memberData = {
         teamId: selectedTeam.id,
         personId,
@@ -294,7 +299,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
       updatePerson(personId, { teamId: selectedTeam.id });
     });
 
-    // Clear selections
+    // Clear selections after all assignments are complete
     setSelectedPeople(new Set());
   };
 
@@ -363,7 +368,17 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center">
               <Target className="h-5 w-5 mr-2" />
-              Teams ({teams.length})
+              Teams (
+              {
+                teams.filter(team => {
+                  if (showLargeTeams) return true;
+                  const peopleInTeam = people.filter(
+                    person => person.teamId === team.id && person.isActive
+                  );
+                  return peopleInTeam.length <= 4;
+                }).length
+              }
+              )
             </CardTitle>
             <Dialog
               open={isCreateDialogOpen}
@@ -509,66 +524,86 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
           </div>
         </CardHeader>
         <CardContent className="space-y-3 max-h-96 overflow-y-auto">
-          {teams.map(team => {
-            const members = getTeamMembers(team.id);
-            const peopleInTeam = people.filter(
-              person => person.teamId === team.id && person.isActive
-            );
-            const health = calculateTeamHealth(team);
-            const isSelected = selectedTeam?.id === team.id;
+          {/* Filter toggle for teams */}
+          <div className="flex items-center space-x-2 pb-3 border-b">
+            <Checkbox
+              id="show-large-teams"
+              checked={showLargeTeams}
+              onCheckedChange={setShowLargeTeams}
+            />
+            <Label htmlFor="show-large-teams" className="text-sm">
+              Show teams with more than 4 members
+            </Label>
+          </div>
 
-            return (
-              <Card
-                key={team.id}
-                className={`p-3 cursor-pointer transition-all hover:shadow-md ${
-                  isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                }`}
-                onClick={() => onTeamChange?.(team)}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg">
-                      {getTeamTypeIcon(team.type)}
-                    </span>
-                    <div>
-                      <h4 className="font-medium">{team.name}</h4>
-                      <p className="text-xs text-gray-600">{team.type}</p>
+          {teams
+            .filter(team => {
+              if (showLargeTeams) return true;
+              const peopleInTeam = people.filter(
+                person => person.teamId === team.id && person.isActive
+              );
+              return peopleInTeam.length <= 4;
+            })
+            .map(team => {
+              const members = getTeamMembers(team.id);
+              const peopleInTeam = people.filter(
+                person => person.teamId === team.id && person.isActive
+              );
+              const health = calculateTeamHealth(team);
+              const isSelected = selectedTeam?.id === team.id;
+
+              return (
+                <Card
+                  key={team.id}
+                  className={`p-3 cursor-pointer transition-all hover:shadow-md ${
+                    isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                  }`}
+                  onClick={() => onTeamChange?.(team)}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">
+                        {getTeamTypeIcon(team.type)}
+                      </span>
+                      <div>
+                        <h4 className="font-medium">{team.name}</h4>
+                        <p className="text-xs text-gray-600">{team.type}</p>
+                      </div>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className={`text-white ${getTeamStatusColor(team.status)}`}
+                    >
+                      {team.status}
+                    </Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center">
+                        <Users className="h-3 w-3 mr-1" />
+                        {peopleInTeam.length} members
+                      </div>
+                      <div className="flex items-center">
+                        {health.status === 'excellent' && (
+                          <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                        )}
+                        {health.status === 'good' && (
+                          <CheckCircle className="h-3 w-3 mr-1 text-blue-500" />
+                        )}
+                        {health.status === 'understaffed' && (
+                          <AlertCircle className="h-3 w-3 mr-1 text-yellow-500" />
+                        )}
+                        {health.status === 'empty' && (
+                          <AlertCircle className="h-3 w-3 mr-1 text-red-500" />
+                        )}
+                        <span className="text-xs">{health.status}</span>
+                      </div>
                     </div>
                   </div>
-                  <Badge
-                    variant="secondary"
-                    className={`text-white ${getTeamStatusColor(team.status)}`}
-                  >
-                    {team.status}
-                  </Badge>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center">
-                      <Users className="h-3 w-3 mr-1" />
-                      {peopleInTeam.length} members
-                    </div>
-                    <div className="flex items-center">
-                      {health.status === 'excellent' && (
-                        <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
-                      )}
-                      {health.status === 'good' && (
-                        <CheckCircle className="h-3 w-3 mr-1 text-blue-500" />
-                      )}
-                      {health.status === 'understaffed' && (
-                        <AlertCircle className="h-3 w-3 mr-1 text-yellow-500" />
-                      )}
-                      {health.status === 'empty' && (
-                        <AlertCircle className="h-3 w-3 mr-1 text-red-500" />
-                      )}
-                      <span className="text-xs">{health.status}</span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
+                </Card>
+              );
+            })}
 
           {teams.length === 0 && (
             <div className="text-center py-8 text-gray-500">
