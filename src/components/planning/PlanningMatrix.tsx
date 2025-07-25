@@ -9,6 +9,7 @@ import {
   Project,
   Epic,
   RunWorkCategory,
+  Division,
 } from '@/types';
 import {
   Plus,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
 import { getDisplayName } from '@/utils/shortnameUtils';
+import { getDivisionName } from '@/utils/teamUtils';
 import { BulkSelection } from './BulkOperationsPanel';
 import { ClipboardControls } from './AllocationClipboard';
 
@@ -35,6 +37,7 @@ interface PlanningMatrixProps {
   projects: Project[];
   epics: Epic[];
   runWorkCategories: RunWorkCategory[];
+  divisions: Division[];
   hideEmptyRows?: boolean;
   bulkSelection?: BulkSelection;
   onBulkSelectionChange?: (selection: BulkSelection) => void;
@@ -50,6 +53,7 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
   projects,
   epics,
   runWorkCategories,
+  divisions,
   hideEmptyRows = false,
   bulkSelection,
   onBulkSelectionChange,
@@ -182,8 +186,7 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
   // Get division display name
   const getDivisionDisplayName = (divisionKey: string) => {
     if (divisionKey === 'no-division') return 'Unassigned Teams';
-    const team = teams.find(t => t.divisionId === divisionKey);
-    return team?.divisionName || divisionKey;
+    return getDivisionName(divisionKey, divisions);
   };
 
   // Toggle division expansion

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTeams } from '@/context/TeamContext';
 import { useSettings } from '@/context/SettingsContext';
+import { Team } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,8 @@ import {
 import TeamTable from '@/components/teams/TeamTable';
 import TeamCards from '@/components/teams/TeamCards';
 import EnhancedTeamDialog from '@/components/teams/TeamDialog';
+import PeopleTeamMapper from '@/components/teams/PeopleTeamMapper';
+import TeamBuilder from '@/components/teams/TeamBuilder';
 import CapacityOverview from '@/components/teams/CapacityOverview';
 import TeamSkillsSummary from '@/components/scenarios/TeamSkillsSummary';
 import TeamPortfolioOverview from '@/components/teams/TeamPortfolioOverview';
@@ -39,6 +42,10 @@ const Teams = () => {
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [selectedTeamForSkills, setSelectedTeamForSkills] =
     useState<string>('');
+  const [isPeopleMapperOpen, setIsPeopleMapperOpen] = useState(false);
+  const [selectedTeamForBuilder, setSelectedTeamForBuilder] = useState<
+    Team | undefined
+  >();
 
   if (!isSetupComplete) {
     return (
@@ -125,6 +132,10 @@ const Teams = () => {
               Remove Default Teams
             </Button>
           )}
+          <Button variant="outline" onClick={() => setIsPeopleMapperOpen(true)}>
+            <Users className="mr-2 h-4 w-4" />
+            Map People to Teams
+          </Button>
           <Button onClick={handleAddTeam}>
             <Plus className="mr-2 h-4 w-4" />
             Add Team
@@ -179,7 +190,7 @@ const Teams = () => {
       </div>
 
       <Tabs defaultValue="portfolio" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger
             value="portfolio"
             className="flex items-center space-x-2"
@@ -197,6 +208,10 @@ const Teams = () => {
           <TabsTrigger value="teams" className="flex items-center space-x-2">
             <Users className="h-4 w-4" />
             <span>Teams</span>
+          </TabsTrigger>
+          <TabsTrigger value="builder" className="flex items-center space-x-2">
+            <Target className="h-4 w-4" />
+            <span>Builder</span>
           </TabsTrigger>
           <TabsTrigger value="run-work" className="flex items-center space-x-2">
             <Target className="h-4 w-4" />
@@ -279,6 +294,13 @@ const Teams = () => {
           )}
         </TabsContent>
 
+        <TabsContent value="builder">
+          <TeamBuilder
+            selectedTeam={selectedTeamForBuilder}
+            onTeamChange={setSelectedTeamForBuilder}
+          />
+        </TabsContent>
+
         <TabsContent value="run-work">
           <RunWorkAllocationView />
         </TabsContent>
@@ -334,6 +356,11 @@ const Teams = () => {
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         teamId={editingTeam}
+      />
+
+      <PeopleTeamMapper
+        isOpen={isPeopleMapperOpen}
+        onClose={() => setIsPeopleMapperOpen(false)}
       />
     </div>
   );

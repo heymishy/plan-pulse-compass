@@ -1232,6 +1232,7 @@ const Planning = () => {
                         projects={filteredData.projects}
                         epics={filteredData.epics}
                         runWorkCategories={runWorkCategories}
+                        divisions={divisions}
                         hideEmptyRows={hideEmptyRows}
                         bulkSelection={bulkSelection}
                         onBulkSelectionChange={setBulkSelection}
