@@ -10,13 +10,12 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useApp } from '@/context/AppContext';
-import { Person, PersonSkill } from '@/types';
+import { Person } from '@/types';
 import { getDefaultConfig } from '@/utils/financialCalculations';
 import PersonBasicInfoForm from './forms/PersonBasicInfoForm';
 import PersonRoleTeamForm from './forms/PersonRoleTeamForm';
 import PersonDatesForm from './forms/PersonDatesForm';
 import PersonEmploymentForm from './forms/PersonEmploymentForm';
-import PersonSkillsForm from '@/components/skills/PersonSkillsForm';
 
 interface PersonDialogProps {
   open: boolean;
@@ -31,7 +30,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
   person,
   onSave,
 }) => {
-  const { roles, teams, personSkills, setPersonSkills, config } = useApp();
+  const { roles, teams, config } = useApp();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -49,9 +48,6 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
   });
   const [contractRateType, setContractRateType] = useState<'hourly' | 'daily'>(
     'hourly'
-  );
-  const [currentPersonSkills, setCurrentPersonSkills] = useState<PersonSkill[]>(
-    []
   );
 
   // Initialize form data when dialog opens or person changes
@@ -80,11 +76,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
         setContractRateType('daily');
       }
 
-      // Load person skills
-      const existingSkills = personSkills.filter(
-        ps => ps.personId === person.id
-      );
-      setCurrentPersonSkills(existingSkills);
+      // Skills are now stored directly on the person object
     } else {
       // Reset form for new person
       setFormData({
@@ -103,9 +95,8 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
         endDate: '',
       });
       setContractRateType('hourly');
-      setCurrentPersonSkills([]);
     }
-  }, [person, open, personSkills]);
+  }, [person, open]);
 
   const selectedRole = roles.find(r => r.id === formData.roleId);
 
@@ -129,25 +120,7 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
     // Save person and get the created/updated person
     const savedPerson = onSave(personData);
 
-    // Update skills with the correct person ID
-    updatePersonSkills(savedPerson.id);
-
     onOpenChange(false);
-  };
-
-  const updatePersonSkills = (personId: string) => {
-    // Remove old skills for this person
-    const otherPersonSkills = personSkills.filter(
-      ps => ps.personId !== personId
-    );
-
-    // Add updated skills with correct personId
-    const updatedSkills = currentPersonSkills.map(ps => ({
-      ...ps,
-      personId: personId,
-    }));
-
-    setPersonSkills([...otherPersonSkills, ...updatedSkills]);
   };
 
   return (
@@ -159,10 +132,9 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="employment">Employment</TabsTrigger>
-              <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
 
@@ -229,14 +201,6 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
                   }))
                 }
                 onContractRateTypeChange={setContractRateType}
-              />
-            </TabsContent>
-
-            <TabsContent value="skills" className="space-y-4">
-              <PersonSkillsForm
-                personId={person?.id || 'new'}
-                personSkills={currentPersonSkills}
-                onPersonSkillsChange={setCurrentPersonSkills}
               />
             </TabsContent>
 

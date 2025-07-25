@@ -47,6 +47,7 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
     people,
     teams,
     divisions,
+    roles,
     teamMembers,
     setPeople,
     addTeamMember,
@@ -56,27 +57,37 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDivision, setSelectedDivision] = useState<string>('all');
+  const [selectedRole, setSelectedRole] = useState<string>('all');
+  const [skillsFilter, setSkillsFilter] = useState('');
   const [selectedTeam, setSelectedTeam] = useState<string>('');
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [showCreateTeamDialog, setShowCreateTeamDialog] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
+  const [showAssignedPeople, setShowAssignedPeople] = useState(false);
+  const [teamDivisionFilter, setTeamDivisionFilter] = useState<string>('all');
 
-  // Get unassigned people (people without teamId or with inactive team assignments)
-  const unassignedPeople = useMemo(() => {
-    const activeTeamMemberIds = new Set(
-      teamMembers.filter(tm => tm.isActive).map(tm => tm.personId)
-    );
+  // Get people based on showAssignedPeople toggle
+  const availablePeople = useMemo(() => {
+    if (showAssignedPeople) {
+      // Show all active people when toggle is on
+      return people.filter(person => person.isActive);
+    } else {
+      // Show only truly unassigned people by default
+      const activeTeamMemberIds = new Set(
+        teamMembers.filter(tm => tm.isActive).map(tm => tm.personId)
+      );
 
-    return people.filter(
-      person =>
-        person.isActive &&
-        (!person.teamId || !activeTeamMemberIds.has(person.id))
-    );
-  }, [people, teamMembers]);
+      return people.filter(
+        person =>
+          person.isActive &&
+          (!person.teamId || !activeTeamMemberIds.has(person.id))
+      );
+    }
+  }, [people, teamMembers, showAssignedPeople]);
 
-  // Filter unassigned people based on search and division
+  // Filter people based on search, division, role, and skills
   const filteredPeople = useMemo(() => {
-    return unassignedPeople.filter(person => {
+    return availablePeople.filter(person => {
       const matchesSearch =
         person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         person.email?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -88,27 +99,53 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
           teams.find(t => t.id === person.teamId)?.divisionId ===
             selectedDivision);
 
+      // Role filter
+      const matchesRole =
+        selectedRole === 'all' || person.roleId === selectedRole;
+
+      // Skills filter
+      const matchesSkills =
+        !skillsFilter ||
+        (person.skills &&
+          person.skills.some(skill =>
+            skill.toLowerCase().includes(skillsFilter.toLowerCase())
+          ));
+
       return (
         matchesSearch &&
-        (selectedDivision === 'all' || !person.teamId || matchesDivision)
+        (selectedDivision === 'all' || !person.teamId || matchesDivision) &&
+        matchesRole &&
+        matchesSkills
       );
     });
-  }, [unassignedPeople, searchTerm, selectedDivision, teams]);
+  }, [
+    availablePeople,
+    searchTerm,
+    selectedDivision,
+    selectedRole,
+    skillsFilter,
+    teams,
+  ]);
 
-  // Group teams by division for better UX
+  // Group teams by division for better UX, filtered by teamDivisionFilter
   const teamsByDivision = useMemo(() => {
     const grouped = new Map<string, Team[]>();
 
-    teams.forEach(team => {
-      const divisionKey = team.divisionId || 'no-division';
-      if (!grouped.has(divisionKey)) {
-        grouped.set(divisionKey, []);
-      }
-      grouped.get(divisionKey)!.push(team);
-    });
+    teams
+      .filter(team => {
+        if (teamDivisionFilter === 'all') return true;
+        return team.divisionId === teamDivisionFilter;
+      })
+      .forEach(team => {
+        const divisionKey = team.divisionId || 'no-division';
+        if (!grouped.has(divisionKey)) {
+          grouped.set(divisionKey, []);
+        }
+        grouped.get(divisionKey)!.push(team);
+      });
 
     return grouped;
-  }, [teams]);
+  }, [teams, teamDivisionFilter]);
 
   const handleSelectPerson = (personId: string, checked: boolean) => {
     const newSelected = new Set(selectedPeople);
@@ -283,7 +320,8 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
             <UserPlus className="h-5 w-5 mr-2" />
             People to Team Mapping
             <Badge variant="secondary" className="ml-2">
-              {unassignedPeople.length} unassigned
+              {availablePeople.length}{' '}
+              {showAssignedPeople ? 'total' : 'unassigned'}
             </Badge>
           </DialogTitle>
         </DialogHeader>
@@ -292,23 +330,37 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
           {/* Left Side - Unassigned People */}
           <div className="space-y-4">
             <div className="space-y-3">
-              {/* Search and Filters */}
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search people..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search people..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Show assigned people toggle */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="show-assigned"
+                  checked={showAssignedPeople}
+                  onCheckedChange={setShowAssignedPeople}
+                />
+                <Label htmlFor="show-assigned" className="text-sm">
+                  Show people already in teams (for reassignment)
+                </Label>
+              </div>
+
+              {/* Filters */}
+              <div className="grid grid-cols-3 gap-2">
                 <Select
                   value={selectedDivision}
                   onValueChange={setSelectedDivision}
                 >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Filter by division" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="All divisions" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Divisions</SelectItem>
@@ -319,6 +371,26 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
+
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All roles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    {roles.map(role => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Input
+                  placeholder="Filter by skills..."
+                  value={skillsFilter}
+                  onChange={e => setSkillsFilter(e.target.value)}
+                />
               </div>
 
               {/* Select All */}
@@ -342,7 +414,9 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
             {/* People List */}
             <Card className="flex-1">
               <CardHeader>
-                <CardTitle className="text-lg">Unassigned People</CardTitle>
+                <CardTitle className="text-lg">
+                  {showAssignedPeople ? 'All People' : 'Unassigned People'}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 max-h-96 overflow-y-auto">
                 {filteredPeople.map(person => (
@@ -390,10 +464,17 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
                 {filteredPeople.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No unassigned people found</p>
-                    {searchTerm && (
+                    <p>
+                      {showAssignedPeople
+                        ? 'No people found'
+                        : 'No unassigned people found'}
+                    </p>
+                    {(searchTerm ||
+                      selectedDivision !== 'all' ||
+                      selectedRole !== 'all' ||
+                      skillsFilter) && (
                       <p className="text-sm">
-                        Try adjusting your search criteria
+                        Try adjusting your search or filter criteria
                       </p>
                     )}
                   </div>
@@ -413,6 +494,28 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Filter Teams by Division
+                    </label>
+                    <Select
+                      value={teamDivisionFilter}
+                      onValueChange={setTeamDivisionFilter}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All divisions" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Divisions</SelectItem>
+                        {divisions.map(division => (
+                          <SelectItem key={division.id} value={division.id}>
+                            {division.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div>
                     <label className="text-sm font-medium mb-2 block">
                       Select Target Team
@@ -515,7 +618,7 @@ const PeopleTeamMapper: React.FC<PeopleTeamMapperProps> = ({
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-orange-600">
-                      {unassignedPeople.length}
+                      {people.filter(p => p.isActive && !p.teamId).length}
                     </div>
                     <div className="text-sm text-gray-600">Unassigned</div>
                   </div>
