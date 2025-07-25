@@ -255,6 +255,9 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
 
   const calculateTeamHealth = (team: Team) => {
     const members = getTeamMembers(team.id);
+    const peopleInTeam = people.filter(
+      person => person.teamId === team.id && person.isActive
+    );
     const totalAllocation = members.reduce(
       (sum, member) => sum + member.allocation,
       0
@@ -262,11 +265,19 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     const avgAllocation =
       members.length > 0 ? totalAllocation / members.length : 0;
 
-    if (members.length === 0) return { score: 0, status: 'empty' };
-    if (members.length * 40 < team.capacity * 0.5)
+    // Use people count for basic health metrics, but TeamMember records for allocation data
+    const memberCount = peopleInTeam.length;
+
+    if (memberCount === 0) return { score: 0, status: 'empty' };
+    if (memberCount * 40 < team.capacity * 0.5)
       return { score: 30, status: 'understaffed' };
-    if (avgAllocation < 50) return { score: 50, status: 'underutilized' };
-    if (avgAllocation > 90) return { score: 90, status: 'excellent' };
+
+    // If we have TeamMember records with allocation data, use them
+    if (members.length > 0 && avgAllocation > 0) {
+      if (avgAllocation < 50) return { score: 50, status: 'underutilized' };
+      if (avgAllocation > 90) return { score: 90, status: 'excellent' };
+    }
+
     return { score: 75, status: 'good' };
   };
 
@@ -426,6 +437,9 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
         <CardContent className="space-y-3 max-h-96 overflow-y-auto">
           {teams.map(team => {
             const members = getTeamMembers(team.id);
+            const peopleInTeam = people.filter(
+              person => person.teamId === team.id && person.isActive
+            );
             const health = calculateTeamHealth(team);
             const isSelected = selectedTeam?.id === team.id;
 
@@ -459,7 +473,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center">
                       <Users className="h-3 w-3 mr-1" />
-                      {members.length} members
+                      {peopleInTeam.length} members
                     </div>
                     <div className="flex items-center">
                       {health.status === 'excellent' && (

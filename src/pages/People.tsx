@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
@@ -30,11 +29,15 @@ const People = () => {
     }
   };
 
-  const handleSavePerson = (personData: Omit<Person, 'id'> & { id?: string }) => {
+  const handleSavePerson = (
+    personData: Omit<Person, 'id'> & { id?: string }
+  ) => {
     if (personData.id) {
       updatePerson(personData.id, personData);
+      return { ...personData, id: personData.id } as Person;
     } else {
-      addPerson(personData);
+      const createdPerson = addPerson(personData);
+      return createdPerson;
     }
   };
 
@@ -52,7 +55,9 @@ const People = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">People</h1>
-          <p className="text-gray-600">Manage your team members and their skills</p>
+          <p className="text-gray-600">
+            Manage your team members and their skills
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <div className="flex border rounded-lg">
@@ -95,7 +100,9 @@ const People = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{statusCounts.inactive}</div>
-            <Badge variant="secondary" className="mt-1">Inactive</Badge>
+            <Badge variant="secondary" className="mt-1">
+              Inactive
+            </Badge>
           </CardContent>
         </Card>
       </div>
@@ -105,12 +112,15 @@ const People = () => {
         <PeopleTable people={people} onEditPerson={handleEditPerson} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {people.map((person) => {
+          {people.map(person => {
             const role = roles.find(r => r.id === person.roleId);
             const team = teams.find(t => t.id === person.teamId);
-            
+
             return (
-              <Card key={person.id} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={person.id}
+                className="hover:shadow-lg transition-shadow"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{person.name}</CardTitle>
@@ -123,15 +133,19 @@ const People = () => {
                     </Button>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-gray-600">{role?.name || 'No role'}</p>
-                    <p className="text-sm text-gray-500">{team?.name || 'No team'}</p>
+                    <p className="text-sm text-gray-600">
+                      {role?.name || 'No role'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {team?.name || 'No team'}
+                    </p>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Status:</span>
-                      <Badge 
+                      <Badge
                         variant={person.isActive ? 'default' : 'secondary'}
                       >
                         {person.isActive ? 'active' : 'inactive'}

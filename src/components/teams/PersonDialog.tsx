@@ -22,7 +22,7 @@ interface PersonDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   person?: Person;
-  onSave: (person: Omit<Person, 'id'> & { id?: string }) => void;
+  onSave: (person: Omit<Person, 'id'> & { id?: string }) => Person;
 }
 
 const PersonDialog: React.FC<PersonDialogProps> = ({
@@ -126,12 +126,16 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
       id: person?.id,
     };
 
-    // Save person
-    onSave(personData);
+    // Save person and get the created/updated person
+    const savedPerson = onSave(personData);
 
-    // Save person skills
-    const personId = person?.id || crypto.randomUUID();
+    // Update skills with the correct person ID
+    updatePersonSkills(savedPerson.id);
 
+    onOpenChange(false);
+  };
+
+  const updatePersonSkills = (personId: string) => {
     // Remove old skills for this person
     const otherPersonSkills = personSkills.filter(
       ps => ps.personId !== personId
@@ -144,8 +148,6 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
     }));
 
     setPersonSkills([...otherPersonSkills, ...updatedSkills]);
-
-    onOpenChange(false);
   };
 
   return (
