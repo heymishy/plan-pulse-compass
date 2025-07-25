@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ import {
   AlertCircle,
   CheckCircle,
   Star,
+  Search,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Team, TeamMember } from '@/types';
@@ -64,6 +66,8 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
 
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [newTeamData, setNewTeamData] = useState({
     name: '',
     description: '',
@@ -82,6 +86,28 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
   const currentTeamMembers = selectedTeam
     ? getTeamMembers(selectedTeam.id)
     : [];
+
+  // Get unassigned people (people without teamId or with inactive team assignments)
+  const unassignedPeople = useMemo(() => {
+    const activeTeamMemberIds = new Set(
+      teamMembers.filter(tm => tm.isActive).map(tm => tm.personId)
+    );
+
+    return people.filter(
+      person =>
+        person.isActive &&
+        (!person.teamId || !activeTeamMemberIds.has(person.id))
+    );
+  }, [people, teamMembers]);
+
+  // Filter unassigned people based on search
+  const filteredUnassignedPeople = useMemo(() => {
+    return unassignedPeople.filter(
+      person =>
+        person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        person.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [unassignedPeople, searchTerm]);
 
   const getTeamStatusColor = (status: Team['status']) => {
     switch (status) {
@@ -156,7 +182,67 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     });
   };
 
-  // Person selection functionality has been moved to PeopleTeamMapper component
+  const handleSelectPerson = (personId: string, checked: boolean) => {
+    const newSelected = new Set(selectedPeople);
+    if (checked) {
+      newSelected.add(personId);
+    } else {
+      newSelected.delete(personId);
+    }
+    setSelectedPeople(newSelected);
+  };
+
+  const handleSelectAllPeople = (checked: boolean) => {
+    if (checked) {
+      setSelectedPeople(new Set(filteredUnassignedPeople.map(p => p.id)));
+    } else {
+      setSelectedPeople(new Set());
+    }
+  };
+
+  const handleAssignToSelectedTeam = () => {
+    if (!selectedTeam || selectedPeople.size === 0) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    selectedPeople.forEach(personId => {
+      const memberData = {
+        teamId: selectedTeam.id,
+        personId,
+        role: 'member' as TeamMember['role'],
+        allocation: 100,
+        startDate: today,
+        isActive: true,
+      };
+
+      addTeamMember(memberData);
+
+      // Update person's teamId
+      updatePerson(personId, { teamId: selectedTeam.id });
+    });
+
+    // Clear selections
+    setSelectedPeople(new Set());
+  };
+
+  const getPersonSkillsDisplay = (person: { skills?: string[] }) => {
+    if (!person.skills || person.skills.length === 0) {
+      return <span className="text-gray-400 text-sm">No skills listed</span>;
+    }
+    return (
+      <div className="flex flex-wrap gap-1">
+        {person.skills.slice(0, 3).map((skill: string, index: number) => (
+          <Badge key={index} variant="outline" className="text-xs">
+            {skill}
+          </Badge>
+        ))}
+        {person.skills.length > 3 && (
+          <Badge variant="outline" className="text-xs">
+            +{person.skills.length - 3} more
+          </Badge>
+        )}
+      </div>
+    );
+  };
 
   const handleRemoveMember = (memberId: string) => {
     removeTeamMember(memberId);
@@ -524,17 +610,120 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
       <div className="lg:col-span-1">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <UserPlus className="h-5 w-5 mr-2" />
-              People Assignment
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <UserPlus className="h-5 w-5 mr-2" />
+                Unassigned People
+              </div>
+              <Badge variant="secondary">{unassignedPeople.length}</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <UserPlus className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>People mapping functionality</p>
-              <p className="text-sm">Consolidated into Team management</p>
+          <CardContent className="space-y-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search people..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
+
+            {/* Select All */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={
+                    selectedPeople.size === filteredUnassignedPeople.length &&
+                    filteredUnassignedPeople.length > 0
+                  }
+                  onCheckedChange={handleSelectAllPeople}
+                />
+                <label className="text-sm">
+                  Select all ({selectedPeople.size} of{' '}
+                  {filteredUnassignedPeople.length} selected)
+                </label>
+              </div>
+            </div>
+
+            {/* Assign Button */}
+            {selectedPeople.size > 0 && selectedTeam && (
+              <Button
+                onClick={handleAssignToSelectedTeam}
+                className="w-full"
+                size="sm"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Assign {selectedPeople.size} to {selectedTeam.name}
+              </Button>
+            )}
+
+            {/* People List */}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {filteredUnassignedPeople.map(person => (
+                <div
+                  key={person.id}
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    selectedPeople.has(person.id)
+                      ? 'bg-blue-50 border-blue-200'
+                      : 'hover:bg-gray-50'
+                  }`}
+                  onClick={() =>
+                    handleSelectPerson(
+                      person.id,
+                      !selectedPeople.has(person.id)
+                    )
+                  }
+                >
+                  <div className="flex items-center space-x-3">
+                    <Checkbox
+                      checked={selectedPeople.has(person.id)}
+                      onChange={() => {}}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-sm">{person.name}</h4>
+                        {person.teamId && (
+                          <Badge variant="outline" className="text-xs">
+                            Previously assigned
+                          </Badge>
+                        )}
+                      </div>
+                      {person.email && (
+                        <p className="text-xs text-gray-600">{person.email}</p>
+                      )}
+                      <div className="mt-1">
+                        {getPersonSkillsDisplay(person)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {filteredUnassignedPeople.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No unassigned people found</p>
+                  {searchTerm && (
+                    <p className="text-sm">
+                      Try adjusting your search criteria
+                    </p>
+                  )}
+                  {unassignedPeople.length === 0 && !searchTerm && (
+                    <p className="text-sm">All people are assigned to teams</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {!selectedTeam && selectedPeople.size > 0 && (
+              <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                <p className="text-sm text-yellow-700">
+                  Select a team above to assign these people
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
