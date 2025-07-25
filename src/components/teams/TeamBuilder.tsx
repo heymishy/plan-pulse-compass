@@ -127,10 +127,20 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
       // Show all active people when toggle is on
       return people.filter(person => person.isActive);
     } else {
-      // Show only truly unassigned people (no teamId at all)
-      return people.filter(person => person.isActive && !person.teamId);
+      // Show only truly unassigned people
+      // Check both person.teamId and active TeamMember records to ensure consistency
+      const activeTeamMemberIds = new Set(
+        teamMembers.filter(tm => tm.isActive).map(tm => tm.personId)
+      );
+
+      return people.filter(
+        person =>
+          person.isActive &&
+          !person.teamId &&
+          !activeTeamMemberIds.has(person.id)
+      );
     }
-  }, [people, showAssignedPeople]);
+  }, [people, showAssignedPeople, teamMembers]);
 
   // Filter available people based on search and filters
   const filteredUnassignedPeople = useMemo(() => {
@@ -324,7 +334,14 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
   };
 
   const handleRemoveMember = (memberId: string) => {
-    removeTeamMember(memberId);
+    // Find the team member to get the person ID
+    const teamMember = teamMembers.find(tm => tm.id === memberId);
+    if (teamMember) {
+      // Remove the team member record
+      removeTeamMember(memberId);
+      // Clear the person's teamId to move them back to unassigned
+      updatePerson(teamMember.personId, { teamId: undefined });
+    }
   };
 
   const getPersonName = (personId: string) => {
