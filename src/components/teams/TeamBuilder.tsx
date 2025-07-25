@@ -71,8 +71,8 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAssignedPeople, setShowAssignedPeople] = useState(false);
-  const [divisionFilter, setDivisionFilter] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
+  const [divisionFilter, setDivisionFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [skillsFilter, setSkillsFilter] = useState('');
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [newTeamData, setNewTeamData] = useState({
@@ -145,7 +145,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     }
 
     // Division filter
-    if (divisionFilter) {
+    if (divisionFilter && divisionFilter !== 'all') {
       filtered = filtered.filter(person => {
         const personTeam = teams.find(t => t.id === person.teamId);
         return personTeam?.divisionId === divisionFilter;
@@ -153,7 +153,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     }
 
     // Role filter
-    if (roleFilter) {
+    if (roleFilter && roleFilter !== 'all') {
       filtered = filtered.filter(person => person.roleId === roleFilter);
     }
 
@@ -744,7 +744,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                     <SelectValue placeholder="All divisions" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All divisions</SelectItem>
+                    <SelectItem value="all">All divisions</SelectItem>
                     {divisions.map(division => (
                       <SelectItem key={division.id} value={division.id}>
                         {division.name}
@@ -763,7 +763,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                     <SelectValue placeholder="All roles" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All roles</SelectItem>
+                    <SelectItem value="all">All roles</SelectItem>
                     {roles.map(role => (
                       <SelectItem key={role.id} value={role.id}>
                         {role.name}
@@ -869,8 +869,8 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                       : 'No unassigned people found'}
                   </p>
                   {(searchTerm ||
-                    divisionFilter ||
-                    roleFilter ||
+                    (divisionFilter && divisionFilter !== 'all') ||
+                    (roleFilter && roleFilter !== 'all') ||
                     skillsFilter) && (
                     <p className="text-sm">
                       Try adjusting your search or filter criteria
@@ -878,8 +878,8 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                   )}
                   {availablePeople.length === 0 &&
                     !searchTerm &&
-                    !divisionFilter &&
-                    !roleFilter &&
+                    (!divisionFilter || divisionFilter === 'all') &&
+                    (!roleFilter || roleFilter === 'all') &&
                     !skillsFilter && (
                       <p className="text-sm">
                         {showAssignedPeople
