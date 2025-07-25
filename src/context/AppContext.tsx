@@ -41,7 +41,7 @@ export interface AppContextType {
   // From TeamContext
   people: Person[];
   setPeople: (people: Person[] | ((prev: Person[]) => Person[])) => void;
-  addPerson: (personData: Omit<Person, 'id'>) => void;
+  addPerson: (personData: Omit<Person, 'id'>) => Person;
   updatePerson: (personId: string, personData: Partial<Person>) => void;
   roles: Role[];
   setRoles: (roles: Role[] | ((prev: Role[]) => Role[])) => void;
@@ -49,14 +49,14 @@ export interface AppContextType {
   setTeams: (teams: Team[] | ((prev: Team[]) => Team[])) => void;
   addTeam: (
     teamData: Omit<Team, 'id' | 'createdDate' | 'lastModified'>
-  ) => void;
+  ) => Team;
   updateTeam: (teamId: string, teamData: Partial<Team>) => void;
   deleteTeam: (teamId: string) => void;
   teamMembers: TeamMember[];
   setTeamMembers: (
     teamMembers: TeamMember[] | ((prev: TeamMember[]) => TeamMember[])
   ) => void;
-  addTeamMember: (teamMemberData: Omit<TeamMember, 'id'>) => void;
+  addTeamMember: (teamMemberData: Omit<TeamMember, 'id'>) => TeamMember;
   updateTeamMember: (
     teamMemberId: string,
     teamMemberData: Partial<TeamMember>

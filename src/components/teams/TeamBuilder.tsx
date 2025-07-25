@@ -36,8 +36,7 @@ import {
   Star,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { Team, TeamMember, UnmappedPerson } from '@/types';
-// UnmappedPeople component was consolidated into Team functionality
+import { Team, TeamMember } from '@/types';
 
 interface TeamBuilderProps {
   selectedTeam?: Team;
@@ -157,57 +156,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     });
   };
 
-  const handlePersonSelect = (person: UnmappedPerson) => {
-    if (!selectedTeam) {
-      // Create a new team with this person
-      setNewTeamData(prev => ({ ...prev, name: `${person.name}'s Team` }));
-      setIsCreateDialogOpen(true);
-      return;
-    }
-
-    // Add person to the selected team
-    const memberData = {
-      teamId: selectedTeam.id,
-      personId: person.id,
-      role: 'member' as TeamMember['role'],
-      allocation: 100,
-      startDate: new Date().toISOString().split('T')[0],
-      isActive: true,
-    };
-
-    addTeamMember(memberData);
-  };
-
-  const handleBulkAction = (action: string, people: UnmappedPerson[]) => {
-    switch (action) {
-      case 'assign-to-team':
-        if (!selectedTeam) return;
-
-        people.forEach(person => {
-          const memberData = {
-            teamId: selectedTeam.id,
-            personId: person.id,
-            role: 'member' as TeamMember['role'],
-            allocation: 100,
-            startDate: new Date().toISOString().split('T')[0],
-            isActive: true,
-          };
-          addTeamMember(memberData);
-        });
-        break;
-
-      case 'create-team':
-        if (people.length > 0) {
-          setNewTeamData(prev => ({
-            ...prev,
-            name: `${people[0].name}'s Team`,
-            capacity: people.length * 40 + 40, // Add some buffer
-          }));
-          setIsCreateDialogOpen(true);
-        }
-        break;
-    }
-  };
+  // Person selection functionality has been moved to PeopleTeamMapper component
 
   const handleRemoveMember = (memberId: string) => {
     removeTeamMember(memberId);

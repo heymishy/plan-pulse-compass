@@ -15,7 +15,7 @@ import {
 interface TeamContextType {
   people: Person[];
   setPeople: (people: Person[] | ((prev: Person[]) => Person[])) => void;
-  addPerson: (personData: Omit<Person, 'id'>) => void;
+  addPerson: (personData: Omit<Person, 'id'>) => Person;
   updatePerson: (personId: string, personData: Partial<Person>) => void;
   roles: Role[];
   setRoles: (roles: Role[] | ((prev: Role[]) => Role[])) => void;
@@ -23,14 +23,14 @@ interface TeamContextType {
   setTeams: (teams: Team[] | ((prev: Team[]) => Team[])) => void;
   addTeam: (
     teamData: Omit<Team, 'id' | 'createdDate' | 'lastModified'>
-  ) => void;
+  ) => Team;
   updateTeam: (teamId: string, teamData: Partial<Team>) => void;
   deleteTeam: (teamId: string) => void;
   teamMembers: TeamMember[];
   setTeamMembers: (
     teamMembers: TeamMember[] | ((prev: TeamMember[]) => TeamMember[])
   ) => void;
-  addTeamMember: (teamMemberData: Omit<TeamMember, 'id'>) => void;
+  addTeamMember: (teamMemberData: Omit<TeamMember, 'id'>) => TeamMember;
   updateTeamMember: (
     teamMemberId: string,
     teamMemberData: Partial<TeamMember>
@@ -83,12 +83,13 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     []
   );
 
-  const addPerson = (personData: Omit<Person, 'id'>) => {
+  const addPerson = (personData: Omit<Person, 'id'>): Person => {
     const newPerson: Person = {
       ...personData,
       id: crypto.randomUUID(),
     };
     setPeople(prevPeople => [...prevPeople, newPerson]);
+    return newPerson;
   };
 
   const updatePerson = (personId: string, personData: Partial<Person>) => {
@@ -101,7 +102,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
 
   const addTeam = (
     teamData: Omit<Team, 'id' | 'createdDate' | 'lastModified'>
-  ) => {
+  ): Team => {
     const now = new Date().toISOString();
     const newTeam: Team = {
       ...teamData,
@@ -114,6 +115,7 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
       projectIds: teamData.projectIds || [],
     };
     setTeams(prevTeams => [...prevTeams, newTeam]);
+    return newTeam;
   };
 
   const updateTeam = (teamId: string, teamData: Partial<Team>) => {
@@ -145,12 +147,15 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     setUnmappedPeople(prev => prev.filter(person => person.id !== personId));
   };
 
-  const addTeamMember = (teamMemberData: Omit<TeamMember, 'id'>) => {
+  const addTeamMember = (
+    teamMemberData: Omit<TeamMember, 'id'>
+  ): TeamMember => {
     const newTeamMember: TeamMember = {
       ...teamMemberData,
       id: crypto.randomUUID(),
     };
     setTeamMembers(prev => [...prev, newTeamMember]);
+    return newTeamMember;
   };
 
   const updateTeamMember = (
