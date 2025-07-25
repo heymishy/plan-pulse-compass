@@ -60,6 +60,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     updateTeamMember,
     removeTeamMember,
     getTeamMembers,
+    updatePerson,
     divisions,
     projects,
   } = useApp();
@@ -83,9 +84,35 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     },
   });
 
-  const currentTeamMembers = selectedTeam
-    ? getTeamMembers(selectedTeam.id)
-    : [];
+  const currentTeamMembers = useMemo(() => {
+    if (!selectedTeam) return [];
+
+    // Get people assigned to this team
+    const teamPeople = people.filter(
+      person => person.teamId === selectedTeam.id && person.isActive
+    );
+
+    // Create display objects that match the expected format
+    return teamPeople.map(person => {
+      // Try to find existing TeamMember record for this person
+      const teamMemberRecord = teamMembers.find(
+        tm =>
+          tm.teamId === selectedTeam.id &&
+          tm.personId === person.id &&
+          tm.isActive
+      );
+
+      return {
+        id: teamMemberRecord?.id || `temp-${person.id}`,
+        personId: person.id,
+        teamId: selectedTeam.id,
+        role: teamMemberRecord?.role || ('member' as TeamMember['role']),
+        allocation: teamMemberRecord?.allocation || 100,
+        startDate: teamMemberRecord?.startDate || person.startDate,
+        isActive: true,
+      };
+    });
+  }, [selectedTeam, people, teamMembers]);
 
   // Get unassigned people (people without teamId or with inactive team assignments)
   const unassignedPeople = useMemo(() => {
