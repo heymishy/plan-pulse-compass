@@ -12,7 +12,7 @@ describe('Quarter and Iteration Generation Logic', () => {
      * This mirrors the generateStandardQuarters function in CycleDialog.tsx
      */
     const generateStandardQuarters = (fyStartDate: string): Cycle[] => {
-      const fyStart = new Date(fyStartDate);
+      const fyStart = new Date(fyStartDate + 'T00:00:00.000Z'); // Force UTC
       if (isNaN(fyStart.getTime())) {
         throw new Error(`Invalid financial year date: ${fyStartDate}`);
       }
@@ -22,14 +22,14 @@ describe('Quarter and Iteration Generation Logic', () => {
       // Generate 4 quarters based on financial year start
       for (let i = 0; i < 4; i++) {
         const quarterStart = new Date(fyStart);
-        quarterStart.setMonth(quarterStart.getMonth() + i * 3);
+        quarterStart.setUTCMonth(quarterStart.getUTCMonth() + i * 3);
 
         const quarterEnd = new Date(quarterStart);
-        quarterEnd.setMonth(quarterEnd.getMonth() + 3);
-        quarterEnd.setDate(quarterEnd.getDate() - 1); // Last day of the quarter
+        quarterEnd.setUTCMonth(quarterEnd.getUTCMonth() + 3);
+        quarterEnd.setUTCDate(quarterEnd.getUTCDate() - 1); // Last day of the quarter
 
         // Use the actual year from the quarter start date for proper naming
-        const quarterYear = quarterStart.getFullYear();
+        const quarterYear = quarterStart.getUTCFullYear();
 
         const newQuarter: Cycle = {
           id: `quarter-${i + 1}-${quarterYear}`,
@@ -37,7 +37,7 @@ describe('Quarter and Iteration Generation Logic', () => {
           name: `Q${i + 1} ${quarterYear}`,
           startDate: quarterStart.toISOString().split('T')[0],
           endDate: quarterEnd.toISOString().split('T')[0],
-          financialYearId: `fy-${fyStart.getFullYear()}`,
+          financialYearId: `fy-${fyStart.getUTCFullYear()}`,
         };
 
         newQuarters.push(newQuarter);
@@ -118,24 +118,24 @@ describe('Quarter and Iteration Generation Logic', () => {
       expect(quarters[0]).toMatchObject({
         name: 'Q1 2024',
         startDate: '2024-07-01',
-        endDate: '2024-09-29',
+        endDate: '2024-09-30',
       });
 
       expect(quarters[1]).toMatchObject({
         name: 'Q2 2024',
-        startDate: '2024-09-30',
-        endDate: '2024-12-30',
+        startDate: '2024-10-01',
+        endDate: '2024-12-31',
       });
 
       expect(quarters[2]).toMatchObject({
         name: 'Q3 2025',
-        startDate: '2024-12-31',
-        endDate: '2025-03-30',
+        startDate: '2025-01-01',
+        endDate: '2025-03-31',
       });
 
       expect(quarters[3]).toMatchObject({
         name: 'Q4 2025',
-        startDate: '2025-03-31',
+        startDate: '2025-04-01',
         endDate: '2025-06-30',
       });
     });
@@ -236,8 +236,8 @@ describe('Quarter and Iteration Generation Logic', () => {
       quarterCycle: Cycle,
       iterationLength: 'fortnightly' | 'monthly' | '6-weekly'
     ): Cycle[] => {
-      const startDate = new Date(quarterCycle.startDate);
-      const endDate = new Date(quarterCycle.endDate);
+      const startDate = new Date(quarterCycle.startDate + 'T00:00:00.000Z');
+      const endDate = new Date(quarterCycle.endDate + 'T00:00:00.000Z');
       const newIterations: Cycle[] = [];
 
       let currentStart = startDate;

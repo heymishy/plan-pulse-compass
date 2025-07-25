@@ -58,8 +58,8 @@ describe('Quarter and Iteration Generation - Comprehensive Coverage', () => {
       customQuarterLength = 3,
     } = options;
 
-    const fyStart = new Date(financialYear.startDate);
-    const fyEnd = new Date(financialYear.endDate);
+    const fyStart = new Date(financialYear.startDate + 'T00:00:00.000Z'); // Force UTC
+    const fyEnd = new Date(financialYear.endDate + 'T00:00:00.000Z'); // Force UTC
 
     if (validateDates && isNaN(fyStart.getTime())) {
       throw new Error(
@@ -78,16 +78,18 @@ describe('Quarter and Iteration Generation - Comprehensive Coverage', () => {
     }
 
     const quarters: Cycle[] = [];
-    const fyYear = fyStart.getFullYear();
+    const fyYear = fyStart.getUTCFullYear();
     const totalQuarters = Math.ceil(12 / customQuarterLength);
 
     for (let i = 0; i < totalQuarters; i++) {
       const quarterStart = new Date(fyStart);
-      quarterStart.setMonth(quarterStart.getMonth() + i * customQuarterLength);
+      quarterStart.setUTCMonth(
+        quarterStart.getUTCMonth() + i * customQuarterLength
+      );
 
       const quarterEnd = new Date(quarterStart);
-      quarterEnd.setMonth(quarterEnd.getMonth() + customQuarterLength);
-      quarterEnd.setDate(quarterEnd.getDate() - 1); // Last day of the quarter
+      quarterEnd.setUTCMonth(quarterEnd.getUTCMonth() + customQuarterLength);
+      quarterEnd.setUTCDate(quarterEnd.getUTCDate() - 1); // Last day of the quarter
 
       // Don't let quarter extend beyond financial year
       if (quarterEnd > fyEnd) {
@@ -154,8 +156,8 @@ describe('Quarter and Iteration Generation - Comprehensive Coverage', () => {
       includeMetadata = false,
     } = options;
 
-    const startDate = new Date(quarterCycle.startDate);
-    const endDate = new Date(quarterCycle.endDate);
+    const startDate = new Date(quarterCycle.startDate + 'T00:00:00.000Z');
+    const endDate = new Date(quarterCycle.endDate + 'T00:00:00.000Z');
     const iterations: Cycle[] = [];
 
     // Adjust start date to Monday if required
@@ -353,10 +355,10 @@ describe('Quarter and Iteration Generation - Comprehensive Coverage', () => {
 
       // Q1 should be in 2024
       expect(quarters[0].startDate).toBe('2024-07-01');
-      expect(quarters[0].endDate).toBe('2024-09-29'); // Generated as Sep 29, which is correct
+      expect(quarters[0].endDate).toBe('2024-09-30'); // UTC calculation gives Sep 30
 
       // Q4 should extend into 2025
-      expect(quarters[3].startDate).toBe('2025-03-31');
+      expect(quarters[3].startDate).toBe('2025-04-01');
       expect(quarters[3].endDate).toBe('2025-06-30');
     });
   });
