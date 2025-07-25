@@ -53,6 +53,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     teams,
     teamMembers,
     people,
+    roles,
     addTeam,
     updateTeam,
     deleteTeam,
@@ -63,11 +64,16 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     updatePerson,
     divisions,
     projects,
+    personSkills,
   } = useApp();
 
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAssignedPeople, setShowAssignedPeople] = useState(false);
+  const [divisionFilter, setDivisionFilter] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [skillsFilter, setSkillsFilter] = useState('');
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
   const [newTeamData, setNewTeamData] = useState({
     name: '',
@@ -114,27 +120,68 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     });
   }, [selectedTeam, people, teamMembers]);
 
-  // Get unassigned people (people without teamId or with inactive team assignments)
-  const unassignedPeople = useMemo(() => {
-    const activeTeamMemberIds = new Set(
-      teamMembers.filter(tm => tm.isActive).map(tm => tm.personId)
-    );
+  // Get people for the right panel (unassigned by default, all if toggle is on)
+  const availablePeople = useMemo(() => {
+    if (showAssignedPeople) {
+      // Show all active people when toggle is on
+      return people.filter(person => person.isActive);
+    } else {
+      // Show only truly unassigned people (no teamId at all)
+      return people.filter(person => person.isActive && !person.teamId);
+    }
+  }, [people, showAssignedPeople]);
 
-    return people.filter(
-      person =>
-        person.isActive &&
-        (!person.teamId || !activeTeamMemberIds.has(person.id))
-    );
-  }, [people, teamMembers]);
-
-  // Filter unassigned people based on search
+  // Filter available people based on search and filters
   const filteredUnassignedPeople = useMemo(() => {
-    return unassignedPeople.filter(
-      person =>
-        person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        person.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [unassignedPeople, searchTerm]);
+    let filtered = availablePeople;
+
+    // Text search
+    if (searchTerm) {
+      filtered = filtered.filter(
+        person =>
+          person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          person.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Division filter
+    if (divisionFilter) {
+      filtered = filtered.filter(person => {
+        const personTeam = teams.find(t => t.id === person.teamId);
+        return personTeam?.divisionId === divisionFilter;
+      });
+    }
+
+    // Role filter
+    if (roleFilter) {
+      filtered = filtered.filter(person => person.roleId === roleFilter);
+    }
+
+    // Skills filter
+    if (skillsFilter) {
+      filtered = filtered.filter(person => {
+        const personSkillRecords = personSkills.filter(
+          ps => ps.personId === person.id
+        );
+        const personSkillNames = personSkillRecords.map(ps =>
+          ps.skillName.toLowerCase()
+        );
+        return personSkillNames.some(skill =>
+          skill.includes(skillsFilter.toLowerCase())
+        );
+      });
+    }
+
+    return filtered;
+  }, [
+    availablePeople,
+    searchTerm,
+    divisionFilter,
+    roleFilter,
+    skillsFilter,
+    teams,
+    personSkills,
+  ]);
 
   const getTeamStatusColor = (status: Team['status']) => {
     switch (status) {
@@ -654,9 +701,9 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
                 <UserPlus className="h-5 w-5 mr-2" />
-                Unassigned People
+                {showAssignedPeople ? 'All People' : 'Unassigned People'}
               </div>
-              <Badge variant="secondary">{unassignedPeople.length}</Badge>
+              <Badge variant="secondary">{availablePeople.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -669,6 +716,74 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                 onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
+            </div>
+
+            {/* Toggle to show assigned people */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="show-assigned"
+                checked={showAssignedPeople}
+                onCheckedChange={setShowAssignedPeople}
+              />
+              <Label htmlFor="show-assigned" className="text-sm">
+                Show people already in teams (for reassignment)
+              </Label>
+            </div>
+
+            {/* Filters */}
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                  Division
+                </Label>
+                <Select
+                  value={divisionFilter}
+                  onValueChange={setDivisionFilter}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="All divisions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All divisions</SelectItem>
+                    {divisions.map(division => (
+                      <SelectItem key={division.id} value={division.id}>
+                        {division.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                  Role
+                </Label>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="All roles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All roles</SelectItem>
+                    {roles.map(role => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                  Skills
+                </Label>
+                <Input
+                  placeholder="Filter by skills..."
+                  value={skillsFilter}
+                  onChange={e => setSkillsFilter(e.target.value)}
+                  className="h-8"
+                />
+              </div>
             </div>
 
             {/* Select All */}
@@ -727,7 +842,10 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                         <h4 className="font-medium text-sm">{person.name}</h4>
                         {person.teamId && (
                           <Badge variant="outline" className="text-xs">
-                            Previously assigned
+                            {showAssignedPeople
+                              ? teams.find(t => t.id === person.teamId)?.name ||
+                                'Assigned'
+                              : 'Previously assigned'}
                           </Badge>
                         )}
                       </div>
@@ -745,15 +863,30 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
               {filteredUnassignedPeople.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>No unassigned people found</p>
-                  {searchTerm && (
+                  <p>
+                    {showAssignedPeople
+                      ? 'No people found'
+                      : 'No unassigned people found'}
+                  </p>
+                  {(searchTerm ||
+                    divisionFilter ||
+                    roleFilter ||
+                    skillsFilter) && (
                     <p className="text-sm">
-                      Try adjusting your search criteria
+                      Try adjusting your search or filter criteria
                     </p>
                   )}
-                  {unassignedPeople.length === 0 && !searchTerm && (
-                    <p className="text-sm">All people are assigned to teams</p>
-                  )}
+                  {availablePeople.length === 0 &&
+                    !searchTerm &&
+                    !divisionFilter &&
+                    !roleFilter &&
+                    !skillsFilter && (
+                      <p className="text-sm">
+                        {showAssignedPeople
+                          ? 'No active people in the system'
+                          : 'All people are assigned to teams'}
+                      </p>
+                    )}
                 </div>
               )}
             </div>
