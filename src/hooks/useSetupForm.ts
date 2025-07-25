@@ -21,13 +21,14 @@ export const useSetupForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Initialize with default financial year start as April 1st of current year
+  // Initialize with default financial year ending September 30th of current year
   const currentYear = new Date().getFullYear();
-  const defaultStartDate = `${currentYear}-04-01`;
+  const defaultStartDate = `${currentYear - 1}-10-01`; // October 1st of previous year
+  const defaultEndDate = `${currentYear}-09-30`; // September 30th of current year
 
   const [formData, setFormData] = useState({
     financialYearStart: defaultStartDate,
-    financialYearEnd: `${currentYear + 1}-03-31`, // Auto-calculated
+    financialYearEnd: defaultEndDate,
     iterationLength: 'fortnightly' as 'fortnightly' | 'monthly' | '6-weekly',
   });
 

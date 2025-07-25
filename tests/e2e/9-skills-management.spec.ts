@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { waitForLocalStorageData } from './test-helpers';
+import { waitForLocalStorageData, ensureSetupComplete } from './test-helpers';
 
 test.describe('Skills Management', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure setup is complete before running tests
+    await ensureSetupComplete(page);
+
     // Navigate to skills page (might be under people section)
     await page.goto('/skills');
     await page.waitForLoadState('networkidle');

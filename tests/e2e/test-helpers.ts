@@ -229,6 +229,62 @@ export async function waitForLocalStorageData(
 }
 
 /**
+ * Ensure setup is complete for tests that need it
+ */
+export async function ensureSetupComplete(page: Page): Promise<void> {
+  console.log('🔧 Ensuring setup is complete...');
+
+  // Navigate to home page first to ensure localStorage is accessible
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  // Check if setup is already complete
+  const setupComplete = await page.evaluate(() => {
+    try {
+      const setupComplete = localStorage.getItem('planning-setup-complete');
+      const hasConfig = localStorage.getItem('planning-config');
+      return setupComplete === 'true' && hasConfig;
+    } catch (e) {
+      return false;
+    }
+  });
+
+  if (setupComplete) {
+    console.log('✅ Setup already complete');
+    return;
+  }
+
+  // Set default configuration
+  await page.evaluate(() => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const defaultConfig = {
+        financialYear: {
+          id: `fy-${currentYear}`,
+          name: `FY ${currentYear}`,
+          startDate: `${currentYear - 1}-10-01`,
+          endDate: `${currentYear}-09-30`,
+        },
+        iterationLength: 'fortnightly',
+        quarters: [],
+        workingDaysPerWeek: 5,
+        workingHoursPerDay: 8,
+        workingDaysPerYear: 260,
+        workingDaysPerMonth: 22,
+        currencySymbol: '$',
+      };
+
+      localStorage.setItem('planning-config', JSON.stringify(defaultConfig));
+      localStorage.setItem('planning-setup-complete', 'true');
+    } catch (e) {
+      console.error('Failed to set localStorage:', e);
+    }
+  });
+
+  console.log('✅ Setup configuration created');
+}
+
+/**
  * Verify quarters are visible in planning page dropdown
  */
 export async function verifyQuartersInDropdown(page: Page): Promise<void> {

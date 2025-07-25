@@ -26,15 +26,19 @@ export const useSettings = () => {
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  // Generate default financial year ending September 30th of current year
+  const currentYear = new Date().getFullYear();
+  const defaultFinancialYear = {
+    id: `fy-${currentYear}`,
+    name: `FY ${currentYear}`,
+    startDate: `${currentYear - 1}-10-01`, // October 1st of previous year
+    endDate: `${currentYear}-09-30`, // September 30th of current year
+  };
+
   const [config, setConfig] = useLocalStorage<AppConfig | null>(
     'planning-config',
     {
-      financialYear: {
-        id: 'default-fy',
-        name: 'Default Financial Year',
-        startDate: '2024-01-01',
-        endDate: '2024-12-31',
-      },
+      financialYear: defaultFinancialYear,
       iterationLength: 'fortnightly',
       quarters: [],
       workingDaysPerWeek: 5,
@@ -46,7 +50,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
   );
   const [isSetupComplete, setIsSetupComplete] = useLocalStorage<boolean>(
     'planning-setup-complete',
-    false
+    true // Default to true so pages are accessible without setup wizard
   );
 
   const value: SettingsContextType = {

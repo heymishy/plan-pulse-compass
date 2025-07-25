@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { waitForLocalStorageData } from './test-helpers';
+import { waitForLocalStorageData, ensureSetupComplete } from './test-helpers';
 
 test.describe('Epics Management', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure setup is complete before running tests
+    await ensureSetupComplete(page);
+
     // Navigate to epics page (might be under planning or projects)
     await page.goto('/epics');
     await page.waitForLoadState('networkidle');

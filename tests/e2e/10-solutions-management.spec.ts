@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { waitForLocalStorageData } from './test-helpers';
+import { waitForLocalStorageData, ensureSetupComplete } from './test-helpers';
 
 test.describe('Solutions Management', () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure setup is complete before running tests
+    await ensureSetupComplete(page);
+
     // Navigate to solutions page (might be under planning or projects)
     await page.goto('/solutions');
     await page.waitForLoadState('networkidle');
