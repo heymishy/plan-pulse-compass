@@ -19,19 +19,11 @@ test.describe('Projects Management', () => {
     // Check that we're on the projects page
     await expect(page.locator('h1:has-text("Projects")')).toBeVisible();
 
-    // Should see the projects table/list/cards
-    await expect(
-      page.locator(
-        '[data-testid="projects-table"], .projects-list, [role="table"], .projects-grid'
-      )
-    ).toBeVisible();
+    // Should see the projects table (default tab is "All Projects" and default view is table)
+    await expect(page.locator('table')).toBeVisible();
 
     // Should see the add project button
-    await expect(
-      page.locator(
-        'button:has-text("Add Project"), button:has-text("New Project"), button:has-text("Create Project")'
-      )
-    ).toBeVisible();
+    await expect(page.locator('button:has-text("Add Project")')).toBeVisible();
 
     console.log('✅ Projects page loaded correctly');
   });
@@ -40,9 +32,7 @@ test.describe('Projects Management', () => {
     console.log('📁 Testing project creation...');
 
     // Click add project button
-    await page.click(
-      'button:has-text("Add Project"), button:has-text("New Project"), button:has-text("Create Project")'
-    );
+    await page.click('button:has-text("Add Project")');
 
     // Wait for dialog to open
     await expect(page.locator('[role="dialog"]')).toBeVisible();
@@ -103,9 +93,7 @@ test.describe('Projects Management', () => {
     console.log('✏️ Testing project editing...');
 
     // First create a project to edit
-    await page.click(
-      'button:has-text("Add Project"), button:has-text("New Project"), button:has-text("Create Project")'
-    );
+    await page.click('button:has-text("Add Project")');
     await expect(page.locator('[role="dialog"]')).toBeVisible();
 
     const originalName = `Project to Edit ${Date.now()}`;
@@ -116,15 +104,13 @@ test.describe('Projects Management', () => {
     await page.click('button:has-text("Create"), button:has-text("Save")');
     await expect(page.locator('[role="dialog"]')).not.toBeVisible();
 
-    // Now edit the project
-    const projectElement = page.locator(
-      `tr:has-text("${originalName}"), div:has-text("${originalName}"), .project-card:has-text("${originalName}")`
-    );
+    // Now edit the project (find in table)
+    const projectElement = page.locator(`table tr:has-text("${originalName}")`);
     await expect(projectElement).toBeVisible();
 
-    // Look for edit button or click on the project
+    // Look for edit button (uses Edit2 icon)
     const editButton = projectElement.locator(
-      'button:has([data-lucide="edit"]), button:has-text("Edit"), [data-testid="edit-project"]'
+      'button:has([data-lucide="edit-2"])'
     );
     if (await editButton.isVisible()) {
       await editButton.click();
@@ -158,9 +144,7 @@ test.describe('Projects Management', () => {
     console.log('📊 Testing project status management...');
 
     // Create a project first
-    await page.click(
-      'button:has-text("Add Project"), button:has-text("New Project"), button:has-text("Create Project")'
-    );
+    await page.click('button:has-text("Add Project")');
     await expect(page.locator('[role="dialog"]')).toBeVisible();
 
     const projectName = `Status Test Project ${Date.now()}`;
@@ -182,9 +166,7 @@ test.describe('Projects Management', () => {
     await expect(page.locator('[role="dialog"]')).not.toBeVisible();
 
     // Verify project shows with correct status
-    const projectRow = page.locator(
-      `tr:has-text("${projectName}"), div:has-text("${projectName}")`
-    );
+    const projectRow = page.locator(`table tr:has-text("${projectName}")`);
     await expect(projectRow).toBeVisible();
 
     console.log('✅ Project status management working');
@@ -243,13 +225,13 @@ test.describe('Projects Management', () => {
 
     // Find and delete the project
     const projectElement = page.locator(
-      `tr:has-text("${projectToDelete}"), div:has-text("${projectToDelete}")`
+      `table tr:has-text("${projectToDelete}")`
     );
     await expect(projectElement).toBeVisible();
 
-    // Look for delete button
+    // Look for delete button (projects might use bulk delete like teams)
     const deleteButton = projectElement.locator(
-      'button:has([data-lucide="trash"]), button:has-text("Delete"), [data-testid="delete-project"]'
+      'button:has([data-lucide="trash-2"])'
     );
 
     if (await deleteButton.isVisible()) {
@@ -278,9 +260,7 @@ test.describe('Projects Management', () => {
     console.log('👥 Testing project-team associations...');
 
     // Create a project first
-    await page.click(
-      'button:has-text("Add Project"), button:has-text("New Project"), button:has-text("Create Project")'
-    );
+    await page.click('button:has-text("Add Project")');
     await expect(page.locator('[role="dialog"]')).toBeVisible();
 
     const projectName = `Team Association Project ${Date.now()}`;

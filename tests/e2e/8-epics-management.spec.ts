@@ -32,15 +32,11 @@ test.describe('Epics Management', () => {
     console.log('🔍 Testing epics view functionality...');
 
     // Check for epics content (flexible selectors)
-    const epicsContent = page.locator(
-      'h1:has-text("Epics"), h2:has-text("Epics"), .epics-list, [data-testid*="epic"]'
-    );
+    const epicsContent = page.locator('h1:has-text("Epics"), table');
     await expect(epicsContent.first()).toBeVisible();
 
     // Should see the add epic button
-    const addEpicButton = page.locator(
-      'button:has-text("Add Epic"), button:has-text("New Epic"), button:has-text("Create Epic")'
-    );
+    const addEpicButton = page.locator('button:has-text("Add Epic")');
     if (await addEpicButton.isVisible()) {
       console.log('ℹ️ Add epic button found');
     }
@@ -52,9 +48,7 @@ test.describe('Epics Management', () => {
     console.log('📈 Testing epic creation...');
 
     // Look for add epic button
-    const addEpicButton = page.locator(
-      'button:has-text("Add Epic"), button:has-text("New Epic"), button:has-text("Create Epic")'
-    );
+    const addEpicButton = page.locator('button:has-text("Add Epic")');
 
     if (await addEpicButton.isVisible()) {
       await addEpicButton.click();
@@ -121,9 +115,7 @@ test.describe('Epics Management', () => {
     console.log('✏️ Testing epic editing...');
 
     // First create an epic to edit
-    const addEpicButton = page.locator(
-      'button:has-text("Add Epic"), button:has-text("New Epic"), button:has-text("Create Epic")'
-    );
+    const addEpicButton = page.locator('button:has-text("Add Epic")');
 
     if (await addEpicButton.isVisible()) {
       await addEpicButton.click();
@@ -138,14 +130,12 @@ test.describe('Epics Management', () => {
       await expect(page.locator('[role="dialog"]')).not.toBeVisible();
 
       // Now edit the epic
-      const epicElement = page.locator(
-        `tr:has-text("${originalName}"), div:has-text("${originalName}"), .epic-card:has-text("${originalName}")`
-      );
+      const epicElement = page.locator(`table tr:has-text("${originalName}")`);
       await expect(epicElement).toBeVisible();
 
       // Look for edit button or click on the epic
       const editButton = epicElement.locator(
-        'button:has([data-lucide="edit"]), button:has-text("Edit"), [data-testid="edit-epic"]'
+        'button:has([data-lucide="edit-2"])'
       );
       if (await editButton.isVisible()) {
         await editButton.click();
@@ -181,9 +171,7 @@ test.describe('Epics Management', () => {
   test('should test epic status and priority management', async ({ page }) => {
     console.log('📊 Testing epic status and priority management...');
 
-    const addEpicButton = page.locator(
-      'button:has-text("Add Epic"), button:has-text("New Epic"), button:has-text("Create Epic")'
-    );
+    const addEpicButton = page.locator('button:has-text("Add Epic")');
 
     if (await addEpicButton.isVisible()) {
       await addEpicButton.click();
@@ -232,9 +220,7 @@ test.describe('Epics Management', () => {
   test('should test epic-project associations', async ({ page }) => {
     console.log('🔗 Testing epic-project associations...');
 
-    const addEpicButton = page.locator(
-      'button:has-text("Add Epic"), button:has-text("New Epic"), button:has-text("Create Epic")'
-    );
+    const addEpicButton = page.locator('button:has-text("Add Epic")');
 
     if (await addEpicButton.isVisible()) {
       await addEpicButton.click();
@@ -272,14 +258,12 @@ test.describe('Epics Management', () => {
     console.log('🔍 Testing epic filtering and sorting...');
 
     // Look for filter/sort controls
-    const filterControls = page.locator(
-      'select:near(text="Filter"), select:near(text="Status"), select:near(text="Priority")'
-    );
+    const filterControls = page.locator('select, [role="combobox"]');
     const sortControls = page.locator(
       'button:has-text("Sort"), [data-testid*="sort"]'
     );
     const searchInput = page.locator(
-      'input[placeholder*="search" i]:near(text="Epic")'
+      'input#search, input[placeholder="Search epics..."]'
     );
 
     if (await filterControls.first().isVisible()) {
@@ -303,9 +287,7 @@ test.describe('Epics Management', () => {
     console.log('🗑️ Testing epic deletion...');
 
     // Create an epic to delete
-    const addEpicButton = page.locator(
-      'button:has-text("Add Epic"), button:has-text("New Epic"), button:has-text("Create Epic")'
-    );
+    const addEpicButton = page.locator('button:has-text("Add Epic")');
 
     if (await addEpicButton.isVisible()) {
       await addEpicButton.click();
@@ -320,14 +302,12 @@ test.describe('Epics Management', () => {
       await expect(page.locator('[role="dialog"]')).not.toBeVisible();
 
       // Find and delete the epic
-      const epicElement = page.locator(
-        `tr:has-text("${epicToDelete}"), div:has-text("${epicToDelete}")`
-      );
+      const epicElement = page.locator(`table tr:has-text("${epicToDelete}")`);
       await expect(epicElement).toBeVisible();
 
       // Look for delete button
       const deleteButton = epicElement.locator(
-        'button:has([data-lucide="trash"]), button:has-text("Delete"), [data-testid="delete-epic"]'
+        'button:has([data-lucide="trash-2"])'
       );
 
       if (await deleteButton.isVisible()) {
