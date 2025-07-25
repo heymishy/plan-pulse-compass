@@ -40,12 +40,13 @@ export const calculatePersonCost = (
   role: Role,
   config: AppConfig
 ): PersonCostCalculation => {
+  const safeConfig = config || getDefaultConfig();
   const {
     workingHoursPerDay,
     workingDaysPerYear,
     workingDaysPerWeek,
     workingDaysPerMonth,
-  } = config;
+  } = safeConfig;
   let costPerHour = 0;
   let rateSource: 'personal' | 'role-default' | 'legacy-fallback' =
     'legacy-fallback';
