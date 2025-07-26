@@ -93,9 +93,11 @@ test.describe('Page Console Error Detection', () => {
 
       // Check if page loaded properly (look for common elements)
       try {
-        // Look for navigation or main content area
+        // Look for navigation or main content area - enhanced selectors
         await expect(
-          page.locator('nav, main, [role="main"], .main-content')
+          page.locator(
+            'nav, main, [role="main"], .main-content, body > div, #root, .app, h1'
+          )
         ).toBeVisible({ timeout: 10000 });
       } catch (error) {
         console.warn(

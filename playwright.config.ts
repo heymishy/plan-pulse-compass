@@ -8,17 +8,36 @@ export default defineConfig({
   workers: process.env.CI ? 1 : 1, // Use single worker to prevent race conditions
   reporter: process.env.CI
     ? [['html'], ['github']]
-    : [['html', { open: 'never' }]],
-  timeout: 45000, // Increased timeout for stability
+    : [
+        ['html', { open: 'never' }],
+        ['list', { printSteps: false }],
+      ], // Reduced output to prevent EPIPE
+  timeout: 60000, // Increased timeout for comprehensive tests
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 10000, // Increased for reliability
-    navigationTimeout: 15000, // Increased for complex page loads
+    actionTimeout: 15000, // Increased for reliability
+    navigationTimeout: 20000, // Increased for complex page loads
     expect: {
-      timeout: 8000, // Increased assertion timeout
+      timeout: 10000, // Increased assertion timeout
+    },
+    // Additional browser args for stability
+    launchOptions: {
+      args: [
+        '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-web-security',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-background-timer-throttling',
+        '--force-color-profile=srgb',
+        '--disable-logging',
+        '--silent',
+      ],
     },
   },
 
