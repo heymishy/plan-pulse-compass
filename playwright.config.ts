@@ -12,16 +12,16 @@ export default defineConfig({
         ['html', { open: 'never' }],
         ['list', { printSteps: false }],
       ], // Reduced output to prevent EPIPE
-  timeout: process.env.CI ? 30000 : 45000, // Reduced timeout for CI memory constraints
+  timeout: process.env.CI ? 15000 : 45000, // Aggressive timeout for CI memory constraints
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: process.env.CI ? 'off' : 'retain-on-failure', // Disable trace in CI to save memory
     screenshot: process.env.CI ? 'off' : 'only-on-failure', // Disable screenshots in CI
     video: process.env.CI ? 'off' : 'retain-on-failure', // Disable video in CI
-    actionTimeout: process.env.CI ? 8000 : 12000, // Reduced for CI
-    navigationTimeout: process.env.CI ? 10000 : 15000, // Reduced for CI
+    actionTimeout: process.env.CI ? 5000 : 12000, // Aggressive reduction for CI
+    navigationTimeout: process.env.CI ? 8000 : 15000, // Aggressive reduction for CI
     expect: {
-      timeout: process.env.CI ? 6000 : 10000, // Reduced for CI
+      timeout: process.env.CI ? 3000 : 10000, // Aggressive reduction for CI
     },
     // Memory-optimized browser args for CI
     launchOptions: {
@@ -52,6 +52,8 @@ export default defineConfig({
               '--disable-gpu',
               '--disable-gpu-sandbox',
               '--single-process', // Use single process to reduce memory
+              '--max_old_space_size=512', // Limit Node.js memory usage
+              '--disable-features=VizDisplayCompositor', // Reduce memory usage
             ]
           : []),
       ],
