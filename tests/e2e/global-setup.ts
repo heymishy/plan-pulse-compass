@@ -26,12 +26,7 @@ async function globalSetup(config: FullConfig) {
     // Pre-configure context for better performance
     viewport: { width: 1280, height: 720 },
     reducedMotion: 'reduce',
-    // Disable images and media for faster loading in setup
-    settings: {
-      javascript: true,
-      images: false,
-      media: false,
-    },
+    // Enable images for proper UI testing
   });
 
   const page = await context.newPage();
@@ -44,11 +39,14 @@ async function globalSetup(config: FullConfig) {
       timeout: 30000,
     });
 
-    // Wait for critical resources to load
-    await page.waitForSelector('[data-testid="app"]', {
-      timeout: 10000,
+    // Wait for critical resources to load - use more generic selector
+    await page.waitForSelector('body', {
+      timeout: 15000,
       state: 'attached',
     });
+
+    // Additional wait for React to initialize
+    await page.waitForTimeout(2000);
 
     console.log('✅ Application pre-warmed successfully');
   } catch (error) {

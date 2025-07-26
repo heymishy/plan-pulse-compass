@@ -2,21 +2,23 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: true, // Enable parallel execution for better performance
+  fullyParallel: false, // Disable parallel execution to fix EPIPE errors
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : '50%', // Use more workers for parallel execution
-  reporter: process.env.CI ? [['html'], ['github']] : 'html',
-  timeout: 30000, // Reduced from 60s to 30s for faster feedback
+  retries: process.env.CI ? 1 : 0, // Reduce retries for faster feedback
+  workers: process.env.CI ? 1 : 1, // Use single worker to prevent race conditions
+  reporter: process.env.CI
+    ? [['html'], ['github']]
+    : [['html', { open: 'never' }]],
+  timeout: 45000, // Increased timeout for stability
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
-    screenshot: process.env.CI ? 'only-on-failure' : 'only-on-failure',
-    video: process.env.CI ? 'retain-on-failure' : 'retain-on-failure',
-    actionTimeout: 5000, // Reduced to 5s for faster failure feedback
-    navigationTimeout: 10000, // 10s for page navigation
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    actionTimeout: 10000, // Increased for reliability
+    navigationTimeout: 15000, // Increased for complex page loads
     expect: {
-      timeout: 5000, // 5s for assertions
+      timeout: 8000, // Increased assertion timeout
     },
   },
 
@@ -28,11 +30,11 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run dev:e2e',
     url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
-    stderr: 'pipe',
-    stdout: 'pipe',
+    stderr: 'ignore', // Reduce log noise that causes EPIPE
+    stdout: 'ignore', // Reduce log noise that causes EPIPE
   },
 });

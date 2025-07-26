@@ -130,11 +130,9 @@ test.describe('Teams Management', () => {
       await page.waitForTimeout(500);
 
       // The TeamBuilder component should be visible
-      // Check for some basic elements that should be present
+      // Check for the specific heading and text that exists in TeamBuilder
       await expect(
-        page
-          .locator('text="Team Builder", text="Select Team", text="Teams"')
-          .first()
+        page.locator('h3:has-text("Select a Team")').first()
       ).toBeVisible();
 
       console.log('✅ Team builder accessed successfully');
@@ -159,13 +157,9 @@ test.describe('Teams Management', () => {
       // Wait for dialog to open
       await expect(page.locator('[role="dialog"]')).toBeVisible();
 
-      // Should see the people mapping interface
+      // Should see the people mapping interface dialog title
       await expect(
-        page
-          .locator(
-            'text="People to Team Mapping", h2:has-text("People to Team Mapping")'
-          )
-          .first()
+        page.locator('[role="dialog"] h2:has-text("People to Team Mapping")')
       ).toBeVisible();
 
       // Close dialog

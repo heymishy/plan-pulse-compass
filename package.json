@@ -4,7 +4,8 @@
   "version": "0.0.22",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "PORT=8080 vite --port 8080",
+    "dev:e2e": "killall -9 node 2>/dev/null || true && PORT=8080 vite --port 8080",
     "build": "npm run copy-workers && vite build",
     "copy-workers": "mkdir -p public/workers && cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/workers/pdf.worker.min.js",
     "build:dev": "vite build --mode development",
@@ -38,6 +39,7 @@
     "test:logic:fast": "vitest run --config vitest.config.node.ts --no-coverage --reporter=default --reporter-options='{\"summary\":false}' src/utils/__tests__/",
     "test:performance:legacy": "vitest run --reporter=verbose --no-coverage",
     "test:e2e": "playwright test",
+    "test:e2e:setup": "killall -9 node 2>/dev/null || true && playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
