@@ -12,18 +12,18 @@ export default defineConfig({
         ['html', { open: 'never' }],
         ['list', { printSteps: false }],
       ], // Reduced output to prevent EPIPE
-  timeout: 45000, // Optimized timeout for reliable execution
+  timeout: process.env.CI ? 30000 : 45000, // Reduced timeout for CI memory constraints
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
-    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
-    actionTimeout: 12000, // Optimized for reliability
-    navigationTimeout: 15000, // Balanced for complex page loads
+    trace: process.env.CI ? 'off' : 'retain-on-failure', // Disable trace in CI to save memory
+    screenshot: process.env.CI ? 'off' : 'only-on-failure', // Disable screenshots in CI
+    video: process.env.CI ? 'off' : 'retain-on-failure', // Disable video in CI
+    actionTimeout: process.env.CI ? 8000 : 12000, // Reduced for CI
+    navigationTimeout: process.env.CI ? 10000 : 15000, // Reduced for CI
     expect: {
-      timeout: 10000, // Increased assertion timeout
+      timeout: process.env.CI ? 6000 : 10000, // Reduced for CI
     },
-    // Additional browser args for stability
+    // Memory-optimized browser args for CI
     launchOptions: {
       args: [
         '--no-sandbox',
@@ -37,6 +37,23 @@ export default defineConfig({
         '--force-color-profile=srgb',
         '--disable-logging',
         '--silent',
+        // Additional memory optimization for CI
+        ...(process.env.CI
+          ? [
+              '--memory-pressure-off',
+              '--disable-background-networking',
+              '--disable-default-apps',
+              '--disable-extensions',
+              '--disable-sync',
+              '--disable-translate',
+              '--hide-scrollbars',
+              '--mute-audio',
+              '--no-first-run',
+              '--disable-gpu',
+              '--disable-gpu-sandbox',
+              '--single-process', // Use single process to reduce memory
+            ]
+          : []),
       ],
     },
   },

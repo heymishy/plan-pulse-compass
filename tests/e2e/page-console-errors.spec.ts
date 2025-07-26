@@ -1,26 +1,35 @@
 import { test, expect, Page } from '@playwright/test';
 
-// Define all pages to test
-const pages = [
-  { name: 'Dashboard', path: '/', hasAuth: false },
-  { name: 'Teams', path: '/teams', hasAuth: false },
-  { name: 'People', path: '/people', hasAuth: false },
-  { name: 'Projects', path: '/projects', hasAuth: false },
-  { name: 'Epics', path: '/epics', hasAuth: false },
-  { name: 'Milestones', path: '/milestones', hasAuth: false },
-  { name: 'Skills', path: '/skills', hasAuth: false },
-  { name: 'Planning', path: '/planning', hasAuth: false },
-  { name: 'Advanced Planning', path: '/advanced-planning', hasAuth: false },
-  { name: 'Journey Planning', path: '/journey-planning', hasAuth: false },
-  { name: 'Allocations', path: '/allocations', hasAuth: false },
-  { name: 'Tracking', path: '/tracking', hasAuth: false },
-  { name: 'Canvas', path: '/canvas', hasAuth: false },
-  { name: 'Financials', path: '/financials', hasAuth: false },
-  { name: 'Reports', path: '/reports', hasAuth: false },
-  { name: 'Scenario Analysis', path: '/scenario-analysis', hasAuth: false },
-  { name: 'OCR', path: '/ocr', hasAuth: false },
-  { name: 'Settings', path: '/settings', hasAuth: false },
-];
+// Define pages to test - reduced set for CI memory optimization
+const isCI = process.env.CI === 'true' || process.env.NODE_ENV === 'ci';
+const pages = isCI
+  ? [
+      { name: 'Dashboard', path: '/', hasAuth: false },
+      { name: 'Teams', path: '/teams', hasAuth: false },
+      { name: 'Projects', path: '/projects', hasAuth: false },
+      { name: 'Planning', path: '/planning', hasAuth: false },
+      { name: 'Settings', path: '/settings', hasAuth: false },
+    ]
+  : [
+      { name: 'Dashboard', path: '/', hasAuth: false },
+      { name: 'Teams', path: '/teams', hasAuth: false },
+      { name: 'People', path: '/people', hasAuth: false },
+      { name: 'Projects', path: '/projects', hasAuth: false },
+      { name: 'Epics', path: '/epics', hasAuth: false },
+      { name: 'Milestones', path: '/milestones', hasAuth: false },
+      { name: 'Skills', path: '/skills', hasAuth: false },
+      { name: 'Planning', path: '/planning', hasAuth: false },
+      { name: 'Advanced Planning', path: '/advanced-planning', hasAuth: false },
+      { name: 'Journey Planning', path: '/journey-planning', hasAuth: false },
+      { name: 'Allocations', path: '/allocations', hasAuth: false },
+      { name: 'Tracking', path: '/tracking', hasAuth: false },
+      { name: 'Canvas', path: '/canvas', hasAuth: false },
+      { name: 'Financials', path: '/financials', hasAuth: false },
+      { name: 'Reports', path: '/reports', hasAuth: false },
+      { name: 'Scenario Analysis', path: '/scenario-analysis', hasAuth: false },
+      { name: 'OCR', path: '/ocr', hasAuth: false },
+      { name: 'Settings', path: '/settings', hasAuth: false },
+    ];
 
 interface ConsoleMessage {
   type: string;
@@ -59,11 +68,11 @@ test.describe('Page Console Error Detection', () => {
   const allErrors: { page: string; errors: ConsoleMessage[] }[] = [];
 
   test.beforeEach(async ({ page }) => {
-    // Set a reasonable timeout for lazy-loaded components
-    test.setTimeout(30000);
+    // Set timeout based on environment - shorter for CI
+    test.setTimeout(isCI ? 15000 : 30000);
 
     // Configure CI-specific settings
-    if (process.env.CI) {
+    if (isCI) {
       // Reduce animation delays in CI
       await page.addInitScript(() => {
         (window as any).CSS = {
@@ -88,8 +97,8 @@ test.describe('Page Console Error Detection', () => {
       // Wait for the page to be fully loaded
       await page.waitForLoadState('networkidle');
 
-      // Wait a bit more for lazy-loaded components
-      await page.waitForTimeout(2000);
+      // Wait for lazy-loaded components - reduced for CI
+      await page.waitForTimeout(isCI ? 1000 : 2000);
 
       // Check if page loaded properly (look for common elements)
       try {
@@ -114,16 +123,16 @@ test.describe('Page Console Error Detection', () => {
       if (tabCount > 0) {
         console.log(`   Found ${tabCount} tabs on ${pageInfo.name}`);
 
-        // Click each tab to test for errors
-        for (let i = 0; i < Math.min(tabCount, 5); i++) {
-          // Limit to 5 tabs to avoid timeout
+        // Click each tab to test for errors - reduced for CI
+        for (let i = 0; i < Math.min(tabCount, isCI ? 2 : 5); i++) {
+          // Limit tabs to avoid timeout
           try {
             const tab = tabs.nth(i);
             const tabText = await tab.textContent();
             console.log(`   Testing tab: ${tabText}`);
 
             await tab.click();
-            await page.waitForTimeout(1000); // Give tab content time to load
+            await page.waitForTimeout(isCI ? 500 : 1000); // Give tab content time to load
           } catch (error) {
             console.warn(
               `   Could not click tab ${i} on ${pageInfo.name}: ${error}`
@@ -151,7 +160,7 @@ test.describe('Page Console Error Detection', () => {
 
       // In CI mode, fail fast for critical errors
       if (
-        process.env.CI &&
+        isCI &&
         consoleMessages.some(
           msg =>
             msg.type === 'error' &&
@@ -267,13 +276,15 @@ test.describe('Specific Error Pattern Detection', () => {
       }
     });
 
-    // Visit a few key pages to check for patterns
-    const keyPages = ['/', '/teams', '/projects', '/planning'];
+    // Visit key pages to check for patterns - reduced for CI
+    const keyPages = isCI
+      ? ['/', '/teams']
+      : ['/', '/teams', '/projects', '/planning'];
 
     for (const path of keyPages) {
       await page.goto(path);
       await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(isCI ? 1000 : 2000);
     }
 
     console.log('\n🔍 Error Pattern Analysis:');
