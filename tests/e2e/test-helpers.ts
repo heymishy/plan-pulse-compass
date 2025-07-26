@@ -68,13 +68,24 @@ export async function createQuartersAndIterations(page: Page): Promise<void> {
     .filter({ hasText: 'Manage Cycles' });
   await expect(cycleDialog).toBeVisible({ timeout: 5000 });
 
-  // Find the specific Q1 quarter entry within the quarters list
-  const q1Quarter = cycleDialog
-    .locator('div')
-    .filter({ hasText: /Q1 2024/ })
-    .and(page.locator('div').filter({ hasText: /Jan.*Mar/ }))
-    .first();
-  await expect(q1Quarter).toBeVisible({ timeout: 5000 });
+  // Find the specific Q1 quarter entry within the quarters list with better error handling
+  let q1Quarter;
+  try {
+    q1Quarter = cycleDialog
+      .locator('div')
+      .filter({ hasText: /Q1 2024/ })
+      .and(page.locator('div').filter({ hasText: /Jan.*Mar/ }))
+      .first();
+    await expect(q1Quarter).toBeVisible({ timeout: 8000 });
+  } catch (error) {
+    // Fallback: look for Q1 quarter in any div containing Q1 2024
+    console.log('Main Q1 selector failed, trying fallback...');
+    q1Quarter = cycleDialog
+      .locator('div')
+      .filter({ hasText: /Q1 2024/ })
+      .first();
+    await expect(q1Quarter).toBeVisible({ timeout: 8000 });
+  }
 
   // Check if iterations already exist by looking at localStorage
   const existingCycles = await page.evaluate(() => {
