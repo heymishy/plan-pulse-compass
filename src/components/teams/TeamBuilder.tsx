@@ -36,9 +36,11 @@ import {
   CheckCircle,
   Star,
   Search,
+  Download,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Team, TeamMember } from '@/types';
+import { useO365Sync } from '@/hooks/useO365Sync';
 
 interface TeamBuilderProps {
   selectedTeam?: Team;
@@ -65,7 +67,17 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     divisions,
     projects,
     personSkills,
+    addPerson,
   } = useApp();
+
+  const {
+    syncEmployees,
+    syncStatus,
+    lastSyncResult,
+    isAuthenticated,
+    authenticate,
+    error: o365Error,
+  } = useO365Sync();
 
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -76,6 +88,8 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
   const [skillsFilter, setSkillsFilter] = useState('');
   const [showLargeTeams, setShowLargeTeams] = useState(false);
   const [selectedPeople, setSelectedPeople] = useState<Set<string>>(new Set());
+  const [isO365SyncDialogOpen, setIsO365SyncDialogOpen] = useState(false);
+  const [selectedBusinessUnit, setSelectedBusinessUnit] = useState('');
   const [newTeamData, setNewTeamData] = useState({
     name: '',
     description: '',
@@ -377,8 +391,52 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     return { score: 75, status: 'good' };
   };
 
+  const handleO365Sync = async () => {
+    try {
+      if (!isAuthenticated) {
+        await authenticate();
+      }
+
+      const result = await syncEmployees({
+        businessUnit: selectedBusinessUnit || undefined,
+        maxUsers: 500,
+      });
+
+      if (result.employees.length > 0) {
+        // Add employees to the people list
+        result.employees.forEach(employee => {
+          // Check if person already exists
+          const existingPerson = people.find(p => p.email === employee.mail);
+
+          if (!existingPerson) {
+            addPerson({
+              name: employee.displayName,
+              email: employee.mail,
+              department: employee.department,
+              isActive: employee.isActive,
+              startDate: new Date().toISOString().split('T')[0],
+              // Map to existing role or create default
+              roleId:
+                roles.find(r => r.name.toLowerCase().includes('member'))?.id ||
+                roles[0]?.id ||
+                '',
+            });
+          }
+        });
+      }
+
+      setIsO365SyncDialogOpen(false);
+      setSelectedBusinessUnit('');
+    } catch (error) {
+      console.error('O365 sync failed:', error);
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+    <div
+      className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full"
+      data-testid="team-builder"
+    >
       {/* Team List */}
       <Card className="lg:col-span-1">
         <CardHeader>
@@ -755,7 +813,94 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                 <UserPlus className="h-5 w-5 mr-2" />
                 {showAssignedPeople ? 'All People' : 'Unassigned People'}
               </div>
-              <Badge variant="secondary">{availablePeople.length}</Badge>
+              <div className="flex items-center space-x-2">
+                <Dialog
+                  open={isO365SyncDialogOpen}
+                  onOpenChange={setIsO365SyncDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      O365 Sync
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Sync Employees from Office365</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="business-unit">
+                          Business Unit (Optional)
+                        </Label>
+                        <Input
+                          id="business-unit"
+                          placeholder="Enter business unit to filter..."
+                          value={selectedBusinessUnit}
+                          onChange={e =>
+                            setSelectedBusinessUnit(e.target.value)
+                          }
+                        />
+                        <p className="text-sm text-gray-600 mt-1">
+                          Leave empty to sync all employees
+                        </p>
+                      </div>
+
+                      {o365Error && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded">
+                          <p className="text-sm text-red-700">{o365Error}</p>
+                        </div>
+                      )}
+
+                      {lastSyncResult && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                          <p className="text-sm text-blue-700">
+                            Last sync: {lastSyncResult.syncedCount} employees
+                            synced
+                            {lastSyncResult.errors.length > 0 &&
+                              ` (${lastSyncResult.errors.length} errors)`}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="text-sm text-gray-600">
+                        <p>This will:</p>
+                        <ul className="list-disc list-inside mt-1 space-y-1">
+                          <li>
+                            Import employee names and emails from Office365
+                          </li>
+                          <li>Filter by business unit if specified</li>
+                          <li>Skip employees already in the system</li>
+                          <li>Require Office365 authentication</li>
+                        </ul>
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsO365SyncDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleO365Sync}
+                        disabled={
+                          syncStatus === 'syncing' ||
+                          syncStatus === 'authenticating'
+                        }
+                      >
+                        {syncStatus === 'authenticating' && 'Authenticating...'}
+                        {syncStatus === 'syncing' && 'Syncing...'}
+                        {(syncStatus === 'idle' ||
+                          syncStatus === 'complete' ||
+                          syncStatus === 'error') &&
+                          'Sync Employees'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Badge variant="secondary">{availablePeople.length}</Badge>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
