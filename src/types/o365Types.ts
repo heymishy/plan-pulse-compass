@@ -42,7 +42,7 @@ export interface SyncResult {
 export interface SyncError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export type SyncStatus =

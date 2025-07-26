@@ -7,6 +7,7 @@ import { o365Service } from '@/services/o365Service';
 vi.mock('@/services/o365Service', () => ({
   o365Service: {
     initialize: vi.fn(),
+    isReady: vi.fn(),
     getAuthStatus: vi.fn(),
     authenticate: vi.fn(),
     signOut: vi.fn(),
@@ -70,11 +71,12 @@ describe('useO365Sync', () => {
     availableScopes: ['User.Read'],
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
 
     // Setup default mocks
     vi.mocked(o365Service.initialize).mockResolvedValue(undefined);
+    vi.mocked(o365Service.isReady).mockReturnValue(true);
     vi.mocked(o365Service.getAuthStatus).mockResolvedValue(null);
     vi.mocked(o365Service.authenticate).mockResolvedValue(mockAuthResult);
     vi.mocked(o365Service.signOut).mockResolvedValue(undefined);

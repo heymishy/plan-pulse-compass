@@ -84,10 +84,11 @@ export class O365GraphService {
           break;
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorObj = error as { code?: string; message?: string };
       errors.push({
-        code: error.code || 'GRAPH_API_ERROR',
-        message: error.message || 'Failed to fetch users from Graph API',
+        code: errorObj.code || 'GRAPH_API_ERROR',
+        message: errorObj.message || 'Failed to fetch users from Graph API',
         details: error,
       });
     }
@@ -197,8 +198,10 @@ export class O365GraphService {
   /**
    * Handle Graph API errors
    */
-  private handleGraphError(error: any): SyncError {
-    if (error.code === 'Forbidden') {
+  private handleGraphError(error: unknown): SyncError {
+    const errorObj = error as { code?: string; message?: string };
+
+    if (errorObj.code === 'Forbidden') {
       return {
         code: 'INSUFFICIENT_PERMISSIONS',
         message:
@@ -207,7 +210,7 @@ export class O365GraphService {
       };
     }
 
-    if (error.code === 'Unauthorized') {
+    if (errorObj.code === 'Unauthorized') {
       return {
         code: 'AUTHENTICATION_FAILED',
         message: 'Authentication failed. Please sign in again.',
@@ -215,7 +218,7 @@ export class O365GraphService {
       };
     }
 
-    if (error.code === 'TooManyRequests') {
+    if (errorObj.code === 'TooManyRequests') {
       return {
         code: 'RATE_LIMITED',
         message: 'Too many requests. Please try again later.',
@@ -225,7 +228,7 @@ export class O365GraphService {
 
     return {
       code: 'UNKNOWN_ERROR',
-      message: error.message || 'An unknown error occurred',
+      message: errorObj.message || 'An unknown error occurred',
       details: error,
     };
   }
