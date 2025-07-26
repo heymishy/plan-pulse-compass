@@ -12,14 +12,14 @@ export default defineConfig({
         ['html', { open: 'never' }],
         ['list', { printSteps: false }],
       ], // Reduced output to prevent EPIPE
-  timeout: 60000, // Increased timeout for comprehensive tests
+  timeout: 45000, // Optimized timeout for reliable execution
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 15000, // Increased for reliability
-    navigationTimeout: 20000, // Increased for complex page loads
+    actionTimeout: 12000, // Optimized for reliability
+    navigationTimeout: 15000, // Balanced for complex page loads
     expect: {
       timeout: 10000, // Increased assertion timeout
     },
