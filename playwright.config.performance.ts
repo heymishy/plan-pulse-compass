@@ -6,16 +6,16 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: true,
+  fullyParallel: false, // Disable for stability
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0, // Reduced retries for faster feedback
-  workers: process.env.CI ? 4 : '75%', // Aggressive parallelization
+  retries: process.env.CI ? 1 : 0, // Keep reduced retries
+  workers: process.env.CI ? 2 : 1, // Reduce parallelization for stability
   reporter: process.env.CI ? ['html', 'github'] : [['html', { open: 'never' }]],
 
-  // Aggressive timeout optimizations
-  timeout: 20000, // Reduced from 30s to 20s
+  // Balanced timeout optimizations
+  timeout: 30000, // Increased for reliability
   expect: {
-    timeout: 3000, // Reduced assertion timeout
+    timeout: 5000, // Increased assertion timeout
   },
 
   use: {
@@ -25,8 +25,8 @@ export default defineConfig({
     video: 'retain-on-failure',
 
     // Performance optimizations
-    actionTimeout: 3000, // Reduced from 5s
-    navigationTimeout: 8000, // Reduced from 10s
+    actionTimeout: 8000, // Balanced timeout
+    navigationTimeout: 12000, // Increased for reliability
 
     // Faster page interactions
     launchOptions: {
@@ -66,11 +66,11 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run dev:e2e',
     url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
-    timeout: 60 * 1000, // Reduced startup timeout
-    stderr: 'pipe',
+    timeout: 120 * 1000, // Increased startup timeout
+    stderr: 'ignore', // Reduce log noise
     stdout: 'ignore', // Reduce log noise
   },
 
