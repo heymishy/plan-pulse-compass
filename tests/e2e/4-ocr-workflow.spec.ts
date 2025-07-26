@@ -10,11 +10,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test.describe('OCR Workflow', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the OCR page
-    await page.goto('/ocr');
+    console.log('🔧 Setting up OCR workflow test environment...');
 
-    // Wait for the page to be fully loaded
-    await expect(page.locator('h3')).toContainText('SteerCo Document OCR');
+    try {
+      // Navigate to the OCR page with enhanced error handling
+      await page.goto('/ocr', { timeout: 15000 });
+
+      // Wait for the page to be fully loaded with better timeout
+      await expect(page.locator('h3')).toContainText('SteerCo Document OCR', {
+        timeout: 8000,
+      });
+      console.log('✅ OCR workflow environment ready');
+    } catch (error) {
+      console.error('❌ OCR setup failed:', error);
+      throw error;
+    }
   });
 
   test('should display OCR interface correctly', async ({ page }) => {
