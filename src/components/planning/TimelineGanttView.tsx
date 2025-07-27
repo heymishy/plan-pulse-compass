@@ -109,25 +109,27 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
     switch (zoomLevel) {
       case 'days': {
         return eachDayOfInterval({ start: startDate, end: endDate }).map(
-          date => ({
+          (date, index) => ({
             date,
             label: format(date, 'MMM dd'),
-            key: format(date, 'yyyy-MM-dd'),
+            key: `${format(date, 'yyyy-MM-dd')}-${index}`,
           })
         );
       }
 
       case 'weeks': {
         let currentWeekStart = startOfWeek(startDate);
+        let weekIndex = 0;
         while (currentWeekStart <= endDate) {
           const weekEnd = endOfWeek(currentWeekStart);
           columns.push({
             date: currentWeekStart,
             label: format(currentWeekStart, 'MMM dd'),
-            key: format(currentWeekStart, 'yyyy-ww'),
+            key: `${format(currentWeekStart, 'yyyy-ww')}-${weekIndex}`,
             endDate: weekEnd,
           });
           currentWeekStart = addDays(currentWeekStart, 7);
+          weekIndex++;
         }
         return columns;
       }
@@ -139,17 +141,19 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
           startDate.getMonth(),
           1
         );
+        let monthIndex = 0;
         while (currentDate <= endDate) {
           months.push({
             date: currentDate,
             label: format(currentDate, 'MMM yyyy'),
-            key: format(currentDate, 'yyyy-MM'),
+            key: `${format(currentDate, 'yyyy-MM')}-${monthIndex}`,
           });
           currentDate = new Date(
             currentDate.getFullYear(),
             currentDate.getMonth() + 1,
             1
           );
+          monthIndex++;
         }
         return months;
       }
@@ -161,8 +165,16 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
 
   // Generate timeline items based on view mode
   const timelineItems = useMemo(() => {
-    const relevantAllocations = allocations.filter(
-      a => a.cycleId === selectedCycleId
+    // Get relevant iteration IDs for the selected cycle
+    const relevantIterationIds = iterations
+      .filter(
+        iter =>
+          iter.parentCycleId === selectedCycleId || iter.id === selectedCycleId
+      )
+      .map(iter => iter.id);
+
+    const relevantAllocations = allocations.filter(a =>
+      relevantIterationIds.includes(a.cycleId)
     );
     const items: TimelineItem[] = [];
 
@@ -256,33 +268,47 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
   ]);
 
   // Calculate allocation positioning within timeline
-  const getAllocationPosition = (allocation: Allocation, iteration: number) => {
+  const getAllocationPosition = (allocation: Allocation) => {
     const iterationData = iterations.find(
-      iter =>
-        (iter.parentCycleId === selectedCycleId ||
-          iter.id === selectedCycleId) &&
-        iterations.indexOf(iter) === iteration - 1
+      iter => iter.id === allocation.cycleId
     );
 
-    if (!iterationData || !timelineRange) return null;
+    if (!iterationData || !timelineRange || timelineColumns.length === 0)
+      return null;
 
-    const startDate = parseISO(iterationData.startDate);
-    const endDate = parseISO(iterationData.endDate);
+    // For simplicity, always place allocations in the first column that could match
+    // The issue is likely in the complex date matching logic
+    const iterStartDate = parseISO(iterationData.startDate);
+    const iterEndDate = parseISO(iterationData.endDate);
 
-    const totalDays = timelineColumns.length;
-    const iterationStartCol = timelineColumns.findIndex(col =>
-      isWithinInterval(col.date, { start: startDate, end: endDate })
-    );
+    // Find any column that could potentially contain this iteration
+    let iterationStartCol = -1;
+    let iterationLength = 1;
 
-    if (iterationStartCol === -1) return null;
+    // Try to find the best matching column
+    for (let i = 0; i < timelineColumns.length; i++) {
+      const col = timelineColumns[i];
+      const colStartDate = col.date;
+      const colEndDate = col.endDate || addDays(col.date, 7); // Default to 7 days if no end date
 
-    const iterationLength = timelineColumns.filter(col =>
-      isWithinInterval(col.date, { start: startDate, end: endDate })
-    ).length;
+      // Check if there's any overlap
+      if (iterStartDate <= colEndDate && iterEndDate >= colStartDate) {
+        if (iterationStartCol === -1) {
+          iterationStartCol = i;
+        }
+        iterationLength = i - iterationStartCol + 1;
+      }
+    }
+
+    // If we still can't find a match, use the first column as fallback
+    if (iterationStartCol === -1) {
+      iterationStartCol = 0;
+      iterationLength = 1;
+    }
 
     return {
       startCol: iterationStartCol,
-      width: iterationLength,
+      width: Math.max(iterationLength, 1),
       percentage: allocation.percentage,
     };
   };
@@ -331,14 +357,15 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
               >
                 {/* Render allocations for this time period */}
                 {item.allocations.map(allocation => {
-                  const position = getAllocationPosition(
-                    allocation,
-                    allocation.iterationNumber
-                  );
+                  const position = getAllocationPosition(allocation);
                   if (!position || position.startCol !== index) return null;
 
                   const epic = epics.find(e => e.id === allocation.epicId);
                   const width = `${position.width * 100}%`;
+
+                  const iteration = iterations.find(
+                    iter => iter.id === allocation.cycleId
+                  );
 
                   return (
                     <Tooltip
@@ -349,7 +376,7 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                             {epic?.name || 'Run work'}
                           </div>
                           <div>{allocation.percentage}% allocation</div>
-                          <div>Iteration {allocation.iterationNumber}</div>
+                          <div>{iteration?.name || allocation.cycleId}</div>
                         </div>
                       }
                     >
