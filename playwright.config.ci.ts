@@ -8,8 +8,8 @@ export default defineConfig({
   retries: 0, // No retries to save time and memory
   workers: 1, // Single worker only
   reporter: [['github']], // Minimal reporting to prevent EPIPE
-  timeout: 20000, // Reduced timeout
-  globalTimeout: 300000, // 5 minute global timeout
+  timeout: 30000, // Reasonable timeout
+  globalTimeout: 600000, // 10 minute global timeout
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: 'off', // No trace collection
@@ -43,8 +43,7 @@ export default defineConfig({
         '--no-first-run',
         '--disable-gpu',
         '--disable-gpu-sandbox',
-        '--single-process',
-        '--max_old_space_size=256', // Very limited memory
+        '--max_old_space_size=512', // Limited but reasonable memory
         '--memory-pressure-off',
       ],
     },
@@ -60,8 +59,8 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev:e2e',
     url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
-    reuseExistingServer: false, // Always start fresh in CI
-    timeout: 60000, // Reduced startup timeout
+    reuseExistingServer: !process.env.CI, // Reuse existing server in development, fresh in CI
+    timeout: 120000, // Allow more time for server startup
     stderr: 'ignore', // Silence all output to prevent EPIPE
     stdout: 'ignore',
   },
