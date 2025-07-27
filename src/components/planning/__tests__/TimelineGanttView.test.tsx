@@ -7,8 +7,30 @@ import { Team, Allocation, Cycle, Epic, Project } from '@/types';
 
 // Mock data
 const mockTeams: Team[] = [
-  { id: 'team1', name: 'Frontend Team', divisionId: 'dev', capacity: 40 },
-  { id: 'team2', name: 'Backend Team', divisionId: 'dev', capacity: 40 },
+  {
+    id: 'team1',
+    name: 'Frontend Team',
+    description: 'Frontend development team',
+    type: 'permanent',
+    status: 'active',
+    divisionId: 'dev',
+    capacity: 40,
+    targetSkills: [],
+    createdDate: '2024-01-01T00:00:00Z',
+    lastModified: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 'team2',
+    name: 'Backend Team',
+    description: 'Backend development team',
+    type: 'permanent',
+    status: 'active',
+    divisionId: 'dev',
+    capacity: 40,
+    targetSkills: [],
+    createdDate: '2024-01-01T00:00:00Z',
+    lastModified: '2024-01-01T00:00:00Z',
+  },
 ];
 
 const mockIterations: Cycle[] = [
@@ -18,8 +40,8 @@ const mockIterations: Cycle[] = [
     startDate: '2024-01-01',
     endDate: '2024-01-14',
     type: 'iteration',
+    financialYearId: 'fy2024',
     parentCycleId: 'q1-2024',
-    status: 'planning',
   },
   {
     id: 'iter2',
@@ -27,21 +49,25 @@ const mockIterations: Cycle[] = [
     startDate: '2024-01-15',
     endDate: '2024-01-28',
     type: 'iteration',
+    financialYearId: 'fy2024',
     parentCycleId: 'q1-2024',
-    status: 'planning',
   },
-];
+] as Cycle[];
 
 const mockProjects: Project[] = [
   {
     id: 'proj1',
     name: 'Web Application',
     description: 'Main web app project',
+    status: 'in-progress',
     startDate: '2024-01-01',
     endDate: '2024-06-30',
-    status: 'active',
     budget: 100000,
     milestones: [],
+    priority: 1,
+    ranking: 1,
+    createdDate: '2024-01-01T00:00:00Z',
+    lastModified: '2024-01-01T00:00:00Z',
   },
 ];
 
@@ -51,10 +77,14 @@ const mockEpics: Epic[] = [
     name: 'User Authentication',
     projectId: 'proj1',
     description: 'Login and registration system',
-    status: 'active',
-    points: 21,
+    status: 'in-progress',
+    priority: 'high',
     startDate: '2024-01-01',
-    targetEndDate: '2024-02-01',
+    endDate: '2024-02-01',
+    estimatedEffort: 21,
+    ranking: 1,
+    createdDate: '2024-01-01T00:00:00Z',
+    lastModified: '2024-01-01T00:00:00Z',
   },
   {
     id: 'epic2',
@@ -62,41 +92,54 @@ const mockEpics: Epic[] = [
     projectId: 'proj1',
     description: 'User dashboard',
     status: 'in-progress',
-    points: 13,
+    priority: 'medium',
     startDate: '2024-01-15',
-    targetEndDate: '2024-03-01',
+    endDate: '2024-03-01',
+    estimatedEffort: 13,
+    ranking: 2,
+    createdDate: '2024-01-01T00:00:00Z',
+    lastModified: '2024-01-01T00:00:00Z',
   },
 ];
 
 const mockAllocations: Allocation[] = [
   {
     id: 'alloc1',
+    personId: 'person1',
     teamId: 'team1',
-    cycleId: 'q1-2024',
-    iterationNumber: 1,
-    percentage: 80,
+    projectId: 'proj1',
     epicId: 'epic1',
-    runWorkCategoryId: '',
+    cycleId: 'iter1',
+    percentage: 80,
+    type: 'project',
+    startDate: '2024-01-01',
+    endDate: '2024-01-14',
     notes: '',
   },
   {
     id: 'alloc2',
+    personId: 'person2',
     teamId: 'team2',
-    cycleId: 'q1-2024',
-    iterationNumber: 1,
-    percentage: 60,
+    projectId: 'proj1',
     epicId: 'epic2',
-    runWorkCategoryId: '',
+    cycleId: 'iter1',
+    percentage: 60,
+    type: 'project',
+    startDate: '2024-01-01',
+    endDate: '2024-01-14',
     notes: '',
   },
   {
     id: 'alloc3',
+    personId: 'person1',
     teamId: 'team1',
-    cycleId: 'q1-2024',
-    iterationNumber: 2,
-    percentage: 90,
+    projectId: 'proj1',
     epicId: 'epic1',
-    runWorkCategoryId: '',
+    cycleId: 'iter2',
+    percentage: 90,
+    type: 'project',
+    startDate: '2024-01-15',
+    endDate: '2024-01-28',
     notes: '',
   },
 ];
@@ -183,9 +226,15 @@ describe('TimelineGanttView', () => {
     render(<TimelineGanttView {...defaultProps} viewMode="teams" />);
 
     // Should show allocation percentages
-    expect(screen.getByText('80%')).toBeInTheDocument();
-    expect(screen.getByText('60%')).toBeInTheDocument();
-    expect(screen.getByText('90%')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('allocation-percentage-alloc1')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('allocation-percentage-alloc2')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('allocation-percentage-alloc3')
+    ).toBeInTheDocument();
   });
 
   it('handles allocation clicks', async () => {
@@ -201,7 +250,9 @@ describe('TimelineGanttView', () => {
     );
 
     // Click on an allocation bar
-    const allocationBar = screen.getByText('80%').closest('div');
+    const allocationBar = screen
+      .getByTestId('allocation-percentage-alloc1')
+      .closest('div');
     if (allocationBar) {
       await user.click(allocationBar);
       expect(mockOnAllocationClick).toHaveBeenCalledWith(mockAllocations[0]);
@@ -237,8 +288,14 @@ describe('TimelineGanttView', () => {
         {
           id: 'team3',
           name: 'Unallocated Team',
+          description: 'Team without allocations',
+          type: 'permanent',
+          status: 'active',
           divisionId: 'dev',
           capacity: 40,
+          targetSkills: [],
+          createdDate: '2024-01-01T00:00:00Z',
+          lastModified: '2024-01-01T00:00:00Z',
         },
       ],
     };
@@ -362,13 +419,14 @@ describe('TimelineGanttView', () => {
       ...mockAllocations,
       {
         id: 'alloc4',
+        personId: 'person1',
         teamId: 'team1',
-        cycleId: 'q1-2024',
-        iterationNumber: 1,
+        cycleId: 'iter1',
         percentage: 20,
-        epicId: '',
-        runWorkCategoryId: 'maintenance',
-        notes: '',
+        type: 'run-work',
+        startDate: '2024-01-01',
+        endDate: '2024-01-14',
+        notes: 'Maintenance work',
       },
     ];
 
@@ -381,6 +439,8 @@ describe('TimelineGanttView', () => {
 
     // Should still render without errors
     expect(screen.getByText('Timeline & Gantt View')).toBeInTheDocument();
-    expect(screen.getByText('20%')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('allocation-percentage-alloc4')
+    ).toBeInTheDocument();
   });
 });

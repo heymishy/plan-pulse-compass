@@ -361,7 +361,10 @@ const TimelineGanttView: React.FC<TimelineGanttViewProps> = ({
                         }}
                         onClick={() => onAllocationClick?.(allocation)}
                       >
-                        <div className="p-1 text-xs text-blue-800 font-medium truncate">
+                        <div
+                          className="p-1 text-xs text-blue-800 font-medium truncate"
+                          data-testid={`allocation-percentage-${allocation.id}`}
+                        >
                           {allocation.percentage}%
                         </div>
                       </div>
