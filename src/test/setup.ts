@@ -181,7 +181,20 @@ vi.mock('date-fns', () => ({
       return new Date(NaN);
     }
   }),
-  parseISO: vi.fn(() => new Date('2024-01-15')),
+  parseISO: vi.fn(dateString => {
+    // Handle ISO date strings like "2024-01-15"
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? new Date('2024-01-15') : date;
+  }),
+  isSameDay: vi.fn((date1, date2) => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return (
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+    );
+  }),
   isValid: vi.fn(date => date instanceof Date && !isNaN(date.getTime())),
   addDays: vi.fn(
     (date, days) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000)

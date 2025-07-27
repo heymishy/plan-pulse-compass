@@ -437,3 +437,12 @@ export type {
   CreateGoalRequest,
   UpdateGoalRequest,
 } from './goalTypes';
+
+// Calendar-related imports and additions
+export type {
+  CalendarEvent,
+  CalendarEventType,
+  CalendarFilters,
+  CalendarViewConfig,
+  DerivedCalendarEvent,
+} from './calendarTypes';

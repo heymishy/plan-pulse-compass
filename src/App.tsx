@@ -28,6 +28,7 @@ const Skills = lazy(() => import('./pages/Skills'));
 const Projects = lazy(() => import('./pages/Projects'));
 const Epics = lazy(() => import('./pages/Epics'));
 const Milestones = lazy(() => import('./pages/Milestones'));
+const Calendar = lazy(() => import('./pages/Calendar'));
 const Planning = lazy(() => import('./pages/Planning'));
 const AdvancedPlanning = lazy(() => import('./pages/AdvancedPlanning'));
 const JourneyPlanning = lazy(() => import('./pages/JourneyPlanning'));
@@ -132,6 +133,10 @@ function App() {
                                       <Route
                                         path="/milestones"
                                         element={<Milestones />}
+                                      />
+                                      <Route
+                                        path="/calendar"
+                                        element={<Calendar />}
                                       />
                                       <Route
                                         path="/planning"
