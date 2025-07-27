@@ -40,7 +40,9 @@ describe('Calendar Page', () => {
       </CalendarPageWrapper>
     );
 
-    expect(screen.getByText('Calendar')).toBeInTheDocument();
+    // Check for the page title specifically
+    const pageTitle = screen.getByRole('heading', { level: 1 });
+    expect(pageTitle).toHaveTextContent('Calendar');
   });
 
   it('should render calendar component', () => {
@@ -62,7 +64,8 @@ describe('Calendar Page', () => {
     );
 
     // Check page title
-    expect(screen.getByText('Calendar')).toBeInTheDocument();
+    const pageTitle = screen.getByRole('heading', { level: 1 });
+    expect(pageTitle).toHaveTextContent('Calendar');
 
     // Check proper layout classes
     const container = screen.getByTestId('calendar-page-container');
@@ -78,6 +81,7 @@ describe('Calendar Page', () => {
 
     // The page should be accessible via navigation
     // This will be validated when route is added
-    expect(screen.getByText('Calendar')).toBeInTheDocument();
+    const pageTitle = screen.getByRole('heading', { level: 1 });
+    expect(pageTitle).toHaveTextContent('Calendar');
   });
 });
