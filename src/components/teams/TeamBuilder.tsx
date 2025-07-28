@@ -40,7 +40,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { Team, TeamMember } from '@/types';
-import { useO365Sync } from '@/hooks/useO365Sync';
+import { useO365SyncWithSettings } from '@/hooks/useO365SyncWithSettings';
+import { useSettings } from '@/context/SettingsContext';
 
 interface TeamBuilderProps {
   selectedTeam?: Team;
@@ -70,6 +71,8 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     addPerson,
   } = useApp();
 
+  const { config } = useSettings();
+
   const {
     syncEmployees,
     syncStatus,
@@ -77,7 +80,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     isAuthenticated,
     authenticate,
     error: o365Error,
-  } = useO365Sync();
+  } = useO365SyncWithSettings(config);
 
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);

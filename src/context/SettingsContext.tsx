@@ -46,6 +46,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({
       workingDaysPerYear: 260,
       workingDaysPerMonth: 22,
       currencySymbol: '$',
+      integrations: {
+        o365: {
+          clientId: '',
+          tenantId: '',
+          redirectUri: 'http://localhost:3000/auth/callback',
+          enabled: false,
+        },
+      },
     }
   );
   const [isSetupComplete, setIsSetupComplete] = useLocalStorage<boolean>(

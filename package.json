@@ -19,7 +19,7 @@
     "test:run": "vitest run",
     "test:run:fast": "vitest run --no-coverage",
     "test:run:single": "vitest run --no-coverage",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "NODE_OPTIONS='--max-old-space-size=2048' vitest run --config=vitest.coverage.config.ts",
     "test:watch": "vitest --watch",
     "test:unit": "vitest run src/components/ui/ src/hooks/ src/utils/__tests__/dateUtils.test.ts src/utils/__tests__/mathUtils.test.ts",
     "test:unit:watch": "vitest src/components/ src/hooks/ src/utils/ src/lib/",

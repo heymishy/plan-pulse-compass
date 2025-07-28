@@ -316,6 +316,17 @@ jobs:
         env:
           CI: true
 
+      - name: Clean up after E2E tests
+        if: always()
+        run: |
+          echo "Cleaning up after E2E tests..."
+          # Kill any remaining processes and clean up memory
+          killall -9 node 2>/dev/null || true
+          killall -9 chromium 2>/dev/null || true
+          killall -9 firefox 2>/dev/null || true
+          killall -9 webkit 2>/dev/null || true
+          sleep 2
+
       - name: Upload E2E test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -344,12 +355,12 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The report includes screenshots, videos, and traces for easy debugging of test failures." >> $GITHUB_STEP_SUMMARY
 
-  # Full Test Suite with coverage (only on main branch)
+  # Full Test Suite with coverage (only on main branch, runs after E2E to prevent memory conflicts)
   full-tests:
     name: Full Test Suite with Coverage
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [comprehensive-tests]
+    timeout-minutes: 25
+    needs: [comprehensive-tests, e2e-tests]
     if: github.ref == 'refs/heads/main'
 
     steps:
@@ -378,10 +389,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Clean up memory before coverage tests
+        run: |
+          echo "Cleaning up memory before running coverage tests..."
+          # Force garbage collection and clear any hanging processes
+          killall -9 node 2>/dev/null || true
+          sleep 2
+
       - name: Run full test suite with coverage
         run: npm run test:coverage
         env:
           CI: true
+          NODE_OPTIONS: '--max-old-space-size=2048 --gc-global'
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4

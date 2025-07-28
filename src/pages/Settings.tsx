@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +9,7 @@ import SkillsSettings from '@/components/settings/SkillsSettings';
 import SolutionsSettings from '@/components/settings/SolutionsSettings';
 import ImportExportSettings from '@/components/settings/ImportExportSettings';
 import AdvancedSettings from '@/components/settings/AdvancedSettings';
+import IntegrationsSettings from '@/components/settings/IntegrationsSettings';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -27,12 +27,13 @@ const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="financial">Financial</TabsTrigger>
           <TabsTrigger value="teams">Teams & Roles</TabsTrigger>
           <TabsTrigger value="skills">Skills</TabsTrigger>
           <TabsTrigger value="solutions">Solutions</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="import">Import/Export</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
@@ -55,6 +56,10 @@ const Settings = () => {
 
         <TabsContent value="solutions" className="mt-6">
           <SolutionsSettings />
+        </TabsContent>
+
+        <TabsContent value="integrations" className="mt-6">
+          <IntegrationsSettings />
         </TabsContent>
 
         <TabsContent value="import" className="mt-6">
