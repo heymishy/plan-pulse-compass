@@ -456,10 +456,7 @@ describe('AllocationImportDialog', () => {
     );
 
     // Try to find file input and upload a file
-    const fileInput =
-      screen.queryByDisplayValue('') ||
-      screen.queryByRole('textbox') ||
-      screen.querySelector('input[type="file"]');
+    const fileInput = document.querySelector('input[type="file"]');
 
     if (fileInput) {
       const file = new File(
