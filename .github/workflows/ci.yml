@@ -1,19 +1,23 @@
 name: 3-Tier Optimized CI Pipeline
 
+# TEMPORARILY DISABLED until Aug 1st due to GitHub Actions limit exceeded
+# 19,320 minutes used (965% over 2,000 limit) - Actions suspended until reset
+
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-      - 'LICENSE'
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+  # EMERGENCY MODE: Only manual triggers until Aug 1st
   workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths-ignore:
+  #     - '**.md'
+  #     - 'docs/**'
+  #     - '.gitignore'
+  #     - 'LICENSE'
+  # pull_request:
+  #   branches: [main]
+  #   paths-ignore:
+  #     - '**.md'
+  #     - 'docs/**'
 
 env:
   NODE_VERSION: '18'
