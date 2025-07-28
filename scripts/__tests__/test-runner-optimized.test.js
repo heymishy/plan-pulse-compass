@@ -14,8 +14,9 @@ describe('Optimized Test Runner', () => {
     it('should have test:critical script defined', () => {
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
       expect(packageJson.scripts['test:critical']).toBeDefined();
-      expect(packageJson.scripts['test:critical']).toContain('lint');
       expect(packageJson.scripts['test:critical']).toContain('typecheck');
+      expect(packageJson.scripts['test:critical']).toContain('test:essential');
+      expect(packageJson.scripts['test:critical']).toContain('build:check');
     });
 
     it('should complete test:critical in under 4 minutes locally', async () => {
