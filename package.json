@@ -43,7 +43,7 @@
     "test:logic:fast": "vitest run --config vitest.config.node.ts --no-coverage --reporter=default --reporter-options='{\"summary\":false}' src/utils/__tests__/",
     "test:performance:legacy": "vitest run --reporter=verbose --no-coverage",
     "test:e2e": "playwright test",
-    "test:e2e:ci": "NODE_OPTIONS='--max-old-space-size=768' playwright test tests/e2e/smoke-test-ci.spec.ts --config=playwright.config.ci.ts --max-failures=1 --workers=1 --timeout=15000",
+    "test:e2e:ci": "NODE_OPTIONS='--max-old-space-size=512' playwright test tests/e2e/smoke-test-ci.spec.ts --config=playwright.config.ci.ts --max-failures=1 --workers=1 --timeout=10000",
     "test:e2e:setup": "killall -9 node 2>/dev/null || true && playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
