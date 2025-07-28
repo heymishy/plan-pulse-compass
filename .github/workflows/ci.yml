@@ -20,7 +20,7 @@ env:
   BUN_VERSION: '1.0.0'
 
 jobs:
-  # TIER 1: Lightning Fast Validation (2-3 minutes, 512MB)
+  # TIER 1: Lightning Fast Validation (2-3 minutes, 768MB)
   # Essential quality gates that must pass for any change
   lightning-validation:
     name: ⚡ Lightning Validation
@@ -57,7 +57,7 @@ jobs:
         run: npm run test:critical
         env:
           CI: true
-          NODE_OPTIONS: '--max-old-space-size=512'
+          NODE_OPTIONS: '--max-old-space-size=768'
 
       - name: Generate lightning validation summary
         if: always()
@@ -65,7 +65,7 @@ jobs:
           echo "## ⚡ Lightning Validation Results" >> $GITHUB_STEP_SUMMARY
           echo "**Purpose**: Essential quality gates for all changes" >> $GITHUB_STEP_SUMMARY
           echo "**Duration**: $(echo '${{ job.status }}' | grep -q 'success' && echo '✅ Under 4 minutes' || echo '❌ Exceeded time limit')" >> $GITHUB_STEP_SUMMARY
-          echo "**Memory**: 512MB allocation (GitHub free plan optimized)" >> $GITHUB_STEP_SUMMARY
+          echo "**Memory**: 768MB allocation (optimized for build requirements)" >> $GITHUB_STEP_SUMMARY
 
   # TIER 2: Comprehensive Testing (8-12 minutes, 768MB)
   # Important tests that validate broader functionality
@@ -343,7 +343,7 @@ jobs:
           echo "# 🎯 3-Tier CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Pipeline Architecture" >> $GITHUB_STEP_SUMMARY
-          echo "- **⚡ Tier 1 - Lightning Validation**: Essential quality gates (4min, 512MB)" >> $GITHUB_STEP_SUMMARY
+          echo "- **⚡ Tier 1 - Lightning Validation**: Essential quality gates (4min, 768MB)" >> $GITHUB_STEP_SUMMARY
           echo "- **🔍 Tier 2 - Comprehensive Testing**: Integration & E2E tests (15min, 768MB)" >> $GITHUB_STEP_SUMMARY
           echo "- **🏆 Tier 3 - Quality Assurance**: Full coverage & advanced tests (25min, 1024MB)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
