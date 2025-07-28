@@ -8,8 +8,8 @@ export default defineConfig({
   retries: 0, // No retries to save time and memory
   workers: 1, // Single worker only
   reporter: [['github']], // Minimal reporting to prevent EPIPE
-  timeout: 30000, // Reasonable timeout
-  globalTimeout: 600000, // 10 minute global timeout
+  timeout: 15000, // Aggressive timeout for CI memory constraints
+  globalTimeout: 300000, // 5 minute global timeout
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
     trace: 'off', // No trace collection
@@ -43,8 +43,10 @@ export default defineConfig({
         '--no-first-run',
         '--disable-gpu',
         '--disable-gpu-sandbox',
-        '--max_old_space_size=512', // Limited but reasonable memory
+        '--max_old_space_size=256', // Minimal memory to prevent OOM
         '--memory-pressure-off',
+        '--single-process', // Use single process for maximum memory efficiency
+        '--no-zygote', // Disable zygote process forking
       ],
     },
   },

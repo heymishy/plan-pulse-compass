@@ -307,6 +307,17 @@ jobs:
       - name: Install Playwright browsers
         run: npm run test:e2e:install
 
+      - name: Pre-E2E memory cleanup
+        run: |
+          echo "Cleaning up memory before E2E tests..."
+          # Force garbage collection and clear caches
+          sudo sync && echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null || true
+          # Kill any lingering processes
+          killall -9 node 2>/dev/null || true
+          killall -9 chromium 2>/dev/null || true
+          killall -9 vite 2>/dev/null || true
+          sleep 3
+
       - name: Run E2E tests with retry
         uses: nick-invision/retry@v2
         with:
