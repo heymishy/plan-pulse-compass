@@ -111,6 +111,13 @@ jobs:
           CI: true
           NODE_OPTIONS: '--max-old-space-size=768'
 
+      - name: Run E2E smoke test (optional)
+        run: npm run test:e2e:smoke
+        continue-on-error: true # Don't block pipeline if E2E fails due to resource constraints
+        env:
+          CI: true
+          NODE_OPTIONS: '--max-old-space-size=512'
+
       - name: Upload comprehensive test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -125,7 +132,7 @@ jobs:
         if: always()
         run: |
           echo "## 🔍 Comprehensive Testing Results" >> $GITHUB_STEP_SUMMARY
-          echo "**Purpose**: Integration tests, layout validation, and smoke E2E tests" >> $GITHUB_STEP_SUMMARY
+          echo "**Purpose**: Integration tests, layout validation, optional E2E smoke tests" >> $GITHUB_STEP_SUMMARY
           echo "**Duration**: $(echo '${{ job.status }}' | grep -q 'success' && echo '✅ Under 15 minutes' || echo '❌ Exceeded time limit')" >> $GITHUB_STEP_SUMMARY
           echo "**Memory**: 768MB allocation (optimized for broader testing)" >> $GITHUB_STEP_SUMMARY
 

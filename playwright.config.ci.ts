@@ -43,7 +43,7 @@ export default defineConfig({
         '--no-first-run',
         '--disable-gpu',
         '--disable-gpu-sandbox',
-        '--max_old_space_size=256', // Increased for comprehensive testing tier
+        '--max_old_space_size=128', // Ultra-minimal for GitHub free plan
         '--memory-pressure-off',
         '--single-process', // Use single process for maximum memory efficiency
         '--no-zygote', // Disable zygote process forking
@@ -69,6 +69,9 @@ export default defineConfig({
         '--use-mock-keychain',
         '--disable-field-trial-config',
         '--disable-shared-workers',
+        '--js-flags="--max-old-space-size=64"', // Ultra-minimal JS heap
+        '--memory-pressure-level=critical', // Force memory pressure mode
+        '--force-low-power-mode', // Reduce resource usage
       ],
     },
   },
@@ -88,7 +91,7 @@ export default defineConfig({
     stderr: 'ignore', // Silence all output to prevent EPIPE
     stdout: 'ignore',
     env: {
-      NODE_OPTIONS: '--max-old-space-size=768', // Match comprehensive testing tier allocation
+      NODE_OPTIONS: '--max-old-space-size=384', // Ultra-minimal for free GitHub plan
     },
   },
 });
