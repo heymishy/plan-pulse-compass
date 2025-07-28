@@ -43,7 +43,7 @@ export default defineConfig({
         '--no-first-run',
         '--disable-gpu',
         '--disable-gpu-sandbox',
-        '--max_old_space_size=128', // Ultra-minimal memory for free GitHub plan
+        '--max_old_space_size=256', // Increased for comprehensive testing tier
         '--memory-pressure-off',
         '--single-process', // Use single process for maximum memory efficiency
         '--no-zygote', // Disable zygote process forking
@@ -88,7 +88,7 @@ export default defineConfig({
     stderr: 'ignore', // Silence all output to prevent EPIPE
     stdout: 'ignore',
     env: {
-      NODE_OPTIONS: '--max-old-space-size=512', // Limit dev server memory
+      NODE_OPTIONS: '--max-old-space-size=768', // Match comprehensive testing tier allocation
     },
   },
 });
