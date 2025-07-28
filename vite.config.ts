@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
-import { componentTagger } from 'lovable-tagger';
 import { visualizer } from 'rollup-plugin-visualizer';
 
 // Plugin to inject version information
@@ -46,7 +45,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' && !process.env.CI && componentTagger(),
     mode === 'analyze' &&
       visualizer({
         filename: 'dist/stats.html',
