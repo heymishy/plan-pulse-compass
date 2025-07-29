@@ -16,6 +16,7 @@ import PersonBasicInfoForm from './forms/PersonBasicInfoForm';
 import PersonRoleTeamForm from './forms/PersonRoleTeamForm';
 import PersonDatesForm from './forms/PersonDatesForm';
 import PersonEmploymentForm from './forms/PersonEmploymentForm';
+import DivisionLeadershipForm from './forms/DivisionLeadershipForm';
 
 interface PersonDialogProps {
   open: boolean;
@@ -132,9 +133,10 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="employment">Employment</TabsTrigger>
+              <TabsTrigger value="leadership">Leadership</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
 
@@ -202,6 +204,19 @@ const PersonDialog: React.FC<PersonDialogProps> = ({
                 }
                 onContractRateTypeChange={setContractRateType}
               />
+            </TabsContent>
+
+            <TabsContent value="leadership" className="space-y-4">
+              {(person?.id || (formData.name && formData.email)) && (
+                <DivisionLeadershipForm
+                  personId={person?.id || 'temp-' + Date.now()}
+                />
+              )}
+              {!(person?.id || (formData.name && formData.email)) && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Save the person first to manage leadership roles</p>
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-4">

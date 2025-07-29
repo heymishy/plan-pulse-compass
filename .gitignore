@@ -130,3 +130,4 @@ bower_components
 *.local
 bfg.jar
 replacements.txt
+.vercel

@@ -27,6 +27,7 @@ import {
   Skill,
   PersonSkill,
   Milestone,
+  DivisionLeadershipRole,
 } from '@/types';
 import {
   Goal,
@@ -162,6 +163,23 @@ export interface AppContextType {
   ) => void;
   addGoal: (goalData: Omit<Goal, 'id' | 'createdDate' | 'updatedDate'>) => void;
   updateGoal: (goalId: string, goalData: Partial<Goal>) => void;
+
+  // Division Leadership Roles
+  divisionLeadershipRoles: DivisionLeadershipRole[];
+  setDivisionLeadershipRoles: (
+    roles:
+      | DivisionLeadershipRole[]
+      | ((prev: DivisionLeadershipRole[]) => DivisionLeadershipRole[])
+  ) => void;
+  addDivisionLeadershipRole: (
+    roleData: Omit<DivisionLeadershipRole, 'id'>
+  ) => DivisionLeadershipRole;
+  updateDivisionLeadershipRole: (
+    roleId: string,
+    roleData: Partial<DivisionLeadershipRole>
+  ) => void;
+  removeDivisionLeadershipRole: (roleId: string) => void;
+  getDivisionLeadershipRoles: (personId: string) => DivisionLeadershipRole[];
 
   // Computed properties that were commonly used
   skills: Skill[];

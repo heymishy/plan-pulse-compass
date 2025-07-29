@@ -46,6 +46,7 @@ export const useCanvasData = ({
     projectSolutions,
     projectSkills,
     teamMembers,
+    divisionLeadershipRoles,
   } = useApp();
 
   const { nodes, edges, stats } = useMemo(() => {
@@ -189,39 +190,6 @@ export const useCanvasData = ({
         break;
       }
       case 'division-sizing': {
-        // Mock division leadership roles for demonstration
-        // In a real implementation, this would come from useApp()
-        const divisionLeadershipRoles = divisions.flatMap(division =>
-          people
-            .filter(
-              person =>
-                person.roleId &&
-                (person.roleId.includes('manager') ||
-                  person.roleId.includes('lead') ||
-                  person.roleId.includes('architect'))
-            )
-            .slice(0, Math.max(1, Math.floor(Math.random() * 3))) // 1-2 leaders per division
-            .map((person, index) => ({
-              id: `mock-leader-${division.id}-${person.id}`,
-              personId: person.id,
-              divisionId: division.id,
-              roleType: (
-                [
-                  'technical-delivery-lead',
-                  'people-leader',
-                  'engineering-manager',
-                ] as const
-              )[index % 3],
-              title: `${division.name} ${['Technical Lead', 'People Manager', 'Engineering Manager'][index % 3]}`,
-              startDate: '2024-01-01',
-              isActive: true,
-              supportsTeams: teams
-                .filter(t => t.divisionId === division.id)
-                .map(t => t.id)
-                .slice(0, 3),
-            }))
-        );
-
         const divisionView = DivisionCanvasView({
           selectedDivision,
           divisions: divisionsToShow,
@@ -282,6 +250,7 @@ export const useCanvasData = ({
     projectSolutions,
     projectSkills,
     teamMembers,
+    divisionLeadershipRoles,
     viewType,
     selectedDivision,
     selectedTeam,

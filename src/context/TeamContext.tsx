@@ -10,6 +10,7 @@ import {
   TeamMember,
   Division,
   UnmappedPerson,
+  DivisionLeadershipRole,
 } from '@/types';
 
 interface TeamContextType {
@@ -49,6 +50,21 @@ interface TeamContextType {
     personData: Omit<UnmappedPerson, 'id' | 'importedDate'>
   ) => void;
   removeUnmappedPerson: (personId: string) => void;
+  divisionLeadershipRoles: DivisionLeadershipRole[];
+  setDivisionLeadershipRoles: (
+    roles:
+      | DivisionLeadershipRole[]
+      | ((prev: DivisionLeadershipRole[]) => DivisionLeadershipRole[])
+  ) => void;
+  addDivisionLeadershipRole: (
+    roleData: Omit<DivisionLeadershipRole, 'id'>
+  ) => DivisionLeadershipRole;
+  updateDivisionLeadershipRole: (
+    roleId: string,
+    roleData: Partial<DivisionLeadershipRole>
+  ) => void;
+  removeDivisionLeadershipRole: (roleId: string) => void;
+  getDivisionLeadershipRoles: (personId: string) => DivisionLeadershipRole[];
 }
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
@@ -82,6 +98,9 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     'planning-team-members',
     []
   );
+  const [divisionLeadershipRoles, setDivisionLeadershipRoles] = useLocalStorage<
+    DivisionLeadershipRole[]
+  >('planning-division-leadership-roles', []);
 
   const addPerson = (personData: Omit<Person, 'id'>): Person => {
     const newPerson: Person = {
@@ -179,6 +198,36 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     );
   };
 
+  const addDivisionLeadershipRole = (
+    roleData: Omit<DivisionLeadershipRole, 'id'>
+  ): DivisionLeadershipRole => {
+    const newRole: DivisionLeadershipRole = {
+      ...roleData,
+      id: crypto.randomUUID(),
+    };
+    setDivisionLeadershipRoles(prev => [...prev, newRole]);
+    return newRole;
+  };
+
+  const updateDivisionLeadershipRole = (
+    roleId: string,
+    roleData: Partial<DivisionLeadershipRole>
+  ) => {
+    setDivisionLeadershipRoles(prev =>
+      prev.map(role => (role.id === roleId ? { ...role, ...roleData } : role))
+    );
+  };
+
+  const removeDivisionLeadershipRole = (roleId: string) => {
+    setDivisionLeadershipRoles(prev => prev.filter(role => role.id !== roleId));
+  };
+
+  const getDivisionLeadershipRoles = (personId: string) => {
+    return divisionLeadershipRoles.filter(
+      role => role.personId === personId && role.isActive
+    );
+  };
+
   const value: TeamContextType = {
     people,
     setPeople,
@@ -203,6 +252,12 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     setUnmappedPeople,
     addUnmappedPerson,
     removeUnmappedPerson,
+    divisionLeadershipRoles,
+    setDivisionLeadershipRoles,
+    addDivisionLeadershipRole,
+    updateDivisionLeadershipRole,
+    removeDivisionLeadershipRole,
+    getDivisionLeadershipRoles,
   };
 
   return <TeamContext.Provider value={value}>{children}</TeamContext.Provider>;
