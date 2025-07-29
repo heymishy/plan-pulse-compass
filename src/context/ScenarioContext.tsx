@@ -9,8 +9,11 @@ import React, {
   useRef,
 } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useApp } from './AppContext';
-import type { AppContextType } from './AppContext';
+import { useTeams } from './TeamContext';
+import { useProjects } from './ProjectContext';
+import { usePlanning } from './PlanningContext';
+import { useSettings } from './SettingsContext';
+import { useGoals } from './GoalContext';
 import {
   Scenario,
   ScenarioData,
@@ -46,7 +49,12 @@ export const useScenarios = () => {
 export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const appContext = useApp();
+  // Use individual context hooks instead of useApp() to avoid circular dependency
+  const teamContext = useTeams();
+  const projectContext = useProjects();
+  const planningContext = usePlanning();
+  const settingsContext = useSettings();
+  const goalContext = useGoals();
   const { toast } = useToast();
 
   // Scenario storage
@@ -91,31 +99,53 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
   // Create a deep clone of application state for scenarios
   const cloneCurrentState = useCallback((): ScenarioData => {
     return {
-      people: structuredClone(appContext.people),
-      teams: structuredClone(appContext.teams),
-      projects: structuredClone(appContext.projects),
-      epics: structuredClone(appContext.epics),
-      allocations: structuredClone(appContext.allocations),
-      divisions: structuredClone(appContext.divisions),
-      roles: structuredClone(appContext.roles),
-      releases: structuredClone(appContext.releases),
-      projectSolutions: structuredClone(appContext.projectSolutions),
-      projectSkills: structuredClone(appContext.projectSkills),
-      runWorkCategories: structuredClone(appContext.runWorkCategories),
-      teamMembers: structuredClone(appContext.teamMembers),
+      people: structuredClone(teamContext.people),
+      teams: structuredClone(teamContext.teams),
+      projects: structuredClone(projectContext.projects),
+      epics: structuredClone(projectContext.epics),
+      allocations: structuredClone(planningContext.allocations),
+      divisions: structuredClone(teamContext.divisions),
+      roles: structuredClone(teamContext.roles),
+      releases: structuredClone(projectContext.releases),
+      projectSolutions: structuredClone(projectContext.projectSolutions),
+      projectSkills: structuredClone(projectContext.projectSkills),
+      runWorkCategories: structuredClone(planningContext.runWorkCategories),
+      teamMembers: structuredClone(teamContext.teamMembers),
       divisionLeadershipRoles: structuredClone(
-        appContext.divisionLeadershipRoles
+        teamContext.divisionLeadershipRoles
       ),
-      unmappedPeople: structuredClone(appContext.unmappedPeople),
-      actualAllocations: structuredClone(appContext.actualAllocations),
-      iterationSnapshots: structuredClone(appContext.iterationSnapshots),
-      goals: structuredClone(appContext.goals),
-      goalEpics: structuredClone(appContext.goalEpics),
-      goalMilestones: structuredClone(appContext.goalMilestones),
-      goalTeams: structuredClone(appContext.goalTeams),
-      config: structuredClone(appContext.config || {}),
+      unmappedPeople: structuredClone(teamContext.unmappedPeople),
+      actualAllocations: structuredClone(planningContext.actualAllocations),
+      iterationSnapshots: structuredClone(planningContext.iterationSnapshots),
+      goals: structuredClone(goalContext.goals),
+      goalEpics: structuredClone(goalContext.goalEpics),
+      goalMilestones: structuredClone(goalContext.goalMilestones),
+      goalTeams: structuredClone(goalContext.goalTeams),
+      config: structuredClone(settingsContext.config || {}),
     };
-  }, [appContext]);
+  }, [
+    teamContext.people,
+    teamContext.teams,
+    teamContext.divisions,
+    teamContext.roles,
+    teamContext.teamMembers,
+    teamContext.divisionLeadershipRoles,
+    teamContext.unmappedPeople,
+    projectContext.projects,
+    projectContext.epics,
+    projectContext.releases,
+    projectContext.projectSolutions,
+    projectContext.projectSkills,
+    planningContext.allocations,
+    planningContext.runWorkCategories,
+    planningContext.actualAllocations,
+    planningContext.iterationSnapshots,
+    goalContext.goals,
+    goalContext.goalEpics,
+    goalContext.goalMilestones,
+    goalContext.goalTeams,
+    settingsContext.config,
+  ]);
 
   // Create a new scenario
   const createScenario = useCallback(
