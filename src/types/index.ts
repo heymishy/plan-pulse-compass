@@ -231,6 +231,28 @@ export interface Team {
   lastModified: string;
 }
 
+// Division Leadership Roles
+export interface DivisionLeadershipRole {
+  id: string;
+  personId: string;
+  divisionId: string;
+  roleType:
+    | 'technical-delivery-lead'
+    | 'people-leader'
+    | 'solution-architect'
+    | 'engineering-manager'
+    | 'principal-engineer'
+    | 'product-lead'
+    | 'operations-lead';
+  title: string;
+  scope?: string; // Description of scope/responsibility
+  startDate: string;
+  endDate?: string;
+  isActive: boolean;
+  supportsTeams?: string[]; // Team IDs this leader supports
+  notes?: string;
+}
+
 export interface TeamMember {
   id: string;
   teamId: string;
@@ -454,3 +476,21 @@ export type {
   CalendarViewConfig,
   DerivedCalendarEvent,
 } from './calendarTypes';
+
+// Canvas View Types
+export type CanvasViewType =
+  | 'all'
+  | 'financial-overview'
+  | 'teams-projects'
+  | 'projects-epics'
+  | 'team-allocations'
+  | 'people-teams'
+  | 'projects-milestones'
+  | 'people-skills'
+  | 'team-skills-summary'
+  | 'projects-solutions'
+  | 'solutions-skills'
+  | 'scenario-analysis'
+  | 'capacity-planning'
+  | 'skill-gap-analysis'
+  | 'division-sizing';
