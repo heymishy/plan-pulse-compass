@@ -47,6 +47,7 @@ import { useImportMappings } from '@/hooks/useImportMappings';
 import { useValueMappings } from '@/hooks/useValueMappings';
 import { ValueMappingStep } from './ValueMappingStep';
 import { JQLGenerator } from './JQLGenerator';
+import { PowerBiImportWizard } from './PowerBiImportWizard';
 import {
   parseJiraCSV,
   transformJiraToEpics,
@@ -550,6 +551,7 @@ const AdvancedDataImport = () => {
     defaultEpicType: 'project',
     epicHierarchySupport: true,
   });
+  const [isPowerBiWizardOpen, setIsPowerBiWizardOpen] = useState(false);
 
   const methods = useForm();
   const { handleSubmit, control, trigger, formState, reset, watch } = methods;
@@ -1216,6 +1218,26 @@ const AdvancedDataImport = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Power BI Import Wizard Button */}
+        <div className="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium text-blue-900">
+                Power BI Import Wizard
+              </h3>
+              <p className="text-sm text-blue-700">
+                Import Jira data from Power BI exports with guided 5-step wizard
+              </p>
+            </div>
+            <Button
+              onClick={() => setIsPowerBiWizardOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Launch Wizard
+            </Button>
+          </div>
+        </div>
+
         {/* Progress indicator */}
         <div className="flex items-center justify-center mb-6">
           <div className="flex items-center space-x-2">
@@ -1625,6 +1647,12 @@ const AdvancedDataImport = () => {
             onBack={() => setStep(2)}
           />
         )}
+
+        {/* Power BI Import Wizard */}
+        <PowerBiImportWizard
+          isOpen={isPowerBiWizardOpen}
+          onClose={() => setIsPowerBiWizardOpen(false)}
+        />
       </CardContent>
     </Card>
   );
