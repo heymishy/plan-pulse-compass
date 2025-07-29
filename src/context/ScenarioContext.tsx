@@ -102,6 +102,13 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
       projectSolutions: structuredClone(appContext.projectSolutions),
       projectSkills: structuredClone(appContext.projectSkills),
       runWorkCategories: structuredClone(appContext.runWorkCategories),
+      teamMembers: structuredClone(appContext.teamMembers),
+      divisionLeadershipRoles: structuredClone(
+        appContext.divisionLeadershipRoles
+      ),
+      unmappedPeople: structuredClone(appContext.unmappedPeople),
+      actualAllocations: structuredClone(appContext.actualAllocations),
+      iterationSnapshots: structuredClone(appContext.iterationSnapshots),
       goals: structuredClone(appContext.goals),
       goalEpics: structuredClone(appContext.goalEpics),
       goalMilestones: structuredClone(appContext.goalMilestones),

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTeams } from '@/context/TeamContext';
+import { useApp } from '@/context/AppContext';
 import { useSettings } from '@/context/SettingsContext';
 import { Team } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,9 +30,10 @@ import TeamPortfolioOverview from '@/components/teams/TeamPortfolioOverview';
 import RunWorkAllocationView from '@/components/teams/RunWorkAllocationView';
 import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtilizationMatrix';
 import EnterpriseTeamAnalytics from '@/components/teams/EnterpriseTeamAnalytics';
+import { ScenarioDebugInfo } from '@/components/scenarios/ScenarioDebugInfo';
 
 const Teams = () => {
-  const { teams, people, divisions, setTeams } = useTeams();
+  const { teams, people, divisions, setTeams } = useApp();
   const { isSetupComplete } = useSettings();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -114,6 +115,7 @@ const Teams = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
+      <ScenarioDebugInfo />
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Teams</h1>

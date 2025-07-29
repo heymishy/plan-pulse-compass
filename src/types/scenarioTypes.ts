@@ -1,6 +1,7 @@
 import type {
   Person,
   Team,
+  TeamMember,
   Project,
   Epic,
   Allocation,
@@ -16,6 +17,10 @@ import type {
   GoalMilestone,
   GoalTeam,
   AppConfig,
+  DivisionLeadershipRole,
+  UnmappedPerson,
+  ActualAllocation,
+  IterationSnapshot,
 } from './index';
 
 /**
@@ -42,6 +47,15 @@ export interface ScenarioData {
   projectSolutions: ProjectSolution[];
   projectSkills: ProjectSkill[];
   runWorkCategories: RunWorkCategory[];
+
+  // Team-related entities (from TeamContext)
+  teamMembers: TeamMember[];
+  divisionLeadershipRoles: DivisionLeadershipRole[];
+  unmappedPeople: UnmappedPerson[];
+
+  // Planning entities (from PlanningContext)
+  actualAllocations: ActualAllocation[];
+  iterationSnapshots: IterationSnapshot[];
 
   // Goals and strategic planning
   goals: Goal[];

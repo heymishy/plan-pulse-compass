@@ -1,4 +1,11 @@
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useMemo,
+  useCallback,
+} from 'react';
+import { useScenarios } from './ScenarioContext';
 import { useTeams } from './TeamContext';
 import { useProjects } from './ProjectContext';
 import { usePlanning } from './PlanningContext';
@@ -198,14 +205,81 @@ export const useApp = () => {
   return context;
 };
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+// Internal context to bridge scenario data to AppProvider
+const ScenarioContextBridge = React.createContext<any>(null);
+
+// Hook to access scenario context from within AppProvider
+export const useScenarioContextBridge = () => {
+  return React.useContext(ScenarioContextBridge);
+};
+
+// Internal provider that handles the actual context aggregation
+const AppProviderInternal: React.FC<{
+  children: ReactNode;
+}> = ({ children }) => {
+  // Get scenario context from bridge if available
+  const scenarioContext = useScenarioContextBridge();
   const teamContext = useTeams();
   const projectContext = useProjects();
   const planningContext = usePlanning();
   const settingsContext = useSettings();
   const goalContext = useGoals();
+
+  // Get current data (either live or scenario)
+  const currentData = useMemo(() => {
+    if (scenarioContext?.isInScenarioMode && scenarioContext?.getCurrentData) {
+      return scenarioContext.getCurrentData();
+    }
+
+    // Return live data
+    return {
+      people: teamContext.people,
+      teams: teamContext.teams,
+      teamMembers: teamContext.teamMembers,
+      divisions: teamContext.divisions,
+      roles: teamContext.roles,
+      unmappedPeople: teamContext.unmappedPeople,
+      divisionLeadershipRoles: teamContext.divisionLeadershipRoles,
+      projects: projectContext.projects,
+      epics: projectContext.epics,
+      releases: projectContext.releases,
+      projectSolutions: projectContext.projectSolutions,
+      projectSkills: projectContext.projectSkills,
+      allocations: planningContext.allocations,
+      actualAllocations: planningContext.actualAllocations,
+      iterationSnapshots: planningContext.iterationSnapshots,
+      runWorkCategories: planningContext.runWorkCategories,
+      goals: goalContext.goals,
+      goalEpics: goalContext.goalEpics,
+      goalMilestones: goalContext.goalMilestones,
+      goalTeams: goalContext.goalTeams,
+      config: settingsContext.config,
+    };
+  }, [
+    scenarioContext?.isInScenarioMode,
+    scenarioContext?.getCurrentData,
+    teamContext.people,
+    teamContext.teams,
+    teamContext.teamMembers,
+    teamContext.divisions,
+    teamContext.roles,
+    teamContext.unmappedPeople,
+    teamContext.divisionLeadershipRoles,
+    projectContext.projects,
+    projectContext.epics,
+    projectContext.releases,
+    projectContext.projectSolutions,
+    projectContext.projectSkills,
+    planningContext.allocations,
+    planningContext.actualAllocations,
+    planningContext.iterationSnapshots,
+    planningContext.runWorkCategories,
+    goalContext.goals,
+    goalContext.goalEpics,
+    goalContext.goalMilestones,
+    goalContext.goalTeams,
+    settingsContext.config,
+  ]);
 
   // Computed properties
   const skills = useMemo(() => {
@@ -233,20 +307,86 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const value: AppContextType = {
-    // Team context
-    ...teamContext,
+    // Use scenario-aware data
+    people: currentData.people,
+    teams: currentData.teams,
+    teamMembers: currentData.teamMembers,
+    divisions: currentData.divisions,
+    roles: currentData.roles,
+    unmappedPeople: currentData.unmappedPeople,
+    divisionLeadershipRoles: currentData.divisionLeadershipRoles,
+    projects: currentData.projects,
+    epics: currentData.epics,
+    releases: currentData.releases,
+    projectSolutions: currentData.projectSolutions,
+    projectSkills: currentData.projectSkills,
+    allocations: currentData.allocations,
+    actualAllocations: currentData.actualAllocations,
+    iterationSnapshots: currentData.iterationSnapshots,
+    runWorkCategories: currentData.runWorkCategories,
+    cycles: planningContext.cycles, // Always live data
+    goals: currentData.goals,
+    goalEpics: currentData.goalEpics,
+    goalMilestones: currentData.goalMilestones,
+    goalTeams: currentData.goalTeams,
+    config: currentData.config,
 
-    // Project context
-    ...projectContext,
+    // Scenario-aware setters (implement key ones)
+    setPeople: teamContext.setPeople,
+    setTeams: teamContext.setTeams,
+    setAllocations: planningContext.setAllocations,
+    setProjects: projectContext.setProjects,
+    setEpics: projectContext.setEpics,
+    setGoals: goalContext.setGoals,
 
-    // Planning context
-    ...planningContext,
+    // Pass through other setters for now (they'll work on live data)
+    // TODO: Make these scenario-aware as needed
+    addPerson: teamContext.addPerson,
+    updatePerson: teamContext.updatePerson,
+    setRoles: teamContext.setRoles,
+    addTeam: teamContext.addTeam,
+    updateTeam: teamContext.updateTeam,
+    deleteTeam: teamContext.deleteTeam,
+    setTeamMembers: teamContext.setTeamMembers,
+    addTeamMember: teamContext.addTeamMember,
+    updateTeamMember: teamContext.updateTeamMember,
+    removeTeamMember: teamContext.removeTeamMember,
+    getTeamMembers: teamContext.getTeamMembers,
+    setDivisions: teamContext.setDivisions,
+    setUnmappedPeople: teamContext.setUnmappedPeople,
+    addUnmappedPerson: teamContext.addUnmappedPerson,
+    removeUnmappedPerson: teamContext.removeUnmappedPerson,
+    setDivisionLeadershipRoles: teamContext.setDivisionLeadershipRoles,
+    addDivisionLeadershipRole: teamContext.addDivisionLeadershipRole,
+    updateDivisionLeadershipRole: teamContext.updateDivisionLeadershipRole,
+    removeDivisionLeadershipRole: teamContext.removeDivisionLeadershipRole,
+    getDivisionLeadershipRoles: teamContext.getDivisionLeadershipRoles,
 
-    // Settings context
-    ...settingsContext,
+    updateProject: projectContext.updateProject,
+    setReleases: projectContext.setReleases,
+    setSolutions: projectContext.setSolutions,
+    setProjectSkills: projectContext.setProjectSkills,
+    setProjectSolutions: projectContext.setProjectSolutions,
 
-    // Goal context
-    ...goalContext,
+    setCycles: planningContext.setCycles,
+    setRunWorkCategories: planningContext.setRunWorkCategories,
+    setActualAllocations: planningContext.setActualAllocations,
+    setIterationReviews: planningContext.setIterationReviews,
+    setIterationSnapshots: planningContext.setIterationSnapshots,
+
+    setConfig: settingsContext.setConfig,
+    isSetupComplete: settingsContext.isSetupComplete,
+    setIsSetupComplete: settingsContext.setIsSetupComplete,
+
+    setNorthStar: goalContext.setNorthStar,
+    setGoalEpics: goalContext.setGoalEpics,
+    setGoalMilestones: goalContext.setGoalMilestones,
+    setGoalTeams: goalContext.setGoalTeams,
+    addGoal: goalContext.addGoal,
+    updateGoal: goalContext.updateGoal,
+    northStar: goalContext.northStar,
+    iterationReviews: planningContext.iterationReviews,
+    solutions: projectContext.solutions,
 
     // Computed properties
     skills,
@@ -256,4 +396,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+};
+
+// Higher-order component that conditionally uses ScenarioContext
+export const AppProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  return <AppProviderInternal>{children}</AppProviderInternal>;
+};
+
+// Scenario-aware wrapper that should be used when scenarios are needed
+export const ScenarioAwareAppProvider: React.FC<{
+  children: ReactNode;
+}> = ({ children }) => {
+  const scenarioContext = useScenarios();
+
+  return (
+    <ScenarioContextBridge.Provider value={scenarioContext}>
+      <AppProviderInternal>{children}</AppProviderInternal>
+    </ScenarioContextBridge.Provider>
+  );
 };
