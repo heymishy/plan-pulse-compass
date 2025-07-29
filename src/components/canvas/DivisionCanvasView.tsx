@@ -107,7 +107,9 @@ const generateDivisionNodes = (
         lr => lr.personId === leader.id
       );
       const roleTypes = leaderRoles.map(lr =>
-        lr.roleType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())
+        (lr.roleType || 'Unknown Role')
+          .replace('-', ' ')
+          .replace(/\b\w/g, l => l.toUpperCase())
       );
 
       const leaderNode: Node = {
@@ -193,7 +195,7 @@ const generateDivisionNodes = (
               </div>
               <div className="text-xs text-green-600">{teamSize} people</div>
               <div className="text-xs text-gray-500">
-                {team.type.replace('-', ' ')}
+                {(team.type || 'unknown').replace('-', ' ')}
               </div>
             </div>
           ),
