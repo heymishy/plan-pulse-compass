@@ -7,6 +7,7 @@ import { SettingsProvider } from './context/SettingsContext';
 import { GoalProvider } from './context/GoalContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AppProvider, ScenarioAwareAppProvider } from './context/AppContext';
+import { SafeScenarioAwareAppProvider } from './context/SafeScenarioAwareAppProvider';
 import { ScenarioProvider } from './context/ScenarioContext';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
@@ -57,7 +58,7 @@ function App() {
             <PlanningProvider>
               <GoalProvider>
                 <ScenarioProvider>
-                  <ScenarioAwareAppProvider>
+                  <SafeScenarioAwareAppProvider>
                     <Router>
                       <KeyboardShortcutsProvider>
                         <SidebarProvider defaultOpen={true}>
@@ -194,7 +195,7 @@ function App() {
                         </SidebarProvider>
                       </KeyboardShortcutsProvider>
                     </Router>
-                  </ScenarioAwareAppProvider>
+                  </SafeScenarioAwareAppProvider>
                 </ScenarioProvider>
               </GoalProvider>
             </PlanningProvider>
