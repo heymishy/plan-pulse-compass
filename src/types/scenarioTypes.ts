@@ -471,6 +471,336 @@ export const BUILTIN_SCENARIO_TEMPLATES: Omit<
       ],
     },
   },
+  {
+    id: 'team-restructure',
+    name: 'Team Restructuring',
+    description: 'Restructure teams by moving people between teams',
+    category: 'team-changes',
+    icon: 'Users',
+    config: {
+      modifications: [
+        {
+          entityType: 'teamMembers',
+          operation: 'bulk-update',
+          filter: {
+            field: 'teamId',
+            operator: 'equals',
+            value: '{{sourceTeamId}}',
+          },
+          changes: [
+            {
+              field: 'teamId',
+              operation: 'set',
+              value: '{{targetTeamId}}',
+            },
+          ],
+        },
+      ],
+      parameters: [
+        {
+          id: 'sourceTeamId',
+          name: 'Source Team',
+          description: 'Team to move people from',
+          type: 'select',
+          required: true,
+          options: [], // Will be populated dynamically
+        },
+        {
+          id: 'targetTeamId',
+          name: 'Target Team',
+          description: 'Team to move people to',
+          type: 'select',
+          required: true,
+          options: [], // Will be populated dynamically
+        },
+      ],
+    },
+  },
+  {
+    id: 'capacity-increase',
+    name: 'Team Capacity Increase',
+    description:
+      'Increase team capacity by adding hours or extending work days',
+    category: 'resource-allocation',
+    icon: 'TrendingUp',
+    config: {
+      modifications: [
+        {
+          entityType: 'teams',
+          operation: 'bulk-update',
+          changes: [
+            {
+              field: 'capacity',
+              operation: 'multiply',
+              value: '{{capacityMultiplier}}',
+            },
+          ],
+        },
+      ],
+      parameters: [
+        {
+          id: 'capacityIncrease',
+          name: 'Capacity Increase %',
+          description: 'Percentage to increase team capacity',
+          type: 'percentage',
+          required: true,
+          defaultValue: 20,
+          min: 5,
+          max: 100,
+        },
+        {
+          id: 'capacityMultiplier',
+          name: 'Capacity Multiplier',
+          description: 'Calculated from capacity increase',
+          type: 'number',
+          required: false,
+          defaultValue: 1.2, // Will be calculated as (100 + capacityIncrease) / 100
+        },
+      ],
+    },
+  },
+  {
+    id: 'project-scope-reduction',
+    name: 'Project Scope Reduction',
+    description:
+      'Reduce project scope by removing features or reducing budgets',
+    category: 'strategic-planning',
+    icon: 'Scissors',
+    config: {
+      modifications: [
+        {
+          entityType: 'epics',
+          operation: 'bulk-update',
+          filter: {
+            field: 'projectId',
+            operator: 'equals',
+            value: '{{targetProjectId}}',
+          },
+          changes: [
+            {
+              field: 'status',
+              operation: 'set',
+              value: 'cancelled',
+            },
+          ],
+        },
+        {
+          entityType: 'projects',
+          operation: 'update',
+          filter: {
+            field: 'id',
+            operator: 'equals',
+            value: '{{targetProjectId}}',
+          },
+          changes: [
+            {
+              field: 'budget',
+              operation: 'multiply',
+              value: '{{budgetReductionMultiplier}}',
+            },
+          ],
+        },
+      ],
+      parameters: [
+        {
+          id: 'targetProjectId',
+          name: 'Target Project',
+          description: 'Project to reduce scope for',
+          type: 'select',
+          required: true,
+          options: [], // Will be populated dynamically
+        },
+        {
+          id: 'scopeReduction',
+          name: 'Scope Reduction %',
+          description: 'Percentage of epics to cancel',
+          type: 'percentage',
+          required: true,
+          defaultValue: 30,
+          min: 10,
+          max: 80,
+        },
+        {
+          id: 'budgetReductionMultiplier',
+          name: 'Budget Reduction Multiplier',
+          description: 'Calculated from scope reduction',
+          type: 'number',
+          required: false,
+          defaultValue: 0.7,
+        },
+      ],
+    },
+  },
+  {
+    id: 'risk-mitigation',
+    name: 'Risk Mitigation Plan',
+    description:
+      'Add buffer capacity and extend timelines for high-risk projects',
+    category: 'risk-mitigation',
+    icon: 'Shield',
+    config: {
+      modifications: [
+        {
+          entityType: 'projects',
+          operation: 'bulk-update',
+          filter: {
+            field: 'riskLevel',
+            operator: 'equals',
+            value: 'high',
+          },
+          changes: [
+            {
+              field: 'endDate',
+              operation: 'add',
+              value: '{{bufferWeeks}}',
+            },
+            {
+              field: 'budget',
+              operation: 'multiply',
+              value: '{{riskBufferMultiplier}}',
+            },
+          ],
+        },
+      ],
+      parameters: [
+        {
+          id: 'bufferWeeks',
+          name: 'Buffer Time (weeks)',
+          description: 'Additional weeks for high-risk projects',
+          type: 'number',
+          required: true,
+          defaultValue: 4,
+          min: 1,
+          max: 12,
+        },
+        {
+          id: 'riskBuffer',
+          name: 'Risk Buffer %',
+          description: 'Additional budget for risk mitigation',
+          type: 'percentage',
+          required: true,
+          defaultValue: 15,
+          min: 5,
+          max: 50,
+        },
+        {
+          id: 'riskBufferMultiplier',
+          name: 'Risk Buffer Multiplier',
+          description: 'Calculated from risk buffer',
+          type: 'number',
+          required: false,
+          defaultValue: 1.15,
+        },
+      ],
+    },
+  },
+  {
+    id: 'remote-transition',
+    name: 'Remote Work Transition',
+    description: 'Adjust team capacity for remote work productivity changes',
+    category: 'organizational',
+    icon: 'Wifi',
+    config: {
+      modifications: [
+        {
+          entityType: 'teams',
+          operation: 'bulk-update',
+          changes: [
+            {
+              field: 'capacity',
+              operation: 'multiply',
+              value: '{{remoteProductivityMultiplier}}',
+            },
+          ],
+        },
+      ],
+      parameters: [
+        {
+          id: 'productivityChange',
+          name: 'Productivity Change %',
+          description: 'Productivity change when moving to remote work',
+          type: 'percentage',
+          required: true,
+          defaultValue: -10, // Default assumption of 10% decrease
+          min: -50,
+          max: 50,
+        },
+        {
+          id: 'remoteProductivityMultiplier',
+          name: 'Remote Productivity Multiplier',
+          description: 'Calculated from productivity change',
+          type: 'number',
+          required: false,
+          defaultValue: 0.9,
+        },
+      ],
+    },
+  },
+  {
+    id: 'new-technology-adoption',
+    name: 'New Technology Adoption',
+    description: 'Account for learning curve when adopting new technology',
+    category: 'strategic-planning',
+    icon: 'Zap',
+    config: {
+      modifications: [
+        {
+          entityType: 'allocations',
+          operation: 'bulk-update',
+          filter: {
+            field: 'projectId',
+            operator: 'equals',
+            value: '{{technologyProjectId}}',
+          },
+          changes: [
+            {
+              field: 'percentage',
+              operation: 'multiply',
+              value: '{{learningCurveMultiplier}}',
+            },
+          ],
+        },
+      ],
+      parameters: [
+        {
+          id: 'technologyProjectId',
+          name: 'Technology Project',
+          description: 'Project involving new technology adoption',
+          type: 'select',
+          required: true,
+          options: [], // Will be populated dynamically
+        },
+        {
+          id: 'learningCurveImpact',
+          name: 'Learning Curve Impact %',
+          description: 'Productivity reduction during learning phase',
+          type: 'percentage',
+          required: true,
+          defaultValue: 25,
+          min: 10,
+          max: 60,
+        },
+        {
+          id: 'rampUpWeeks',
+          name: 'Ramp-up Period (weeks)',
+          description: 'Weeks needed to reach full productivity',
+          type: 'number',
+          required: true,
+          defaultValue: 8,
+          min: 2,
+          max: 24,
+        },
+        {
+          id: 'learningCurveMultiplier',
+          name: 'Learning Curve Multiplier',
+          description: 'Calculated from learning curve impact',
+          type: 'number',
+          required: false,
+          defaultValue: 0.75,
+        },
+      ],
+    },
+  },
 ];
 
 /**

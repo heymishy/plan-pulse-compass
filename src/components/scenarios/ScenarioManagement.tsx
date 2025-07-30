@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { CreateScenarioDialog } from './CreateScenarioDialog';
 import { ScenarioComparison } from './ScenarioComparison';
+import ScenarioExportImport from './ScenarioExportImport';
 import type { Scenario } from '@/types/scenarioTypes';
 
 interface ScenarioManagementProps {
@@ -516,6 +517,16 @@ export const ScenarioManagement: React.FC<ScenarioManagementProps> = ({
               </TableBody>
             </Table>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Export/Import Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Export & Import</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScenarioExportImport scenarios={scenarios} />
         </CardContent>
       </Card>
 

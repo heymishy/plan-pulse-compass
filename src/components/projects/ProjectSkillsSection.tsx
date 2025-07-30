@@ -1,10 +1,15 @@
-
 import React from 'react';
 import { useApp } from '@/context/AppContext';
 import { ProjectSkill, ProjectSolution } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Plus } from 'lucide-react';
@@ -23,7 +28,9 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
   const { skills, solutions } = useApp();
   const [showAddSkill, setShowAddSkill] = React.useState(false);
   const [selectedSkillId, setSelectedSkillId] = React.useState('');
-  const [selectedImportance, setSelectedImportance] = React.useState<'critical' | 'important' | 'nice-to-have'>('important');
+  const [selectedImportance, setSelectedImportance] = React.useState<
+    'critical' | 'important' | 'nice-to-have'
+  >('important');
 
   // Get skills from solutions (read-only)
   const skillsFromSolutions = React.useMemo(() => {
@@ -42,7 +49,10 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
               skillId,
               sourceType: 'solution',
               sourceSolutionId: ps.solutionId,
-              importance: 'important',
+              importance: 'important' as
+                | 'critical'
+                | 'important'
+                | 'nice-to-have',
             });
           }
         });
@@ -56,9 +66,10 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
   const directSkills = projectSkills.filter(ps => ps.sourceType === 'direct');
 
   // Available skills for adding (not already included)
-  const availableSkills = skills.filter(skill => 
-    !skillsFromSolutions.some(sfs => sfs.skillId === skill.id) &&
-    !directSkills.some(ds => ds.skillId === skill.id)
+  const availableSkills = skills.filter(
+    skill =>
+      !skillsFromSolutions.some(sfs => sfs.skillId === skill.id) &&
+      !directSkills.some(ds => ds.skillId === skill.id)
   );
 
   const handleAddDirectSkill = () => {
@@ -81,11 +92,12 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
     onSkillsChange(projectSkills.filter(ps => ps.id !== skillId));
   };
 
-  const handleUpdateImportance = (skillId: string, importance: 'critical' | 'important' | 'nice-to-have') => {
+  const handleUpdateImportance = (
+    skillId: string,
+    importance: 'critical' | 'important' | 'nice-to-have'
+  ) => {
     onSkillsChange(
-      projectSkills.map(ps => 
-        ps.id === skillId ? { ...ps, importance } : ps
-      )
+      projectSkills.map(ps => (ps.id === skillId ? { ...ps, importance } : ps))
     );
   };
 
@@ -97,7 +109,9 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
     return solutions.find(s => s.id === solutionId)?.name || 'Unknown Solution';
   };
 
-  const getImportanceBadgeVariant = (importance: string) => {
+  const getImportanceBadgeVariant = (
+    importance: string
+  ): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (importance) {
       case 'critical':
         return 'destructive';
@@ -113,22 +127,31 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
   return (
     <div className="space-y-4">
       <Label>Required Skills</Label>
-      
+
       {/* Skills from solutions */}
       {skillsFromSolutions.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-2">From Solutions:</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-2">
+            From Solutions:
+          </h4>
           <div className="space-y-2">
-            {skillsFromSolutions.map((skill) => (
-              <div key={skill.id} className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
+            {skillsFromSolutions.map(skill => (
+              <div
+                key={skill.id}
+                className="flex items-center justify-between p-2 bg-blue-50 rounded-lg"
+              >
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline">{getSkillName(skill.skillId)}</Badge>
                   <span className="text-xs text-gray-500">
                     from {getSolutionName(skill.sourceSolutionId!)}
                   </span>
                 </div>
-                <Badge variant={getImportanceBadgeVariant(skill.importance)}>
-                  {skill.importance}
+                <Badge
+                  variant={getImportanceBadgeVariant(
+                    skill.importance || 'important'
+                  )}
+                >
+                  {skill.importance || 'important'}
                 </Badge>
               </div>
             ))}
@@ -139,16 +162,24 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
       {/* Direct skills */}
       {directSkills.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Additional Skills:</h4>
+          <h4 className="text-sm font-medium text-gray-700 mb-2">
+            Additional Skills:
+          </h4>
           <div className="space-y-2">
-            {directSkills.map((skill) => (
-              <div key={skill.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+            {directSkills.map(skill => (
+              <div
+                key={skill.id}
+                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center space-x-2">
                   <Badge variant="outline">{getSkillName(skill.skillId)}</Badge>
-                  <Select 
-                    value={skill.importance} 
-                    onValueChange={(value: string) => 
-                      handleUpdateImportance(skill.id, value as 'critical' | 'important' | 'nice-to-have')
+                  <Select
+                    value={skill.importance}
+                    onValueChange={(value: string) =>
+                      handleUpdateImportance(
+                        skill.id,
+                        value as 'critical' | 'important' | 'nice-to-have'
+                      )
                     }
                   >
                     <SelectTrigger className="w-32">
@@ -194,7 +225,10 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label>Skill</Label>
-              <Select value={selectedSkillId} onValueChange={setSelectedSkillId}>
+              <Select
+                value={selectedSkillId}
+                onValueChange={setSelectedSkillId}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a skill" />
                 </SelectTrigger>
@@ -209,10 +243,12 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
             </div>
             <div>
               <Label>Importance</Label>
-              <Select 
-                value={selectedImportance} 
-                onValueChange={(value: string) => 
-                  setSelectedImportance(value as 'critical' | 'important' | 'nice-to-have')
+              <Select
+                value={selectedImportance}
+                onValueChange={(value: string) =>
+                  setSelectedImportance(
+                    value as 'critical' | 'important' | 'nice-to-have'
+                  )
                 }
               >
                 <SelectTrigger>
@@ -247,11 +283,15 @@ const ProjectSkillsSection: React.FC<ProjectSkillsSectionProps> = ({
         </div>
       )}
 
-      {availableSkills.length === 0 && !showAddSkill && directSkills.length === 0 && skillsFromSolutions.length === 0 && (
-        <p className="text-sm text-gray-500">
-          No skills required. Add solutions to automatically include their associated skills.
-        </p>
-      )}
+      {availableSkills.length === 0 &&
+        !showAddSkill &&
+        directSkills.length === 0 &&
+        skillsFromSolutions.length === 0 && (
+          <p className="text-sm text-gray-500">
+            No skills required. Add solutions to automatically include their
+            associated skills.
+          </p>
+        )}
     </div>
   );
 };

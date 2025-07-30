@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useScenarios } from '@/context/ScenarioContext';
+import ScenarioBanner from '@/components/scenarios/ScenarioBanner';
 import {
   useKeyboardShortcuts,
   KeyboardShortcut,
@@ -85,6 +87,7 @@ const Planning = () => {
     personSkills,
     skills,
   } = useApp();
+  const { isInScenarioMode, activeScenarioId, scenarios } = useScenarios();
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('all');
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
@@ -813,6 +816,10 @@ const Planning = () => {
     );
   }
 
+  const activeScenario = activeScenarioId
+    ? scenarios.find(s => s.id === activeScenarioId)
+    : null;
+
   return (
     <AllocationClipboardProvider
       onAllocationsChange={setAllocations}
@@ -820,6 +827,8 @@ const Planning = () => {
       selectedCycleId={selectedCycleId}
     >
       <div className="p-3 sm:p-4 md:p-6 3xl:p-8 space-y-4 md:space-y-6 max-w-full">
+        {/* Scenario Banner */}
+        {isInScenarioMode && <ScenarioBanner />}
         <div className="flex items-center justify-between">
           <div>
             <h1
@@ -827,9 +836,16 @@ const Planning = () => {
               data-testid="planning-title"
             >
               Planning
+              {isInScenarioMode && activeScenario && (
+                <Badge variant="secondary" className="ml-2 text-sm">
+                  Scenario: {activeScenario.name}
+                </Badge>
+              )}
             </h1>
             <p className="text-gray-600">
-              Plan team allocations and analyze project feasibility
+              {isInScenarioMode
+                ? `Planning allocations in scenario: ${activeScenario?.name || 'Unknown'}`
+                : 'Plan team allocations and analyze project feasibility'}
             </p>
           </div>
           <div className="flex items-center space-x-2">

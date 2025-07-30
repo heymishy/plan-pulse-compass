@@ -45,6 +45,7 @@ import type {
   Scenario,
   ScenarioComparison as ScenarioComparisonType,
 } from '@/types/scenarioTypes';
+import ScenarioVisualDiff from './ScenarioVisualDiff';
 
 interface ScenarioComparisonProps {
   scenario: Scenario;
@@ -59,6 +60,16 @@ interface ChangeItem {
   impact: 'low' | 'medium' | 'high';
   details?: any;
 }
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
   scenario,
@@ -422,7 +433,10 @@ export const ScenarioComparison: React.FC<ScenarioComparisonProps> = ({
         </CardHeader>
       </Card>
 
-      {/* Summary Overview */}
+      {/* Visual Diff */}
+      {comparison && <ScenarioVisualDiff comparison={comparison} />}
+
+      {/* Legacy Summary Overview */}
       <Collapsible
         open={expandedSections.has('summary')}
         onOpenChange={() => toggleSection('summary')}

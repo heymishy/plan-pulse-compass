@@ -114,32 +114,78 @@ The project uses a multi-tier testing approach:
 - **Test Reliability**: Zero flaky tests - all tests must be deterministic
 - **Test Maintainability**: Tests should be readable and well-documented
 
+## 🚨 CRITICAL TESTING REQUIREMENTS
+
+**ALL CHANGES MUST RUN COMPREHENSIVE LOCAL TESTS INCLUDING E2E TESTS BEFORE ANY COMMIT, PUSH, OR DEPLOYMENT**
+
+### Mandatory Test Execution Order
+
+**EVERY change, no matter how small, must complete this full testing sequence:**
+
+```bash
+# 1. MANDATORY - Core functionality tests
+npm run test:core
+
+# 2. MANDATORY - TypeScript validation
+npm run typecheck
+
+# 3. MANDATORY - Code quality checks
+npm run lint
+
+# 4. MANDATORY - Production build verification
+npm run build
+
+# 5. MANDATORY - E2E console error detection
+npx playwright test tests/e2e/page-console-errors.spec.ts
+
+# 6. MANDATORY - Critical user journey E2E tests
+npx playwright test tests/e2e/smoke-test-ci.spec.ts
+
+# 7. RECOMMENDED - Full test coverage validation
+npm run test:coverage
+```
+
+**⚠️ ZERO EXCEPTIONS**: No commits, pushes, or deployments are allowed without completing ALL mandatory tests above.
+
 ## Pre-Commit Checklist
 
-**MANDATORY checklist before ANY commit:**
+**MANDATORY checklist before ANY commit (NEVER skip E2E tests):**
 
 - [ ] ✅ **TDD Cycle Completed**: Red → Green → Refactor cycle followed
 - [ ] ✅ **Core Tests Pass**: `npm run test:core` returns 100% pass rate
-- [ ] ✅ **Types Valid**: `npm run type-check` passes without errors
+- [ ] ✅ **Types Valid**: `npm run typecheck` passes without errors
 - [ ] ✅ **Linting Clean**: `npm run lint` passes without errors
 - [ ] ✅ **Build Successful**: `npm run build` completes without errors
+- [ ] ✅ **E2E Console Errors**: `npx playwright test tests/e2e/page-console-errors.spec.ts` shows NO errors
+- [ ] ✅ **E2E Smoke Tests**: `npx playwright test tests/e2e/smoke-test-ci.spec.ts` passes
 - [ ] ✅ **Integration Tests**: `npm run test:integration` passes (if applicable)
 - [ ] ✅ **Manual Testing**: Features tested manually in development environment
 - [ ] ✅ **Git Status Clean**: Only intended changes staged for commit
 
-### Pre-Push Checklist
+### Pre-Push/Deploy Checklist
 
-**MANDATORY checklist before ANY push:**
+**MANDATORY checklist before ANY push or deployment:**
 
 - [ ] ✅ **Full Test Suite**: `npm run test:coverage` achieves ≥90% coverage
-- [ ] ✅ **E2E Tests**: Critical user journeys validated (for major changes)
-- [ ] ✅ **Console Error Check**: `npm run test:console-errors` passes locally
+- [ ] ✅ **Comprehensive E2E Tests**: ALL E2E test suites pass without errors
+- [ ] ✅ **Console Error Validation**: NO console errors in ANY tested pages
+- [ ] ✅ **Cross-Browser Testing**: Major browsers tested (Chrome, Firefox, Safari, Edge)
 - [ ] ✅ **Performance Check**: No significant performance regressions
 - [ ] ✅ **Bundle Analysis**: Bundle size within acceptable limits
 - [ ] ✅ **Security Audit**: `npm audit` shows no high-severity vulnerabilities
-- [ ] ✅ **CI Memory Validation**: Verify CI memory limits are appropriate for changes
+- [ ] ✅ **Production Deployment Test**: Deployed version verified to work correctly
 - [ ] ✅ **Documentation**: README and docs updated for new features
 - [ ] ✅ **Migration Strategy**: Database/breaking changes have migration plan
+
+### E2E Test Requirements
+
+**E2E tests are NOT optional - they must pass for ALL changes:**
+
+- **Console Error Detection**: Every page must load without JavaScript console errors
+- **Critical User Flows**: All primary user journeys must function correctly
+- **Cross-Browser Compatibility**: Tests must pass in all supported browsers
+- **Performance Validation**: Page load times and interaction responsiveness verified
+- **Accessibility Compliance**: WCAG 2.1 AA standards maintained
 
 ## Code Quality Standards
 

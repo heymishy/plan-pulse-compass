@@ -43,9 +43,9 @@ const AllProviders: React.FC<{ children: React.ReactNode }> = ({
       <ProjectProvider>
         <PlanningProvider>
           <GoalProvider>
-            <AppProvider>
-              <ScenarioProvider>{children}</ScenarioProvider>
-            </AppProvider>
+            <ScenarioProvider>
+              <AppProvider>{children}</AppProvider>
+            </ScenarioProvider>
           </GoalProvider>
         </PlanningProvider>
       </ProjectProvider>

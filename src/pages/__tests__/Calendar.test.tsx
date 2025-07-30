@@ -1,15 +1,23 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import CalendarPage from '../Calendar';
-import { AppProvider } from '../../context/AppContext';
+import { SafeScenarioAwareAppProvider } from '../../context/SafeScenarioAwareAppProvider';
 import { ProjectProvider } from '../../context/ProjectContext';
 import { TeamProvider } from '../../context/TeamContext';
 import { PlanningProvider } from '../../context/PlanningContext';
 import { SettingsProvider } from '../../context/SettingsContext';
 import { ThemeProvider } from '../../context/ThemeContext';
 import { GoalProvider } from '../../context/GoalContext';
+import { ScenarioProvider } from '../../context/ScenarioContext';
+
+// Mock toast hook
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({
+    toast: vi.fn(),
+  }),
+}));
 
 // Wrapper component with all necessary providers
 const CalendarPageWrapper: React.FC<{ children: React.ReactNode }> = ({
@@ -20,11 +28,15 @@ const CalendarPageWrapper: React.FC<{ children: React.ReactNode }> = ({
       <SettingsProvider>
         <TeamProvider>
           <ProjectProvider>
-            <GoalProvider>
-              <PlanningProvider>
-                <AppProvider>{children}</AppProvider>
-              </PlanningProvider>
-            </GoalProvider>
+            <PlanningProvider>
+              <GoalProvider>
+                <ScenarioProvider>
+                  <SafeScenarioAwareAppProvider>
+                    {children}
+                  </SafeScenarioAwareAppProvider>
+                </ScenarioProvider>
+              </GoalProvider>
+            </PlanningProvider>
           </ProjectProvider>
         </TeamProvider>
       </SettingsProvider>

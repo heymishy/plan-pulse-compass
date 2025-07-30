@@ -371,51 +371,216 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
   // Get scenario comparison with live data
   const getScenarioComparison = useCallback(
     async (scenarioId: string): Promise<ScenarioComparison> => {
-      // TODO: Implement comprehensive comparison logic
-      // This would analyze differences between scenario data and live data
-      // and generate detailed comparison metrics
-
       const scenario = scenarios.find(s => s.id === scenarioId);
       if (!scenario) {
         throw new Error('Scenario not found');
       }
 
-      // For now, return a basic comparison structure
+      const liveData = cloneCurrentState();
+      const scenarioData = scenario.data;
+      const changes: ScenarioChange[] = [];
+
+      // Compare projects for financial impact
+      const projectCostChanges: any[] = [];
+      scenarioData.projects.forEach(scenarioProject => {
+        const liveProject = liveData.projects.find(
+          p => p.id === scenarioProject.id
+        );
+        if (liveProject && liveProject.budget !== scenarioProject.budget) {
+          const costDifference =
+            (scenarioProject.budget || 0) - (liveProject.budget || 0);
+          projectCostChanges.push({
+            projectId: scenarioProject.id,
+            projectName: scenarioProject.name,
+            costDifference,
+            percentageChange: liveProject.budget
+              ? (costDifference / liveProject.budget) * 100
+              : 0,
+          });
+
+          changes.push({
+            id: `project-budget-${scenarioProject.id}`,
+            category: 'financial',
+            entityType: 'projects',
+            entityId: scenarioProject.id,
+            entityName: scenarioProject.name,
+            changeType: 'modified',
+            description: `Budget changed from $${liveProject.budget?.toLocaleString() || 0} to $${scenarioProject.budget?.toLocaleString() || 0}`,
+            impact:
+              Math.abs(costDifference) > 100000
+                ? 'high'
+                : Math.abs(costDifference) > 50000
+                  ? 'medium'
+                  : 'low',
+            details: [
+              {
+                field: 'budget',
+                fieldDisplayName: 'Budget',
+                oldValue: liveProject.budget,
+                newValue: scenarioProject.budget,
+                formattedOldValue: `$${liveProject.budget?.toLocaleString() || 0}`,
+                formattedNewValue: `$${scenarioProject.budget?.toLocaleString() || 0}`,
+              },
+            ],
+          });
+        }
+
+        // Check for new projects
+        if (!liveProject) {
+          changes.push({
+            id: `project-added-${scenarioProject.id}`,
+            category: 'scope',
+            entityType: 'projects',
+            entityId: scenarioProject.id,
+            entityName: scenarioProject.name,
+            changeType: 'added',
+            description: `New project "${scenarioProject.name}" added`,
+            impact: 'medium',
+            details: [],
+          });
+        }
+      });
+
+      // Check for removed projects
+      liveData.projects.forEach(liveProject => {
+        const scenarioProject = scenarioData.projects.find(
+          p => p.id === liveProject.id
+        );
+        if (!scenarioProject) {
+          changes.push({
+            id: `project-removed-${liveProject.id}`,
+            category: 'scope',
+            entityType: 'projects',
+            entityId: liveProject.id,
+            entityName: liveProject.name,
+            changeType: 'removed',
+            description: `Project "${liveProject.name}" removed`,
+            impact: 'high',
+            details: [],
+          });
+        }
+      });
+
+      // Compare teams for resource impact
+      const teamCapacityChanges: any[] = [];
+      scenarioData.teams.forEach(scenarioTeam => {
+        const liveTeam = liveData.teams.find(t => t.id === scenarioTeam.id);
+        if (liveTeam && liveTeam.capacity !== scenarioTeam.capacity) {
+          const capacityDifference = scenarioTeam.capacity - liveTeam.capacity;
+          teamCapacityChanges.push({
+            teamId: scenarioTeam.id,
+            teamName: scenarioTeam.name,
+            capacityDifference,
+            allocationChanges: 0, // TODO: Calculate based on allocations
+          });
+
+          changes.push({
+            id: `team-capacity-${scenarioTeam.id}`,
+            category: 'resources',
+            entityType: 'teams',
+            entityId: scenarioTeam.id,
+            entityName: scenarioTeam.name,
+            changeType: 'modified',
+            description: `Team capacity changed from ${liveTeam.capacity}h to ${scenarioTeam.capacity}h`,
+            impact:
+              Math.abs(capacityDifference) > 20
+                ? 'high'
+                : Math.abs(capacityDifference) > 10
+                  ? 'medium'
+                  : 'low',
+            details: [
+              {
+                field: 'capacity',
+                fieldDisplayName: 'Capacity',
+                oldValue: liveTeam.capacity,
+                newValue: scenarioTeam.capacity,
+                formattedOldValue: `${liveTeam.capacity}h`,
+                formattedNewValue: `${scenarioTeam.capacity}h`,
+              },
+            ],
+          });
+        }
+
+        // Check for new teams
+        if (!liveTeam) {
+          changes.push({
+            id: `team-added-${scenarioTeam.id}`,
+            category: 'organizational',
+            entityType: 'teams',
+            entityId: scenarioTeam.id,
+            entityName: scenarioTeam.name,
+            changeType: 'added',
+            description: `New team "${scenarioTeam.name}" added`,
+            impact: 'medium',
+            details: [],
+          });
+        }
+      });
+
+      // Compare allocations for timeline and resource impact
+      const allocationChanges =
+        scenarioData.allocations.length - liveData.allocations.length;
+
+      // Calculate categorized changes
+      const categorizedChanges = {
+        financial: changes.filter(c => c.category === 'financial').length,
+        resources: changes.filter(c => c.category === 'resources').length,
+        timeline: changes.filter(c => c.category === 'timeline').length,
+        scope: changes.filter(c => c.category === 'scope').length,
+        organizational: changes.filter(c => c.category === 'organizational')
+          .length,
+      };
+
+      // Calculate total cost difference
+      const totalCostDifference = projectCostChanges.reduce(
+        (sum, change) => sum + change.costDifference,
+        0
+      );
+
+      // Calculate people changes
+      const peopleChanges = {
+        added: scenarioData.people.length - liveData.people.length,
+        removed: Math.max(
+          0,
+          liveData.people.length - scenarioData.people.length
+        ),
+        reallocated: 0, // TODO: Calculate based on team membership changes
+      };
+
+      // Determine impact level
+      const highImpactChanges = changes.filter(c => c.impact === 'high').length;
+      const impactLevel =
+        highImpactChanges > 5
+          ? 'high'
+          : highImpactChanges > 2
+            ? 'medium'
+            : 'low';
+
       return {
         scenarioId,
         scenarioName: scenario.name,
         comparedAt: new Date().toISOString(),
         summary: {
-          totalChanges: scenario.modifications.length,
-          categorizedChanges: {
-            financial: 0,
-            resources: 0,
-            timeline: 0,
-            scope: 0,
-            organizational: 0,
-          },
-          impactLevel: 'medium',
+          totalChanges: changes.length,
+          categorizedChanges,
+          impactLevel,
         },
-        changes: [],
+        changes,
         financialImpact: {
-          totalCostDifference: 0,
-          budgetVariance: 0,
-          projectCostChanges: [],
+          totalCostDifference,
+          budgetVariance: totalCostDifference,
+          projectCostChanges,
         },
         resourceImpact: {
-          teamCapacityChanges: [],
-          peopleChanges: {
-            added: 0,
-            removed: 0,
-            reallocated: 0,
-          },
+          teamCapacityChanges,
+          peopleChanges,
         },
         timelineImpact: {
-          projectDateChanges: [],
+          projectDateChanges: [], // TODO: Implement date change detection
         },
       };
     },
-    [scenarios]
+    [scenarios, cloneCurrentState]
   );
 
   // Get current data (proxy to scenario data when in scenario mode)
