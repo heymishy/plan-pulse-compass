@@ -11,6 +11,7 @@ import { useProjects } from './ProjectContext';
 import { usePlanning } from './PlanningContext';
 import { useSettings } from './SettingsContext';
 import { useGoals } from './GoalContext';
+import { useSkills } from './SkillsContext';
 import { useScenarioAwareOperations } from '@/hooks/useScenarioAwareOperations';
 import {
   Person,
@@ -206,9 +207,25 @@ export interface AppContextType {
   removeDivisionLeadershipRole: (roleId: string) => void;
   getDivisionLeadershipRoles: (personId: string) => DivisionLeadershipRole[];
 
-  // Computed properties that were commonly used
+  // Skills Management
   skills: Skill[];
+  setSkills: (skills: Skill[] | ((prev: Skill[]) => Skill[])) => void;
   personSkills: PersonSkill[];
+  setPersonSkills: (
+    personSkills: PersonSkill[] | ((prev: PersonSkill[]) => PersonSkill[])
+  ) => void;
+  addSkill: (skillData: Omit<Skill, 'id' | 'createdDate'>) => Skill;
+  updateSkill: (skillId: string, skillData: Partial<Skill>) => void;
+  deleteSkill: (skillId: string) => void;
+  addPersonSkill: (personSkillData: Omit<PersonSkill, 'id'>) => PersonSkill;
+  updatePersonSkill: (
+    personSkillId: string,
+    personSkillData: Partial<PersonSkill>
+  ) => void;
+  deletePersonSkill: (personSkillId: string) => void;
+  getPersonSkills: (personId: string) => PersonSkill[];
+
+  // Computed properties that were commonly used
   milestones: Milestone[];
   isDataLoading: boolean;
 }
@@ -242,6 +259,7 @@ const AppProviderInternal: React.FC<{
   const planningContext = usePlanning();
   const settingsContext = useSettings();
   const goalContext = useGoals();
+  const skillsContext = useSkills();
 
   // Get scenario-aware operations
   const scenarioAwareOps = useScenarioAwareOperations();
@@ -274,6 +292,8 @@ const AppProviderInternal: React.FC<{
       goalEpics: goalContext.goalEpics,
       goalMilestones: goalContext.goalMilestones,
       goalTeams: goalContext.goalTeams,
+      skills: skillsContext.skills,
+      personSkills: skillsContext.personSkills,
       config: settingsContext.config,
     };
   }, [
@@ -299,21 +319,12 @@ const AppProviderInternal: React.FC<{
     goalContext.goalEpics,
     goalContext.goalMilestones,
     goalContext.goalTeams,
+    skillsContext.skills,
+    skillsContext.personSkills,
     settingsContext.config,
   ]);
 
-  // Computed properties
-  const skills = useMemo(() => {
-    // For now, return empty array - this would need to be implemented
-    // based on the actual skills data structure
-    return [] as Skill[];
-  }, []);
-
-  const personSkills = useMemo(() => {
-    // For now, return empty array - this would need to be implemented
-    // based on the actual person skills data structure
-    return [] as PersonSkill[];
-  }, []);
+  // Skills are now provided from currentData, no need for separate computed properties
 
   const milestones = useMemo(() => {
     // For now, return empty array - this would need to be implemented
@@ -391,20 +402,16 @@ const AppProviderInternal: React.FC<{
     removeDivisionLeadershipRole: teamContext.removeDivisionLeadershipRole,
     getDivisionLeadershipRoles: teamContext.getDivisionLeadershipRoles,
     setReleases: projectContext.setReleases,
-    setSolutions: projectContext.setSolutions,
     setProjectSkills: projectContext.setProjectSkills,
     setProjectSolutions: projectContext.setProjectSolutions,
-
     setCycles: planningContext.setCycles,
     setRunWorkCategories: planningContext.setRunWorkCategories,
     setActualAllocations: planningContext.setActualAllocations,
     setIterationReviews: planningContext.setIterationReviews,
     setIterationSnapshots: planningContext.setIterationSnapshots,
-
     setConfig: settingsContext.setConfig,
     isSetupComplete: settingsContext.isSetupComplete,
     setIsSetupComplete: settingsContext.setIsSetupComplete,
-
     setNorthStar: goalContext.setNorthStar,
     setGoalEpics: goalContext.setGoalEpics,
     setGoalMilestones: goalContext.setGoalMilestones,
@@ -413,11 +420,23 @@ const AppProviderInternal: React.FC<{
     updateGoal: goalContext.updateGoal,
     northStar: goalContext.northStar,
     iterationReviews: planningContext.iterationReviews,
-    solutions: projectContext.solutions,
+    solutions: currentData.solutions,
+    setSolutions: scenarioAwareOps.solution.set,
+
+    // Skills Management
+    skills: currentData.skills,
+    setSkills: skillsContext.setSkills,
+    personSkills: currentData.personSkills,
+    setPersonSkills: skillsContext.setPersonSkills,
+    addSkill: skillsContext.addSkill,
+    updateSkill: skillsContext.updateSkill,
+    deleteSkill: skillsContext.deleteSkill,
+    addPersonSkill: skillsContext.addPersonSkill,
+    updatePersonSkill: skillsContext.updatePersonSkill,
+    deletePersonSkill: skillsContext.deletePersonSkill,
+    getPersonSkills: skillsContext.getPersonSkills,
 
     // Computed properties
-    skills,
-    personSkills,
     milestones,
     isDataLoading,
   };

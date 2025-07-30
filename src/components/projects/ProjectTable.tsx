@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project } from '@/types';
@@ -33,21 +32,42 @@ interface ProjectTableProps {
   onViewProject: (projectId: string) => void;
 }
 
-const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, onViewProject }) => {
-  const { setProjects, setEpics, epics, allocations, cycles, people, roles, teams } = useApp();
+const ProjectTable: React.FC<ProjectTableProps> = ({
+  projects,
+  onEditProject,
+  onViewProject,
+}) => {
+  const {
+    setProjects,
+    setEpics,
+    epics,
+    allocations,
+    cycles,
+    people,
+    roles,
+    teams,
+  } = useApp();
   const { toast } = useToast();
-  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(
+    new Set()
+  );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | undefined) => {
     const statusConfig = {
       planning: { label: 'Planning', variant: 'secondary' as const },
+      'in-progress': { label: 'Active', variant: 'default' as const },
       active: { label: 'Active', variant: 'default' as const },
       completed: { label: 'Completed', variant: 'outline' as const },
+      'on-hold': { label: 'On Hold', variant: 'secondary' as const },
       cancelled: { label: 'Cancelled', variant: 'destructive' as const },
     };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.planning;
+
+    // Handle undefined, null, or invalid status values
+    const normalizedStatus = status?.toLowerCase() || 'planning';
+    const config =
+      statusConfig[normalizedStatus as keyof typeof statusConfig] ||
+      statusConfig.planning;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -71,13 +91,17 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, on
 
   const handleBulkDelete = () => {
     // Remove selected projects
-    setProjects(prevProjects => prevProjects.filter(project => !selectedProjects.has(project.id)));
-    
+    setProjects(prevProjects =>
+      prevProjects.filter(project => !selectedProjects.has(project.id))
+    );
+
     // Remove epics associated with deleted projects
-    setEpics(prevEpics => prevEpics.filter(epic => !selectedProjects.has(epic.projectId)));
+    setEpics(prevEpics =>
+      prevEpics.filter(epic => !selectedProjects.has(epic.projectId))
+    );
 
     toast({
-      title: "Projects Deleted",
+      title: 'Projects Deleted',
       description: `Successfully deleted ${selectedProjects.size} project${selectedProjects.size !== 1 ? 's' : ''} and their associated epics`,
     });
 
@@ -85,14 +109,16 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, on
     setShowDeleteDialog(false);
   };
 
-  const isAllSelected = projects.length > 0 && selectedProjects.size === projects.length;
+  const isAllSelected =
+    projects.length > 0 && selectedProjects.size === projects.length;
 
   return (
     <div className="space-y-4">
       {selectedProjects.size > 0 && (
         <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
           <span className="text-sm text-blue-700">
-            {selectedProjects.size} project{selectedProjects.size !== 1 ? 's' : ''} selected
+            {selectedProjects.size} project
+            {selectedProjects.size !== 1 ? 's' : ''} selected
           </span>
           <Button
             variant="destructive"
@@ -126,61 +152,80 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, on
             </TableRow>
           </TableHeader>
           <TableBody>
-            {projects.map((project) => {
-              const projectEpics = epics.filter(e => e.projectId === project.id);
-              const { totalCost } = calculateProjectCost(project, epics, allocations, cycles, people, roles, teams);
+            {projects.map(project => {
+              const projectEpics = epics.filter(
+                e => e.projectId === project.id
+              );
+              const { totalCost } = calculateProjectCost(
+                project,
+                epics,
+                allocations,
+                cycles,
+                people,
+                roles,
+                teams
+              );
 
               return (
-              <TableRow key={project.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedProjects.has(project.id)}
-                    onCheckedChange={(checked) => handleSelectProject(project.id, checked as boolean)}
-                    aria-label={`Select ${project.name}`}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{project.name}</TableCell>
-                <TableCell>{getStatusBadge(project.status)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <Layers className="h-4 w-4 text-gray-500" />
-                    <span>{projectEpics.length}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4 text-gray-500" />
-                    <span>
-                      {totalCost.toLocaleString(undefined, {
-                        style: 'currency',
-                        currency: 'USD',
-                        maximumFractionDigits: 0,
-                      })}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>{new Date(project.startDate).toLocaleDateString()}</TableCell>
-                <TableCell>{project.endDate ? new Date(project.endDate).toLocaleDateString() : 'N/A'}</TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onViewProject(project.id)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEditProject(project.id)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )})}
+                <TableRow key={project.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedProjects.has(project.id)}
+                      onCheckedChange={checked =>
+                        handleSelectProject(project.id, checked as boolean)
+                      }
+                      aria-label={`Select ${project.name}`}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{project.name}</TableCell>
+                  <TableCell>{getStatusBadge(project.status)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Layers className="h-4 w-4 text-gray-500" />
+                      <span>{projectEpics.length}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-4 w-4 text-gray-500" />
+                      <span>
+                        {totalCost.toLocaleString(undefined, {
+                          style: 'currency',
+                          currency: 'USD',
+                          maximumFractionDigits: 0,
+                        })}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(project.startDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {project.endDate
+                      ? new Date(project.endDate).toLocaleDateString()
+                      : 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-end space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onViewProject(project.id)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEditProject(project.id)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -190,13 +235,17 @@ const ProjectTable: React.FC<ProjectTableProps> = ({ projects, onEditProject, on
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Projects</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedProjects.size} project{selectedProjects.size !== 1 ? 's' : ''}? 
-              This action cannot be undone and will also delete all associated epics.
+              Are you sure you want to delete {selectedProjects.size} project
+              {selectedProjects.size !== 1 ? 's' : ''}? This action cannot be
+              undone and will also delete all associated epics.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
