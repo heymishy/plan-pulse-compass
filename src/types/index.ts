@@ -326,15 +326,12 @@ export interface Milestone {
 
 export interface Allocation {
   id: string;
-  personId: string;
   teamId: string;
-  projectId?: string;
-  epicId?: string;
   cycleId: string;
+  iterationNumber: number;
+  epicId?: string;
+  runWorkCategoryId?: string;
   percentage: number;
-  type: 'project' | 'run-work';
-  startDate: string;
-  endDate: string;
   notes?: string;
 }
 

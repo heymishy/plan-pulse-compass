@@ -181,3 +181,5 @@ export const ScenarioBanner: React.FC<ScenarioBannerProps> = ({
     </div>
   );
 };
+
+export default ScenarioBanner;

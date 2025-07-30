@@ -57,7 +57,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
   runWorkCategories,
   prefilledData,
 }) => {
-  const { allocations, setAllocations } = useApp();
+  const { allocations, addAllocation, updateAllocation } = useApp();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     teamId: '',
@@ -132,7 +132,7 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.teamId || !formData.iterationNumber || !formData.percentage) {
@@ -207,20 +207,27 @@ const AllocationDialog: React.FC<AllocationDialogProps> = ({
       notes: formData.notes.trim() || undefined,
     };
 
-    if (allocation) {
-      setAllocations(prev =>
-        prev.map(a => (a.id === allocation.id ? allocationData : a))
-      );
+    try {
+      if (allocation) {
+        await updateAllocation(allocation.id, allocationData);
+        toast({
+          title: 'Success',
+          description: 'Allocation updated successfully',
+        });
+      } else {
+        await addAllocation(allocationData);
+        toast({
+          title: 'Success',
+          description: 'Allocation created successfully',
+        });
+      }
+    } catch (error) {
       toast({
-        title: 'Success',
-        description: 'Allocation updated successfully',
+        title: 'Error',
+        description: 'Failed to save allocation. Please try again.',
+        variant: 'destructive',
       });
-    } else {
-      setAllocations(prev => [...prev, allocationData]);
-      toast({
-        title: 'Success',
-        description: 'Allocation created successfully',
-      });
+      return;
     }
 
     onClose();

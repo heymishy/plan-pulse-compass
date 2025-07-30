@@ -11,6 +11,7 @@ import { useProjects } from './ProjectContext';
 import { usePlanning } from './PlanningContext';
 import { useSettings } from './SettingsContext';
 import { useGoals } from './GoalContext';
+import { useScenarioAwareOperations } from '@/hooks/useScenarioAwareOperations';
 import {
   Person,
   Team,
@@ -49,17 +50,21 @@ export interface AppContextType {
   // From TeamContext
   people: Person[];
   setPeople: (people: Person[] | ((prev: Person[]) => Person[])) => void;
-  addPerson: (personData: Omit<Person, 'id'>) => Person;
-  updatePerson: (personId: string, personData: Partial<Person>) => void;
+  addPerson: (personData: Omit<Person, 'id'>) => Promise<Person>;
+  updatePerson: (
+    personId: string,
+    personData: Partial<Person>
+  ) => Promise<void>;
+  deletePerson: (personId: string) => Promise<void>;
   roles: Role[];
   setRoles: (roles: Role[] | ((prev: Role[]) => Role[])) => void;
   teams: Team[];
   setTeams: (teams: Team[] | ((prev: Team[]) => Team[])) => void;
   addTeam: (
     teamData: Omit<Team, 'id' | 'createdDate' | 'lastModified'>
-  ) => Team;
-  updateTeam: (teamId: string, teamData: Partial<Team>) => void;
-  deleteTeam: (teamId: string) => void;
+  ) => Promise<Team>;
+  updateTeam: (teamId: string, teamData: Partial<Team>) => Promise<void>;
+  deleteTeam: (teamId: string) => Promise<void>;
   teamMembers: TeamMember[];
   setTeamMembers: (
     teamMembers: TeamMember[] | ((prev: TeamMember[]) => TeamMember[])
@@ -87,7 +92,12 @@ export interface AppContextType {
   // From ProjectContext
   projects: Project[];
   setProjects: (projects: Project[] | ((prev: Project[]) => Project[])) => void;
-  updateProject: (projectId: string, updatedProject: Project) => void;
+  addProject: (projectData: Omit<Project, 'id'>) => Promise<Project>;
+  updateProject: (
+    projectId: string,
+    projectData: Partial<Project>
+  ) => Promise<void>;
+  deleteProject: (projectId: string) => Promise<void>;
   epics: Epic[];
   setEpics: (epics: Epic[] | ((prev: Epic[]) => Epic[])) => void;
   releases: Release[];
@@ -112,6 +122,14 @@ export interface AppContextType {
   setAllocations: (
     allocations: Allocation[] | ((prev: Allocation[]) => Allocation[])
   ) => void;
+  addAllocation: (
+    allocationData: Omit<Allocation, 'id'>
+  ) => Promise<Allocation>;
+  updateAllocation: (
+    allocationId: string,
+    allocationData: Partial<Allocation>
+  ) => Promise<void>;
+  deleteAllocation: (allocationId: string) => Promise<void>;
   cycles: Cycle[];
   setCycles: (cycles: Cycle[] | ((prev: Cycle[]) => Cycle[])) => void;
   runWorkCategories: RunWorkCategory[];
@@ -224,6 +242,9 @@ const AppProviderInternal: React.FC<{
   const planningContext = usePlanning();
   const settingsContext = useSettings();
   const goalContext = useGoals();
+
+  // Get scenario-aware operations
+  const scenarioAwareOps = useScenarioAwareOperations();
 
   // Get current data (either live or scenario)
   const currentData = useMemo(() => {
@@ -339,14 +360,22 @@ const AppProviderInternal: React.FC<{
     setEpics: projectContext.setEpics,
     setGoals: goalContext.setGoals,
 
+    // Scenario-aware CRUD operations
+    addPerson: scenarioAwareOps.person.add,
+    updatePerson: scenarioAwareOps.person.update,
+    deletePerson: scenarioAwareOps.person.delete,
+    addTeam: scenarioAwareOps.team.add,
+    updateTeam: scenarioAwareOps.team.update,
+    deleteTeam: scenarioAwareOps.team.delete,
+    addProject: scenarioAwareOps.project.add,
+    updateProject: scenarioAwareOps.project.update,
+    deleteProject: scenarioAwareOps.project.delete,
+    addAllocation: scenarioAwareOps.allocation.add,
+    updateAllocation: scenarioAwareOps.allocation.update,
+    deleteAllocation: scenarioAwareOps.allocation.delete,
+
     // Pass through other setters for now (they'll work on live data)
-    // TODO: Make these scenario-aware as needed
-    addPerson: teamContext.addPerson,
-    updatePerson: teamContext.updatePerson,
     setRoles: teamContext.setRoles,
-    addTeam: teamContext.addTeam,
-    updateTeam: teamContext.updateTeam,
-    deleteTeam: teamContext.deleteTeam,
     setTeamMembers: teamContext.setTeamMembers,
     addTeamMember: teamContext.addTeamMember,
     updateTeamMember: teamContext.updateTeamMember,
@@ -361,8 +390,6 @@ const AppProviderInternal: React.FC<{
     updateDivisionLeadershipRole: teamContext.updateDivisionLeadershipRole,
     removeDivisionLeadershipRole: teamContext.removeDivisionLeadershipRole,
     getDivisionLeadershipRoles: teamContext.getDivisionLeadershipRoles,
-
-    updateProject: projectContext.updateProject,
     setReleases: projectContext.setReleases,
     setSolutions: projectContext.setSolutions,
     setProjectSkills: projectContext.setProjectSkills,
