@@ -5,7 +5,6 @@ import { ProjectProvider } from './context/ProjectContext';
 import { PlanningProvider } from './context/PlanningContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { GoalProvider } from './context/GoalContext';
-import { SkillsProvider } from './context/SkillsContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AppProvider, ScenarioAwareAppProvider } from './context/AppContext';
 import { SafeScenarioAwareAppProvider } from './context/SafeScenarioAwareAppProvider';
@@ -58,151 +57,146 @@ function App() {
           <ProjectProvider>
             <PlanningProvider>
               <GoalProvider>
-                <SkillsProvider>
-                  <ScenarioProvider>
-                    <SafeScenarioAwareAppProvider>
-                      <Router>
-                        <KeyboardShortcutsProvider>
-                          <SidebarProvider defaultOpen={true}>
-                            <div className="flex min-h-screen bg-background">
-                              <Sidebar
-                                side="left"
-                                variant="sidebar"
-                                collapsible="icon"
-                                className="border-r"
-                              >
-                                <EnhancedNavigation />
-                              </Sidebar>
-                              <SidebarInset className="flex-1 min-w-0">
-                                <div className="flex flex-col min-h-screen w-full">
-                                  <ScenarioBanner />
-                                  <div className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                                    <div className="flex flex-col space-y-3">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-4">
-                                          <h1 className="text-lg font-semibold">
-                                            Plan Pulse Compass
-                                          </h1>
-                                        </div>
-                                        <ScenarioSwitcher />
+                <ScenarioProvider>
+                  <SafeScenarioAwareAppProvider>
+                    <Router>
+                      <KeyboardShortcutsProvider>
+                        <SidebarProvider defaultOpen={true}>
+                          <div className="flex min-h-screen bg-background">
+                            <Sidebar
+                              side="left"
+                              variant="sidebar"
+                              collapsible="icon"
+                              className="border-r"
+                            >
+                              <EnhancedNavigation />
+                            </Sidebar>
+                            <SidebarInset className="flex-1 min-w-0">
+                              <div className="flex flex-col min-h-screen w-full">
+                                <ScenarioBanner />
+                                <div className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                                  <div className="flex flex-col space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center space-x-4">
+                                        <h1 className="text-lg font-semibold">
+                                          Plan Pulse Compass
+                                        </h1>
                                       </div>
-                                      <PageBreadcrumb
-                                        showDescription={false}
-                                        maxItems={5}
-                                      />
+                                      <ScenarioSwitcher />
                                     </div>
+                                    <PageBreadcrumb
+                                      showDescription={false}
+                                      maxItems={5}
+                                    />
                                   </div>
-                                  <main className="flex-1 w-full max-w-none">
-                                    <Suspense
-                                      fallback={
-                                        <div className="flex items-center justify-center h-64">
-                                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                                          <span className="ml-2 text-gray-600">
-                                            Loading...
-                                          </span>
-                                        </div>
-                                      }
-                                    >
-                                      <Routes>
-                                        <Route path="/" element={<Index />} />
-                                        <Route
-                                          path="/setup"
-                                          element={<Setup />}
-                                        />
-                                        <Route
-                                          path="/dashboard"
-                                          element={<Dashboard />}
-                                        />
-                                        <Route
-                                          path="/teams"
-                                          element={<Teams />}
-                                        />
-                                        <Route
-                                          path="/people"
-                                          element={<People />}
-                                        />
-                                        <Route
-                                          path="/skills"
-                                          element={<Skills />}
-                                        />
-                                        <Route
-                                          path="/projects"
-                                          element={<Projects />}
-                                        />
-                                        <Route
-                                          path="/epics"
-                                          element={<Epics />}
-                                        />
-                                        <Route
-                                          path="/milestones"
-                                          element={<Milestones />}
-                                        />
-                                        <Route
-                                          path="/calendar"
-                                          element={<Calendar />}
-                                        />
-                                        <Route
-                                          path="/planning"
-                                          element={<Planning />}
-                                        />
-                                        <Route
-                                          path="/advanced-planning"
-                                          element={<AdvancedPlanning />}
-                                        />
-                                        <Route
-                                          path="/journey-planning"
-                                          element={<JourneyPlanning />}
-                                        />
-                                        <Route
-                                          path="/allocations"
-                                          element={<Allocations />}
-                                        />
-                                        <Route
-                                          path="/tracking"
-                                          element={<Tracking />}
-                                        />
-                                        <Route
-                                          path="/financials"
-                                          element={<Financials />}
-                                        />
-                                        <Route
-                                          path="/reports"
-                                          element={<Reports />}
-                                        />
-                                        <Route
-                                          path="/settings"
-                                          element={<Settings />}
-                                        />
-                                        <Route
-                                          path="/canvas"
-                                          element={<Canvas />}
-                                        />
-                                        <Route
-                                          path="/scenario-analysis"
-                                          element={<ScenarioAnalysis />}
-                                        />
-                                        <Route
-                                          path="/ocr"
-                                          element={<OCRPage />}
-                                        />
-                                        <Route
-                                          path="*"
-                                          element={<NotFound />}
-                                        />
-                                      </Routes>
-                                    </Suspense>
-                                  </main>
-                                  <Footer />
                                 </div>
-                              </SidebarInset>
-                            </div>
-                            <Toaster />
-                          </SidebarProvider>
-                        </KeyboardShortcutsProvider>
-                      </Router>
-                    </SafeScenarioAwareAppProvider>
-                  </ScenarioProvider>
-                </SkillsProvider>
+                                <main className="flex-1 w-full max-w-none">
+                                  <Suspense
+                                    fallback={
+                                      <div className="flex items-center justify-center h-64">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                                        <span className="ml-2 text-gray-600">
+                                          Loading...
+                                        </span>
+                                      </div>
+                                    }
+                                  >
+                                    <Routes>
+                                      <Route path="/" element={<Index />} />
+                                      <Route
+                                        path="/setup"
+                                        element={<Setup />}
+                                      />
+                                      <Route
+                                        path="/dashboard"
+                                        element={<Dashboard />}
+                                      />
+                                      <Route
+                                        path="/teams"
+                                        element={<Teams />}
+                                      />
+                                      <Route
+                                        path="/people"
+                                        element={<People />}
+                                      />
+                                      <Route
+                                        path="/skills"
+                                        element={<Skills />}
+                                      />
+                                      <Route
+                                        path="/projects"
+                                        element={<Projects />}
+                                      />
+                                      <Route
+                                        path="/epics"
+                                        element={<Epics />}
+                                      />
+                                      <Route
+                                        path="/milestones"
+                                        element={<Milestones />}
+                                      />
+                                      <Route
+                                        path="/calendar"
+                                        element={<Calendar />}
+                                      />
+                                      <Route
+                                        path="/planning"
+                                        element={<Planning />}
+                                      />
+                                      <Route
+                                        path="/advanced-planning"
+                                        element={<AdvancedPlanning />}
+                                      />
+                                      <Route
+                                        path="/journey-planning"
+                                        element={<JourneyPlanning />}
+                                      />
+                                      <Route
+                                        path="/allocations"
+                                        element={<Allocations />}
+                                      />
+                                      <Route
+                                        path="/tracking"
+                                        element={<Tracking />}
+                                      />
+                                      <Route
+                                        path="/financials"
+                                        element={<Financials />}
+                                      />
+                                      <Route
+                                        path="/reports"
+                                        element={<Reports />}
+                                      />
+                                      <Route
+                                        path="/settings"
+                                        element={<Settings />}
+                                      />
+                                      <Route
+                                        path="/canvas"
+                                        element={<Canvas />}
+                                      />
+                                      <Route
+                                        path="/scenario-analysis"
+                                        element={<ScenarioAnalysis />}
+                                      />
+                                      <Route
+                                        path="/ocr"
+                                        element={<OCRPage />}
+                                      />
+                                      <Route path="*" element={<NotFound />} />
+                                    </Routes>
+                                  </Suspense>
+                                </main>
+                                <Footer />
+                              </div>
+                            </SidebarInset>
+                          </div>
+                          <Toaster />
+                        </SidebarProvider>
+                      </KeyboardShortcutsProvider>
+                    </Router>
+                  </SafeScenarioAwareAppProvider>
+                </ScenarioProvider>
               </GoalProvider>
             </PlanningProvider>
           </ProjectProvider>

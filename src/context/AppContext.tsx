@@ -11,7 +11,7 @@ import { useProjects } from './ProjectContext';
 import { usePlanning } from './PlanningContext';
 import { useSettings } from './SettingsContext';
 import { useGoals } from './GoalContext';
-import { useSkills } from './SkillsContext';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useScenarioAwareOperations } from '@/hooks/useScenarioAwareOperations';
 import {
   Person,
@@ -259,7 +259,82 @@ const AppProviderInternal: React.FC<{
   const planningContext = usePlanning();
   const settingsContext = useSettings();
   const goalContext = useGoals();
-  const skillsContext = useSkills();
+
+  // Skills management - direct integration
+  const [skills, setSkills] = useLocalStorage<Skill[]>('planning-skills', []);
+  const [personSkills, setPersonSkills] = useLocalStorage<PersonSkill[]>(
+    'planning-person-skills',
+    []
+  );
+
+  const addSkill = useCallback(
+    (skillData: Omit<Skill, 'id' | 'createdDate'>): Skill => {
+      const newSkill: Skill = {
+        id: crypto.randomUUID(),
+        ...skillData,
+        createdDate: new Date().toISOString(),
+      };
+      setSkills(prev => [...prev, newSkill]);
+      return newSkill;
+    },
+    [setSkills]
+  );
+
+  const updateSkill = useCallback(
+    (skillId: string, skillData: Partial<Skill>): void => {
+      setSkills(prev =>
+        prev.map(skill =>
+          skill.id === skillId ? { ...skill, ...skillData } : skill
+        )
+      );
+    },
+    [setSkills]
+  );
+
+  const deleteSkill = useCallback(
+    (skillId: string): void => {
+      setSkills(prev => prev.filter(skill => skill.id !== skillId));
+      setPersonSkills(prev => prev.filter(ps => ps.skillId !== skillId));
+    },
+    [setSkills, setPersonSkills]
+  );
+
+  const addPersonSkill = useCallback(
+    (personSkillData: Omit<PersonSkill, 'id'>): PersonSkill => {
+      const newPersonSkill: PersonSkill = {
+        id: crypto.randomUUID(),
+        ...personSkillData,
+      };
+      setPersonSkills(prev => [...prev, newPersonSkill]);
+      return newPersonSkill;
+    },
+    [setPersonSkills]
+  );
+
+  const updatePersonSkill = useCallback(
+    (personSkillId: string, personSkillData: Partial<PersonSkill>): void => {
+      setPersonSkills(prev =>
+        prev.map(ps =>
+          ps.id === personSkillId ? { ...ps, ...personSkillData } : ps
+        )
+      );
+    },
+    [setPersonSkills]
+  );
+
+  const deletePersonSkill = useCallback(
+    (personSkillId: string): void => {
+      setPersonSkills(prev => prev.filter(ps => ps.id !== personSkillId));
+    },
+    [setPersonSkills]
+  );
+
+  const getPersonSkills = useCallback(
+    (personId: string): PersonSkill[] => {
+      return personSkills.filter(ps => ps.personId === personId);
+    },
+    [personSkills]
+  );
 
   // Get scenario-aware operations
   const scenarioAwareOps = useScenarioAwareOperations();
@@ -282,6 +357,7 @@ const AppProviderInternal: React.FC<{
       projects: projectContext.projects,
       epics: projectContext.epics,
       releases: projectContext.releases,
+      solutions: projectContext.solutions,
       projectSolutions: projectContext.projectSolutions,
       projectSkills: projectContext.projectSkills,
       allocations: planningContext.allocations,
@@ -292,8 +368,8 @@ const AppProviderInternal: React.FC<{
       goalEpics: goalContext.goalEpics,
       goalMilestones: goalContext.goalMilestones,
       goalTeams: goalContext.goalTeams,
-      skills: skillsContext.skills,
-      personSkills: skillsContext.personSkills,
+      skills: skills,
+      personSkills: personSkills,
       config: settingsContext.config,
     };
   }, [
@@ -309,6 +385,7 @@ const AppProviderInternal: React.FC<{
     projectContext.projects,
     projectContext.epics,
     projectContext.releases,
+    projectContext.solutions,
     projectContext.projectSolutions,
     projectContext.projectSkills,
     planningContext.allocations,
@@ -319,8 +396,8 @@ const AppProviderInternal: React.FC<{
     goalContext.goalEpics,
     goalContext.goalMilestones,
     goalContext.goalTeams,
-    skillsContext.skills,
-    skillsContext.personSkills,
+    skills,
+    personSkills,
     settingsContext.config,
   ]);
 
@@ -421,20 +498,20 @@ const AppProviderInternal: React.FC<{
     northStar: goalContext.northStar,
     iterationReviews: planningContext.iterationReviews,
     solutions: currentData.solutions,
-    setSolutions: scenarioAwareOps.solution.set,
+    setSolutions: projectContext.setSolutions,
 
     // Skills Management
     skills: currentData.skills,
-    setSkills: skillsContext.setSkills,
+    setSkills,
     personSkills: currentData.personSkills,
-    setPersonSkills: skillsContext.setPersonSkills,
-    addSkill: skillsContext.addSkill,
-    updateSkill: skillsContext.updateSkill,
-    deleteSkill: skillsContext.deleteSkill,
-    addPersonSkill: skillsContext.addPersonSkill,
-    updatePersonSkill: skillsContext.updatePersonSkill,
-    deletePersonSkill: skillsContext.deletePersonSkill,
-    getPersonSkills: skillsContext.getPersonSkills,
+    setPersonSkills,
+    addSkill,
+    updateSkill,
+    deleteSkill,
+    addPersonSkill,
+    updatePersonSkill,
+    deletePersonSkill,
+    getPersonSkills,
 
     // Computed properties
     milestones,

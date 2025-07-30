@@ -309,7 +309,7 @@ export const CreateScenarioDialog: React.FC<CreateScenarioDialogProps> = ({
                           const IconComponent = template.icon
                             ? templateIcons[
                                 template.icon as keyof typeof templateIcons
-                              ]
+                              ] || Target
                             : Target;
 
                           return (
