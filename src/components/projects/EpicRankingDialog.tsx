@@ -72,7 +72,9 @@ const SortableEpicRow: React.FC<SortableEpicRowProps> = ({
   };
 
   const getStatusBadgeVariant = (status: Epic['status']) => {
-    switch (status) {
+    // Handle undefined, null, or invalid status values
+    const normalizedStatus = status?.toLowerCase() || 'not-started';
+    switch (normalizedStatus) {
       case 'completed':
         return 'default';
       case 'in-progress':

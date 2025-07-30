@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project, Epic } from '@/types';
@@ -12,7 +11,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Calendar, Target, DollarSign, Plus, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import EpicDialog from '@/components/projects/EpicDialog';
@@ -25,15 +31,35 @@ interface ProjectDetailsDialogProps {
   project: Project | null;
 }
 
-const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onClose, project }) => {
-  const { epics, setEpics, allocations, cycles, people, roles, teams } = useApp();
+const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({
+  isOpen,
+  onClose,
+  project,
+}) => {
+  const { epics, setEpics, allocations, cycles, people, roles, teams } =
+    useApp();
   const { toast } = useToast();
   const [isEpicDialogOpen, setIsEpicDialogOpen] = useState(false);
   const [selectedEpic, setSelectedEpic] = useState<Epic | null>(null);
 
   const projectFinancials = useMemo(() => {
-    if (!project) return { totalCost: 0, breakdown: [], teamBreakdown: [], monthlyBurnRate: 0, totalDurationInDays: 0 };
-    return calculateProjectCost(project, epics, allocations, cycles, people, roles, teams);
+    if (!project)
+      return {
+        totalCost: 0,
+        breakdown: [],
+        teamBreakdown: [],
+        monthlyBurnRate: 0,
+        totalDurationInDays: 0,
+      };
+    return calculateProjectCost(
+      project,
+      epics,
+      allocations,
+      cycles,
+      people,
+      roles,
+      teams
+    );
   }, [project, epics, allocations, cycles, people, roles, teams]);
 
   if (!project) return null;
@@ -49,8 +75,12 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
       completed: { variant: 'outline' as const, label: 'Completed' },
       cancelled: { variant: 'destructive' as const, label: 'Cancelled' },
     };
-    
-    const config = statusConfig[status];
+
+    // Handle undefined, null, or invalid status values
+    const normalizedStatus = status?.toLowerCase() || 'planning';
+    const config =
+      statusConfig[normalizedStatus as keyof typeof statusConfig] ||
+      statusConfig.planning;
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -60,20 +90,28 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
       'in-progress': { variant: 'default' as const, label: 'In Progress' },
       completed: { variant: 'outline' as const, label: 'Completed' },
     };
-    
-    const config = statusConfig[status];
+
+    // Handle undefined, null, or invalid status values
+    const normalizedStatus = status?.toLowerCase() || 'not-started';
+    const config =
+      statusConfig[normalizedStatus as keyof typeof statusConfig] ||
+      statusConfig['not-started'];
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getMilestoneStatusBadge = (status: string) => {
+  const getMilestoneStatusBadge = (status: string | undefined) => {
     const statusConfig = {
       'not-started': { variant: 'secondary' as const, label: 'Not Started' },
       'in-progress': { variant: 'default' as const, label: 'In Progress' },
       completed: { variant: 'outline' as const, label: 'Completed' },
       'at-risk': { variant: 'destructive' as const, label: 'At Risk' },
     };
-    
-    const config = statusConfig[status as keyof typeof statusConfig];
+
+    // Handle undefined, null, or invalid status values
+    const normalizedStatus = status?.toLowerCase() || 'not-started';
+    const config =
+      statusConfig[normalizedStatus as keyof typeof statusConfig] ||
+      statusConfig['not-started'];
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -90,13 +128,18 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
   const handleDeleteEpic = (epicId: string) => {
     setEpics(prev => prev.filter(epic => epic.id !== epicId));
     toast({
-      title: "Success",
-      description: "Epic deleted successfully",
+      title: 'Success',
+      description: 'Epic deleted successfully',
     });
   };
 
-  const completedMilestones = project.milestones.filter(m => m.status === 'completed').length;
-  const totalEffort = projectEpics.reduce((sum, epic) => sum + epic.estimatedEffort, 0);
+  const completedMilestones = project.milestones.filter(
+    m => m.status === 'completed'
+  ).length;
+  const totalEffort = projectEpics.reduce(
+    (sum, epic) => sum + epic.estimatedEffort,
+    0
+  );
 
   return (
     <>
@@ -121,9 +164,14 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm">
-                    <div>Start: {format(new Date(project.startDate), 'MMM dd, yyyy')}</div>
+                    <div>
+                      Start:{' '}
+                      {format(new Date(project.startDate), 'MMM dd, yyyy')}
+                    </div>
                     {project.endDate && (
-                      <div>End: {format(new Date(project.endDate), 'MMM dd, yyyy')}</div>
+                      <div>
+                        End: {format(new Date(project.endDate), 'MMM dd, yyyy')}
+                      </div>
                     )}
                   </div>
                 </CardContent>
@@ -138,18 +186,34 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm">
-                    Budget: {project.budget ? `$${project.budget.toLocaleString()}` : 'N/A'}
+                    Budget:{' '}
+                    {project.budget
+                      ? `$${project.budget.toLocaleString()}`
+                      : 'N/A'}
                   </div>
                   <div className="text-sm">
-                    Est. Cost: ${projectFinancials.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    Est. Cost: $
+                    {projectFinancials.totalCost.toLocaleString(undefined, {
+                      maximumFractionDigits: 0,
+                    })}
                   </div>
                   {project.budget && (
-                    <div className={`text-sm font-semibold ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {variance >= 0 ? 'Surplus' : 'Deficit'}: ${Math.abs(variance).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <div
+                      className={`text-sm font-semibold ${variance >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                    >
+                      {variance >= 0 ? 'Surplus' : 'Deficit'}: $
+                      {Math.abs(variance).toLocaleString(undefined, {
+                        maximumFractionDigits: 0,
+                      })}
                     </div>
                   )}
                   <div className="text-sm mt-2 pt-2 border-t">
-                    Burn Rate: ${projectFinancials.monthlyBurnRate.toLocaleString(undefined, { maximumFractionDigits: 0 })} / month
+                    Burn Rate: $
+                    {projectFinancials.monthlyBurnRate.toLocaleString(
+                      undefined,
+                      { maximumFractionDigits: 0 }
+                    )}{' '}
+                    / month
                   </div>
                 </CardContent>
               </Card>
@@ -163,10 +227,13 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm">
-                    Milestones: {completedMilestones}/{project.milestones.length}
+                    Milestones: {completedMilestones}/
+                    {project.milestones.length}
                   </div>
                   <div className="text-sm">
-                    Epics: {projectEpics.filter(e => e.status === 'completed').length}/{projectEpics.length}
+                    Epics:{' '}
+                    {projectEpics.filter(e => e.status === 'completed').length}/
+                    {projectEpics.length}
                   </div>
                 </CardContent>
               </Card>
@@ -176,7 +243,9 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
             {project.description && (
               <div>
                 <h3 className="text-lg font-semibold mb-2">Description</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{project.description}</p>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {project.description}
+                </p>
               </div>
             )}
 
@@ -185,20 +254,25 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
               <div>
                 <h3 className="text-lg font-semibold mb-3">Milestones</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {project.milestones.map((milestone) => (
+                  {project.milestones.map(milestone => (
                     <Card key={milestone.id}>
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-sm">{milestone.name}</CardTitle>
+                          <CardTitle className="text-sm">
+                            {milestone.name}
+                          </CardTitle>
                           {getMilestoneStatusBadge(milestone.status)}
                         </div>
                       </CardHeader>
                       <CardContent>
                         <div className="text-sm text-gray-600">
-                          Due: {format(new Date(milestone.dueDate), 'MMM dd, yyyy')}
+                          Due:{' '}
+                          {format(new Date(milestone.dueDate), 'MMM dd, yyyy')}
                         </div>
                         {milestone.description && (
-                          <p className="text-sm mt-1">{milestone.description}</p>
+                          <p className="text-sm mt-1">
+                            {milestone.description}
+                          </p>
                         )}
                       </CardContent>
                     </Card>
@@ -208,41 +282,51 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
             )}
 
             <Separator />
-            
+
             {/* Team Cost Contribution */}
             {projectFinancials.teamBreakdown.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-3">Team Cost Contribution</h3>
+                <h3 className="text-lg font-semibold mb-3">
+                  Team Cost Contribution
+                </h3>
                 <Card>
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Team</TableHead>
-                          <TableHead className="text-right">Total Contributed Cost</TableHead>
+                          <TableHead className="text-right">
+                            Total Contributed Cost
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {projectFinancials.teamBreakdown
-                          .map(item => (
-                            <TableRow key={item.teamName}>
-                              <TableCell className="font-medium">{item.teamName}</TableCell>
-                              <TableCell className="text-right font-mono">
-                                ${item.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                        {projectFinancials.teamBreakdown.map(item => (
+                          <TableRow key={item.teamName}>
+                            <TableCell className="font-medium">
+                              {item.teamName}
+                            </TableCell>
+                            <TableCell className="text-right font-mono">
+                              $
+                              {item.totalCost.toLocaleString(undefined, {
+                                maximumFractionDigits: 0,
+                              })}
+                            </TableCell>
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </CardContent>
                 </Card>
               </div>
             )}
-            
+
             {/* Cost Breakdown Section */}
             {projectFinancials.breakdown.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-3">Cost Breakdown by Person</h3>
+                <h3 className="text-lg font-semibold mb-3">
+                  Cost Breakdown by Person
+                </h3>
                 <Card>
                   <CardContent className="p-0">
                     <Table>
@@ -250,7 +334,9 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                         <TableRow>
                           <TableHead>Person</TableHead>
                           <TableHead>Rate Information</TableHead>
-                          <TableHead className="text-right">Total Cost</TableHead>
+                          <TableHead className="text-right">
+                            Total Cost
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -258,11 +344,18 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                           .sort((a, b) => b.totalCost - a.totalCost)
                           .map(item => (
                             <TableRow key={item.personId}>
-                              <TableCell className="font-medium">{item.personName}</TableCell>
+                              <TableCell className="font-medium">
+                                {item.personName}
+                              </TableCell>
                               <TableCell>
                                 <div className="flex flex-col">
                                   <span className="font-medium">
-                                    ${item.effectiveRate.toLocaleString(undefined, { maximumFractionDigits: 2 })} / {item.rateType}
+                                    $
+                                    {item.effectiveRate.toLocaleString(
+                                      undefined,
+                                      { maximumFractionDigits: 2 }
+                                    )}{' '}
+                                    / {item.rateType}
                                   </span>
                                   <span className="text-xs text-gray-500 capitalize">
                                     Source: {item.rateSource.replace('-', ' ')}
@@ -270,14 +363,23 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                                 </div>
                               </TableCell>
                               <TableCell className="text-right font-mono">
-                                ${item.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                $
+                                {item.totalCost.toLocaleString(undefined, {
+                                  maximumFractionDigits: 0,
+                                })}
                               </TableCell>
                             </TableRow>
                           ))}
                         <TableRow className="font-bold bg-gray-50 dark:bg-gray-800">
-                          <TableCell colSpan={2}>Total Estimated Cost</TableCell>
+                          <TableCell colSpan={2}>
+                            Total Estimated Cost
+                          </TableCell>
                           <TableCell className="text-right font-mono">
-                            ${projectFinancials.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            $
+                            {projectFinancials.totalCost.toLocaleString(
+                              undefined,
+                              { maximumFractionDigits: 0 }
+                            )}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -312,7 +414,7 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({ isOpen, onC
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {projectEpics.map((epic) => (
+                  {projectEpics.map(epic => (
                     <Card key={epic.id}>
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">

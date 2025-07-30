@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project } from '@/types';
@@ -38,9 +37,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 interface ProjectRankingDialogProps {
@@ -54,10 +51,10 @@ interface SortableProjectRowProps {
   onRankingChange: (projectId: string, newRanking: string) => void;
 }
 
-const SortableProjectRow: React.FC<SortableProjectRowProps> = ({ 
-  project, 
-  index, 
-  onRankingChange 
+const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
+  project,
+  index,
+  onRankingChange,
 }) => {
   const {
     attributes,
@@ -74,23 +71,29 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
   };
 
   const getStatusBadgeVariant = (status: Project['status']) => {
-    switch (status) {
-      case 'completed': return 'default';
-      case 'active': return 'secondary';
-      case 'planning': return 'outline';
-      default: return 'destructive';
+    // Handle undefined, null, or invalid status values
+    const normalizedStatus = status?.toLowerCase() || 'planning';
+    switch (normalizedStatus) {
+      case 'completed':
+        return 'default';
+      case 'active':
+        return 'secondary';
+      case 'planning':
+        return 'outline';
+      default:
+        return 'destructive';
     }
   };
 
   return (
-    <TableRow 
-      ref={setNodeRef} 
-      style={style} 
+    <TableRow
+      ref={setNodeRef}
+      style={style}
       className={isDragging ? 'opacity-50' : ''}
     >
       <TableCell>
-        <div 
-          {...attributes} 
+        <div
+          {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
         >
@@ -103,7 +106,7 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
           min="1"
           max="1000"
           value={project.ranking || index + 1}
-          onChange={(e) => onRankingChange(project.id, e.target.value)}
+          onChange={e => onRankingChange(project.id, e.target.value)}
           placeholder="Rank"
           className="w-20"
         />
@@ -131,7 +134,10 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
   );
 };
 
-const ProjectRankingDialog: React.FC<ProjectRankingDialogProps> = ({ isOpen, onClose }) => {
+const ProjectRankingDialog: React.FC<ProjectRankingDialogProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const { projects, setProjects } = useApp();
   const { toast } = useToast();
   const [rankedProjects, setRankedProjects] = useState<Project[]>([]);
@@ -160,16 +166,18 @@ const ProjectRankingDialog: React.FC<ProjectRankingDialogProps> = ({ isOpen, onC
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setRankedProjects((projects) => {
-        const oldIndex = projects.findIndex((project) => project.id === active.id);
-        const newIndex = projects.findIndex((project) => project.id === over?.id);
+      setRankedProjects(projects => {
+        const oldIndex = projects.findIndex(
+          project => project.id === active.id
+        );
+        const newIndex = projects.findIndex(project => project.id === over?.id);
 
         const newProjects = arrayMove(projects, oldIndex, newIndex);
-        
+
         // Update rankings based on new positions
         return newProjects.map((project, index) => ({
           ...project,
-          ranking: index + 1
+          ranking: index + 1,
         }));
       });
     }
@@ -177,16 +185,16 @@ const ProjectRankingDialog: React.FC<ProjectRankingDialogProps> = ({ isOpen, onC
 
   const handleRankingChange = (projectId: string, newRanking: string) => {
     const ranking = newRanking ? parseInt(newRanking) : undefined;
-    setRankedProjects(prev => prev.map(p => 
-      p.id === projectId ? { ...p, ranking } : p
-    ));
+    setRankedProjects(prev =>
+      prev.map(p => (p.id === projectId ? { ...p, ranking } : p))
+    );
   };
 
   const handleSave = () => {
     setProjects(rankedProjects);
     toast({
-      title: "Success",
-      description: "Project rankings updated successfully",
+      title: 'Success',
+      description: 'Project rankings updated successfully',
     });
     onClose();
   };
@@ -200,7 +208,8 @@ const ProjectRankingDialog: React.FC<ProjectRankingDialogProps> = ({ isOpen, onC
 
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Drag projects to reorder them by priority, or manually set rankings from 1-1000. Higher numbers = lower priority.
+            Drag projects to reorder them by priority, or manually set rankings
+            from 1-1000. Higher numbers = lower priority.
           </p>
 
           <DndContext
@@ -220,8 +229,8 @@ const ProjectRankingDialog: React.FC<ProjectRankingDialogProps> = ({ isOpen, onC
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <SortableContext 
-                  items={rankedProjects.map(p => p.id)} 
+                <SortableContext
+                  items={rankedProjects.map(p => p.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   {rankedProjects.map((project, index) => (
@@ -242,9 +251,7 @@ const ProjectRankingDialog: React.FC<ProjectRankingDialogProps> = ({ isOpen, onC
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            Save Rankings
-          </Button>
+          <Button onClick={handleSave}>Save Rankings</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
