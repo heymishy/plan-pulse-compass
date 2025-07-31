@@ -589,9 +589,9 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {/* Filter Controls */}
-      <div className="flex flex-wrap gap-4 items-center justify-between bg-gray-50 p-4 rounded-lg">
+      <div className="flex flex-wrap gap-4 items-center justify-between bg-gray-50 p-4 rounded-lg w-full">
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center space-x-2">
             <Filter className="h-4 w-4 text-gray-500" />
@@ -599,7 +599,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
               placeholder="Filter projects..."
               value={filters.search}
               onChange={e => handleFilterChange('search', e.target.value)}
-              className="w-64"
+              className="w-64 xl:w-80"
             />
           </div>
 
@@ -609,7 +609,10 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
               handleFilterChange('status', value === 'all' ? '' : value)
             }
           >
-            <SelectTrigger className="w-40" aria-label="Filter by status">
+            <SelectTrigger
+              className="w-40 xl:w-48"
+              aria-label="Filter by status"
+            >
               <SelectValue placeholder="All Status" />
             </SelectTrigger>
             <SelectContent>
@@ -627,7 +630,10 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
               handleFilterChange('priority', value === 'all' ? '' : value)
             }
           >
-            <SelectTrigger className="w-40" aria-label="Filter by priority">
+            <SelectTrigger
+              className="w-40 xl:w-48"
+              aria-label="Filter by priority"
+            >
               <SelectValue placeholder="All Priority" />
             </SelectTrigger>
             <SelectContent>
@@ -701,13 +707,13 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
         </div>
       )}
 
-      <div className="rounded-md border">
+      <div className="rounded-md border w-full overflow-x-auto">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <Table>
+          <Table className="w-full min-w-max">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
@@ -816,8 +822,8 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
       </div>
 
       {/* Budget Totals */}
-      <div className="bg-gray-50 p-4 rounded-lg border">
-        <div className="flex items-center justify-between">
+      <div className="bg-gray-50 p-4 rounded-lg border w-full">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-6">
             <div className="text-sm">
               <span className="font-medium">

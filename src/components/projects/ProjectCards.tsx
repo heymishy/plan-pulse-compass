@@ -94,9 +94,9 @@ const ProjectCards: React.FC<ProjectCardsProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {selectedProjects.size > 0 && (
-        <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+        <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg w-full">
           <span className="text-sm text-blue-700">
             {selectedProjects.size} project
             {selectedProjects.size !== 1 ? 's' : ''} selected
@@ -112,7 +112,7 @@ const ProjectCards: React.FC<ProjectCardsProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 w-full">
         {projects.map(project => {
           const projectEpics = epics.filter(e => e.projectId === project.id);
           const { totalCost } = calculateProjectCost(

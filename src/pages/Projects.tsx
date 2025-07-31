@@ -101,7 +101,7 @@ const Projects = () => {
     : null;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 w-full">
       {/* Scenario Banner */}
       {isInScenarioMode && <ScenarioBanner />}
 
