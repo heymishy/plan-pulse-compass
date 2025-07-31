@@ -43,6 +43,24 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { calculateProjectCost } from '@/utils/financialCalculations';
+import {
+  calculateProjectTotalBudget,
+  getProjectPriorityOrder,
+} from '@/utils/projectBudgetUtils';
+
+// Currency formatting helper
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  });
+};
+
+// Budget display helper
+const formatBudgetDisplay = (amount: number): string => {
+  return amount > 0 ? formatCurrency(amount) : 'Not set';
+};
 
 interface ProjectTableProps {
   projects: Project[];
@@ -55,6 +73,7 @@ type SortField =
   | 'status'
   | 'budget'
   | 'priority'
+  | 'priorityOrder'
   | 'startDate'
   | 'endDate';
 type SortDirection = 'asc' | 'desc';
@@ -145,7 +164,8 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
 
     if (filters.priority) {
       filtered = filtered.filter(
-        project => project.priority?.toString() === filters.priority
+        project =>
+          getProjectPriorityOrder(project)?.toString() === filters.priority
       );
     }
 
@@ -164,12 +184,16 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
             bValue = b.status || '';
             break;
           case 'budget':
-            aValue = a.budget || 0;
-            bValue = b.budget || 0;
+            aValue = calculateProjectTotalBudget(a);
+            bValue = calculateProjectTotalBudget(b);
             break;
           case 'priority':
-            aValue = a.priority || 999;
-            bValue = b.priority || 999;
+            aValue = getProjectPriorityOrder(a) || 999;
+            bValue = getProjectPriorityOrder(b) || 999;
+            break;
+          case 'priorityOrder':
+            aValue = getProjectPriorityOrder(a) || 999;
+            bValue = getProjectPriorityOrder(b) || 999;
             break;
           case 'startDate':
             aValue = new Date(a.startDate).getTime();
@@ -194,9 +218,12 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
 
   // Budget calculations
   const budgetTotals = useMemo(() => {
-    const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
+    const totalBudget = projects.reduce(
+      (sum, p) => sum + calculateProjectTotalBudget(p),
+      0
+    );
     const filteredBudget = filteredAndSortedProjects.reduce(
-      (sum, p) => sum + (p.budget || 0),
+      (sum, p) => sum + calculateProjectTotalBudget(p),
       0
     );
     const isFiltered = filters.search || filters.status || filters.priority;
@@ -470,34 +497,24 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-gray-500" />
-                      <span>
-                        {totalCost.toLocaleString(undefined, {
-                          style: 'currency',
-                          currency: 'USD',
-                          maximumFractionDigits: 0,
-                        })}
-                      </span>
+                      <span>{formatCurrency(totalCost)}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-gray-500" />
                       <span>
-                        {project.budget
-                          ? project.budget.toLocaleString(undefined, {
-                              style: 'currency',
-                              currency: 'USD',
-                              maximumFractionDigits: 0,
-                            })
-                          : 'Not set'}
+                        {formatBudgetDisplay(
+                          calculateProjectTotalBudget(project)
+                        )}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      className={`${getPriorityBadgeColor(project.priority)} border-0`}
+                      className={`${getPriorityBadgeColor(getProjectPriorityOrder(project))} border-0`}
                     >
-                      {project.priority || 'N/A'}
+                      {getProjectPriorityOrder(project) || 'N/A'}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -542,11 +559,11 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
                 {budgetTotals.isFiltered ? 'Filtered Budget' : 'Total Budget'}:
               </span>
               <span className="ml-2 text-lg font-bold text-green-600">
-                $
-                {(budgetTotals.isFiltered
-                  ? budgetTotals.filtered
-                  : budgetTotals.total
-                ).toLocaleString()}
+                {formatCurrency(
+                  budgetTotals.isFiltered
+                    ? budgetTotals.filtered
+                    : budgetTotals.total
+                )}
               </span>
             </div>
             <div className="text-sm text-gray-600">
@@ -559,7 +576,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
           </div>
           {budgetTotals.isFiltered && (
             <div className="text-sm text-gray-500">
-              Total Budget: ${budgetTotals.total.toLocaleString()}
+              Total Budget: {formatCurrency(budgetTotals.total)}
             </div>
           )}
         </div>

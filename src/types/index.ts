@@ -280,6 +280,11 @@ export interface Role {
   description?: string;
 }
 
+export interface ProjectFinancialYearBudget {
+  financialYearId: string;
+  amount: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -288,10 +293,12 @@ export interface Project {
   status: 'planning' | 'in-progress' | 'completed' | 'on-hold' | 'cancelled';
   startDate: string;
   endDate?: string;
-  budget?: number;
+  budget?: number; // Legacy field - maintained for backward compatibility
+  financialYearBudgets?: ProjectFinancialYearBudget[]; // New per-financial-year budget system
   milestones: string[];
   priority: number;
   ranking: number;
+  priorityOrder?: number; // Enhanced priority ordering (defaults to priority if not set)
   createdDate: string;
   lastModified: string;
 }
