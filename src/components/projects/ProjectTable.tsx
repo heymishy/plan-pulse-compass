@@ -41,6 +41,8 @@ import {
   Filter,
   X,
   GripVertical,
+  Database,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   DndContext,
@@ -66,6 +68,7 @@ import {
   calculateProjectTotalBudget,
   getProjectPriorityOrder,
   assignDefaultPriorityOrderToProjects,
+  migrateLegacyBudgetToFinancialYear,
 } from '@/utils/projectBudgetUtils';
 import { getPriorityLevels } from '@/utils/priorityUtils';
 
@@ -305,6 +308,10 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
     priority: '',
   });
 
+  // Migration state
+  const [showMigrationDialog, setShowMigrationDialog] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+
   const handleSelectProject = (projectId: string, checked: boolean) => {
     const newSelected = new Set(selectedProjects);
     if (checked) {
@@ -530,6 +537,57 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
     });
   };
 
+  // Legacy Budget Migration functions
+  const legacyProjects = useMemo(() => {
+    return projects.filter(
+      project =>
+        !project.financialYearBudgets?.length &&
+        project.budget != null &&
+        project.budget > 0
+    );
+  }, [projects]);
+
+  const hasLegacyProjects = legacyProjects.length > 0;
+
+  const handleMigrateLegacyBudgets = async () => {
+    if (!config.financialYear) {
+      toast({
+        title: 'Migration Error',
+        description:
+          'No financial year configured. Please set up financial year settings first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsMigrating(true);
+
+    try {
+      const migratedProjects = projects.map(project =>
+        migrateLegacyBudgetToFinancialYear(project, config.financialYear.id)
+      );
+
+      setProjects(migratedProjects);
+      setShowMigrationDialog(false);
+
+      toast({
+        title: 'Migration Successful',
+        description: `Successfully migrated ${legacyProjects.length} project${
+          legacyProjects.length !== 1 ? 's' : ''
+        } to financial year budget structure.`,
+      });
+    } catch (error) {
+      console.error('Migration failed:', error);
+      toast({
+        title: 'Migration Failed',
+        description: 'An error occurred during migration. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Filter Controls */}
@@ -610,6 +668,36 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
             <Trash2 className="h-4 w-4 mr-2" />
             Delete Selected
           </Button>
+        </div>
+      )}
+
+      {/* Legacy Budget Migration Notice */}
+      {hasLegacyProjects && (
+        <div className="flex items-center justify-between bg-amber-50 p-4 rounded-lg border border-amber-200">
+          <div className="flex items-center space-x-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">
+                Legacy Budget Migration Available
+              </p>
+              <p className="text-xs text-amber-700">
+                {legacyProjects.length} project
+                {legacyProjects.length !== 1 ? 's' : ''} can be migrated to the
+                new financial year budget structure.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMigrationDialog(true)}
+              disabled={isMigrating}
+            >
+              <Database className="h-4 w-4 mr-2" />
+              {legacyProjects.length === 1 ? 'Migrate' : 'Migrate All'}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -776,6 +864,39 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
               className="bg-red-600 hover:bg-red-700"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Legacy Budget Migration Dialog */}
+      <AlertDialog
+        open={showMigrationDialog}
+        onOpenChange={setShowMigrationDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Migrate Legacy Budgets</AlertDialogTitle>
+            <AlertDialogDescription>
+              Migrate {legacyProjects.length} project
+              {legacyProjects.length !== 1 ? 's' : ''} from the legacy budget
+              structure to the new financial year budget structure?
+              {config.financialYear && (
+                <span className="block mt-2 text-sm">
+                  Projects will be migrated to{' '}
+                  <strong>{config.financialYear.name}</strong> financial year.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isMigrating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMigrateLegacyBudgets}
+              disabled={isMigrating}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {isMigrating ? 'Migrating...' : 'Confirm'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
