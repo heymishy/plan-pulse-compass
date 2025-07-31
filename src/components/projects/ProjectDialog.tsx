@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Project, Milestone, ProjectSolution, ProjectSkill } from '@/types';
+import {
+  Project,
+  Milestone,
+  ProjectSolution,
+  ProjectSkill,
+  ProjectFinancialYearBudget,
+} from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +31,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProjectSkillsSection from './ProjectSkillsSection';
 import ProjectSolutionsSection from './ProjectSolutionsSection';
+import ProjectFinancialYearBudgetEditor from './ProjectFinancialYearBudgetEditor';
+import ProjectPriorityEditor from './ProjectPriorityEditor';
 
 interface ProjectDialogProps {
   isOpen: boolean;
@@ -53,8 +61,13 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
     startDate: '',
     endDate: '',
     budget: '',
+    priority: 2,
+    priorityOrder: undefined as number | undefined,
   });
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [financialYearBudgets, setFinancialYearBudgets] = useState<
+    ProjectFinancialYearBudget[]
+  >([]);
   const [currentProjectSolutions, setCurrentProjectSolutions] = useState<
     ProjectSolution[]
   >([]);
@@ -71,8 +84,11 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
         startDate: project.startDate,
         endDate: project.endDate || '',
         budget: project.budget?.toString() || '',
+        priority: project.priority || 2,
+        priorityOrder: project.priorityOrder,
       });
       setMilestones(project.milestones);
+      setFinancialYearBudgets(project.financialYearBudgets || []);
 
       // Load existing project solutions and skills
       setCurrentProjectSolutions(
@@ -89,8 +105,11 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
         startDate: '',
         endDate: '',
         budget: '',
+        priority: 2,
+        priorityOrder: undefined,
       });
       setMilestones([]);
+      setFinancialYearBudgets([]);
       setCurrentProjectSolutions([]);
       setCurrentProjectSkills([]);
     }
@@ -159,6 +178,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
       startDate: formData.startDate,
       endDate: formData.endDate || undefined,
       budget: formData.budget ? parseFloat(formData.budget) : undefined,
+      priority: formData.priority,
+      priorityOrder: formData.priorityOrder,
+      financialYearBudgets:
+        financialYearBudgets.length > 0 ? financialYearBudgets : undefined,
       milestones: milestones.map(m => ({ ...m, projectId })),
     };
 
@@ -204,8 +227,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="budget">Budget</TabsTrigger>
+              <TabsTrigger value="priority">Priority</TabsTrigger>
               <TabsTrigger value="solutions">Solutions</TabsTrigger>
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="milestones">Milestones</TabsTrigger>
@@ -293,6 +318,29 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                   />
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="budget" className="space-y-4">
+              <ProjectFinancialYearBudgetEditor
+                budgets={financialYearBudgets}
+                legacyBudget={
+                  formData.budget ? parseFloat(formData.budget) : undefined
+                }
+                onBudgetsChange={setFinancialYearBudgets}
+              />
+            </TabsContent>
+
+            <TabsContent value="priority" className="space-y-4">
+              <ProjectPriorityEditor
+                priority={formData.priority}
+                priorityOrder={formData.priorityOrder}
+                onPriorityChange={priority =>
+                  setFormData(prev => ({ ...prev, priority }))
+                }
+                onPriorityOrderChange={priorityOrder =>
+                  setFormData(prev => ({ ...prev, priorityOrder }))
+                }
+              />
             </TabsContent>
 
             <TabsContent value="solutions" className="space-y-4">
