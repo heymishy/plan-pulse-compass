@@ -138,200 +138,213 @@ const Allocations = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Team Allocations</h1>
-          <p className="text-gray-600">
-            Visual views of team capacity and allocation planning
-          </p>
+    <div className="h-full w-full flex flex-col overflow-hidden">
+      <div
+        className="flex-1 p-6 space-y-6 w-full overflow-auto"
+        data-testid="allocations-content"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Team Allocations
+            </h1>
+            <p className="text-gray-600">
+              Visual views of team capacity and allocation planning
+            </p>
+          </div>
+          <AllocationImportDialog onImportComplete={handleImportComplete} />
         </div>
-        <AllocationImportDialog onImportComplete={handleImportComplete} />
-      </div>
 
-      {/* Filters */}
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Quarter:</label>
-          <Select value={selectedCycleId} onValueChange={setSelectedCycleId}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select quarter" />
-            </SelectTrigger>
-            <SelectContent>
-              {quarterCycles.map(cycle => (
-                <SelectItem key={cycle.id} value={cycle.id}>
-                  {cycle.name} ({cycle.status})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Filters */}
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium">Quarter:</label>
+            <Select value={selectedCycleId} onValueChange={setSelectedCycleId}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select quarter" />
+              </SelectTrigger>
+              <SelectContent>
+                {quarterCycles.map(cycle => (
+                  <SelectItem key={cycle.id} value={cycle.id}>
+                    {cycle.name} ({cycle.status})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium">Team:</label>
+            <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams</SelectItem>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Team:</label>
-          <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Teams</SelectItem>
-              {teams.map(team => (
-                <SelectItem key={team.id} value={team.id}>
-                  {team.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      {/* Stats Overview */}
-      <AllocationStats
-        allocations={filteredAllocations}
-        teams={filteredTeams}
-        iterations={iterations}
-        projects={projects}
-        epics={epics}
-        runWorkCategories={runWorkCategories}
-      />
+        {/* Stats Overview */}
+        <AllocationStats
+          allocations={filteredAllocations}
+          teams={filteredTeams}
+          iterations={iterations}
+          projects={projects}
+          epics={epics}
+          runWorkCategories={runWorkCategories}
+        />
 
-      {/* Visual Views */}
-      <Tabs defaultValue="quarter-plans" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger
-            value="quarter-plans"
-            className="flex items-center space-x-2"
-          >
-            <Target className="h-4 w-4" />
-            <span>Quarter Plans</span>
-          </TabsTrigger>
-          <TabsTrigger value="timeline" className="flex items-center space-x-2">
-            <Calendar className="h-4 w-4" />
-            <span>Timeline View</span>
-          </TabsTrigger>
-          <TabsTrigger value="matrix" className="flex items-center space-x-2">
-            <Grid className="h-4 w-4" />
-            <span>Matrix View</span>
-          </TabsTrigger>
-          <TabsTrigger value="capacity" className="flex items-center space-x-2">
-            <BarChart3 className="h-4 w-4" />
-            <span>Capacity Chart</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="utilization"
-            className="flex items-center space-x-2"
-          >
-            <Activity className="h-4 w-4" />
-            <span>Utilization</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="epic-timeline"
-            className="flex items-center space-x-2"
-          >
-            <Clock className="h-4 w-4" />
-            <span>Epic Timeline</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="annual-view"
-            className="flex items-center space-x-2"
-          >
-            <BookOpenCheck className="h-4 w-4" />
-            <span>Annual View</span>
-          </TabsTrigger>
-        </TabsList>
+        {/* Visual Views */}
+        <Tabs defaultValue="quarter-plans" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger
+              value="quarter-plans"
+              className="flex items-center space-x-2"
+            >
+              <Target className="h-4 w-4" />
+              <span>Quarter Plans</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="timeline"
+              className="flex items-center space-x-2"
+            >
+              <Calendar className="h-4 w-4" />
+              <span>Timeline View</span>
+            </TabsTrigger>
+            <TabsTrigger value="matrix" className="flex items-center space-x-2">
+              <Grid className="h-4 w-4" />
+              <span>Matrix View</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="capacity"
+              className="flex items-center space-x-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span>Capacity Chart</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="utilization"
+              className="flex items-center space-x-2"
+            >
+              <Activity className="h-4 w-4" />
+              <span>Utilization</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="epic-timeline"
+              className="flex items-center space-x-2"
+            >
+              <Clock className="h-4 w-4" />
+              <span>Epic Timeline</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="annual-view"
+              className="flex items-center space-x-2"
+            >
+              <BookOpenCheck className="h-4 w-4" />
+              <span>Annual View</span>
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="quarter-plans">
-          {selectedCycleId && iterations.length > 0 ? (
-            <TeamQuarterPlans
-              teams={filteredTeams}
-              iterations={iterations}
-              allocations={filteredAllocations}
-              projects={projects}
-              epics={epics}
-              runWorkCategories={runWorkCategories}
-            />
-          ) : (
-            <NoDataForQuarter selectedCycleId={selectedCycleId} />
-          )}
-        </TabsContent>
+          <TabsContent value="quarter-plans">
+            {selectedCycleId && iterations.length > 0 ? (
+              <TeamQuarterPlans
+                teams={filteredTeams}
+                iterations={iterations}
+                allocations={filteredAllocations}
+                projects={projects}
+                epics={epics}
+                runWorkCategories={runWorkCategories}
+              />
+            ) : (
+              <NoDataForQuarter selectedCycleId={selectedCycleId} />
+            )}
+          </TabsContent>
 
-        <TabsContent value="timeline">
-          {selectedCycleId && iterations.length > 0 ? (
-            <AllocationTimeline
-              teams={filteredTeams}
-              iterations={iterations}
-              allocations={filteredAllocations}
-              projects={projects}
-              epics={epics}
-              runWorkCategories={runWorkCategories}
-            />
-          ) : (
-            <NoDataForQuarter selectedCycleId={selectedCycleId} />
-          )}
-        </TabsContent>
+          <TabsContent value="timeline">
+            {selectedCycleId && iterations.length > 0 ? (
+              <AllocationTimeline
+                teams={filteredTeams}
+                iterations={iterations}
+                allocations={filteredAllocations}
+                projects={projects}
+                epics={epics}
+                runWorkCategories={runWorkCategories}
+              />
+            ) : (
+              <NoDataForQuarter selectedCycleId={selectedCycleId} />
+            )}
+          </TabsContent>
 
-        <TabsContent value="matrix">
-          {selectedCycleId && iterations.length > 0 ? (
-            <AllocationMatrix
-              teams={filteredTeams}
-              iterations={iterations}
-              allocations={filteredAllocations}
-              projects={projects}
-              epics={epics}
-              runWorkCategories={runWorkCategories}
-            />
-          ) : (
-            <NoDataForQuarter selectedCycleId={selectedCycleId} />
-          )}
-        </TabsContent>
+          <TabsContent value="matrix">
+            {selectedCycleId && iterations.length > 0 ? (
+              <AllocationMatrix
+                teams={filteredTeams}
+                iterations={iterations}
+                allocations={filteredAllocations}
+                projects={projects}
+                epics={epics}
+                runWorkCategories={runWorkCategories}
+              />
+            ) : (
+              <NoDataForQuarter selectedCycleId={selectedCycleId} />
+            )}
+          </TabsContent>
 
-        <TabsContent value="capacity">
-          {selectedCycleId && iterations.length > 0 ? (
-            <CapacityChart
-              teams={filteredTeams}
-              iterations={iterations}
-              allocations={filteredAllocations}
-            />
-          ) : (
-            <NoDataForQuarter selectedCycleId={selectedCycleId} />
-          )}
-        </TabsContent>
+          <TabsContent value="capacity">
+            {selectedCycleId && iterations.length > 0 ? (
+              <CapacityChart
+                teams={filteredTeams}
+                iterations={iterations}
+                allocations={filteredAllocations}
+              />
+            ) : (
+              <NoDataForQuarter selectedCycleId={selectedCycleId} />
+            )}
+          </TabsContent>
 
-        <TabsContent value="utilization">
-          <TeamCapacityUtilizationMatrix />
-        </TabsContent>
+          <TabsContent value="utilization">
+            <TeamCapacityUtilizationMatrix />
+          </TabsContent>
 
-        <TabsContent value="epic-timeline">
-          {selectedCycleId && iterations.length > 0 ? (
-            <EpicTimelineView
-              cycleId={selectedCycleId}
-              teams={teams}
-              iterations={iterations}
+          <TabsContent value="epic-timeline">
+            {selectedCycleId && iterations.length > 0 ? (
+              <EpicTimelineView
+                cycleId={selectedCycleId}
+                teams={teams}
+                iterations={iterations}
+                allocations={allocations}
+                projects={projects}
+                epics={epics}
+                milestones={projects.flatMap(p => p.milestones)}
+                runWorkCategories={runWorkCategories}
+                divisions={divisions}
+                people={people}
+              />
+            ) : (
+              <NoDataForQuarter selectedCycleId={selectedCycleId} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="annual-view">
+            <AnnualFinancialReport
               allocations={allocations}
-              projects={projects}
+              cycles={cycles}
+              teams={teams}
+              projects={annualReportProjects}
               epics={epics}
-              milestones={projects.flatMap(p => p.milestones)}
-              runWorkCategories={runWorkCategories}
-              divisions={divisions}
               people={people}
+              roles={roles}
+              config={config}
             />
-          ) : (
-            <NoDataForQuarter selectedCycleId={selectedCycleId} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="annual-view">
-          <AnnualFinancialReport
-            allocations={allocations}
-            cycles={cycles}
-            teams={teams}
-            projects={annualReportProjects}
-            epics={epics}
-            people={people}
-            roles={roles}
-            config={config}
-          />
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };

@@ -212,347 +212,355 @@ const Epics = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <EpicsHeader
-        onCreateEpic={handleCreateEpic}
-        onCreateRelease={handleCreateRelease}
-        onOpenRanking={handleOpenRanking}
-        showMvpLine={showMvpLine}
-        showReleaseLine={showReleaseLine}
-        onToggleMvpLine={() => setShowMvpLine(!showMvpLine)}
-        onToggleReleaseLine={() => setShowReleaseLine(!showReleaseLine)}
-      />
+    <div className="h-full w-full flex flex-col overflow-hidden">
+      <div
+        className="flex-1 p-6 space-y-6 w-full overflow-auto"
+        data-testid="epics-content"
+      >
+        <EpicsHeader
+          onCreateEpic={handleCreateEpic}
+          onCreateRelease={handleCreateRelease}
+          onOpenRanking={handleOpenRanking}
+          showMvpLine={showMvpLine}
+          showReleaseLine={showReleaseLine}
+          onToggleMvpLine={() => setShowMvpLine(!showMvpLine)}
+          onToggleReleaseLine={() => setShowReleaseLine(!showReleaseLine)}
+        />
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center">
-            <Filter className="h-5 w-5 mr-2" />
-            Filters & Search
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="search">Search</Label>
-              <Input
-                id="search"
-                placeholder="Search epics..."
-                value={filters.search}
-                onChange={e =>
-                  setFilters(prev => ({ ...prev, search: e.target.value }))
-                }
-              />
-            </div>
-
-            <div>
-              <Label>Project</Label>
-              <Select
-                value={filters.projectId}
-                onValueChange={value =>
-                  setFilters(prev => ({ ...prev, projectId: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All projects" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Projects</SelectItem>
-                  {projects.map(project => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Division</Label>
-              <Select
-                value={filters.divisionId}
-                onValueChange={value =>
-                  setFilters(prev => ({ ...prev, divisionId: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All divisions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Divisions</SelectItem>
-                  {divisions.map(division => (
-                    <SelectItem key={division.id} value={division.id}>
-                      {division.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Team</Label>
-              <Select
-                value={filters.teamId}
-                onValueChange={value =>
-                  setFilters(prev => ({ ...prev, teamId: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All teams" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Teams</SelectItem>
-                  {teams.map(team => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-            <div>
-              <Label>Status</Label>
-              <Select
-                value={filters.status}
-                onValueChange={value =>
-                  setFilters(prev => ({ ...prev, status: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="not-started">Not Started</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Release</Label>
-              <Select
-                value={filters.releaseId}
-                onValueChange={value =>
-                  setFilters(prev => ({ ...prev, releaseId: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All releases" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Releases</SelectItem>
-                  {releases.map(release => (
-                    <SelectItem key={release.id} value={release.id}>
-                      {release.name} ({release.version})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="startDate">Start Date From</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={filters.startDate}
-                onChange={e =>
-                  setFilters(prev => ({ ...prev, startDate: e.target.value }))
-                }
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="endDate">Target Date To</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={filters.endDate}
-                onChange={e =>
-                  setFilters(prev => ({ ...prev, endDate: e.target.value }))
-                }
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Bulk Actions */}
-      {selectedEpics.length > 0 && (
+        {/* Filters */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">
-                {selectedEpics.length} epic(s) selected
-              </span>
-              <div className="flex space-x-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkStatusUpdate('not-started')}
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Filter className="h-5 w-5 mr-2" />
+              Filters & Search
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <Label htmlFor="search">Search</Label>
+                <Input
+                  id="search"
+                  placeholder="Search epics..."
+                  value={filters.search}
+                  onChange={e =>
+                    setFilters(prev => ({ ...prev, search: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label>Project</Label>
+                <Select
+                  value={filters.projectId}
+                  onValueChange={value =>
+                    setFilters(prev => ({ ...prev, projectId: value }))
+                  }
                 >
-                  Mark as Not Started
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkStatusUpdate('in-progress')}
+                  <SelectTrigger>
+                    <SelectValue placeholder="All projects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Projects</SelectItem>
+                    {projects.map(project => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Division</Label>
+                <Select
+                  value={filters.divisionId}
+                  onValueChange={value =>
+                    setFilters(prev => ({ ...prev, divisionId: value }))
+                  }
                 >
-                  Mark as In Progress
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkStatusUpdate('completed')}
+                  <SelectTrigger>
+                    <SelectValue placeholder="All divisions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Divisions</SelectItem>
+                    {divisions.map(division => (
+                      <SelectItem key={division.id} value={division.id}>
+                        {division.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Team</Label>
+                <Select
+                  value={filters.teamId}
+                  onValueChange={value =>
+                    setFilters(prev => ({ ...prev, teamId: value }))
+                  }
                 >
-                  Mark as Completed
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setSelectedEpics([])}
+                  <SelectTrigger>
+                    <SelectValue placeholder="All teams" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Teams</SelectItem>
+                    {teams.map(team => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+              <div>
+                <Label>Status</Label>
+                <Select
+                  value={filters.status}
+                  onValueChange={value =>
+                    setFilters(prev => ({ ...prev, status: value }))
+                  }
                 >
-                  Clear Selection
-                </Button>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="not-started">Not Started</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Release</Label>
+                <Select
+                  value={filters.releaseId}
+                  onValueChange={value =>
+                    setFilters(prev => ({ ...prev, releaseId: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All releases" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Releases</SelectItem>
+                    {releases.map(release => (
+                      <SelectItem key={release.id} value={release.id}>
+                        {release.name} ({release.version})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="startDate">Start Date From</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={filters.startDate}
+                  onChange={e =>
+                    setFilters(prev => ({ ...prev, startDate: e.target.value }))
+                  }
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="endDate">Target Date To</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={filters.endDate}
+                  onChange={e =>
+                    setFilters(prev => ({ ...prev, endDate: e.target.value }))
+                  }
+                />
               </div>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Sort Controls */}
-      <div className="flex items-center space-x-4">
-        <Label>Sort by:</Label>
-        <Select
-          value={sortBy}
-          onValueChange={(value: string) => setSortBy(value)}
-        >
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="name">Name</SelectItem>
-            <SelectItem value="mvpPriority">MVP Priority</SelectItem>
-            <SelectItem value="releasePriority">Release Priority</SelectItem>
-            <SelectItem value="effort">Effort</SelectItem>
-            <SelectItem value="targetDate">Target Date</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-        >
-          <ArrowUpDown className="h-4 w-4 mr-2" />
-          {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-        </Button>
-      </div>
+        {/* Bulk Actions */}
+        {selectedEpics.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  {selectedEpics.length} epic(s) selected
+                </span>
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleBulkStatusUpdate('not-started')}
+                  >
+                    Mark as Not Started
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleBulkStatusUpdate('in-progress')}
+                  >
+                    Mark as In Progress
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleBulkStatusUpdate('completed')}
+                  >
+                    Mark as Completed
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedEpics([])}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Epics Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={
-                      selectedEpics.length === filteredAndSortedEpics.length &&
-                      filteredAndSortedEpics.length > 0
-                    }
-                    onCheckedChange={handleSelectAll}
-                  />
-                </TableHead>
-                <TableHead>Epic Name</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Effort</TableHead>
-                <TableHead>Target Date</TableHead>
-                <TableHead>Release</TableHead>
-                {showMvpLine && <TableHead>MVP Priority</TableHead>}
-                {showReleaseLine && <TableHead>Release Priority</TableHead>}
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedEpics.map(epic => (
-                <TableRow key={epic.id}>
-                  <TableCell>
+        {/* Sort Controls */}
+        <div className="flex items-center space-x-4">
+          <Label>Sort by:</Label>
+          <Select
+            value={sortBy}
+            onValueChange={(value: string) => setSortBy(value)}
+          >
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="mvpPriority">MVP Priority</SelectItem>
+              <SelectItem value="releasePriority">Release Priority</SelectItem>
+              <SelectItem value="effort">Effort</SelectItem>
+              <SelectItem value="targetDate">Target Date</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          >
+            <ArrowUpDown className="h-4 w-4 mr-2" />
+            {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+          </Button>
+        </div>
+
+        {/* Epics Table */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedEpics.includes(epic.id)}
-                      onCheckedChange={checked =>
-                        handleSelectEpic(epic.id, checked as boolean)
+                      checked={
+                        selectedEpics.length ===
+                          filteredAndSortedEpics.length &&
+                        filteredAndSortedEpics.length > 0
                       }
+                      onCheckedChange={handleSelectAll}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{epic.name}</div>
-                      {epic.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {epic.description}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{epic.projectName}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(epic.status)}>
-                      {epic.status ? epic.status.replace('-', ' ') : 'Unknown'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{epic.estimatedEffort || 'Not set'}</TableCell>
-                  <TableCell>{epic.targetEndDate || 'Not set'}</TableCell>
-                  <TableCell>{epic.releaseName || 'No release'}</TableCell>
-                  {showMvpLine && (
-                    <TableCell>{epic.mvpPriority || 'Not set'}</TableCell>
-                  )}
-                  {showReleaseLine && (
-                    <TableCell>{epic.releasePriority || 'Not set'}</TableCell>
-                  )}
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditEpic(epic)}
-                    >
-                      Edit
-                    </Button>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead>Epic Name</TableHead>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Effort</TableHead>
+                  <TableHead>Target Date</TableHead>
+                  <TableHead>Release</TableHead>
+                  {showMvpLine && <TableHead>MVP Priority</TableHead>}
+                  {showReleaseLine && <TableHead>Release Priority</TableHead>}
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedEpics.map(epic => (
+                  <TableRow key={epic.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedEpics.includes(epic.id)}
+                        onCheckedChange={checked =>
+                          handleSelectEpic(epic.id, checked as boolean)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{epic.name}</div>
+                        {epic.description && (
+                          <div className="text-sm text-gray-500 truncate max-w-xs">
+                            {epic.description}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{epic.projectName}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(epic.status)}>
+                        {epic.status
+                          ? epic.status.replace('-', ' ')
+                          : 'Unknown'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{epic.estimatedEffort || 'Not set'}</TableCell>
+                    <TableCell>{epic.targetEndDate || 'Not set'}</TableCell>
+                    <TableCell>{epic.releaseName || 'No release'}</TableCell>
+                    {showMvpLine && (
+                      <TableCell>{epic.mvpPriority || 'Not set'}</TableCell>
+                    )}
+                    {showReleaseLine && (
+                      <TableCell>{epic.releasePriority || 'Not set'}</TableCell>
+                    )}
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditEpic(epic)}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-      {/* Dialogs */}
-      <EpicDialog
-        isOpen={isEpicDialogOpen}
-        onClose={() => setIsEpicDialogOpen(false)}
-        epic={selectedEpic}
-        projectId={selectedEpic?.projectId || ''}
-      />
+        {/* Dialogs */}
+        <EpicDialog
+          isOpen={isEpicDialogOpen}
+          onClose={() => setIsEpicDialogOpen(false)}
+          epic={selectedEpic}
+          projectId={selectedEpic?.projectId || ''}
+        />
 
-      <ReleaseDialog
-        isOpen={isReleaseDialogOpen}
-        onClose={() => setIsReleaseDialogOpen(false)}
-        release={null}
-      />
+        <ReleaseDialog
+          isOpen={isReleaseDialogOpen}
+          onClose={() => setIsReleaseDialogOpen(false)}
+          release={null}
+        />
 
-      <EpicRankingDialog
-        isOpen={isRankingDialogOpen}
-        onClose={() => setIsRankingDialogOpen(false)}
-      />
+        <EpicRankingDialog
+          isOpen={isRankingDialogOpen}
+          onClose={() => setIsRankingDialogOpen(false)}
+        />
+      </div>
     </div>
   );
 };
