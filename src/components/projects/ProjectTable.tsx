@@ -589,7 +589,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
   };
 
   return (
-    <div className="space-y-4 w-full">
+    <div className="space-y-4 w-full h-full flex flex-col">
       {/* Filter Controls */}
       <div className="flex flex-wrap gap-4 items-center justify-between bg-gray-50 p-4 rounded-lg w-full">
         <div className="flex flex-wrap gap-4 items-center">
@@ -707,7 +707,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
         </div>
       )}
 
-      <div className="rounded-md border w-full overflow-x-auto">
+      <div className="flex-1 rounded-md border w-full overflow-auto">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
