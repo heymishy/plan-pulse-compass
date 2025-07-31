@@ -141,3 +141,30 @@ export const migrateLegacyBudgetToFinancialYear = (
     ],
   };
 };
+
+/**
+ * Assign default priority order values to projects that don't have them
+ * Projects with undefined priorityOrder get assigned their priority level value
+ */
+export const assignDefaultPriorityOrder = (project: Project): Project => {
+  // If project already has a priority order, return as-is
+  if (project.priorityOrder !== undefined) {
+    return project;
+  }
+
+  // Assign priority level as default priority order
+  return {
+    ...project,
+    priorityOrder: project.priority || 4, // Default to lowest priority if priority is also undefined
+  };
+};
+
+/**
+ * Assign default priority order values to multiple projects
+ * Ensures all projects have a priority order for consistent sorting
+ */
+export const assignDefaultPriorityOrderToProjects = (
+  projects: Project[]
+): Project[] => {
+  return projects.map(assignDefaultPriorityOrder);
+};

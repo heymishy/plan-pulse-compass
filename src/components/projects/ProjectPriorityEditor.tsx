@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Target, ArrowUpDown } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useSettings } from '@/context/SettingsContext';
+import { getPriorityLevels, getPriorityLevel } from '@/utils/priorityUtils';
 
 interface ProjectPriorityEditorProps {
   priority: number;
@@ -26,37 +28,16 @@ const ProjectPriorityEditor: React.FC<ProjectPriorityEditorProps> = ({
   onPriorityChange,
   onPriorityOrderChange,
 }) => {
-  // Priority level configurations
-  const priorityLevels = [
-    {
-      value: 1,
-      label: 'Priority 1',
-      description: 'Critical - Highest priority',
-      color: 'bg-red-100 text-red-800',
-    },
-    {
-      value: 2,
-      label: 'Priority 2',
-      description: 'High - Important but not critical',
-      color: 'bg-yellow-100 text-yellow-800',
-    },
-    {
-      value: 3,
-      label: 'Priority 3',
-      description: 'Medium - Standard priority',
-      color: 'bg-green-100 text-green-800',
-    },
-    {
-      value: 4,
-      label: 'Priority 4',
-      description: 'Low - Can be deferred',
-      color: 'bg-blue-100 text-blue-800',
-    },
-  ];
+  const { config } = useSettings();
 
-  // Get priority level info
-  const currentPriorityLevel =
-    priorityLevels.find(p => p.value === priority) || priorityLevels[1];
+  // Get priority levels from configuration with fallback to defaults
+  const priorityLevels = getPriorityLevels(config.priorityLevels);
+
+  // Get current priority level info
+  const currentPriorityLevel = getPriorityLevel(
+    priority,
+    config.priorityLevels
+  );
 
   // Handle priority order change with validation
   const handlePriorityOrderChange = (value: string) => {
@@ -100,10 +81,10 @@ const ProjectPriorityEditor: React.FC<ProjectPriorityEditorProps> = ({
             </SelectTrigger>
             <SelectContent>
               {priorityLevels.map(level => (
-                <SelectItem key={level.value} value={level.value.toString()}>
+                <SelectItem key={level.id} value={level.id.toString()}>
                   <div className="flex items-center space-x-2">
                     <Badge className={`${level.color} border-0 text-xs`}>
-                      {level.value}
+                      {level.id}
                     </Badge>
                     <span>{level.label}</span>
                   </div>

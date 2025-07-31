@@ -1,3 +1,10 @@
+export interface PriorityLevel {
+  id: number;
+  label: string;
+  description: string;
+  color: string;
+}
+
 export interface AppConfig {
   financialYear: FinancialYear;
   iterationLength: 'fortnightly' | 'monthly' | '6-weekly';
@@ -7,6 +14,7 @@ export interface AppConfig {
   workingDaysPerYear: number; // e.g., 260 for typical business year
   workingDaysPerMonth: number; // e.g., 22 for typical business month
   currencySymbol: string; // e.g., '$', '€', '£'
+  priorityLevels?: PriorityLevel[]; // Configurable priority levels
   integrations?: {
     o365?: {
       clientId?: string;

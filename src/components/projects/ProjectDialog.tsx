@@ -106,7 +106,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
         endDate: '',
         budget: '',
         priority: 2,
-        priorityOrder: undefined,
+        priorityOrder: 2, // Default priority order to match priority level
       });
       setMilestones([]);
       setFinancialYearBudgets([]);
@@ -335,7 +335,15 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                 priority={formData.priority}
                 priorityOrder={formData.priorityOrder}
                 onPriorityChange={priority =>
-                  setFormData(prev => ({ ...prev, priority }))
+                  setFormData(prev => ({
+                    ...prev,
+                    priority,
+                    // Auto-set priority order to match priority level if not explicitly set by user
+                    priorityOrder:
+                      prev.priorityOrder === prev.priority
+                        ? priority
+                        : prev.priorityOrder,
+                  }))
                 }
                 onPriorityOrderChange={priorityOrder =>
                   setFormData(prev => ({ ...prev, priorityOrder }))

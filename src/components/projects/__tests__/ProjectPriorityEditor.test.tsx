@@ -3,6 +3,26 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ProjectPriorityEditor from '../ProjectPriorityEditor';
 
+// Mock the SettingsContext
+vi.mock('@/context/SettingsContext', () => ({
+  useSettings: () => ({
+    config: {
+      financialYear: {
+        id: 'fy-2024',
+        name: 'FY 2024',
+        startDate: '2023-10-01',
+        endDate: '2024-09-30',
+        quarters: [],
+      },
+      currencySymbol: '$',
+      // Don't provide priorityLevels to test default fallback
+    },
+    setupComplete: true,
+    updateConfig: vi.fn(),
+    setSetupComplete: vi.fn(),
+  }),
+}));
+
 describe('ProjectPriorityEditor', () => {
   const mockOnPriorityChange = vi.fn();
   const mockOnPriorityOrderChange = vi.fn();
@@ -25,7 +45,9 @@ describe('ProjectPriorityEditor', () => {
     expect(screen.getAllByText('Priority Order')).toHaveLength(2); // Label and help text
     // Priority shows as badge with value 2 in multiple places
     expect(screen.getAllByText('2').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByDisplayValue('5')).toBeInTheDocument();
+    // Check for priority order input with value 5 using a more specific selector
+    const priorityOrderInput = screen.getByLabelText('Priority Order');
+    expect(priorityOrderInput).toHaveValue(5);
   });
 
   it('should show priority level descriptions', () => {
@@ -52,7 +74,9 @@ describe('ProjectPriorityEditor', () => {
       />
     );
 
-    const prioritySelect = screen.getByDisplayValue('2');
+    const prioritySelect = screen.getByRole('combobox', {
+      name: /priority level/i,
+    });
     await user.click(prioritySelect);
 
     await waitFor(() => {
@@ -75,11 +99,11 @@ describe('ProjectPriorityEditor', () => {
       />
     );
 
-    const priorityOrderInput = screen.getByDisplayValue('5');
-    await user.clear(priorityOrderInput);
-    await user.type(priorityOrderInput, '3');
+    const priorityOrderInput = screen.getByLabelText('Priority Order');
+    // Simulate onChange event directly to avoid complex user interaction issues
+    fireEvent.change(priorityOrderInput, { target: { value: '3' } });
 
-    expect(mockOnPriorityOrderChange).toHaveBeenCalledWith(3);
+    expect(mockOnPriorityOrderChange).toHaveBeenLastCalledWith(3);
   });
 
   it('should show fallback behavior explanation when priority order is not set', () => {
@@ -108,12 +132,12 @@ describe('ProjectPriorityEditor', () => {
       />
     );
 
-    const priorityOrderInput = screen.getByDisplayValue('5');
-    await user.clear(priorityOrderInput);
-    await user.type(priorityOrderInput, '-2');
+    const priorityOrderInput = screen.getByLabelText('Priority Order');
+    // Simulate onChange event directly to avoid complex user interaction issues
+    fireEvent.change(priorityOrderInput, { target: { value: '-2' } });
 
     // Should call with 1 (minimum valid value)
-    expect(mockOnPriorityOrderChange).toHaveBeenCalledWith(1);
+    expect(mockOnPriorityOrderChange).toHaveBeenLastCalledWith(1);
   });
 
   it('should handle empty priority order input', async () => {
@@ -127,10 +151,11 @@ describe('ProjectPriorityEditor', () => {
       />
     );
 
-    const priorityOrderInput = screen.getByDisplayValue('5');
-    await user.clear(priorityOrderInput);
+    const priorityOrderInput = screen.getByLabelText('Priority Order');
+    // Simulate onChange event directly to avoid complex user interaction issues
+    fireEvent.change(priorityOrderInput, { target: { value: '' } });
 
-    expect(mockOnPriorityOrderChange).toHaveBeenCalledWith(undefined);
+    expect(mockOnPriorityOrderChange).toHaveBeenLastCalledWith(undefined);
   });
 
   it('should display priority badges with correct colors', () => {
@@ -143,8 +168,10 @@ describe('ProjectPriorityEditor', () => {
       />
     );
 
-    const priorityBadge = screen.getByText('1');
-    expect(priorityBadge.parentElement).toHaveClass('bg-red-100');
+    const priorityBadges = screen.getAllByText('1');
+    // Get the main priority level badge (first one)
+    const priorityBadge = priorityBadges[0];
+    expect(priorityBadge).toHaveClass('bg-red-100');
   });
 
   it('should show help text explaining the difference between priority and priority order', () => {
@@ -157,11 +184,12 @@ describe('ProjectPriorityEditor', () => {
       />
     );
 
+    // Look for the help text by checking for both keywords separately
+    expect(screen.getByText('Priority Level')).toBeInTheDocument();
+    expect(screen.getByText('is a general classification')).toBeInTheDocument();
+    expect(screen.getByText('Priority Order')).toBeInTheDocument();
     expect(
-      screen.getByText(/priority level is a general classification/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/priority order provides fine-grained sorting/i)
+      screen.getByText('provides fine-grained sorting')
     ).toBeInTheDocument();
   });
 });

@@ -40,13 +40,34 @@ import {
   ChevronDown,
   Filter,
   X,
+  GripVertical,
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/context/SettingsContext';
 import { calculateProjectCost } from '@/utils/financialCalculations';
 import {
   calculateProjectTotalBudget,
   getProjectPriorityOrder,
+  assignDefaultPriorityOrderToProjects,
 } from '@/utils/projectBudgetUtils';
+import { getPriorityLevels } from '@/utils/priorityUtils';
 
 // Currency formatting helper
 const formatCurrency = (amount: number): string => {
@@ -60,6 +81,165 @@ const formatCurrency = (amount: number): string => {
 // Budget display helper
 const formatBudgetDisplay = (amount: number): string => {
   return amount > 0 ? formatCurrency(amount) : 'Not set';
+};
+
+// Sortable Project Row Component
+interface SortableProjectRowProps {
+  project: Project;
+  epics: any[];
+  allocations: any[];
+  cycles: any[];
+  people: any[];
+  roles: any[];
+  teams: any[];
+  selectedProjects: Set<string>;
+  onSelectProject: (projectId: string, checked: boolean) => void;
+  onViewProject: (projectId: string) => void;
+  onEditProject: (projectId: string) => void;
+  isDragDisabled?: boolean;
+}
+
+const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
+  project,
+  epics,
+  allocations,
+  cycles,
+  people,
+  roles,
+  teams,
+  selectedProjects,
+  onSelectProject,
+  onViewProject,
+  onEditProject,
+  isDragDisabled = false,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: project.id,
+    disabled: isDragDisabled,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const projectEpics = epics.filter(e => e.projectId === project.id);
+  const { totalCost } = calculateProjectCost(
+    project,
+    epics,
+    allocations,
+    cycles,
+    people,
+    roles,
+    teams
+  );
+
+  const getStatusBadge = (status: string | undefined) => {
+    const statusConfig = {
+      planning: { label: 'Planning', variant: 'secondary' as const },
+      'in-progress': { label: 'Active', variant: 'default' as const },
+      active: { label: 'Active', variant: 'default' as const },
+      completed: { label: 'Completed', variant: 'outline' as const },
+      'on-hold': { label: 'On Hold', variant: 'secondary' as const },
+      cancelled: { label: 'Cancelled', variant: 'destructive' as const },
+    };
+
+    // Handle undefined, null, or invalid status values
+    const normalizedStatus = status?.toLowerCase() || 'planning';
+    const config =
+      statusConfig[normalizedStatus as keyof typeof statusConfig] ||
+      statusConfig.planning;
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={isDragging ? 'opacity-50' : ''}
+    >
+      <TableCell>
+        <Checkbox
+          checked={selectedProjects.has(project.id)}
+          onCheckedChange={checked =>
+            onSelectProject(project.id, checked as boolean)
+          }
+          aria-label={`Select ${project.name}`}
+        />
+      </TableCell>
+      <TableCell className="text-center font-mono">
+        <div className="flex items-center justify-center space-x-2">
+          {!isDragDisabled && (
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+              aria-label="Drag to reorder"
+            >
+              <GripVertical className="h-4 w-4 text-gray-400" />
+            </div>
+          )}
+          <Badge variant="outline" className="min-w-[2rem] justify-center">
+            {getProjectPriorityOrder(project) || project.priority || 'N/A'}
+          </Badge>
+        </div>
+      </TableCell>
+      <TableCell className="font-medium">{project.name}</TableCell>
+      <TableCell>{getStatusBadge(project.status)}</TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <Layers className="h-4 w-4 text-gray-500" />
+          <span>{projectEpics.length}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <DollarSign className="h-4 w-4 text-gray-500" />
+          <span>{formatCurrency(totalCost)}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          <DollarSign className="h-4 w-4 text-gray-500" />
+          <span>
+            {formatBudgetDisplay(calculateProjectTotalBudget(project))}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>{new Date(project.startDate).toLocaleDateString()}</TableCell>
+      <TableCell>
+        {project.endDate
+          ? new Date(project.endDate).toLocaleDateString()
+          : 'N/A'}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center justify-end space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onViewProject(project.id)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEditProject(project.id)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
 };
 
 interface ProjectTableProps {
@@ -100,10 +280,19 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
     teams,
   } = useApp();
   const { toast } = useToast();
+  const { config } = useSettings();
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(
     new Set()
   );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Sorting state
   const [sortField, setSortField] = useState<SortField | null>(null);
@@ -115,24 +304,6 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
     status: '',
     priority: '',
   });
-
-  const getStatusBadge = (status: string | undefined) => {
-    const statusConfig = {
-      planning: { label: 'Planning', variant: 'secondary' as const },
-      'in-progress': { label: 'Active', variant: 'default' as const },
-      active: { label: 'Active', variant: 'default' as const },
-      completed: { label: 'Completed', variant: 'outline' as const },
-      'on-hold': { label: 'On Hold', variant: 'secondary' as const },
-      cancelled: { label: 'Cancelled', variant: 'destructive' as const },
-    };
-
-    // Handle undefined, null, or invalid status values
-    const normalizedStatus = status?.toLowerCase() || 'planning';
-    const config =
-      statusConfig[normalizedStatus as keyof typeof statusConfig] ||
-      statusConfig.planning;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
 
   const handleSelectProject = (projectId: string, checked: boolean) => {
     const newSelected = new Set(selectedProjects);
@@ -146,7 +317,8 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
 
   // Filtering and sorting logic
   const filteredAndSortedProjects = useMemo(() => {
-    let filtered = [...projects];
+    // Ensure all projects have default priority order values
+    let filtered = assignDefaultPriorityOrderToProjects([...projects]);
 
     // Apply filters
     if (filters.search) {
@@ -218,7 +390,8 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
 
   // Budget calculations
   const budgetTotals = useMemo(() => {
-    const totalBudget = projects.reduce(
+    const projectsWithDefaults = assignDefaultPriorityOrderToProjects(projects);
+    const totalBudget = projectsWithDefaults.reduce(
       (sum, p) => sum + calculateProjectTotalBudget(p),
       0
     );
@@ -265,14 +438,6 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
     );
   };
 
-  const getPriorityBadgeColor = (priority: number | undefined) => {
-    if (!priority) return 'bg-gray-100 text-gray-800';
-    if (priority === 1) return 'bg-red-100 text-red-800';
-    if (priority === 2) return 'bg-yellow-100 text-yellow-800';
-    if (priority === 3) return 'bg-green-100 text-green-800';
-    return 'bg-blue-100 text-blue-800';
-  };
-
   const handleBulkDelete = () => {
     // Remove selected projects
     setProjects(prevProjects =>
@@ -305,6 +470,64 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
     } else {
       setSelectedProjects(new Set());
     }
+  };
+
+  // Handle drag end - update priority order for all affected projects
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    // Only allow reordering when no sorting is applied (let users see the natural priority order)
+    if (sortField) {
+      toast({
+        title: 'Cannot Reorder',
+        description:
+          'Please clear the current sort to enable drag-and-drop reordering.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const oldIndex = filteredAndSortedProjects.findIndex(
+      project => project.id === active.id
+    );
+    const newIndex = filteredAndSortedProjects.findIndex(
+      project => project.id === over.id
+    );
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    // Reorder the filtered projects array
+    const reorderedProjects = arrayMove(
+      filteredAndSortedProjects,
+      oldIndex,
+      newIndex
+    );
+
+    // Update priority order for all affected projects
+    const updatedProjects = reorderedProjects.map((project, index) => ({
+      ...project,
+      priorityOrder: index + 1, // Start priority order from 1
+    }));
+
+    // Update the main projects array while preserving non-filtered projects
+    const projectsMap = new Map(projects.map(p => [p.id, p]));
+    updatedProjects.forEach(updatedProject => {
+      projectsMap.set(updatedProject.id, updatedProject);
+    });
+
+    const newProjects = Array.from(projectsMap.values());
+    setProjects(newProjects);
+
+    toast({
+      title: 'Priority Order Updated',
+      description: `Moved "${filteredAndSortedProjects[oldIndex].name}" and updated priority order for affected projects.`,
+    });
   };
 
   return (
@@ -351,9 +574,11 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Priority</SelectItem>
-              <SelectItem value="1">Priority 1</SelectItem>
-              <SelectItem value="2">Priority 2</SelectItem>
-              <SelectItem value="3">Priority 3</SelectItem>
+              {getPriorityLevels(config.priorityLevels).map(level => (
+                <SelectItem key={level.id} value={level.id.toString()}>
+                  {level.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -389,165 +614,117 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
       )}
 
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={isAllSelected}
-                  onCheckedChange={handleSelectAll}
-                  aria-label="Select all projects"
-                />
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('name')}
-                  className="font-medium text-left p-0 h-auto"
-                  aria-label="Sort by project name"
-                >
-                  Project Name
-                  {getSortIcon('name')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('status')}
-                  className="font-medium text-left p-0 h-auto"
-                  aria-label="Sort by status"
-                >
-                  Status
-                  {getSortIcon('status')}
-                </Button>
-              </TableHead>
-              <TableHead>Epics</TableHead>
-              <TableHead>Est. Cost</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('budget')}
-                  className="font-medium text-left p-0 h-auto"
-                  aria-label="Sort by budget"
-                >
-                  Budget
-                  {getSortIcon('budget')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('priority')}
-                  className="font-medium text-left p-0 h-auto"
-                  aria-label="Sort by priority"
-                >
-                  Priority
-                  {getSortIcon('priority')}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('startDate')}
-                  className="font-medium text-left p-0 h-auto"
-                  aria-label="Sort by start date"
-                >
-                  Start Date
-                  {getSortIcon('startDate')}
-                </Button>
-              </TableHead>
-              <TableHead>End Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAndSortedProjects.map(project => {
-              const projectEpics = epics.filter(
-                e => e.projectId === project.id
-              );
-              const { totalCost } = calculateProjectCost(
-                project,
-                epics,
-                allocations,
-                cycles,
-                people,
-                roles,
-                teams
-              );
-
-              return (
-                <TableRow key={project.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedProjects.has(project.id)}
-                      onCheckedChange={checked =>
-                        handleSelectProject(project.id, checked as boolean)
-                      }
-                      aria-label={`Select ${project.name}`}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{project.name}</TableCell>
-                  <TableCell>{getStatusBadge(project.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Layers className="h-4 w-4 text-gray-500" />
-                      <span>{projectEpics.length}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="h-4 w-4 text-gray-500" />
-                      <span>{formatCurrency(totalCost)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="h-4 w-4 text-gray-500" />
-                      <span>
-                        {formatBudgetDisplay(
-                          calculateProjectTotalBudget(project)
-                        )}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={`${getPriorityBadgeColor(getProjectPriorityOrder(project))} border-0`}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all projects"
+                  />
+                </TableHead>
+                <TableHead className="w-24">
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('priorityOrder')}
+                      className="font-medium text-left p-0 h-auto"
+                      aria-label="Sort by priority order"
                     >
-                      {getProjectPriorityOrder(project) || 'N/A'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(project.startDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    {project.endDate
-                      ? new Date(project.endDate).toLocaleDateString()
-                      : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewProject(project.id)}
+                      #{getSortIcon('priorityOrder')}
+                    </Button>
+                    {!sortField && (
+                      <div
+                        className="text-xs text-gray-500"
+                        title="Drag to reorder"
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEditProject(project.id)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                        ⇅
+                      </div>
+                    )}
+                  </div>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('name')}
+                    className="font-medium text-left p-0 h-auto"
+                    aria-label="Sort by project name"
+                  >
+                    Project Name
+                    {getSortIcon('name')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('status')}
+                    className="font-medium text-left p-0 h-auto"
+                    aria-label="Sort by status"
+                  >
+                    Status
+                    {getSortIcon('status')}
+                  </Button>
+                </TableHead>
+                <TableHead>Epics</TableHead>
+                <TableHead>Est. Cost</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('budget')}
+                    className="font-medium text-left p-0 h-auto"
+                    aria-label="Sort by budget"
+                  >
+                    Budget
+                    {getSortIcon('budget')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('startDate')}
+                    className="font-medium text-left p-0 h-auto"
+                    aria-label="Sort by start date"
+                  >
+                    Start Date
+                    {getSortIcon('startDate')}
+                  </Button>
+                </TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <SortableContext
+                items={filteredAndSortedProjects.map(p => p.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {filteredAndSortedProjects.map(project => (
+                  <SortableProjectRow
+                    key={project.id}
+                    project={project}
+                    epics={epics}
+                    allocations={allocations}
+                    cycles={cycles}
+                    people={people}
+                    roles={roles}
+                    teams={teams}
+                    selectedProjects={selectedProjects}
+                    onSelectProject={handleSelectProject}
+                    onViewProject={onViewProject}
+                    onEditProject={onEditProject}
+                    isDragDisabled={!!sortField} // Disable dragging when sorting is active
+                  />
+                ))}
+              </SortableContext>
+            </TableBody>
+          </Table>
+        </DndContext>
       </div>
 
       {/* Budget Totals */}
