@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -22,7 +30,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Edit, Eye, Trash2, Layers, DollarSign } from 'lucide-react';
+import {
+  Edit,
+  Eye,
+  Trash2,
+  Layers,
+  DollarSign,
+  ChevronUp,
+  ChevronDown,
+  Filter,
+  X,
+} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { calculateProjectCost } from '@/utils/financialCalculations';
 
@@ -30,6 +48,21 @@ interface ProjectTableProps {
   projects: Project[];
   onEditProject: (projectId: string) => void;
   onViewProject: (projectId: string) => void;
+}
+
+type SortField =
+  | 'name'
+  | 'status'
+  | 'budget'
+  | 'priority'
+  | 'startDate'
+  | 'endDate';
+type SortDirection = 'asc' | 'desc';
+
+interface FilterState {
+  search: string;
+  status: string;
+  priority: string;
 }
 
 const ProjectTable: React.FC<ProjectTableProps> = ({
@@ -53,6 +86,17 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
   );
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  // Sorting state
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Filtering state
+  const [filters, setFilters] = useState<FilterState>({
+    search: '',
+    status: '',
+    priority: '',
+  });
+
   const getStatusBadge = (status: string | undefined) => {
     const statusConfig = {
       planning: { label: 'Planning', variant: 'secondary' as const },
@@ -71,14 +115,6 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedProjects(new Set(projects.map(project => project.id)));
-    } else {
-      setSelectedProjects(new Set());
-    }
-  };
-
   const handleSelectProject = (projectId: string, checked: boolean) => {
     const newSelected = new Set(selectedProjects);
     if (checked) {
@@ -87,6 +123,127 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
       newSelected.delete(projectId);
     }
     setSelectedProjects(newSelected);
+  };
+
+  // Filtering and sorting logic
+  const filteredAndSortedProjects = useMemo(() => {
+    let filtered = [...projects];
+
+    // Apply filters
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        project =>
+          project.name.toLowerCase().includes(searchLower) ||
+          (project.description?.toLowerCase().includes(searchLower) ?? false)
+      );
+    }
+
+    if (filters.status) {
+      filtered = filtered.filter(project => project.status === filters.status);
+    }
+
+    if (filters.priority) {
+      filtered = filtered.filter(
+        project => project.priority?.toString() === filters.priority
+      );
+    }
+
+    // Apply sorting only if a sort field is selected
+    if (sortField) {
+      filtered.sort((a, b) => {
+        let aValue, bValue;
+
+        switch (sortField) {
+          case 'name':
+            aValue = a.name.toLowerCase();
+            bValue = b.name.toLowerCase();
+            break;
+          case 'status':
+            aValue = a.status || '';
+            bValue = b.status || '';
+            break;
+          case 'budget':
+            aValue = a.budget || 0;
+            bValue = b.budget || 0;
+            break;
+          case 'priority':
+            aValue = a.priority || 999;
+            bValue = b.priority || 999;
+            break;
+          case 'startDate':
+            aValue = new Date(a.startDate).getTime();
+            bValue = new Date(b.startDate).getTime();
+            break;
+          case 'endDate':
+            aValue = a.endDate ? new Date(a.endDate).getTime() : 0;
+            bValue = b.endDate ? new Date(b.endDate).getTime() : 0;
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [projects, filters, sortField, sortDirection]);
+
+  // Budget calculations
+  const budgetTotals = useMemo(() => {
+    const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
+    const filteredBudget = filteredAndSortedProjects.reduce(
+      (sum, p) => sum + (p.budget || 0),
+      0
+    );
+    const isFiltered = filters.search || filters.status || filters.priority;
+
+    return {
+      total: totalBudget,
+      filtered: filteredBudget,
+      isFiltered,
+      projectCount: filteredAndSortedProjects.length,
+      totalProjectCount: projects.length,
+    };
+  }, [projects, filteredAndSortedProjects, filters]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const handleFilterChange = (key: keyof FilterState, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ search: '', status: '', priority: '' });
+  };
+
+  const hasActiveFilters = filters.search || filters.status || filters.priority;
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? (
+      <ChevronUp className="h-4 w-4 ml-1" />
+    ) : (
+      <ChevronDown className="h-4 w-4 ml-1" />
+    );
+  };
+
+  const getPriorityBadgeColor = (priority: number | undefined) => {
+    if (!priority) return 'bg-gray-100 text-gray-800';
+    if (priority === 1) return 'bg-red-100 text-red-800';
+    if (priority === 2) return 'bg-yellow-100 text-yellow-800';
+    if (priority === 3) return 'bg-green-100 text-green-800';
+    return 'bg-blue-100 text-blue-800';
   };
 
   const handleBulkDelete = () => {
@@ -110,10 +267,83 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
   };
 
   const isAllSelected =
-    projects.length > 0 && selectedProjects.size === projects.length;
+    filteredAndSortedProjects.length > 0 &&
+    selectedProjects.size === filteredAndSortedProjects.length;
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedProjects(
+        new Set(filteredAndSortedProjects.map(project => project.id))
+      );
+    } else {
+      setSelectedProjects(new Set());
+    }
+  };
 
   return (
     <div className="space-y-4">
+      {/* Filter Controls */}
+      <div className="flex flex-wrap gap-4 items-center justify-between bg-gray-50 p-4 rounded-lg">
+        <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex items-center space-x-2">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Filter projects..."
+              value={filters.search}
+              onChange={e => handleFilterChange('search', e.target.value)}
+              className="w-64"
+            />
+          </div>
+
+          <Select
+            value={filters.status || 'all'}
+            onValueChange={value =>
+              handleFilterChange('status', value === 'all' ? '' : value)
+            }
+          >
+            <SelectTrigger className="w-40" aria-label="Filter by status">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="planning">Planning</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.priority || 'all'}
+            onValueChange={value =>
+              handleFilterChange('priority', value === 'all' ? '' : value)
+            }
+          >
+            <SelectTrigger className="w-40" aria-label="Filter by priority">
+              <SelectValue placeholder="All Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priority</SelectItem>
+              <SelectItem value="1">Priority 1</SelectItem>
+              <SelectItem value="2">Priority 2</SelectItem>
+              <SelectItem value="3">Priority 3</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              aria-label="Clear filters"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Clear Filters
+            </Button>
+          )}
+        </div>
+      </div>
+
       {selectedProjects.size > 0 && (
         <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
           <span className="text-sm text-blue-700">
@@ -142,17 +372,69 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
                   aria-label="Select all projects"
                 />
               </TableHead>
-              <TableHead>Project Name</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('name')}
+                  className="font-medium text-left p-0 h-auto"
+                  aria-label="Sort by project name"
+                >
+                  Project Name
+                  {getSortIcon('name')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('status')}
+                  className="font-medium text-left p-0 h-auto"
+                  aria-label="Sort by status"
+                >
+                  Status
+                  {getSortIcon('status')}
+                </Button>
+              </TableHead>
               <TableHead>Epics</TableHead>
               <TableHead>Est. Cost</TableHead>
-              <TableHead>Start Date</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('budget')}
+                  className="font-medium text-left p-0 h-auto"
+                  aria-label="Sort by budget"
+                >
+                  Budget
+                  {getSortIcon('budget')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('priority')}
+                  className="font-medium text-left p-0 h-auto"
+                  aria-label="Sort by priority"
+                >
+                  Priority
+                  {getSortIcon('priority')}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort('startDate')}
+                  className="font-medium text-left p-0 h-auto"
+                  aria-label="Sort by start date"
+                >
+                  Start Date
+                  {getSortIcon('startDate')}
+                </Button>
+              </TableHead>
               <TableHead>End Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {projects.map(project => {
+            {filteredAndSortedProjects.map(project => {
               const projectEpics = epics.filter(
                 e => e.projectId === project.id
               );
@@ -198,6 +480,27 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-4 w-4 text-gray-500" />
+                      <span>
+                        {project.budget
+                          ? project.budget.toLocaleString(undefined, {
+                              style: 'currency',
+                              currency: 'USD',
+                              maximumFractionDigits: 0,
+                            })
+                          : 'Not set'}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={`${getPriorityBadgeColor(project.priority)} border-0`}
+                    >
+                      {project.priority || 'N/A'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
                     {new Date(project.startDate).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
@@ -228,6 +531,38 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
             })}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Budget Totals */}
+      <div className="bg-gray-50 p-4 rounded-lg border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <div className="text-sm">
+              <span className="font-medium">
+                {budgetTotals.isFiltered ? 'Filtered Budget' : 'Total Budget'}:
+              </span>
+              <span className="ml-2 text-lg font-bold text-green-600">
+                $
+                {(budgetTotals.isFiltered
+                  ? budgetTotals.filtered
+                  : budgetTotals.total
+                ).toLocaleString()}
+              </span>
+            </div>
+            <div className="text-sm text-gray-600">
+              {budgetTotals.projectCount} project
+              {budgetTotals.projectCount !== 1 ? 's' : ''}
+              {budgetTotals.isFiltered && (
+                <span> (of {budgetTotals.totalProjectCount} total)</span>
+              )}
+            </div>
+          </div>
+          {budgetTotals.isFiltered && (
+            <div className="text-sm text-gray-500">
+              Total Budget: ${budgetTotals.total.toLocaleString()}
+            </div>
+          )}
+        </div>
       </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
