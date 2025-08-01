@@ -233,8 +233,8 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
             onClick={() => onViewProject(project.id)}
             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
           >
-            <Eye className="h-4 w-4 mr-1" />
-            View
+            <Edit className="h-4 w-4 mr-1" />
+            Edit
           </Button>
         </div>
       </TableCell>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Project, Epic, Milestone } from '@/types';
+import { Project, Epic, Milestone, ProjectFinancialYearBudget } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +36,9 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { calculateProjectCost } from '@/utils/financialCalculations';
 import { calculateProjectedEndDate } from '@/utils/calculateProjectedEndDate';
+import { calculateProjectTotalBudget } from '@/utils/projectBudgetUtils';
 import { format } from 'date-fns';
+import ProjectFinancialYearBudgetEditor from './ProjectFinancialYearBudgetEditor';
 
 // Currency formatting helper with abbreviations for large numbers
 const formatCurrency = (amount: number): string => {
@@ -75,10 +77,14 @@ export const ProjectCommandCenterModal: React.FC<
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [editedProject, setEditedProject] = useState<Project | null>(null);
+  const [financialYearBudgets, setFinancialYearBudgets] = useState<
+    ProjectFinancialYearBudget[]
+  >([]);
 
   // Initialize edited project when project changes
   useEffect(() => {
     setEditedProject(project);
+    setFinancialYearBudgets(project?.financialYearBudgets || []);
   }, [project]);
 
   // Calculate financial data
@@ -131,6 +137,7 @@ export const ProjectCommandCenterModal: React.FC<
 
   const handleClose = () => {
     setEditedProject(project);
+    setFinancialYearBudgets(project?.financialYearBudgets || []);
     setActiveTab('overview');
     onClose();
   };
@@ -149,8 +156,13 @@ export const ProjectCommandCenterModal: React.FC<
     }
 
     // Update the project in the context
+    const updatedProject = {
+      ...editedProject,
+      financialYearBudgets:
+        financialYearBudgets.length > 0 ? financialYearBudgets : undefined,
+    };
     const updatedProjects = projects.map(p =>
-      p.id === project.id ? editedProject : p
+      p.id === project.id ? updatedProject : p
     );
     setProjects(updatedProjects);
 
@@ -163,6 +175,7 @@ export const ProjectCommandCenterModal: React.FC<
 
   const handleCancel = () => {
     setEditedProject(project);
+    setFinancialYearBudgets(project?.financialYearBudgets || []);
     onClose();
   };
 
@@ -434,12 +447,15 @@ export const ProjectCommandCenterModal: React.FC<
                           {formatCurrency(projectFinancials.totalCost)}
                         </span>
                       </div>
-                      {editedProject?.budget && (
+                      {calculateProjectTotalBudget(editedProject || project) >
+                        0 && (
                         <div className="flex items-center justify-between border-t pt-2">
                           <span className="text-sm font-medium">Variance:</span>
                           <span
                             className={`text-sm font-semibold ${
-                              editedProject.budget -
+                              calculateProjectTotalBudget(
+                                editedProject || project
+                              ) -
                                 projectFinancials.totalCost >=
                               0
                                 ? 'text-green-600'
@@ -448,8 +464,9 @@ export const ProjectCommandCenterModal: React.FC<
                           >
                             {formatCurrency(
                               Math.abs(
-                                editedProject.budget -
-                                  projectFinancials.totalCost
+                                calculateProjectTotalBudget(
+                                  editedProject || project
+                                ) - projectFinancials.totalCost
                               )
                             )}
                           </span>
@@ -560,7 +577,16 @@ export const ProjectCommandCenterModal: React.FC<
                 <h3 className="text-lg font-semibold mb-4">
                   Financial Overview
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* Financial Year Budget Editor */}
+                <ProjectFinancialYearBudgetEditor
+                  budgets={financialYearBudgets}
+                  legacyBudget={editedProject?.budget}
+                  onBudgetsChange={setFinancialYearBudgets}
+                />
+
+                {/* Cost Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <Card>
                     <CardHeader>
                       <CardTitle>Cost Summary</CardTitle>
@@ -597,20 +623,29 @@ export const ProjectCommandCenterModal: React.FC<
                     <CardContent>
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span>Allocated Budget:</span>
+                          <span>Total Budget:</span>
                           <span>
-                            {project.budget
-                              ? formatCurrency(project.budget)
+                            {calculateProjectTotalBudget(
+                              editedProject || project
+                            )
+                              ? formatCurrency(
+                                  calculateProjectTotalBudget(
+                                    editedProject || project
+                                  )
+                                )
                               : 'Not set'}
                           </span>
                         </div>
-                        {project.budget && (
+                        {calculateProjectTotalBudget(editedProject || project) >
+                          0 && (
                           <>
                             <div className="flex justify-between">
                               <span>Remaining Budget:</span>
                               <span
                                 className={
-                                  project.budget -
+                                  calculateProjectTotalBudget(
+                                    editedProject || project
+                                  ) -
                                     projectFinancials.totalCost >=
                                   0
                                     ? 'text-green-600 font-semibold'
@@ -618,7 +653,9 @@ export const ProjectCommandCenterModal: React.FC<
                                 }
                               >
                                 {formatCurrency(
-                                  project.budget - projectFinancials.totalCost
+                                  calculateProjectTotalBudget(
+                                    editedProject || project
+                                  ) - projectFinancials.totalCost
                                 )}
                               </span>
                             </div>
@@ -627,7 +664,9 @@ export const ProjectCommandCenterModal: React.FC<
                               <span>
                                 {Math.round(
                                   (projectFinancials.totalCost /
-                                    project.budget) *
+                                    calculateProjectTotalBudget(
+                                      editedProject || project
+                                    )) *
                                     100
                                 )}
                                 %

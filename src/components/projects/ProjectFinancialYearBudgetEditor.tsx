@@ -59,10 +59,15 @@ const ProjectFinancialYearBudgetEditor: React.FC<
     return budgets.reduce((sum, budget) => sum + (budget.amount || 0), 0);
   }, [budgets]);
 
-  // Format currency
+  // Format currency with abbreviations for large numbers
   const formatCurrency = (amount: number): string => {
-    const symbol = config?.currencySymbol || '$';
-    return `${symbol}${amount.toLocaleString()}`;
+    if (amount >= 1000000) {
+      return `$${(amount / 1000000).toFixed(1)}M`;
+    } else if (amount >= 1000) {
+      return `$${(amount / 1000).toFixed(amount >= 10000 ? 0 : 1)}K`;
+    } else {
+      return `$${amount.toLocaleString()}`;
+    }
   };
 
   // Add new financial year budget

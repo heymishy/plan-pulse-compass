@@ -15,13 +15,13 @@ test.describe('Project Edit Functionality', () => {
   test('should open project modal in edit mode and allow editing project fields', async ({
     page,
   }) => {
-    // Find the first project row and click View button
-    const firstViewButton = page
+    // Find the first project row and click Edit button
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await expect(firstViewButton).toBeVisible();
-    await firstViewButton.click();
+    await expect(firstEditButton).toBeVisible();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -43,12 +43,12 @@ test.describe('Project Edit Functionality', () => {
   test('should allow editing project name and save changes', async ({
     page,
   }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -79,12 +79,12 @@ test.describe('Project Edit Functionality', () => {
   });
 
   test('should allow editing project description', async ({ page }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -104,7 +104,7 @@ test.describe('Project Edit Functionality', () => {
     await expect(modal).not.toBeVisible();
 
     // Reopen modal to verify description was saved
-    await firstViewButton.click();
+    await firstEditButton.click();
     await expect(modal).toBeVisible();
     await expect(page.locator('#project-description')).toHaveValue(
       newDescription
@@ -112,12 +112,12 @@ test.describe('Project Edit Functionality', () => {
   });
 
   test('should allow changing project status', async ({ page }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -146,12 +146,12 @@ test.describe('Project Edit Functionality', () => {
   });
 
   test('should allow changing project priority', async ({ page }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -172,12 +172,12 @@ test.describe('Project Edit Functionality', () => {
   });
 
   test('should allow editing project dates', async ({ page }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -198,19 +198,19 @@ test.describe('Project Edit Functionality', () => {
     await expect(modal).not.toBeVisible();
 
     // Reopen modal to verify dates were saved
-    await firstViewButton.click();
+    await firstEditButton.click();
     await expect(modal).toBeVisible();
     await expect(startDateInput).toHaveValue('2024-03-01');
     await expect(endDateInput).toHaveValue('2024-06-30');
   });
 
   test('should allow editing project budget', async ({ page }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -228,7 +228,7 @@ test.describe('Project Edit Functionality', () => {
     await expect(modal).not.toBeVisible();
 
     // Reopen modal to verify budget was saved
-    await firstViewButton.click();
+    await firstEditButton.click();
     await expect(modal).toBeVisible();
     await expect(budgetInput).toHaveValue('500000');
   });
@@ -236,12 +236,12 @@ test.describe('Project Edit Functionality', () => {
   test('should cancel changes and revert to original values', async ({
     page,
   }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -265,7 +265,7 @@ test.describe('Project Edit Functionality', () => {
     await expect(modal).not.toBeVisible();
 
     // Reopen modal to verify original values are restored
-    await firstViewButton.click();
+    await firstEditButton.click();
     await expect(modal).toBeVisible();
     await expect(page.locator('#project-name')).toHaveValue(originalName);
   });
@@ -273,12 +273,12 @@ test.describe('Project Edit Functionality', () => {
   test('should show validation error for empty project name', async ({
     page,
   }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');
@@ -296,12 +296,12 @@ test.describe('Project Edit Functionality', () => {
   });
 
   test('should maintain tab state while editing', async ({ page }) => {
-    // Click View button on first project
-    const firstViewButton = page
+    // Click Edit button on first project
+    const firstEditButton = page
       .locator('button')
-      .filter({ hasText: 'View' })
+      .filter({ hasText: 'Edit' })
       .first();
-    await firstViewButton.click();
+    await firstEditButton.click();
 
     // Wait for modal to open
     const modal = page.locator('[data-testid="project-command-center-modal"]');

@@ -212,6 +212,29 @@ vi.mock('@/context/AppContext', () => ({
   useApp: vi.fn(),
 }));
 
+// Mock useSettings hook
+vi.mock('@/context/SettingsContext', () => ({
+  useSettings: vi.fn(() => ({
+    config: {
+      financialYear: {
+        id: 'fy-2024',
+        name: 'FY 2024',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+        quarters: ['q1-2024', 'q2-2024', 'q3-2024', 'q4-2024'],
+      },
+      iterationLength: 'fortnightly' as const,
+      quarters: [],
+      workingDaysPerWeek: 5,
+      workingHoursPerDay: 8,
+      workingDaysPerYear: 260,
+      workingDaysPerMonth: 22,
+      currencySymbol: '$',
+    },
+    setConfig: vi.fn(),
+  })),
+}));
+
 // Mock calculateProjectCost utility
 vi.mock('@/utils/financialCalculations', () => ({
   calculateProjectCost: vi.fn(() => ({
@@ -244,6 +267,11 @@ vi.mock('@/utils/financialCalculations', () => ({
 // Mock calculateProjectedEndDate utility
 vi.mock('@/utils/calculateProjectedEndDate', () => ({
   calculateProjectedEndDate: vi.fn(() => '2024-06-30'),
+}));
+
+// Mock project budget utilities
+vi.mock('@/utils/projectBudgetUtils', () => ({
+  calculateProjectTotalBudget: vi.fn(project => project?.budget || 0),
 }));
 
 interface ProjectCommandCenterModalProps {
