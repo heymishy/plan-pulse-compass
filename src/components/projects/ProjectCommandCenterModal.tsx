@@ -427,19 +427,25 @@ export const ProjectCommandCenterModal: React.FC<
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="project-budget">Budget</Label>
-                        <Input
-                          id="project-budget"
-                          data-testid="project-budget"
-                          type="number"
-                          value={editedProject?.budget || ''}
-                          onChange={e =>
-                            handleFieldChange(
-                              'budget',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          placeholder="Enter budget amount"
-                        />
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                            $
+                          </span>
+                          <Input
+                            id="project-budget"
+                            data-testid="project-budget"
+                            type="number"
+                            value={editedProject?.budget || ''}
+                            onChange={e =>
+                              handleFieldChange(
+                                'budget',
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            placeholder="Enter budget amount"
+                            className="pl-8"
+                          />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Est. Cost:</span>

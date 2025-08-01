@@ -441,7 +441,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
       data-testid="team-builder"
     >
       {/* Team List */}
-      <Card className="lg:col-span-1">
+      <Card className="lg:col-span-1 flex flex-col">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center">
@@ -601,7 +601,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3 max-h-96 overflow-y-auto">
+        <CardContent className="space-y-3 overflow-y-auto flex-1 min-h-0">
           {/* Filter toggle for teams */}
           <div className="flex items-center space-x-2 pb-3 border-b">
             <Checkbox
@@ -701,7 +701,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
       </Card>
 
       {/* Team Details */}
-      <Card className="lg:col-span-1">
+      <Card className="lg:col-span-1 flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center">
             {selectedTeam ? (
@@ -719,7 +719,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 overflow-y-auto min-h-0">
           {selectedTeam ? (
             <div className="space-y-4">
               <div>
@@ -733,7 +733,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                 <h4 className="font-medium mb-2">
                   Team Members ({currentTeamMembers.length})
                 </h4>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+                <div className="space-y-2 overflow-y-auto flex-1">
                   {currentTeamMembers.map(member => (
                     <div
                       key={member.id}
@@ -809,7 +809,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
 
       {/* People Assignment */}
       <div className="lg:col-span-1">
-        <Card>
+        <Card className="flex flex-col h-full">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
@@ -906,7 +906,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex-1 overflow-y-auto min-h-0">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -1016,7 +1016,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
             )}
 
             {/* People List */}
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="space-y-2 overflow-y-auto flex-1">
               {filteredUnassignedPeople.map(person => (
                 <div
                   key={person.id}

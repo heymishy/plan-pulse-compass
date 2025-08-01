@@ -306,16 +306,24 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="budget">Budget ($)</Label>
-                  <Input
-                    id="budget"
-                    type="number"
-                    value={formData.budget}
-                    onChange={e => handleInputChange('budget', e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
+                  <Label htmlFor="budget">Budget</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                      $
+                    </span>
+                    <Input
+                      id="budget"
+                      type="number"
+                      value={formData.budget}
+                      onChange={e =>
+                        handleInputChange('budget', e.target.value)
+                      }
+                      placeholder="0"
+                      min="0"
+                      step="0.01"
+                      className="pl-8"
+                    />
+                  </div>
                 </div>
               </div>
             </TabsContent>
