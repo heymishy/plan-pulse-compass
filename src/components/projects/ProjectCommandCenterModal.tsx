@@ -38,17 +38,12 @@ import { calculateProjectCost } from '@/utils/financialCalculations';
 import { calculateProjectedEndDate } from '@/utils/calculateProjectedEndDate';
 import { calculateProjectTotalBudget } from '@/utils/projectBudgetUtils';
 import { format } from 'date-fns';
+import { formatCurrency } from '@/utils/currency';
 import ProjectFinancialYearBudgetEditor from './ProjectFinancialYearBudgetEditor';
 
-// Currency formatting helper with abbreviations for large numbers
-const formatCurrency = (amount: number): string => {
-  if (amount >= 1000000) {
-    return `$${(amount / 1000000).toFixed(1)}M`;
-  } else if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(amount >= 10000 ? 0 : 1)}K`;
-  } else {
-    return `$${amount.toLocaleString()}`;
-  }
+// Use centralized currency formatting utility for proper comma formatting
+const formatCurrencyDisplay = (amount: number): string => {
+  return formatCurrency(amount);
 };
 
 export interface ProjectCommandCenterModalProps {
@@ -450,7 +445,7 @@ export const ProjectCommandCenterModal: React.FC<
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Est. Cost:</span>
                         <span className="text-sm">
-                          {formatCurrency(projectFinancials.totalCost)}
+                          {formatCurrencyDisplay(projectFinancials.totalCost)}
                         </span>
                       </div>
                       {calculateProjectTotalBudget(editedProject || project) >
@@ -468,7 +463,7 @@ export const ProjectCommandCenterModal: React.FC<
                                 : 'text-red-600'
                             }`}
                           >
-                            {formatCurrency(
+                            {formatCurrencyDisplay(
                               Math.abs(
                                 calculateProjectTotalBudget(
                                   editedProject || project
@@ -516,7 +511,7 @@ export const ProjectCommandCenterModal: React.FC<
                   <Card>
                     <CardContent className="p-4 text-center">
                       <div className="text-2xl font-bold text-purple-600">
-                        {formatCurrency(
+                        {formatCurrencyDisplay(
                           Math.round(projectFinancials.monthlyBurnRate)
                         )}
                       </div>
@@ -602,13 +597,13 @@ export const ProjectCommandCenterModal: React.FC<
                         <div className="flex justify-between">
                           <span>Total Estimated Cost:</span>
                           <span className="font-semibold">
-                            {formatCurrency(projectFinancials.totalCost)}
+                            {formatCurrencyDisplay(projectFinancials.totalCost)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Monthly Burn Rate:</span>
                           <span>
-                            {formatCurrency(
+                            {formatCurrencyDisplay(
                               Math.round(projectFinancials.monthlyBurnRate)
                             )}
                           </span>
@@ -658,7 +653,7 @@ export const ProjectCommandCenterModal: React.FC<
                                     : 'text-red-600 font-semibold'
                                 }
                               >
-                                {formatCurrency(
+                                {formatCurrencyDisplay(
                                   calculateProjectTotalBudget(
                                     editedProject || project
                                   ) - projectFinancials.totalCost

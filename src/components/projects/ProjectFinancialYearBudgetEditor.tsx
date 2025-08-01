@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, DollarSign, ArrowRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { formatCurrency } from '@/utils/currency';
 
 interface ProjectFinancialYearBudgetEditorProps {
   budgets: ProjectFinancialYearBudget[];
@@ -59,15 +60,9 @@ const ProjectFinancialYearBudgetEditor: React.FC<
     return budgets.reduce((sum, budget) => sum + (budget.amount || 0), 0);
   }, [budgets]);
 
-  // Format currency with abbreviations for large numbers
-  const formatCurrency = (amount: number): string => {
-    if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(1)}M`;
-    } else if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(amount >= 10000 ? 0 : 1)}K`;
-    } else {
-      return `$${amount.toLocaleString()}`;
-    }
+  // Use centralized currency formatting utility
+  const formatCurrencyDisplay = (amount: number): string => {
+    return formatCurrency(amount);
   };
 
   // Add new financial year budget
@@ -163,8 +158,8 @@ const ProjectFinancialYearBudgetEditor: React.FC<
             <ArrowRight className="h-4 w-4" />
             <AlertDescription className="flex items-center justify-between">
               <span>
-                Migrate legacy budget of {formatCurrency(legacyBudget)} to
-                current financial year?
+                Migrate legacy budget of {formatCurrencyDisplay(legacyBudget)}{' '}
+                to current financial year?
               </span>
               <Button
                 variant="outline"
@@ -268,7 +263,7 @@ const ProjectFinancialYearBudgetEditor: React.FC<
           <div className="flex items-center space-x-2">
             <Label className="font-medium">Total Budget:</Label>
             <Badge variant="secondary" className="text-lg px-3 py-1">
-              {formatCurrency(totalBudget)}
+              {formatCurrencyDisplay(totalBudget)}
             </Badge>
           </div>
         </div>

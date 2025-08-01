@@ -64,10 +64,12 @@ To provide organizations with a complete solution for strategic resource plannin
 
 **Data Model**:
 
-- Person: id, name, email, roleId, teamId, employmentType, salary/rates, start/end dates, skills
-- Role: id, name, rateType, multiple default rates (hourly/daily/annual), competency requirements
-- Team: id, name, divisionId, capacity, productOwnerId, skills summary
-- Division: id, name, description, budget, productOwnerId
+- **Person**: `id`, `name`, `email`, `roleId`, `teamId`, `isActive`, `employmentType` ('permanent' | 'contract'), `annualSalary`, `startDate`, `endDate`, `skills`.
+- **Role**: `id`, `name`, `rateType` ('annual' | 'daily' | 'hourly'), `defaultAnnualSalary`, `description`.
+- **Team**: `id`, `name`, `description`, `type`, `status`, `divisionId`, `productOwnerId`, `capacity`, `targetSkills`, `projectIds`, `duration`, `createdDate`, `lastModified`.
+- **Division**: `id`, `name`, `description`, `budget`.
+- **TeamMember**: `id`, `teamId`, `personId`, `role`, `allocation`, `startDate`, `endDate`, `isActive`.
+- **DivisionLeadershipRole**: `id`, `personId`, `divisionId`, `roleType`, `title`, `scope`, `startDate`, `endDate`, `isActive`.
 
 ### 3. Project Portfolio & Epic Management
 
@@ -100,13 +102,13 @@ To provide organizations with a complete solution for strategic resource plannin
 
 **Key Features**:
 
-- **Sophisticated Cost Calculation Engine**: Multi-tier cost calculation supporting various employment types and rate structures
-- **Comprehensive Project Financials**: Detailed cost breakdown per project with variance tracking and budget analysis
-- **Team Financial Analysis**: Cost analysis by team, division, and organizational level
-- **Advanced Budget Tracking**: Monitor actual vs. planned costs with variance analysis and forecasting
-- **Burn Rate Analysis**: Track monthly, quarterly, and annual burn rates with trend analysis
-- **Multi-Rate Support**: Support for hourly, daily, and annual rate structures with automatic conversions
-- **Employment Type Costing**: Different calculation models optimized for employees vs. contractors
+- **Sophisticated Cost Calculation Engine**: Multi-tier cost calculation supporting various employment types and rate structures, based on configurable parameters like `workingDaysPerWeek`, `workingHoursPerDay`, and `currencySymbol`.
+- **Comprehensive Project Financials**: Detailed cost breakdown per project with variance tracking and budget analysis.
+- **Team Financial Analysis**: Cost analysis by team, division, and organizational level.
+- **Advanced Budget Tracking**: Monitor actual vs. planned costs with variance analysis and forecasting.
+- **Burn Rate Analysis**: Track monthly, quarterly, and annual burn rates with trend analysis.
+- **Multi-Rate Support**: Support for hourly, daily, and annual rate structures with automatic conversions.
+- **Employment Type Costing**: Different calculation models optimized for employees vs. contractors.
 
 **Advanced Financial Features**:
 
@@ -132,7 +134,7 @@ To provide organizations with a complete solution for strategic resource plannin
 
 - **Multi-Level Planning**: Comprehensive planning across annual, quarterly, monthly, and iteration levels
 - **Advanced Iteration Management**: Flexible iteration structures (fortnightly, monthly, 6-weekly) with configurable cycles
-- **Interactive Allocation Matrix**: Visual matrix showing team allocations across time periods with drag-and-drop functionality
+- **Interactive Allocation Matrix**: Visual matrix showing team allocations across time periods.
 - **Bulk Allocation Management**: Sophisticated mass allocation tools with bulk import/export capabilities
 - **Intelligent Capacity Planning**: Automated capacity management with overallocation prevention and optimization
 - **Epic Assignment System**: Advanced linking of allocations to specific epics with workload balancing
@@ -196,7 +198,7 @@ To provide organizations with a complete solution for strategic resource plannin
 - **15+ Visualization Types**: Comprehensive set of visualization modes for different analytical needs
 - **Interactive Node-Based Graphs**: Advanced drag-and-drop visualizations with real-time data updates
 - **Relationship Mapping**: Complex relationship visualization between teams, projects, epics, people, and skills
-- **Advanced Filtering**: Multi-dimensional filtering by division, team, project, skills, and time periods
+- **Advanced Filtering**: Multi-dimensional filtering by division, team, and project.
 - **Navigation Tools**: Mini-map, zoom controls, and layout optimization for large visualizations
 - **Export Capabilities**: High-quality export for reporting and presentation purposes
 
@@ -211,19 +213,36 @@ To provide organizations with a complete solution for strategic resource plannin
 
 **View Types**:
 
-- Teams vs. Projects with allocation intensity
-- Projects vs. Epics with completion status
-- Team Allocations with capacity utilization
-- People vs. Teams with skills mapping
-- Projects vs. Milestones with timeline view
-- People vs. Skills with proficiency levels
-- Team Skills Summary with gap analysis
-- Financial Overview with cost distribution
-- Projects vs. Solutions with technology mapping
-- Solutions vs. Skills with requirement mapping
-- Scenario Analysis with comparative views
-- Goal Journey with achievement pathways
-- Capacity Planning with optimization recommendations
+- **All Relationships**: A comprehensive view of all entities and their relationships.
+- **Financial Overview**: A high-level view of the organization's financial health.
+- **Teams & Projects**: Shows which teams are working on which projects.
+- **Projects & Epics**: Breaks down projects into their constituent epics.
+- **Team Allocations**: Visualizes how teams are allocated across different projects and epics.
+- **People & Teams**: Shows the members of each team.
+- **Projects & Milestones**: Tracks the progress of projects against their milestones.
+- **People & Skills**: Maps the skills of each person in the organization.
+- **Team Skills Summary**: Provides an overview of the skills available in each team.
+- **Projects & Solutions**: Shows which technical solutions are being used in which projects.
+- **Solutions & Skills**: Maps the skills required for each technical solution.
+- **Scenario Analysis**: Allows for side-by-side comparison of different planning scenarios.
+- **Capacity Planning**: Helps with resource planning and allocation.
+- **Skill Gap Analysis**: Identifies skill gaps within teams and across the organization.
+- **Division Sizing**: Provides an overview of the size and composition of each division.
+
+### 8. Team Cost Analysis Visualization
+
+**Purpose**: Provide a graphical representation of team costs, allowing users to analyze team composition, cost efficiency, and risk.
+
+**Key Features**:
+
+- **Four View Modes**:
+  - **Hierarchy**: Displays teams grouped by division.
+  - **Cost Clusters**: Groups teams by cost ranges.
+  - **Risk Analysis**: A scatter plot of risk vs. cost.
+  - **Efficiency Matrix**: A scatter plot of utilization vs. cost per person.
+- **Node Sizing**: Nodes can be sized by team size, cost, risk, or utilization.
+- **Color Coding**: Nodes can be color-coded by division, cost efficiency, contractor ratio, or risk level.
+- **Filtering**: The visualization can be filtered by division, team size, and maximum cost.
 
 ### 8. Comprehensive Reports & Analytics
 
@@ -267,7 +286,7 @@ To provide organizations with a complete solution for strategic resource plannin
 - **Validation Rules**: Configurable validation rules with custom error messages
 - **Progress Tracking**: Real-time import progress with detailed status reporting
 - **Error Handling**: Comprehensive error handling with correction workflows
-- **Rollback Capabilities**: Full rollback support for failed or incorrect imports
+- **Jira Import**: Guided JQL export/import process for bringing in Jira data.
 
 **Supported Import Types**:
 
@@ -286,7 +305,7 @@ To provide organizations with a complete solution for strategic resource plannin
 **Key Features**:
 
 - **General Settings**: Core application configuration with organizational branding and preferences
-- **Advanced Financial Settings**: Sophisticated rate structures, calculation parameters, and currency support
+- **Advanced Financial Settings**: Configurable `workingDaysPerWeek`, `workingHoursPerDay`, and `currencySymbol`.
 - **Team Management Settings**: Team structure configuration, role definitions, and capacity management
 - **Skills Framework Configuration**: Skills taxonomy setup, proficiency levels, and certification tracking
 - **Solutions Management**: Technical solutions catalog with skills mapping and project associations
