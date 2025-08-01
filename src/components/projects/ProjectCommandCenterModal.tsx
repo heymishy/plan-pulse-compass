@@ -28,6 +28,17 @@ import { calculateProjectCost } from '@/utils/financialCalculations';
 import { calculateProjectedEndDate } from '@/utils/calculateProjectedEndDate';
 import { format } from 'date-fns';
 
+// Currency formatting helper with abbreviations for large numbers
+const formatCurrency = (amount: number): string => {
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  } else if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(amount >= 10000 ? 0 : 1)}K`;
+  } else {
+    return `$${amount.toLocaleString()}`;
+  }
+};
+
 export interface ProjectCommandCenterModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -334,14 +345,14 @@ export const ProjectCommandCenterModal: React.FC<
                         <span className="text-sm font-medium">Budget:</span>
                         <span data-testid="project-budget" className="text-sm">
                           {project.budget
-                            ? `$${project.budget.toLocaleString()}`
+                            ? formatCurrency(project.budget)
                             : 'Not set'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Est. Cost:</span>
                         <span className="text-sm">
-                          ${projectFinancials.totalCost.toLocaleString()}
+                          {formatCurrency(projectFinancials.totalCost)}
                         </span>
                       </div>
                       {project.budget && (
@@ -354,10 +365,11 @@ export const ProjectCommandCenterModal: React.FC<
                                 : 'text-red-600'
                             }`}
                           >
-                            $
-                            {Math.abs(
-                              project.budget - projectFinancials.totalCost
-                            ).toLocaleString()}
+                            {formatCurrency(
+                              Math.abs(
+                                project.budget - projectFinancials.totalCost
+                              )
+                            )}
                           </span>
                         </div>
                       )}
@@ -399,10 +411,9 @@ export const ProjectCommandCenterModal: React.FC<
                   <Card>
                     <CardContent className="p-4 text-center">
                       <div className="text-2xl font-bold text-purple-600">
-                        $
-                        {Math.round(
-                          projectFinancials.monthlyBurnRate
-                        ).toLocaleString()}
+                        {formatCurrency(
+                          Math.round(projectFinancials.monthlyBurnRate)
+                        )}
                       </div>
                       <div className="text-sm text-gray-600">Monthly Burn</div>
                     </CardContent>
@@ -477,16 +488,15 @@ export const ProjectCommandCenterModal: React.FC<
                         <div className="flex justify-between">
                           <span>Total Estimated Cost:</span>
                           <span className="font-semibold">
-                            ${projectFinancials.totalCost.toLocaleString()}
+                            {formatCurrency(projectFinancials.totalCost)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Monthly Burn Rate:</span>
                           <span>
-                            $
-                            {Math.round(
-                              projectFinancials.monthlyBurnRate
-                            ).toLocaleString()}
+                            {formatCurrency(
+                              Math.round(projectFinancials.monthlyBurnRate)
+                            )}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -508,7 +518,7 @@ export const ProjectCommandCenterModal: React.FC<
                           <span>Allocated Budget:</span>
                           <span>
                             {project.budget
-                              ? `$${project.budget.toLocaleString()}`
+                              ? formatCurrency(project.budget)
                               : 'Not set'}
                           </span>
                         </div>
@@ -525,10 +535,9 @@ export const ProjectCommandCenterModal: React.FC<
                                     : 'text-red-600 font-semibold'
                                 }
                               >
-                                $
-                                {(
+                                {formatCurrency(
                                   project.budget - projectFinancials.totalCost
-                                ).toLocaleString()}
+                                )}
                               </span>
                             </div>
                             <div className="flex justify-between">

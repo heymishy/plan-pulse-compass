@@ -72,13 +72,15 @@ import {
 } from '@/utils/projectBudgetUtils';
 import { getPriorityLevels } from '@/utils/priorityUtils';
 
-// Currency formatting helper
+// Currency formatting helper with abbreviations for large numbers
 const formatCurrency = (amount: number): string => {
-  return amount.toLocaleString(undefined, {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  });
+  if (amount >= 1000000) {
+    return `$${(amount / 1000000).toFixed(1)}M`;
+  } else if (amount >= 1000) {
+    return `$${(amount / 1000).toFixed(amount >= 10000 ? 0 : 1)}K`;
+  } else {
+    return `$${amount.toLocaleString()}`;
+  }
 };
 
 // Budget display helper
@@ -224,20 +226,15 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
           : 'N/A'}
       </TableCell>
       <TableCell>
-        <div className="flex items-center justify-end space-x-2">
+        <div className="flex items-center justify-end">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onViewProject(project.id)}
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
           >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEditProject(project.id)}
-          >
-            <Edit className="h-4 w-4" />
+            <Eye className="h-4 w-4 mr-1" />
+            View
           </Button>
         </div>
       </TableCell>
