@@ -302,39 +302,50 @@ const mockAllocation: Allocation = {
 
 ## CI/CD Pipeline Integration
 
+### Pipeline Status: ✅ RE-ENABLED & OPTIMIZED
+
+The GitHub Actions CI/CD pipeline has been **re-enabled** with significant optimizations for GitHub free tier compliance (2,000 minutes/month limit).
+
+**Resource-Optimized 3-Tier Architecture:**
+
 ### Pipeline Structure
 
-The CI/CD pipeline uses a multi-track approach:
-
-1. **Quick Validation Track** (Fast feedback - <10 minutes)
-   - ESLint validation
-   - TypeScript type checking
+1. **⚡ Lightning Validation** (4 minutes, 512MB)
    - Core test suite (`npm run test:core`)
-   - Quick build check
+   - ESLint validation (`npm run lint`)
+   - TypeScript type checking (`npm run type-check`)
+   - Essential quality gates for ALL changes
 
-2. **Comprehensive Testing Track** (Thorough validation - <20 minutes)
-   - Integration tests
-   - UI/Layout tests
-   - Test result artifacts
+2. **🔍 Comprehensive Testing** (15 minutes, 512MB)
+   - Integration tests (`npm run test:integration`)
+   - Critical E2E smoke tests (Chromium only)
+   - Console error detection
+   - Broader functionality validation
 
-3. **Non-Core Testing Track** (Non-blocking - <15 minutes)
-   - O365 integration tests
-   - OCR functionality tests
-   - Advanced feature tests
-   - Continues on error to not block main pipeline
-
-4. **E2E Testing Track** (Main branch only - <15 minutes)
-   - Full user journey validation
-   - Cross-browser testing
-   - Performance monitoring
+3. **🏆 Quality Assurance** (25 minutes, 768MB) - Main branch only
+   - Full coverage tests (`npm run test:coverage`)
+   - Security audit (`npm audit --audit-level=high`)
+   - Production build verification
+   - Comprehensive validation suite
 
 ### Pipeline Quality Gates
 
-- **Quick Validation**: MUST pass for any PR to be merged
+- **Lightning Validation**: MUST pass for any PR to be merged (MANDATORY)
 - **Core Tests**: 100% pass rate required
 - **Type Safety**: Zero TypeScript errors allowed
 - **Code Quality**: Zero ESLint errors allowed
 - **Build Success**: Must build successfully for production
+- **Resource Compliance**: Stay within 40% optimized usage of GitHub free tier
+
+### Key Optimizations Applied
+
+- **Memory Reduction**: 35% less memory usage (512-768MB vs 768-1024MB)
+- **Selective Browser Installation**: Chromium-only for smoke tests
+- **Smart Path Ignoring**: Skip CI for documentation-only changes
+- **Aggressive Caching**: Dependencies, browsers, and build outputs
+- **Single Worker E2E**: Prevent memory competition and OOM failures
+
+**📋 For detailed optimization guide, see: `CI_OPTIMIZATION_GUIDE.md`**
 
 ## Testing Best Practices
 
