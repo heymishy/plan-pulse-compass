@@ -1,27 +1,34 @@
 name: 3-Tier Optimized CI Pipeline
 
-# TEMPORARILY DISABLED until Aug 1st due to GitHub Actions limit exceeded
-# 19,320 minutes used (965% over 2,000 limit) - Actions suspended until reset
+# RE-ENABLED: Optimized for GitHub Actions free tier (2,000 minutes/month)
+# Resource management: Smart caching, selective triggers, memory-optimized
 
 on:
-  # EMERGENCY MODE: Only manual triggers until Aug 1st
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'README.md'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'README.md'
   workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   paths-ignore:
-  #     - '**.md'
-  #     - 'docs/**'
-  #     - '.gitignore'
-  #     - 'LICENSE'
-  # pull_request:
-  #   branches: [main]
-  #   paths-ignore:
-  #     - '**.md'
-  #     - 'docs/**'
 
 env:
   NODE_VERSION: '18'
   BUN_VERSION: '1.0.0'
+  # Resource optimization settings
+  CI_CACHE_STRATEGY: 'aggressive'
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' # Skip unless needed
+  FORCE_COLOR: '0' # Reduce output size
 
 jobs:
   # TIER 1: Lightning Fast Validation (2-3 minutes, 768MB)
@@ -57,19 +64,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run critical test suite
-        run: npm run test:critical
+      - name: Run critical test suite (core tests + lint + typecheck)
+        run: |
+          npm run test:core
+          npm run lint
+          npm run type-check
         env:
           CI: true
-          NODE_OPTIONS: '--max-old-space-size=768'
+          NODE_OPTIONS: '--max-old-space-size=512'
 
       - name: Generate lightning validation summary
         if: always()
         run: |
           echo "## ⚡ Lightning Validation Results" >> $GITHUB_STEP_SUMMARY
-          echo "**Purpose**: Essential quality gates for all changes" >> $GITHUB_STEP_SUMMARY
+          echo "**Purpose**: Essential quality gates (core tests, lint, typecheck)" >> $GITHUB_STEP_SUMMARY
           echo "**Duration**: $(echo '${{ job.status }}' | grep -q 'success' && echo '✅ Under 4 minutes' || echo '❌ Exceeded time limit')" >> $GITHUB_STEP_SUMMARY
-          echo "**Memory**: 768MB allocation (optimized for build requirements)" >> $GITHUB_STEP_SUMMARY
+          echo "**Memory**: 512MB allocation (optimized for essential tests)" >> $GITHUB_STEP_SUMMARY
 
   # TIER 2: Comprehensive Testing (8-12 minutes, 768MB)
   # Important tests that validate broader functionality
@@ -106,21 +116,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers (minimal)
-        run: npm run test:e2e:install
+      - name: Install Playwright browsers (minimal - Chromium only)
+        run: npx playwright install chromium --with-deps
 
-      - name: Run important test suite
-        run: npm run test:important
-        env:
-          CI: true
-          NODE_OPTIONS: '--max-old-space-size=768'
-
-      - name: Run E2E smoke test (optional)
-        run: npm run test:e2e:smoke
-        continue-on-error: true # Don't block pipeline if E2E fails due to resource constraints
+      - name: Run integration test suite
+        run: npm run test:integration
         env:
           CI: true
           NODE_OPTIONS: '--max-old-space-size=512'
+
+      - name: Run E2E smoke test (critical paths only)
+        run: npx playwright test tests/e2e/smoke-test-ci.spec.ts --workers=1
+        continue-on-error: true # Don't block pipeline if E2E fails due to resource constraints
+        env:
+          CI: true
+          NODE_OPTIONS: '--max-old-space-size=400'
+          PLAYWRIGHT_BROWSERS_PATH: 0
 
       - name: Upload comprehensive test results
         uses: actions/upload-artifact@v4
@@ -136,9 +147,9 @@ jobs:
         if: always()
         run: |
           echo "## 🔍 Comprehensive Testing Results" >> $GITHUB_STEP_SUMMARY
-          echo "**Purpose**: Integration tests, layout validation, optional E2E smoke tests" >> $GITHUB_STEP_SUMMARY
+          echo "**Purpose**: Integration tests and critical E2E smoke tests" >> $GITHUB_STEP_SUMMARY
           echo "**Duration**: $(echo '${{ job.status }}' | grep -q 'success' && echo '✅ Under 15 minutes' || echo '❌ Exceeded time limit')" >> $GITHUB_STEP_SUMMARY
-          echo "**Memory**: 768MB allocation (optimized for broader testing)" >> $GITHUB_STEP_SUMMARY
+          echo "**Memory**: 512MB allocation (optimized for CI efficiency)" >> $GITHUB_STEP_SUMMARY
 
   # TIER 3: Quality Assurance (15-20 minutes, 1024MB)
   # Full quality suite including coverage, advanced tests, and comprehensive E2E
@@ -182,23 +193,24 @@ jobs:
           sudo sync && echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null || true
           sleep 2
 
-      - name: Install Playwright browsers
-        run: npm run test:e2e:install
+      - name: Install Playwright browsers (optimized)
+        run: npx playwright install chromium firefox --with-deps
 
-      - name: Run quality test suite
-        run: npm run test:quality
+      - name: Run comprehensive test suite with coverage
+        run: npm run test:coverage
         env:
           CI: true
-          NODE_OPTIONS: '--max-old-space-size=1024'
+          NODE_OPTIONS: '--max-old-space-size=768'
 
       - name: Run security audit
         run: npm audit --audit-level=high
         continue-on-error: true
 
-      - name: Generate build with bundle analysis
-        run: npm run build:analyze
+      - name: Generate optimized production build
+        run: npm run build
         env:
           CI: true
+          NODE_OPTIONS: '--max-old-space-size=512'
 
       - name: Upload quality assurance results
         uses: actions/upload-artifact@v4
@@ -233,9 +245,9 @@ jobs:
         if: always()
         run: |
           echo "## 🏆 Quality Assurance Results" >> $GITHUB_STEP_SUMMARY
-          echo "**Purpose**: Full coverage tests, advanced features, comprehensive E2E, security audit" >> $GITHUB_STEP_SUMMARY
+          echo "**Purpose**: Full coverage tests, security audit, production build" >> $GITHUB_STEP_SUMMARY
           echo "**Duration**: $(echo '${{ job.status }}' | grep -q 'success' && echo '✅ Under 25 minutes' || echo '❌ Exceeded time limit')" >> $GITHUB_STEP_SUMMARY
-          echo "**Memory**: 1024MB allocation (maximum for comprehensive testing)" >> $GITHUB_STEP_SUMMARY
+          echo "**Memory**: 768MB allocation (balanced for comprehensive testing)" >> $GITHUB_STEP_SUMMARY
           echo "**E2E Report**: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/e2e-reports/${{ github.run_number }}/" >> $GITHUB_STEP_SUMMARY
 
   # Build for all changes (runs after lightning validation)
@@ -360,8 +372,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Resource Optimization" >> $GITHUB_STEP_SUMMARY
           echo "- **GitHub Free Plan**: Optimized for 2,000 CI minutes/month limit" >> $GITHUB_STEP_SUMMARY
-          echo "- **Memory Efficiency**: Right-sized allocations prevent OOM failures" >> $GITHUB_STEP_SUMMARY
-          echo "- **Parallel Execution**: Independent tiers run simultaneously when possible" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory Efficiency**: Reduced allocations (512-768MB) prevent OOM failures" >> $GITHUB_STEP_SUMMARY
+          echo "- **Selective Testing**: Critical tests prioritized, non-essential tests as optional" >> $GITHUB_STEP_SUMMARY
+          echo "- **Smart Caching**: Aggressive dependency and browser caching" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## TDD Compliance" >> $GITHUB_STEP_SUMMARY
           echo "- **Test First**: All changes require passing tests before merge" >> $GITHUB_STEP_SUMMARY
