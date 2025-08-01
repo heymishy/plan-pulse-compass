@@ -71,17 +71,7 @@ import {
   migrateLegacyBudgetToFinancialYear,
 } from '@/utils/projectBudgetUtils';
 import { getPriorityLevels } from '@/utils/priorityUtils';
-
-// Currency formatting helper with abbreviations for large numbers
-const formatCurrency = (amount: number): string => {
-  if (amount >= 1000000) {
-    return `$${(amount / 1000000).toFixed(1)}M`;
-  } else if (amount >= 1000) {
-    return `$${(amount / 1000).toFixed(amount >= 10000 ? 0 : 1)}K`;
-  } else {
-    return `$${amount.toLocaleString()}`;
-  }
-};
+import { formatCurrency } from '@/utils/currency';
 
 // Budget display helper
 const formatBudgetDisplay = (amount: number): string => {
