@@ -21,6 +21,7 @@ import ProjectTable from '@/components/projects/ProjectTable';
 import ProjectCards from '@/components/projects/ProjectCards';
 import ProjectDialog from '@/components/projects/ProjectDialog';
 import ProjectDetailsDialog from '@/components/projects/ProjectDetailsDialog';
+import { ProjectCommandCenterModal } from '@/components/projects/ProjectCommandCenterModal';
 import ProjectTeamFinderDialog from '@/components/scenarios/ProjectTeamFinderDialog';
 
 const Projects = () => {
@@ -30,6 +31,9 @@ const Projects = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [commandCenterMode, setCommandCenterMode] = useState<'view' | 'edit'>(
+    'view'
+  );
 
   if (!isSetupComplete) {
     return (
@@ -74,11 +78,13 @@ const Projects = () => {
 
   const handleEditProject = (projectId: string) => {
     setSelectedProject(projectId);
-    setIsCreateDialogOpen(true);
+    setCommandCenterMode('edit');
+    setIsViewDialogOpen(true);
   };
 
   const handleViewProject = (projectId: string) => {
     setSelectedProject(projectId);
+    setCommandCenterMode('view');
     setIsViewDialogOpen(true);
   };
 
@@ -269,11 +275,12 @@ const Projects = () => {
           project={currentProject}
         />
 
-        {/* Project Details Dialog */}
-        <ProjectDetailsDialog
+        {/* Project Command Center Modal */}
+        <ProjectCommandCenterModal
           isOpen={isViewDialogOpen}
           onClose={handleCloseViewDialog}
           project={currentProject}
+          mode={commandCenterMode}
         />
       </div>
     </div>
