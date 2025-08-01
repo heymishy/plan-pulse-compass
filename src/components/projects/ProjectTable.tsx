@@ -345,7 +345,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
       );
     }
 
-    // Apply sorting only if a sort field is selected
+    // Apply sorting - if no sort field is selected, default to priority order
     if (sortField) {
       filtered.sort((a, b) => {
         let aValue, bValue;
@@ -386,6 +386,13 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
         if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
         return 0;
+      });
+    } else {
+      // Default sort by priority order to make drag-and-drop changes visible
+      filtered.sort((a, b) => {
+        const aOrder = getProjectPriorityOrder(a) || 999;
+        const bOrder = getProjectPriorityOrder(b) || 999;
+        return aOrder - bOrder; // Ascending order (1, 2, 3...)
       });
     }
 
@@ -513,16 +520,29 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
       newIndex
     );
 
-    // Update priority order for all affected projects
-    const updatedProjects = reorderedProjects.map((project, index) => ({
-      ...project,
-      priorityOrder: index + 1, // Start priority order from 1
-    }));
-
-    // Update the main projects array while preserving non-filtered projects
+    // Create a comprehensive priority order assignment for ALL projects
     const projectsMap = new Map(projects.map(p => [p.id, p]));
-    updatedProjects.forEach(updatedProject => {
-      projectsMap.set(updatedProject.id, updatedProject);
+
+    // First, update the reordered projects with their new priority order
+    reorderedProjects.forEach((project, index) => {
+      projectsMap.set(project.id, {
+        ...project,
+        priorityOrder: index + 1, // Start priority order from 1
+      });
+    });
+
+    // For projects not in the current filter, maintain their relative position
+    // by assigning priority orders that don't conflict with the reordered ones
+    const reorderedIds = new Set(reorderedProjects.map(p => p.id));
+    const nonFilteredProjects = projects.filter(p => !reorderedIds.has(p.id));
+
+    // Assign priority orders to non-filtered projects, starting after the reordered ones
+    let nextPriority = reorderedProjects.length + 1;
+    nonFilteredProjects.forEach(project => {
+      projectsMap.set(project.id, {
+        ...project,
+        priorityOrder: project.priorityOrder || nextPriority++,
+      });
     });
 
     const newProjects = Array.from(projectsMap.values());

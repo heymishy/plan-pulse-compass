@@ -4,6 +4,16 @@ import { Project, Epic, Milestone } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -43,12 +53,11 @@ export interface ProjectCommandCenterModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: Project | null;
-  mode?: 'view' | 'edit';
 }
 
 export const ProjectCommandCenterModal: React.FC<
   ProjectCommandCenterModalProps
-> = ({ isOpen, onClose, project, mode = 'view' }) => {
+> = ({ isOpen, onClose, project }) => {
   const {
     epics,
     milestones,
@@ -65,12 +74,12 @@ export const ProjectCommandCenterModal: React.FC<
 
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
-  const [isEditMode, setIsEditMode] = useState(mode === 'edit');
+  const [editedProject, setEditedProject] = useState<Project | null>(null);
 
-  // Reset edit mode when mode prop changes
+  // Initialize edited project when project changes
   useEffect(() => {
-    setIsEditMode(mode === 'edit');
-  }, [mode]);
+    setEditedProject(project);
+  }, [project]);
 
   // Calculate financial data
   const projectFinancials = useMemo(() => {
@@ -121,27 +130,48 @@ export const ProjectCommandCenterModal: React.FC<
   );
 
   const handleClose = () => {
-    setIsEditMode(false);
+    setEditedProject(project);
     setActiveTab('overview');
     onClose();
   };
 
   const handleSave = () => {
-    // Save logic will be implemented in edit mode
+    if (!editedProject || !project) return;
+
+    // Basic validation
+    if (!editedProject.name?.trim()) {
+      toast({
+        title: 'Validation Error',
+        description: 'Project name is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Update the project in the context
+    const updatedProjects = projects.map(p =>
+      p.id === project.id ? editedProject : p
+    );
+    setProjects(updatedProjects);
+
     toast({
       title: 'Success',
       description: 'Project updated successfully',
     });
-    setIsEditMode(false);
+    onClose();
   };
 
   const handleCancel = () => {
-    setIsEditMode(false);
-    handleClose();
+    setEditedProject(project);
+    onClose();
   };
 
-  const toggleEditMode = () => {
-    setIsEditMode(!isEditMode);
+  const handleFieldChange = (field: keyof Project, value: any) => {
+    if (!editedProject) return;
+    setEditedProject({
+      ...editedProject,
+      [field]: value,
+    });
   };
 
   if (!isOpen || !project) {
@@ -169,25 +199,17 @@ export const ProjectCommandCenterModal: React.FC<
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <DialogTitle className="text-2xl font-bold">
-                {project.name}
+                {editedProject?.name || project.name}
               </DialogTitle>
-              <Badge variant={getStatusBadgeVariant(project.status)}>
-                {project.status.replace('-', ' ')}
+              <Badge
+                variant={getStatusBadgeVariant(
+                  editedProject?.status || project.status
+                )}
+              >
+                {(editedProject?.status || project.status).replace('-', ' ')}
               </Badge>
             </div>
             <div className="flex items-center space-x-2">
-              <span
-                data-testid="mode-indicator"
-                className="text-sm text-gray-500"
-              >
-                {isEditMode ? 'edit' : 'view'}
-              </span>
-              {!isEditMode && (
-                <Button variant="outline" size="sm" onClick={toggleEditMode}>
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -255,33 +277,71 @@ export const ProjectCommandCenterModal: React.FC<
                         Project Details
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div
-                        data-testid="project-name"
-                        className="font-semibold text-lg"
-                      >
-                        {project.name}
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="project-name">Project Name</Label>
+                        <Input
+                          id="project-name"
+                          data-testid="project-name"
+                          value={editedProject?.name || ''}
+                          onChange={e =>
+                            handleFieldChange('name', e.target.value)
+                          }
+                          className="font-semibold"
+                        />
                       </div>
-                      <div
-                        data-testid="project-description"
-                        className="text-sm text-gray-600"
-                      >
-                        {project.description || 'No description provided'}
+                      <div className="space-y-2">
+                        <Label htmlFor="project-description">Description</Label>
+                        <Textarea
+                          id="project-description"
+                          data-testid="project-description"
+                          value={editedProject?.description || ''}
+                          onChange={e =>
+                            handleFieldChange('description', e.target.value)
+                          }
+                          placeholder="Enter project description"
+                          className="min-h-[60px]"
+                        />
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium">Status:</span>
-                        <span data-testid="project-status" className="text-sm">
-                          {project.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium">Priority:</span>
-                        <span
-                          data-testid="project-priority"
-                          className="text-sm"
+                      <div className="space-y-2">
+                        <Label htmlFor="project-status">Status</Label>
+                        <Select
+                          value={editedProject?.status || 'planning'}
+                          onValueChange={value =>
+                            handleFieldChange('status', value)
+                          }
                         >
-                          {project.priority}
-                        </span>
+                          <SelectTrigger data-testid="project-status">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="planning">Planning</SelectItem>
+                            <SelectItem value="in-progress">
+                              In Progress
+                            </SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="on-hold">On Hold</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="project-priority">Priority</Label>
+                        <Select
+                          value={editedProject?.priority || 'medium'}
+                          onValueChange={value =>
+                            handleFieldChange('priority', value)
+                          }
+                        >
+                          <SelectTrigger data-testid="project-priority">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </CardContent>
                   </Card>
@@ -292,31 +352,42 @@ export const ProjectCommandCenterModal: React.FC<
                         Timeline
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Start Date:</span>
-                        <span
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="project-start-date">Start Date</Label>
+                        <Input
+                          id="project-start-date"
                           data-testid="project-start-date"
-                          className="text-sm"
-                        >
-                          {project.startDate
-                            ? format(
-                                new Date(project.startDate),
-                                'MMM dd, yyyy'
-                              )
-                            : 'Not set'}
-                        </span>
+                          type="date"
+                          value={
+                            editedProject?.startDate
+                              ? new Date(editedProject.startDate)
+                                  .toISOString()
+                                  .split('T')[0]
+                              : ''
+                          }
+                          onChange={e =>
+                            handleFieldChange('startDate', e.target.value)
+                          }
+                        />
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">End Date:</span>
-                        <span
+                      <div className="space-y-2">
+                        <Label htmlFor="project-end-date">End Date</Label>
+                        <Input
+                          id="project-end-date"
                           data-testid="project-end-date"
-                          className="text-sm"
-                        >
-                          {project.endDate
-                            ? format(new Date(project.endDate), 'MMM dd, yyyy')
-                            : 'Not set'}
-                        </span>
+                          type="date"
+                          value={
+                            editedProject?.endDate
+                              ? new Date(editedProject.endDate)
+                                  .toISOString()
+                                  .split('T')[0]
+                              : ''
+                          }
+                          onChange={e =>
+                            handleFieldChange('endDate', e.target.value)
+                          }
+                        />
                       </div>
                       <div className="flex items-center justify-between border-t pt-2">
                         <span className="text-sm font-medium text-blue-600">
@@ -340,14 +411,22 @@ export const ProjectCommandCenterModal: React.FC<
                         Budget & Cost
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Budget:</span>
-                        <span data-testid="project-budget" className="text-sm">
-                          {project.budget
-                            ? formatCurrency(project.budget)
-                            : 'Not set'}
-                        </span>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="project-budget">Budget</Label>
+                        <Input
+                          id="project-budget"
+                          data-testid="project-budget"
+                          type="number"
+                          value={editedProject?.budget || ''}
+                          onChange={e =>
+                            handleFieldChange(
+                              'budget',
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          placeholder="Enter budget amount"
+                        />
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Est. Cost:</span>
@@ -355,19 +434,22 @@ export const ProjectCommandCenterModal: React.FC<
                           {formatCurrency(projectFinancials.totalCost)}
                         </span>
                       </div>
-                      {project.budget && (
+                      {editedProject?.budget && (
                         <div className="flex items-center justify-between border-t pt-2">
                           <span className="text-sm font-medium">Variance:</span>
                           <span
                             className={`text-sm font-semibold ${
-                              project.budget - projectFinancials.totalCost >= 0
+                              editedProject.budget -
+                                projectFinancials.totalCost >=
+                              0
                                 ? 'text-green-600'
                                 : 'text-red-600'
                             }`}
                           >
                             {formatCurrency(
                               Math.abs(
-                                project.budget - projectFinancials.totalCost
+                                editedProject.budget -
+                                  projectFinancials.totalCost
                               )
                             )}
                           </span>
@@ -641,26 +723,24 @@ export const ProjectCommandCenterModal: React.FC<
           </div>
         </Tabs>
 
-        {/* Edit Mode Actions */}
-        {isEditMode && (
-          <div
-            data-testid="edit-actions"
-            className="flex items-center justify-end space-x-2 mt-6 pt-4 border-t"
+        {/* Edit Actions */}
+        <div
+          data-testid="edit-actions"
+          className="flex items-center justify-end space-x-2 mt-6 pt-4 border-t"
+        >
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            data-testid="cancel-button"
           >
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              data-testid="cancel-button"
-            >
-              <RotateCcw className="h-4 w-4 mr-1" />
-              Cancel
-            </Button>
-            <Button onClick={handleSave} data-testid="save-button">
-              <Save className="h-4 w-4 mr-1" />
-              Save Changes
-            </Button>
-          </div>
-        )}
+            <RotateCcw className="h-4 w-4 mr-1" />
+            Cancel
+          </Button>
+          <Button onClick={handleSave} data-testid="save-button">
+            <Save className="h-4 w-4 mr-1" />
+            Save Changes
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

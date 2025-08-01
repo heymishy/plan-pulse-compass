@@ -250,61 +250,9 @@ interface ProjectCommandCenterModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: Project | null;
-  mode?: 'view' | 'edit';
 }
 
-// Mock component until implementation
-const MockProjectCommandCenterModal: React.FC<
-  ProjectCommandCenterModalProps
-> = ({ isOpen, onClose, project, mode = 'view' }) => {
-  if (!isOpen || !project) return null;
-
-  return (
-    <div data-testid="project-command-center-modal">
-      <div data-testid="modal-header">
-        <h1>{project.name}</h1>
-        <button data-testid="close-button" onClick={onClose}>
-          Close
-        </button>
-        <span data-testid="mode-indicator">{mode}</span>
-      </div>
-
-      <div data-testid="tab-navigation">
-        <button data-testid="overview-tab">Overview</button>
-        <button data-testid="epics-timeline-tab">Epics & Timeline</button>
-        <button data-testid="financials-tab">Financials</button>
-        <button data-testid="solutions-skills-tab">Solutions & Skills</button>
-        <button data-testid="progress-tracking-tab">Progress & Tracking</button>
-        <button data-testid="steerco-report-tab">SteerCo Report</button>
-      </div>
-
-      <div data-testid="tab-content">
-        <div data-testid="overview-content">
-          <div data-testid="project-name">{project.name}</div>
-          <div data-testid="project-description">{project.description}</div>
-          <div data-testid="project-status">{project.status}</div>
-          <div data-testid="project-start-date">{project.startDate}</div>
-          <div data-testid="project-end-date">{project.endDate}</div>
-          <div data-testid="projected-end-date">2024-06-30</div>
-          <div data-testid="project-budget">{project.budget}</div>
-          <div data-testid="project-priority">{project.priority}</div>
-        </div>
-      </div>
-
-      {mode === 'edit' && (
-        <div data-testid="edit-actions">
-          <button data-testid="save-button">Save</button>
-          <button data-testid="cancel-button" onClick={onClose}>
-            Cancel
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Use the real component now that we have proper mocks
-// const ProjectCommandCenterModal = MockProjectCommandCenterModal;
+// Using the real component with proper mocks
 
 describe('ProjectCommandCenterModal', () => {
   let mockContextValue: any;
@@ -313,6 +261,7 @@ describe('ProjectCommandCenterModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockOnClose.mockClear();
     mockContextValue = createMockContextValue();
     mockUseApp.mockReturnValue(mockContextValue);
   });
@@ -322,7 +271,6 @@ describe('ProjectCommandCenterModal', () => {
       isOpen: true,
       onClose: mockOnClose,
       project: createMockProject(),
-      mode: 'view',
       ...props,
     };
 
@@ -378,25 +326,23 @@ describe('ProjectCommandCenterModal', () => {
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
 
-    it('should display correct mode indicator', () => {
-      renderModal({ mode: 'view' });
-      expect(screen.getByTestId('mode-indicator')).toHaveTextContent('view');
+    it('should always be in edit mode and show form fields', () => {
+      renderModal();
 
-      // Test edit mode
-      const { rerender } = render(
-        <ProjectCommandCenterModal
-          isOpen={true}
-          onClose={mockOnClose}
-          project={createMockProject()}
-          mode="edit"
-        />
-      );
-      expect(screen.getByTestId('mode-indicator')).toHaveTextContent('edit');
+      // Should show editable form fields
+      expect(screen.getByTestId('project-name')).toBeInTheDocument();
+      expect(screen.getByTestId('project-description')).toBeInTheDocument();
+      expect(screen.getByTestId('project-status')).toBeInTheDocument();
+
+      // Should always show edit actions
+      expect(screen.getByTestId('edit-actions')).toBeInTheDocument();
+      expect(screen.getByTestId('save-button')).toBeInTheDocument();
+      expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
     });
   });
 
   describe('Overview tab content', () => {
-    it('should display basic project information', () => {
+    it('should display basic project information in editable form fields', () => {
       const project = createMockProject({
         name: 'Test Project',
         description: 'Test Description',
@@ -404,18 +350,19 @@ describe('ProjectCommandCenterModal', () => {
         startDate: '2024-01-01',
         endDate: '2024-12-31',
         budget: 100000,
-        priority: 2,
+        priority: 'medium',
       });
 
       renderModal({ project });
 
-      expect(screen.getByText('Test Project')).toBeInTheDocument();
-      expect(screen.getByText('Test Description')).toBeInTheDocument();
-      expect(screen.getByText('in-progress')).toBeInTheDocument();
-      expect(screen.getByText('Jan 01, 2024')).toBeInTheDocument();
-      expect(screen.getByText('Dec 31, 2024')).toBeInTheDocument();
-      expect(screen.getByText('$100,000')).toBeInTheDocument();
-      expect(screen.getByText('2')).toBeInTheDocument();
+      // Check form inputs have correct values
+      expect(screen.getByDisplayValue('Test Project')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Test Description')).toBeInTheDocument();
+      expect(screen.getByText('In Progress')).toBeInTheDocument(); // Select shows formatted text
+      expect(screen.getByDisplayValue('2024-01-01')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('2024-12-31')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('100000')).toBeInTheDocument();
+      expect(screen.getByText('Medium')).toBeInTheDocument(); // Select shows formatted text
     });
 
     it('should display projected end date from calculation', () => {
@@ -425,46 +372,42 @@ describe('ProjectCommandCenterModal', () => {
 
     it('should handle projects with missing optional fields', () => {
       const project = createMockProject({
-        description: undefined,
-        endDate: undefined,
-        budget: undefined,
+        description: '',
+        endDate: '',
+        budget: 0,
       });
 
       renderModal({ project });
 
-      expect(screen.getByText('Test Project')).toBeInTheDocument();
-      expect(screen.getByText('planning')).toBeInTheDocument();
-      expect(screen.getByText('Jan 01, 2024')).toBeInTheDocument();
+      // Should show project name and default values for empty fields
+      expect(screen.getByDisplayValue('Test Project')).toBeInTheDocument();
+      // Check that description textarea exists and is empty
+      const descriptionField = screen.getByTestId('project-description');
+      expect(descriptionField).toHaveValue('');
+      expect(screen.getByText('Planning')).toBeInTheDocument(); // Default status displayed in select
     });
   });
 
-  describe('View mode functionality', () => {
-    it('should render in view mode by default', () => {
+  describe('Edit functionality', () => {
+    it('should always show edit actions and form fields', () => {
       renderModal();
-      expect(screen.getByTestId('mode-indicator')).toHaveTextContent('view');
-      expect(screen.queryByTestId('edit-actions')).not.toBeInTheDocument();
-    });
 
-    it('should not show edit actions in view mode', () => {
-      renderModal({ mode: 'view' });
-      expect(screen.queryByTestId('edit-actions')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('save-button')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Edit mode functionality', () => {
-    it('should render edit actions when in edit mode', () => {
-      renderModal({ mode: 'edit' });
-
-      expect(screen.getByTestId('mode-indicator')).toHaveTextContent('edit');
+      // Should always show edit actions
       expect(screen.getByTestId('edit-actions')).toBeInTheDocument();
       expect(screen.getByTestId('save-button')).toBeInTheDocument();
       expect(screen.getByTestId('cancel-button')).toBeInTheDocument();
-    });
 
-    it('should handle cancel button click in edit mode', async () => {
+      // Should show editable form fields
+      expect(screen.getByTestId('project-name')).toBeInTheDocument();
+      expect(screen.getByTestId('project-description')).toBeInTheDocument();
+      expect(screen.getByTestId('project-status')).toBeInTheDocument();
+    });
+  });
+
+  describe('Button interactions', () => {
+    it('should handle cancel button click', async () => {
       const user = userEvent.setup();
-      renderModal({ mode: 'edit' });
+      renderModal();
 
       const cancelButton = screen.getByTestId('cancel-button');
       await user.click(cancelButton);
@@ -472,9 +415,9 @@ describe('ProjectCommandCenterModal', () => {
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle save button click in edit mode', async () => {
+    it('should handle save button click', async () => {
       const user = userEvent.setup();
-      renderModal({ mode: 'edit' });
+      renderModal();
 
       const saveButton = screen.getByTestId('save-button');
       expect(saveButton).toBeInTheDocument();
@@ -534,12 +477,8 @@ describe('ProjectCommandCenterModal', () => {
       mockContextValue.projects = [contextProject];
       renderModal({ project: contextProject });
 
-      expect(screen.getByTestId('project-name')).toHaveTextContent(
-        'Context Project'
-      );
-      expect(screen.getByTestId('project-description')).toHaveTextContent(
-        'From context'
-      );
+      expect(screen.getByDisplayValue('Context Project')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('From context')).toBeInTheDocument();
     });
 
     it('should handle context with related data (epics, milestones)', () => {
@@ -577,7 +516,6 @@ describe('ProjectCommandCenterModal', () => {
           isOpen={true}
           onClose={mockOnClose}
           project={createMockProject()}
-          mode="view"
         />
       );
 
@@ -603,21 +541,24 @@ describe('ProjectCommandCenterModal', () => {
       expect(screen.getByTestId('tab-navigation')).toBeInTheDocument();
     });
 
-    it('should handle mode switching correctly', () => {
-      const { rerender } = renderModal({ mode: 'view' });
-      expect(screen.getByTestId('mode-indicator')).toHaveTextContent('view');
-      expect(screen.queryByTestId('edit-actions')).not.toBeInTheDocument();
+    it('should always be in edit mode with form fields', () => {
+      const { rerender } = renderModal();
 
+      // Should always show editable fields and actions
+      expect(screen.getByTestId('project-name')).toBeInTheDocument();
+      expect(screen.getByTestId('project-description')).toBeInTheDocument();
+      expect(screen.getByTestId('edit-actions')).toBeInTheDocument();
+
+      // Rerender with different project should still show edit fields
       rerender(
         <ProjectCommandCenterModal
           isOpen={true}
           onClose={mockOnClose}
-          project={createMockProject()}
-          mode="edit"
+          project={createMockProject({ name: 'Different Project' })}
         />
       );
 
-      expect(screen.getByTestId('mode-indicator')).toHaveTextContent('edit');
+      expect(screen.getByTestId('project-name')).toBeInTheDocument();
       expect(screen.getByTestId('edit-actions')).toBeInTheDocument();
     });
 
@@ -629,7 +570,6 @@ describe('ProjectCommandCenterModal', () => {
           isOpen={true}
           onClose={mockOnClose}
           project={createMockProject()}
-          mode="view"
         />
       );
 
@@ -646,9 +586,8 @@ describe('ProjectCommandCenterModal', () => {
       const modal = screen.getByTestId('project-command-center-modal');
       expect(modal).toBeInTheDocument();
 
-      // Modal should be accessible to screen readers
-      const header = screen.getByTestId('modal-header');
-      expect(header).toBeInTheDocument();
+      // Modal should have dialog role (handled by shadcn Dialog component)
+      expect(modal.closest('[role="dialog"]')).toBeInTheDocument();
     });
 
     it('should support keyboard navigation for tabs', () => {
@@ -684,7 +623,6 @@ describe('ProjectCommandCenterModal', () => {
           isOpen={true}
           onClose={mockOnClose}
           project={project}
-          mode="view"
         />
       );
 
@@ -711,7 +649,6 @@ describe('ProjectCommandCenterModal', () => {
           isOpen={true}
           onClose={mockOnClose}
           project={createMockProject()}
-          mode="view"
         />
       );
 

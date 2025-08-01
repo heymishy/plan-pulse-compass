@@ -31,9 +31,6 @@ const Projects = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [commandCenterMode, setCommandCenterMode] = useState<'view' | 'edit'>(
-    'view'
-  );
 
   if (!isSetupComplete) {
     return (
@@ -78,13 +75,11 @@ const Projects = () => {
 
   const handleEditProject = (projectId: string) => {
     setSelectedProject(projectId);
-    setCommandCenterMode('edit');
     setIsViewDialogOpen(true);
   };
 
   const handleViewProject = (projectId: string) => {
     setSelectedProject(projectId);
-    setCommandCenterMode('view');
     setIsViewDialogOpen(true);
   };
 
@@ -280,7 +275,6 @@ const Projects = () => {
           isOpen={isViewDialogOpen}
           onClose={handleCloseViewDialog}
           project={currentProject}
-          mode={commandCenterMode}
         />
       </div>
     </div>
