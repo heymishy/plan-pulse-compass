@@ -1,6 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Project, Epic, Milestone, ProjectFinancialYearBudget } from '@/types';
+import {
+  Project,
+  Epic,
+  Milestone,
+  ProjectFinancialYearBudget,
+  ProjectSolution,
+  ProjectSkill,
+} from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +41,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import ProjectSolutionsSkillsSection from './ProjectSolutionsSkillsSection';
 import { calculateProjectCost } from '@/utils/financialCalculations';
 import { calculateProjectedEndDate } from '@/utils/calculateProjectedEndDate';
 import { calculateProjectTotalBudget } from '@/utils/projectBudgetUtils';
@@ -67,6 +75,8 @@ export const ProjectCommandCenterModal: React.FC<
     setProjects,
     projectSolutions,
     projectSkills,
+    setProjectSolutions,
+    setProjectSkills,
   } = useApp();
 
   const { toast } = useToast();
@@ -75,6 +85,17 @@ export const ProjectCommandCenterModal: React.FC<
   const [financialYearBudgets, setFinancialYearBudgets] = useState<
     ProjectFinancialYearBudget[]
   >([]);
+
+  // Get current project solutions and skills
+  const currentProjectSolutions = useMemo(
+    () => projectSolutions.filter(ps => ps.projectId === project?.id) || [],
+    [projectSolutions, project?.id]
+  );
+
+  const currentProjectSkills = useMemo(
+    () => projectSkills.filter(ps => ps.projectId === project?.id) || [],
+    [projectSkills, project?.id]
+  );
 
   // Initialize edited project when project changes
   useEffect(() => {
@@ -180,6 +201,34 @@ export const ProjectCommandCenterModal: React.FC<
       ...editedProject,
       [field]: value,
     });
+  };
+
+  const handleSolutionsChange = (solutions: ProjectSolution[]) => {
+    if (!project?.id) return;
+
+    // Update solutions for this project
+    const otherProjectSolutions = projectSolutions.filter(
+      ps => ps.projectId !== project.id
+    );
+    const updatedSolutions = [
+      ...otherProjectSolutions,
+      ...solutions.map(s => ({ ...s, projectId: project.id })),
+    ];
+    setProjectSolutions(updatedSolutions);
+  };
+
+  const handleSkillsChange = (skills: ProjectSkill[]) => {
+    if (!project?.id) return;
+
+    // Update skills for this project
+    const otherProjectSkills = projectSkills.filter(
+      ps => ps.projectId !== project.id
+    );
+    const updatedSkills = [
+      ...otherProjectSkills,
+      ...skills.map(s => ({ ...s, projectId: project.id })),
+    ];
+    setProjectSkills(updatedSkills);
   };
 
   if (!isOpen || !project) {
@@ -688,11 +737,13 @@ export const ProjectCommandCenterModal: React.FC<
                 <h3 className="text-lg font-semibold mb-4">
                   Solutions & Skills
                 </h3>
-                <Card>
-                  <CardContent className="p-8 text-center text-gray-500">
-                    Solutions and skills management will be implemented here.
-                  </CardContent>
-                </Card>
+                <ProjectSolutionsSkillsSection
+                  projectId={project.id}
+                  projectSolutions={currentProjectSolutions}
+                  projectSkills={currentProjectSkills}
+                  onSolutionsChange={handleSolutionsChange}
+                  onSkillsChange={handleSkillsChange}
+                />
               </div>
             </TabsContent>
 
