@@ -184,12 +184,15 @@ describe('ProjectPriorityEditor', () => {
       />
     );
 
-    // Look for the help text by checking for both keywords separately
-    expect(screen.getByText('Priority Level')).toBeInTheDocument();
-    expect(screen.getByText('is a general classification')).toBeInTheDocument();
-    expect(screen.getByText('Priority Order')).toBeInTheDocument();
+    // Look for the help text by checking for partial text that appears only in help section
+    expect(screen.getByText(/is a general classification/)).toBeInTheDocument();
     expect(
-      screen.getByText('provides fine-grained sorting')
+      screen.getByText(/provides fine-grained sorting/)
     ).toBeInTheDocument();
+    // Check that we have multiple instances of "Priority Level" and "Priority Order"
+    expect(screen.getAllByText(/Priority Level/)).toHaveLength(2); // Label and help text
+    expect(screen.getAllByText(/Priority Order/).length).toBeGreaterThanOrEqual(
+      2
+    ); // Label, help text, and possibly fallback text
   });
 });

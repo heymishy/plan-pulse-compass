@@ -162,7 +162,10 @@ describe('ProjectDialog', () => {
     expect(screen.getByLabelText('Status')).toBeInTheDocument();
     expect(screen.getByLabelText('Start Date *')).toBeInTheDocument();
     expect(screen.getByLabelText('End Date')).toBeInTheDocument();
-    expect(screen.getByLabelText('Budget ($)')).toBeInTheDocument();
+
+    // Find the budget input field specifically
+    const budgetInput = screen.getByRole('spinbutton', { name: /budget/i });
+    expect(budgetInput).toBeInTheDocument();
   });
 
   it('displays tabs for different sections', () => {
@@ -225,7 +228,7 @@ describe('ProjectDialog', () => {
   it('handles budget changes', async () => {
     renderComponent();
 
-    const budgetInput = screen.getByLabelText('Budget ($)');
+    const budgetInput = screen.getByRole('spinbutton', { name: /budget/i });
     fireEvent.change(budgetInput, { target: { value: '150000' } });
 
     expect(budgetInput).toHaveValue(150000);
