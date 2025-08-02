@@ -217,7 +217,7 @@ const ProjectSolutionsSkillsSection: React.FC<
   // Available skills for manual addition
   const availableSkills = useMemo(
     () =>
-      skills.filter(
+      (skills || []).filter(
         skill => !allProjectSkills.some(ps => ps.skillId === skill.id)
       ),
     [skills, allProjectSkills]
@@ -332,8 +332,8 @@ const ProjectSolutionsSkillsSection: React.FC<
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {projectSolutions.map(ps => {
-                    const solution = solutions.find(
+                  {(projectSolutions || []).map(ps => {
+                    const solution = (solutions || []).find(
                       s => s.id === ps.solutionId
                     );
                     if (!solution) return null;
@@ -355,10 +355,10 @@ const ProjectSolutionsSkillsSection: React.FC<
                           <p className="text-sm text-gray-600">
                             {solution.description}
                           </p>
-                          {solution.skills.length > 0 && (
+                          {solution.skills && solution.skills.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {solution.skills.map(skillId => {
-                                const skill = skills.find(
+                                const skill = (skills || []).find(
                                   s => s.id === skillId
                                 );
                                 return skill ? (
@@ -500,7 +500,9 @@ const ProjectSolutionsSkillsSection: React.FC<
                   </TableHeader>
                   <TableBody>
                     {allProjectSkills.map(ps => {
-                      const skill = skills.find(s => s.id === ps.skillId);
+                      const skill = (skills || []).find(
+                        s => s.id === ps.skillId
+                      );
                       const isFromSolution = skillsFromSolutions.some(
                         sfs => sfs.skillId === ps.skillId
                       );
@@ -787,7 +789,7 @@ const ProjectSolutionsSkillsSection: React.FC<
                             <TableCell>
                               <div className="flex flex-wrap gap-1">
                                 {Object.entries(
-                                  analysis.teamCoverage.proficiencyLevels
+                                  analysis.teamCoverage.proficiencyLevels || {}
                                 ).map(([level, count]) => (
                                   <Badge
                                     key={level}
