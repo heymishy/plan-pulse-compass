@@ -1,5 +1,25 @@
 # Plan Pulse Compass - Claude Development Guidelines
 
+## 🚀 Token Optimization Framework - MANDATORY
+
+**🔥 CRITICAL**: All development sessions MUST follow the [Token Optimization Framework](./CLAUDE_OPTIMIZATION.md) to minimize token consumption by 87%.
+
+**Quick Reference**:
+
+- 🎯 Use targeted file sections (200-400 tokens vs 2000+)
+- 📊 Summary-first approach for problem solving
+- 🔄 Build context incrementally, not upfront
+- 📦 Compress tool results and focus on essentials
+- 🎛️ Batch related operations strategically
+
+**Tools Available**:
+
+- `./scripts/test-summary.sh` - Token-efficient test results
+- `./scripts/targeted-grep.sh` - Specific file section reading
+- Progressive investigation phases instead of full context loading
+
+---
+
 ## Project Overview
 
 Plan Pulse Compass is a comprehensive planning and project management application built with React 18.3.1, TypeScript 5.5.3, and Vite 6.0.1. The project uses a modern tech stack with shadcn/ui components, Vitest for testing, and comprehensive CI/CD pipelines.

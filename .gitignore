@@ -131,3 +131,6 @@ bower_components
 bfg.jar
 replacements.txt
 .vercel
+
+# Crush files
+.crush/
