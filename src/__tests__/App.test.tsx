@@ -18,6 +18,9 @@ vi.mock('@/context/AppContext', () => ({
   AppProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  ScenarioAwareAppProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   useApp: () => ({
     isSetupComplete: false,
     isDataLoading: false,
@@ -49,6 +52,21 @@ vi.mock('@/context/ProjectContext', () => ({
   ProjectProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  useProjects: () => ({
+    projects: [],
+    setProjects: vi.fn(),
+    updateProject: vi.fn(),
+    epics: [],
+    setEpics: vi.fn(),
+    releases: [],
+    setReleases: vi.fn(),
+    solutions: [],
+    setSolutions: vi.fn(),
+    projectSkills: [],
+    setProjectSkills: vi.fn(),
+    projectSolutions: [],
+    setProjectSolutions: vi.fn(),
+  }),
 }));
 
 vi.mock('@/context/TeamContext', () => ({
@@ -69,12 +87,36 @@ vi.mock('@/context/PlanningContext', () => ({
   PlanningProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  usePlanning: () => ({
+    allocations: [],
+    setAllocations: vi.fn(),
+    cycles: [],
+    setCycles: vi.fn(),
+    runWorkCategories: [],
+    setRunWorkCategories: vi.fn(),
+    actualAllocations: [],
+    setActualAllocations: vi.fn(),
+    iterationReviews: [],
+    setIterationReviews: vi.fn(),
+    iterationSnapshots: [],
+    setIterationSnapshots: vi.fn(),
+  }),
 }));
 
 vi.mock('@/context/GoalContext', () => ({
   GoalProvider: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  useGoals: () => ({
+    northStar: null,
+    setNorthStar: vi.fn(),
+    goalEpics: [],
+    setGoalEpics: vi.fn(),
+    goalMilestones: [],
+    setGoalMilestones: vi.fn(),
+    goalTeams: [],
+    setGoalTeams: vi.fn(),
+  }),
 }));
 
 vi.mock('@/context/ThemeContext', () => ({
