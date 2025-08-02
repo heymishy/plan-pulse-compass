@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   BUN_VERSION: '1.0.0'
   # Resource optimization settings
   CI_CACHE_STRATEGY: 'aggressive'
