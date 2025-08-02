@@ -29,6 +29,15 @@ export default tseslint.config(
       '@typescript-eslint/no-empty-object-type': 'warn',
       '@typescript-eslint/no-require-imports': 'warn',
       'prefer-const': 'warn',
+      // Fix for ESLint rule loading error
+      '@typescript-eslint/no-unused-expressions': [
+        'error',
+        {
+          allowShortCircuit: false,
+          allowTernary: false,
+          allowTaggedTemplates: false,
+        },
+      ],
     },
   }
 );
