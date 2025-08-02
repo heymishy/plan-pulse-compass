@@ -36,7 +36,7 @@ export async function setupMockServiceWorker(page: Page) {
     if (!window.crypto) {
       Object.defineProperty(window, 'crypto', {
         value: {
-          getRandomValues: (arr: any) => {
+          getRandomValues: (arr: Uint8Array | Uint16Array | Uint32Array) => {
             for (let i = 0; i < arr.length; i++) {
               arr[i] = Math.floor(Math.random() * 256);
             }
@@ -57,7 +57,7 @@ export async function setupMockServiceWorker(page: Page) {
         VITE_O365_TENANT_ID: 'test-tenant-id',
         VITE_O365_REDIRECT_URI: 'http://localhost:3000/auth/callback',
       },
-    } as any;
+    } as NodeJS.Process;
   });
 
   // Set up default API route handlers
@@ -246,7 +246,10 @@ export async function mockO365Scenarios(page: Page) {
           });
         }
 
-        const response: any = { value: employees };
+        const response: {
+          value: typeof employees;
+          '@odata.nextLink'?: string;
+        } = { value: employees };
 
         // Add next link if there are more results
         if (skip + returnCount < totalEmployees) {

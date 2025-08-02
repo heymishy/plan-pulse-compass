@@ -78,6 +78,14 @@ export interface PersonSkill {
   notes?: string;
 }
 
+export interface SkillProficiency {
+  skillId: string;
+  skillName: string;
+  level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  yearsOfExperience?: number;
+  certifications?: string[];
+}
+
 export interface TeamSkillSummary {
   skillId: string;
   skillName: string;
@@ -90,6 +98,29 @@ export interface TeamSkillSummary {
     advanced: number;
     expert: number;
   };
+}
+
+export interface ProductivityMetric {
+  date: string;
+  value: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+export interface CostMetric {
+  date: string;
+  totalCost: number;
+  costPerPerson: number;
+  trend: 'up' | 'down' | 'stable';
+}
+
+export interface TeamAnalytics {
+  teamHealthScore: number; // Composite metric 0-100
+  knowledgeDistribution: Record<string, number>; // Skill coverage percentages
+  busFactor: number; // Single points of failure count
+  onboardingEfficiency: number; // Time to productivity in days
+  retentionRate: number; // 12-month rolling percentage
+  productivityTrends: ProductivityMetric[];
+  costTrends: CostMetric[];
 }
 
 // NEW: Project Risk Type
@@ -215,11 +246,19 @@ export interface Person {
   roleId: string;
   teamId: string;
   isActive: boolean;
-  employmentType: 'permanent' | 'contract' | 'temporary';
+  employmentType: 'permanent' | 'contractor' | 'temporary';
   annualSalary?: number;
   startDate: string;
   endDate?: string;
   skills?: string[];
+  // Enhanced analytics fields
+  seniorityLevel?: 'junior' | 'mid' | 'senior' | 'lead' | 'principal';
+  skillProficiencies?: SkillProficiency[];
+  performanceRating?: number; // 1-5 scale
+  retentionRisk?: 'low' | 'medium' | 'high';
+  careerProgressionPath?: string;
+  mentorshipCapacity?: number;
+  crossTrainingAreas?: string[];
 }
 
 export interface Team {

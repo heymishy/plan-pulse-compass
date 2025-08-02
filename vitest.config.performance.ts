@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
+import os from 'os';
 
 /**
  * High-performance Vitest configuration optimized for speed
@@ -31,10 +32,7 @@ export default defineConfig({
     poolOptions: {
       threads: {
         singleThread: false,
-        maxThreads: Math.min(
-          4,
-          Math.max(1, Math.floor(require('os').cpus().length / 2))
-        ),
+        maxThreads: Math.min(4, Math.max(1, Math.floor(os.cpus().length / 2))),
         minThreads: 2,
         isolate: false, // Faster execution, less isolation
       },
@@ -80,7 +78,7 @@ export default defineConfig({
     },
 
     // Optimized concurrency settings
-    maxConcurrency: Math.min(4, Math.max(1, require('os').cpus().length)),
+    maxConcurrency: Math.min(4, Math.max(1, os.cpus().length)),
     bail: 1, // Stop on first failure for faster feedback
 
     // Cache optimizations
