@@ -96,8 +96,9 @@ const ProjectSolutionsSkillsSection: React.FC<
   // Get available solutions (not already added)
   const availableSolutions = useMemo(
     () =>
-      solutions.filter(
-        solution => !projectSolutions.some(ps => ps.solutionId === solution.id)
+      (solutions || []).filter(
+        solution =>
+          !(projectSolutions || []).some(ps => ps.solutionId === solution.id)
       ),
     [solutions, projectSolutions]
   );
@@ -107,9 +108,9 @@ const ProjectSolutionsSkillsSection: React.FC<
     const skillIds = new Set<string>();
     const result: ProjectSkill[] = [];
 
-    projectSolutions.forEach(ps => {
-      const solution = solutions.find(s => s.id === ps.solutionId);
-      if (solution) {
+    (projectSolutions || []).forEach(ps => {
+      const solution = (solutions || []).find(s => s.id === ps.solutionId);
+      if (solution && solution.skills && Array.isArray(solution.skills)) {
         solution.skills.forEach(skillId => {
           if (!skillIds.has(skillId)) {
             skillIds.add(skillId);
@@ -133,7 +134,7 @@ const ProjectSolutionsSkillsSection: React.FC<
     const combined = [...skillsFromSolutions];
 
     // Add manual skills that aren't already covered by solutions
-    projectSkills.forEach(ps => {
+    (projectSkills || []).forEach(ps => {
       if (!skillsFromSolutions.some(sfs => sfs.skillId === ps.skillId)) {
         combined.push(ps);
       }
@@ -146,16 +147,16 @@ const ProjectSolutionsSkillsSection: React.FC<
   const skillAnalysis = useMemo((): SkillAnalysis[] => {
     return allProjectSkills
       .map(ps => {
-        const skill = skills.find(s => s.id === ps.skillId);
+        const skill = (skills || []).find(s => s.id === ps.skillId);
         if (!skill) return null;
 
         // Calculate team coverage
-        const teamMembers = people.filter(p =>
-          teams.some(t => t.id === p.teamId)
+        const teamMembers = (people || []).filter(p =>
+          (teams || []).some(t => t.id === p.teamId)
         );
 
         const skillHolders = teamMembers.filter(person =>
-          personSkills.some(
+          (personSkills || []).some(
             pSkill =>
               pSkill.personId === person.id && pSkill.skillId === ps.skillId
           )
@@ -163,7 +164,7 @@ const ProjectSolutionsSkillsSection: React.FC<
 
         const proficiencyLevels = skillHolders.reduce(
           (acc, person) => {
-            const pSkill = personSkills.find(
+            const pSkill = (personSkills || []).find(
               pSkill =>
                 pSkill.personId === person.id && pSkill.skillId === ps.skillId
             );
