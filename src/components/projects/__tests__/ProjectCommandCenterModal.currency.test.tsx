@@ -8,6 +8,7 @@ import {
 } from '../ProjectCommandCenterModal';
 import { Project, Epic, Milestone, Team, Person } from '@/types';
 import { calculateProjectCost } from '@/utils/financialCalculations';
+import { SettingsProvider } from '@/context/SettingsContext';
 
 // Mock the required contexts and utilities
 const mockUseApp = {
@@ -25,6 +26,46 @@ const mockUseApp = {
   deleteMilestone: vi.fn(),
   allocations: [],
   cycles: [],
+  roles: [],
+  setRoles: vi.fn(),
+  projectSolutions: [],
+  setProjectSolutions: vi.fn(),
+  projectSkills: [],
+  setProjectSkills: vi.fn(),
+  solutions: [],
+  setSolutions: vi.fn(),
+  skills: [],
+  setSkills: vi.fn(),
+  runWorkCategories: [],
+  setRunWorkCategories: vi.fn(),
+  actualAllocations: [],
+  setActualAllocations: vi.fn(),
+  config: {
+    financialYear: {
+      id: 'fy-2024',
+      name: 'FY 2024',
+      startDate: '2024-01-01',
+      endDate: '2024-12-31',
+      quarters: ['q1-2024', 'q2-2024', 'q3-2024', 'q4-2024'],
+    },
+    iterationLength: 'fortnightly' as const,
+    quarters: [],
+    workingDaysPerWeek: 5,
+    workingHoursPerDay: 8,
+    workingDaysPerYear: 260,
+    workingDaysPerMonth: 22,
+    currencySymbol: '$',
+  },
+  setConfig: vi.fn(),
+  divisions: [],
+  setDivisions: vi.fn(),
+  setProjects: vi.fn(),
+  setEpics: vi.fn(),
+  setMilestones: vi.fn(),
+  setTeams: vi.fn(),
+  setPeople: vi.fn(),
+  setAllocations: vi.fn(),
+  setCycles: vi.fn(),
 };
 
 const mockUseToast = {
@@ -58,7 +99,33 @@ vi.mock('@/utils/projectBudgetUtils', () => ({
   calculateProjectTotalBudget: () => 600000,
 }));
 
-describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
+// Mock useSettings hook with proper config
+vi.mock('@/context/SettingsContext', () => ({
+  useSettings: vi.fn(() => ({
+    config: {
+      financialYear: {
+        id: 'fy-2024',
+        name: 'FY 2024',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+        quarters: ['q1-2024', 'q2-2024', 'q3-2024', 'q4-2024'],
+      },
+      iterationLength: 'fortnightly' as const,
+      quarters: [],
+      workingDaysPerWeek: 5,
+      workingHoursPerDay: 8,
+      workingDaysPerYear: 260,
+      workingDaysPerMonth: 22,
+      currencySymbol: '$',
+    },
+    setConfig: vi.fn(),
+  })),
+  SettingsProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+describe('ProjectCommandCenterModal Currency Formatting', () => {
   const mockProject: Project = {
     id: 'project-1',
     name: 'Test Project',
@@ -101,23 +168,32 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
     }));
   });
 
+  // Helper function to render component with proper context
+  const renderWithContext = (props: ProjectCommandCenterModalProps) => {
+    return render(
+      <SettingsProvider>
+        <ProjectCommandCenterModal {...props} />
+      </SettingsProvider>
+    );
+  };
+
   describe('overview tab currency formatting', () => {
     it('should display estimated cost with proper comma formatting', () => {
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       // Should show estimated cost with commas
       expect(screen.getByText('$500,000')).toBeInTheDocument();
     });
 
     it('should display monthly burn rate with proper comma formatting', () => {
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       // Should show monthly burn rate with commas
       expect(screen.getByText('$25,000')).toBeInTheDocument();
     });
 
     it('should display budget variance with proper comma formatting', () => {
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       // Budget is $600,000, cost is $500,000, so variance should be $100,000
       expect(screen.getByText('$100,000')).toBeInTheDocument();
@@ -127,7 +203,7 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
   describe('financials tab currency formatting', () => {
     it('should display total estimated cost in financials tab with commas', async () => {
       const user = userEvent.setup();
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       // Switch to financials tab
       const financialsTab = screen.getByTestId('financials-tab');
@@ -144,7 +220,7 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
 
     it('should display monthly burn rate in financials tab with commas', async () => {
       const user = userEvent.setup();
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       // Switch to financials tab
       const financialsTab = screen.getByTestId('financials-tab');
@@ -161,7 +237,7 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
 
     it('should display budget variance in financials tab with proper formatting', async () => {
       const user = userEvent.setup();
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       // Switch to financials tab
       const financialsTab = screen.getByTestId('financials-tab');
@@ -196,9 +272,7 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
         }));
 
         const user = userEvent.setup();
-        const { unmount } = render(
-          <ProjectCommandCenterModal {...defaultProps} />
-        );
+        const { unmount } = renderWithContext(defaultProps);
 
         // Switch to financials tab to see the currency formatting
         const financialsTab = screen.getByTestId('financials-tab');
@@ -228,7 +302,7 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
 
   describe('budget input field', () => {
     it('should display currency symbol in budget input field', () => {
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       // Should show $ symbol in budget input
       const budgetSection = screen.getByLabelText('Budget').closest('div');
@@ -237,7 +311,7 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
     });
 
     it('should handle budget input changes correctly', () => {
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       const budgetInput = screen.getByTestId(
         'project-budget'
@@ -252,7 +326,7 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
   describe('financial year budget integration', () => {
     it('should integrate properly with ProjectFinancialYearBudgetEditor', async () => {
       const user = userEvent.setup();
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       // Verify we're on the overview tab initially
       expect(screen.getByTestId('overview-tab')).toHaveAttribute(
@@ -276,37 +350,35 @@ describe.skip('ProjectCommandCenterModal Currency Formatting', () => {
 
   describe('edge cases', () => {
     it('should handle zero amounts correctly', () => {
-      const mockCalculateProjectCost = vi.fn().mockReturnValue({
+      // Reset the mock to return zero values
+      const mockCalc = vi.mocked(calculateProjectCost);
+      mockCalc.mockImplementation(() => ({
         totalCost: 0,
         breakdown: [],
         teamBreakdown: [],
         monthlyBurnRate: 0,
         totalDurationInDays: 0,
-      });
-
-      vi.doMock('@/utils/financialCalculations', () => ({
-        calculateProjectCost: mockCalculateProjectCost,
       }));
 
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
-      expect(screen.getByText('$0')).toBeInTheDocument();
+      // Expect multiple $0 elements since cost appears in multiple places
+      const zeroAmountElements = screen.getAllByText('$0');
+      expect(zeroAmountElements.length).toBeGreaterThan(0);
     });
 
     it('should handle very large amounts correctly', () => {
-      const mockCalculateProjectCost = vi.fn().mockReturnValue({
+      // Reset the mock to return large values
+      const mockCalc = vi.mocked(calculateProjectCost);
+      mockCalc.mockImplementation(() => ({
         totalCost: 999999999,
         breakdown: [],
         teamBreakdown: [],
         monthlyBurnRate: 83333333,
         totalDurationInDays: 365,
-      });
-
-      vi.doMock('@/utils/financialCalculations', () => ({
-        calculateProjectCost: mockCalculateProjectCost,
       }));
 
-      render(<ProjectCommandCenterModal {...defaultProps} />);
+      renderWithContext(defaultProps);
 
       expect(screen.getByText('$999,999,999')).toBeInTheDocument();
       expect(screen.getByText('$83,333,333')).toBeInTheDocument();
