@@ -1,36 +1,71 @@
-
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Upload, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { parseAllocationCSV, validateAllocationImport, convertImportToAllocations, downloadAllocationSampleCSV, AllocationImportRow } from '@/utils/allocationImportUtils';
+import {
+  parseAllocationCSV,
+  validateAllocationImport,
+  convertImportToAllocations,
+  downloadAllocationSampleCSV,
+  AllocationImportRow,
+} from '@/utils/allocationImportUtils';
 
 interface AllocationImportDialogProps {
   onImportComplete: () => void;
 }
 
-const AllocationImportDialog: React.FC<AllocationImportDialogProps> = ({ onImportComplete }) => {
-  const { teams, epics, runWorkCategories, cycles, allocations, setAllocations } = useApp();
+const AllocationImportDialog: React.FC<AllocationImportDialogProps> = ({
+  onImportComplete,
+}) => {
+  const {
+    teams,
+    epics,
+    runWorkCategories,
+    cycles,
+    allocations,
+    setAllocations,
+  } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [importData, setImportData] = useState<AllocationImportRow[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async e => {
       try {
         const text = e.target?.result as string;
-        const parsed = parseAllocationCSV(text);
-        const { valid, errors } = validateAllocationImport(parsed, teams, epics, runWorkCategories, cycles);
-        
+        const parsed = await parseAllocationCSV(text);
+        const { valid, errors } = await validateAllocationImport(
+          parsed,
+          teams,
+          epics,
+          runWorkCategories,
+          cycles
+        );
+
         setImportData(valid);
         setErrors(errors);
       } catch (error) {
@@ -43,12 +78,18 @@ const AllocationImportDialog: React.FC<AllocationImportDialogProps> = ({ onImpor
 
   const handleImport = () => {
     if (importData.length === 0) return;
-    
+
     setIsProcessing(true);
     try {
-      const newAllocations = convertImportToAllocations(importData, teams, epics, runWorkCategories, cycles);
+      const newAllocations = convertImportToAllocations(
+        importData,
+        teams,
+        epics,
+        runWorkCategories,
+        cycles
+      );
       setAllocations(prev => [...prev, ...newAllocations]);
-      
+
       setIsOpen(false);
       setImportData([]);
       setErrors([]);
@@ -77,7 +118,7 @@ const AllocationImportDialog: React.FC<AllocationImportDialogProps> = ({ onImpor
         <DialogHeader>
           <DialogTitle>Import Team Allocations</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Instructions and Sample Download */}
           <div className="space-y-4">
@@ -85,15 +126,21 @@ const AllocationImportDialog: React.FC<AllocationImportDialogProps> = ({ onImpor
               <div>
                 <h3 className="font-medium">Upload CSV File</h3>
                 <p className="text-sm text-gray-600">
-                  Import team allocations for the quarter. Required columns: Team Name, Epic Name, Epic Type, Sprint Number, Percentage, Quarter
+                  Import team allocations for the quarter. Required columns:
+                  Team Name, Epic Name, Epic Type, Sprint Number, Percentage,
+                  Quarter
                 </p>
               </div>
-              <Button variant="outline" onClick={downloadAllocationSampleCSV} className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                onClick={downloadAllocationSampleCSV}
+                className="flex items-center space-x-2"
+              >
                 <Download className="h-4 w-4" />
                 <span>Sample CSV</span>
               </Button>
             </div>
-            
+
             <Input
               type="file"
               accept=".csv"
@@ -121,7 +168,8 @@ const AllocationImportDialog: React.FC<AllocationImportDialogProps> = ({ onImpor
             <Alert>
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                Successfully validated {importData.length} allocation records. Review the data below and click Import to proceed.
+                Successfully validated {importData.length} allocation records.
+                Review the data below and click Import to proceed.
               </AlertDescription>
             </Alert>
           )}
@@ -129,7 +177,9 @@ const AllocationImportDialog: React.FC<AllocationImportDialogProps> = ({ onImpor
           {/* Data Preview */}
           {importData.length > 0 && (
             <div>
-              <h3 className="font-medium mb-3">Data Preview ({importData.length} records)</h3>
+              <h3 className="font-medium mb-3">
+                Data Preview ({importData.length} records)
+              </h3>
               <div className="border rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -170,14 +220,22 @@ const AllocationImportDialog: React.FC<AllocationImportDialogProps> = ({ onImpor
               Reset
             </Button>
             <div className="space-x-2">
-              <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isProcessing}>
+              <Button
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                disabled={isProcessing}
+              >
                 Cancel
               </Button>
-              <Button 
-                onClick={handleImport} 
-                disabled={importData.length === 0 || errors.length > 0 || isProcessing}
+              <Button
+                onClick={handleImport}
+                disabled={
+                  importData.length === 0 || errors.length > 0 || isProcessing
+                }
               >
-                {isProcessing ? 'Importing...' : `Import ${importData.length} Records`}
+                {isProcessing
+                  ? 'Importing...'
+                  : `Import ${importData.length} Records`}
               </Button>
             </div>
           </div>

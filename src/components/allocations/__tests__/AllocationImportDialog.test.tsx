@@ -18,9 +18,9 @@ import { useApp } from '@/context/AppContext';
 
 // Mock the utils module with enhanced cleanup
 vi.mock('@/utils/allocationImportUtils', () => ({
-  parseAllocationCSV: vi.fn(),
-  validateAllocationImport: vi.fn(),
-  convertImportToAllocations: vi.fn(),
+  parseAllocationCSV: vi.fn().mockResolvedValue(mockAllocationData),
+  validateAllocationImport: vi.fn().mockResolvedValue(mockValidationResult),
+  convertImportToAllocations: vi.fn().mockReturnValue(mockAllocations),
   downloadAllocationSampleCSV: vi.fn(),
 }));
 
