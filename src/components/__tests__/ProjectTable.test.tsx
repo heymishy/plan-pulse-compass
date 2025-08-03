@@ -50,15 +50,36 @@ describe('ProjectTable', () => {
     mockUseToast.mockReturnValue({ toast: mockToast });
 
     mockUseApp.mockReturnValue({
+      projects: [],
       setProjects: vi.fn(),
-      setEpics: vi.fn(),
       epics: [],
+      setEpics: vi.fn(),
       allocations: [],
       cycles: [],
       people: [],
       roles: [],
       teams: [],
-    } as any);
+      config: {
+        financialYear: {
+          id: 'fy2024',
+          name: 'FY2024',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
+          quarters: [],
+        },
+        priorityLevels: [],
+      },
+      setAllocations: vi.fn(),
+      setCycles: vi.fn(),
+      setPeople: vi.fn(),
+      setRoles: vi.fn(),
+      setTeams: vi.fn(),
+      setConfig: vi.fn(),
+      isLoading: false,
+      error: null,
+      lastSync: null,
+      syncData: vi.fn(),
+    });
   });
 
   it('should handle undefined project status gracefully (defensive coding test)', () => {

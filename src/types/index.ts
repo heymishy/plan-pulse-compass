@@ -49,6 +49,16 @@ export interface ProjectCost {
   }[];
 }
 
+export interface TeamMoveImpact {
+  personName: string;
+  originalTeamId: string;
+  newTeamId: string;
+  impactOnOriginalTeam: number;
+  impactOnNewTeam: number;
+  newCostOfOriginalTeam: number;
+  newCostOfNewTeam: number;
+}
+
 // Skills Management Types
 export interface Skill {
   id: string;

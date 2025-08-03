@@ -1,4 +1,4 @@
-import { Person, Team, Role, AppConfig } from '../types';
+import { Person, Team, Role, AppConfig, TeamMoveImpact } from '../types';
 import { calculatePersonCost } from './financialCalculations';
 
 /**
@@ -42,7 +42,7 @@ export const analyzeTeamMoveImpact = (
   roles: Role[],
   teams: Team[],
   config: AppConfig
-) => {
+): TeamMoveImpact => {
   const originalTeamId = person.teamId;
   const originalTeam = teams.find(t => t.id === originalTeamId);
 

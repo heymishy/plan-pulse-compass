@@ -1,0 +1,772 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  getProjectRequiredSkills,
+  calculateTeamProjectCompatibility,
+  analyzeProjectSkillGaps,
+  filterTeamsBySkills,
+  analyzeSkillCoverage,
+  recommendTeamsForProject,
+} from '../skillBasedPlanning';
+import { Team, Project, Skill, ProjectSkill, Solution } from '@/types';
+
+describe('Skills-Based Planning Utilities', () => {
+  let mockTeams: Team[];
+  let mockProjects: Project[];
+  let mockSkills: Skill[];
+  let mockProjectSkills: ProjectSkill[];
+  let mockSolutions: Solution[];
+
+  beforeEach(() => {
+    mockSkills = [
+      {
+        id: 'skill1',
+        name: 'React',
+        category: 'Frontend',
+        description: 'React.js library',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'skill2',
+        name: 'Node.js',
+        category: 'Backend',
+        description: 'Node.js runtime',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'skill3',
+        name: 'TypeScript',
+        category: 'Language',
+        description: 'TypeScript language',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'skill4',
+        name: 'Vue.js',
+        category: 'Frontend',
+        description: 'Vue.js framework',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'skill5',
+        name: 'Python',
+        category: 'Language',
+        description: 'Python programming language',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'skill6',
+        name: 'Docker',
+        category: 'DevOps',
+        description: 'Container platform',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+    ];
+
+    mockTeams = [
+      {
+        id: 'team1',
+        name: 'Frontend Team',
+        description: 'UI development team',
+        type: 'permanent',
+        status: 'active',
+        divisionId: 'engineering',
+        capacity: 40,
+        targetSkills: ['skill1', 'skill3'], // React, TypeScript
+        projectIds: [],
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModified: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'team2',
+        name: 'Backend Team',
+        description: 'API development team',
+        type: 'permanent',
+        status: 'active',
+        divisionId: 'engineering',
+        capacity: 60,
+        targetSkills: ['skill2', 'skill3', 'skill6'], // Node.js, TypeScript, Docker
+        projectIds: [],
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModified: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'team3',
+        name: 'Full Stack Team',
+        description: 'Full stack development team',
+        type: 'permanent',
+        status: 'active',
+        divisionId: 'engineering',
+        capacity: 50,
+        targetSkills: ['skill1', 'skill2', 'skill3'], // React, Node.js, TypeScript
+        projectIds: [],
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModified: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'team4',
+        name: 'Python Team',
+        description: 'Python development team',
+        type: 'permanent',
+        status: 'active',
+        divisionId: 'data',
+        capacity: 30,
+        targetSkills: ['skill5', 'skill6'], // Python, Docker
+        projectIds: [],
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModified: '2024-01-01T00:00:00Z',
+      },
+    ];
+
+    mockSolutions = [
+      {
+        id: 'solution1',
+        name: 'Web Application',
+        description: 'Modern web application solution',
+        skills: ['skill1', 'skill3'], // React, TypeScript
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'solution2',
+        name: 'API Service',
+        description: 'RESTful API service solution',
+        skills: ['skill2', 'skill3', 'skill6'], // Node.js, TypeScript, Docker
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+    ];
+
+    mockProjects = [
+      {
+        id: 'project1',
+        name: 'E-commerce Platform',
+        description: 'Online shopping platform',
+        status: 'active',
+        priority: 'high',
+        type: 'development',
+        budgetAllocated: 100000,
+        solutionIds: ['solution1'], // Web Application
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModified: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'project2',
+        name: 'Data Analytics API',
+        description: 'Analytics API service',
+        status: 'active',
+        priority: 'medium',
+        type: 'development',
+        budgetAllocated: 75000,
+        solutionIds: ['solution2'], // API Service
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModified: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'project3',
+        name: 'Full Stack Application',
+        description: 'Complete web application with API',
+        status: 'active',
+        priority: 'high',
+        type: 'development',
+        budgetAllocated: 150000,
+        solutionIds: ['solution1', 'solution2'], // Both solutions
+        createdDate: '2024-01-01T00:00:00Z',
+        lastModified: '2024-01-01T00:00:00Z',
+      },
+    ];
+
+    mockProjectSkills = [
+      {
+        id: 'ps1',
+        projectId: 'project1',
+        skillId: 'skill4', // Vue.js (additional to solution skills)
+      },
+      {
+        id: 'ps2',
+        projectId: 'project2',
+        skillId: 'skill5', // Python (additional to solution skills)
+      },
+    ];
+  });
+
+  describe('getProjectRequiredSkills', () => {
+    it('should get skills from project solutions', () => {
+      const requiredSkills = getProjectRequiredSkills(
+        mockProjects[0], // E-commerce Platform with Web Application solution
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(requiredSkills).toHaveLength(2);
+      expect(requiredSkills.map(s => s.skillName)).toEqual([
+        'React',
+        'TypeScript',
+      ]);
+      expect(requiredSkills.every(s => s.source === 'solution')).toBe(true);
+    });
+
+    it('should get skills from project-specific skills', () => {
+      const requiredSkills = getProjectRequiredSkills(
+        mockProjects[0], // E-commerce Platform
+        mockProjectSkills.filter(ps => ps.projectId === 'project1'),
+        [],
+        mockSkills
+      );
+
+      expect(requiredSkills).toHaveLength(1);
+      expect(requiredSkills[0].skillName).toBe('Vue.js');
+      expect(requiredSkills[0].source).toBe('project');
+    });
+
+    it('should combine solution skills and project-specific skills', () => {
+      const requiredSkills = getProjectRequiredSkills(
+        mockProjects[0], // E-commerce Platform
+        mockProjectSkills.filter(ps => ps.projectId === 'project1'),
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(requiredSkills).toHaveLength(3);
+      const skillNames = requiredSkills.map(s => s.skillName).sort();
+      expect(skillNames).toEqual(['React', 'TypeScript', 'Vue.js']);
+    });
+
+    it('should handle projects with multiple solutions', () => {
+      const requiredSkills = getProjectRequiredSkills(
+        mockProjects[2], // Full Stack Application
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(requiredSkills).toHaveLength(4); // React, TypeScript, Node.js, Docker
+      const skillNames = requiredSkills.map(s => s.skillName).sort();
+      expect(skillNames).toEqual(['Docker', 'Node.js', 'React', 'TypeScript']);
+    });
+
+    it('should handle missing solutions gracefully', () => {
+      const projectWithMissingSolution = {
+        ...mockProjects[0],
+        solutionIds: ['non-existent-solution'],
+      };
+
+      const requiredSkills = getProjectRequiredSkills(
+        projectWithMissingSolution,
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(requiredSkills).toHaveLength(0);
+    });
+  });
+
+  describe('calculateTeamProjectCompatibility', () => {
+    it('should calculate perfect compatibility for exact skill match', () => {
+      const compatibility = calculateTeamProjectCompatibility(
+        mockTeams[0], // Frontend Team: React, TypeScript
+        mockProjects[0], // E-commerce Platform requires: React, TypeScript, Vue.js
+        mockProjectSkills.filter(ps => ps.projectId === 'project1'),
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(compatibility.teamId).toBe('team1');
+      expect(compatibility.projectId).toBe('project1');
+      expect(compatibility.skillsRequired).toBe(3);
+      expect(compatibility.skillsMatched).toBe(2); // React, TypeScript
+      expect(compatibility.skillsGap).toBe(1); // Missing Vue.js
+      expect(compatibility.compatibilityScore).toBeCloseTo(0.67, 1); // 2/3 ≈ 0.67
+      expect(compatibility.recommendation).toBe('good'); // 67% is good, not fair
+    });
+
+    it('should calculate high compatibility for full stack team', () => {
+      const compatibility = calculateTeamProjectCompatibility(
+        mockTeams[2], // Full Stack Team: React, Node.js, TypeScript
+        mockProjects[2], // Full Stack Application requires: React, TypeScript, Node.js, Docker
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(compatibility.compatibilityScore).toBeCloseTo(0.75, 2); // 3/4
+      expect(compatibility.recommendation).toBe('good');
+      expect(compatibility.skillsMatched).toBe(3);
+      expect(compatibility.skillsGap).toBe(1); // Missing Docker
+    });
+
+    it('should identify category matches for related skills', () => {
+      const compatibility = calculateTeamProjectCompatibility(
+        mockTeams[0], // Frontend Team: React, TypeScript
+        {
+          ...mockProjects[0],
+          solutionIds: [], // Remove solution requirements
+        },
+        [{ id: 'ps1', projectId: 'project1', skillId: 'skill4' }], // Requires Vue.js
+        mockSolutions,
+        mockSkills
+      );
+
+      const vueSkillMatch = compatibility.skillMatches.find(
+        sm => sm.skillName === 'Vue.js'
+      );
+      expect(vueSkillMatch?.matchType).toBe('category'); // Team has React (same Frontend category)
+    });
+
+    it('should provide detailed reasoning for recommendations', () => {
+      const compatibility = calculateTeamProjectCompatibility(
+        mockTeams[2], // Full Stack Team
+        mockProjects[2], // Full Stack Application
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(compatibility.reasoning).toContain(
+        'Good skill compatibility (75%)'
+      );
+      expect(compatibility.reasoning.some(r => r.includes('Strong in:'))).toBe(
+        true
+      );
+    });
+
+    it('should handle teams with no matching skills', () => {
+      const compatibility = calculateTeamProjectCompatibility(
+        mockTeams[3], // Python Team: Python, Docker
+        mockProjects[0], // E-commerce Platform requires: React, TypeScript, Vue.js
+        mockProjectSkills.filter(ps => ps.projectId === 'project1'),
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(compatibility.compatibilityScore).toBeCloseTo(0, 1); // Should be 0 or very close
+      expect(compatibility.recommendation).toBe('poor');
+      expect(compatibility.skillsMatched).toBe(0);
+      expect(compatibility.skillsGap).toBe(3);
+    });
+
+    it('should handle empty skill requirements', () => {
+      const projectWithNoSkills = {
+        ...mockProjects[0],
+        solutionIds: [],
+      };
+
+      const compatibility = calculateTeamProjectCompatibility(
+        mockTeams[0],
+        projectWithNoSkills,
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(compatibility.compatibilityScore).toBe(0);
+      expect(compatibility.skillsRequired).toBe(0);
+      expect(compatibility.skillsMatched).toBe(0);
+    });
+  });
+
+  describe('analyzeProjectSkillGaps', () => {
+    it('should identify the best team for a project', () => {
+      const analysis = analyzeProjectSkillGaps(
+        mockProjects[2], // Full Stack Application
+        mockTeams,
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(analysis.projectId).toBe('project3');
+      expect(analysis.projectName).toBe('Full Stack Application');
+      expect(analysis.recommendations.bestTeam).toBe('team2'); // Backend Team should be best (3/4 skills)
+    });
+
+    it('should identify skill gaps across teams', () => {
+      const analysis = analyzeProjectSkillGaps(
+        mockProjects[0], // E-commerce Platform requires: React, TypeScript, Vue.js
+        mockTeams,
+        mockProjectSkills.filter(ps => ps.projectId === 'project1'),
+        mockSolutions,
+        mockSkills
+      );
+
+      const vueGap = analysis.recommendations.skillGaps.find(
+        gap => gap.skillName === 'Vue.js'
+      );
+      expect(vueGap).toBeDefined();
+      expect(vueGap?.teamsNeeding.length).toBeGreaterThan(0);
+    });
+
+    it('should categorize skill priorities correctly', () => {
+      const analysis = analyzeProjectSkillGaps(
+        mockProjects[2], // Full Stack Application
+        mockTeams,
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      const dockerGap = analysis.recommendations.skillGaps.find(
+        gap => gap.skillName === 'Docker'
+      );
+      expect(dockerGap?.priority).toBe('important'); // Most teams lack Docker
+    });
+
+    it('should provide training and hiring recommendations', () => {
+      const analysis = analyzeProjectSkillGaps(
+        mockProjects[2], // Full Stack Application
+        mockTeams,
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(analysis.recommendations.trainingNeeds).toBeDefined();
+      expect(analysis.recommendations.hiringNeeds).toBeDefined();
+    });
+
+    it('should handle projects with no matching teams', () => {
+      const pythonOnlyProject = {
+        ...mockProjects[0],
+        solutionIds: [],
+      };
+      const pythonOnlyProjectSkills = [
+        { id: 'ps1', projectId: 'project1', skillId: 'skill5' }, // Python only
+      ];
+
+      const analysis = analyzeProjectSkillGaps(
+        pythonOnlyProject,
+        [mockTeams[0], mockTeams[1]], // Frontend and Backend teams (no Python)
+        pythonOnlyProjectSkills,
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(analysis.recommendations.bestTeam).toBeNull();
+    });
+  });
+
+  describe('filterTeamsBySkills', () => {
+    it('should filter teams by required skills', () => {
+      const filteredTeams = filterTeamsBySkills(
+        mockTeams,
+        ['skill1', 'skill3'], // React, TypeScript
+        mockSkills,
+        0.5 // 50% minimum compatibility
+      );
+
+      expect(filteredTeams).toHaveLength(3); // Frontend, Full Stack, and Backend teams all have TypeScript
+      expect(filteredTeams[0].compatibilityScore).toBe(1); // Full Stack team has both
+      expect(filteredTeams[1].compatibilityScore).toBe(1); // Frontend team has both
+    });
+
+    it('should sort results by compatibility score', () => {
+      const filteredTeams = filterTeamsBySkills(
+        mockTeams,
+        ['skill1', 'skill2', 'skill3'], // React, Node.js, TypeScript
+        mockSkills,
+        0.3
+      );
+
+      expect(filteredTeams).toHaveLength(3); // Full Stack, Backend, and Frontend teams
+      expect(filteredTeams[0].compatibilityScore).toBe(1); // Full Stack team has all 3
+      expect(filteredTeams[1].compatibilityScore).toBeCloseTo(0.67, 2); // Backend team has 2/3
+    });
+
+    it('should include matching skills in results', () => {
+      const filteredTeams = filterTeamsBySkills(
+        mockTeams,
+        ['skill1', 'skill2'], // React, Node.js
+        mockSkills,
+        0.4
+      );
+
+      const fullStackResult = filteredTeams.find(
+        result => result.team.id === 'team3'
+      );
+      expect(fullStackResult?.matchingSkills).toEqual(['React', 'Node.js']);
+    });
+
+    it('should handle empty skill requirements', () => {
+      const filteredTeams = filterTeamsBySkills(mockTeams, [], mockSkills);
+
+      expect(filteredTeams).toHaveLength(mockTeams.length);
+      expect(
+        filteredTeams.every(result => result.compatibilityScore === 1)
+      ).toBe(true);
+    });
+
+    it('should respect minimum compatibility threshold', () => {
+      const filteredTeams = filterTeamsBySkills(
+        mockTeams,
+        ['skill1', 'skill2', 'skill3'], // React, Node.js, TypeScript
+        mockSkills,
+        0.8 // 80% minimum compatibility
+      );
+
+      expect(filteredTeams).toHaveLength(1); // Only Full Stack team meets 80%
+      expect(filteredTeams[0].team.id).toBe('team3');
+    });
+  });
+
+  describe('analyzeSkillCoverage', () => {
+    it('should calculate overall skill coverage', () => {
+      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+
+      expect(coverage.totalSkills).toBe(6);
+      expect(coverage.coveredSkills).toBe(5); // All except Vue.js
+      expect(coverage.coveragePercentage).toBeCloseTo(83.33, 2);
+    });
+
+    it('should identify skills coverage per skill', () => {
+      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+
+      const reactCoverage = coverage.skillCoverage.find(
+        sc => sc.skillName === 'React'
+      );
+      expect(reactCoverage?.coverageCount).toBe(2); // Frontend and Full Stack teams
+      expect(reactCoverage?.teamsWithSkill).toHaveLength(2);
+
+      const vueCoverage = coverage.skillCoverage.find(
+        sc => sc.skillName === 'Vue.js'
+      );
+      expect(vueCoverage?.coverageCount).toBe(0);
+      expect(vueCoverage?.isAtRisk).toBe(true);
+    });
+
+    it('should analyze coverage by category', () => {
+      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+
+      expect(coverage.categoryAnalysis['Frontend']).toBeDefined();
+      expect(coverage.categoryAnalysis['Frontend'].totalSkills).toBe(2); // React, Vue.js
+      expect(coverage.categoryAnalysis['Frontend'].coveredSkills).toBe(1); // Only React
+      expect(coverage.categoryAnalysis['Frontend'].coveragePercentage).toBe(50);
+    });
+
+    it('should identify well-covered and at-risk skills', () => {
+      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+
+      expect(coverage.recommendations.skillsAtRisk).toContain('Vue.js');
+      expect(coverage.recommendations.skillsWellCovered).toContain(
+        'TypeScript'
+      ); // 3 teams
+    });
+
+    it('should identify categories needing attention', () => {
+      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+
+      expect(coverage.recommendations.categoriesNeedingAttention).toContain(
+        'Frontend'
+      ); // 50% coverage
+    });
+
+    it('should handle teams with no skills', () => {
+      const teamsWithoutSkills = [
+        { ...mockTeams[0], targetSkills: [] },
+        { ...mockTeams[1], targetSkills: [] },
+      ];
+
+      const coverage = analyzeSkillCoverage(teamsWithoutSkills, mockSkills);
+
+      expect(coverage.coveredSkills).toBe(0);
+      expect(coverage.coveragePercentage).toBe(0);
+      expect(coverage.recommendations.skillsAtRisk).toHaveLength(6); // All skills at risk
+    });
+  });
+
+  describe('recommendTeamsForProject', () => {
+    it('should recommend best teams for a project', () => {
+      const recommendations = recommendTeamsForProject(
+        mockProjects[2], // Full Stack Application
+        mockTeams,
+        [],
+        mockSolutions,
+        mockSkills,
+        3
+      );
+
+      expect(recommendations).toHaveLength(3);
+      expect(recommendations[0].rank).toBe(1);
+      expect(recommendations[0].team.id).toBe('team2'); // Backend team should be #1 (has 3/4 skills)
+      expect(recommendations[0].recommendation).toContain('Good match');
+    });
+
+    it('should provide ranked recommendations with explanations', () => {
+      const recommendations = recommendTeamsForProject(
+        mockProjects[0], // E-commerce Platform
+        mockTeams,
+        mockProjectSkills.filter(ps => ps.projectId === 'project1'),
+        mockSolutions,
+        mockSkills,
+        2
+      );
+
+      expect(recommendations).toHaveLength(2);
+      expect(recommendations[0].rank).toBe(1);
+      expect(recommendations[1].rank).toBe(2);
+      expect(recommendations[0].recommendation).toBeDefined();
+      expect(recommendations[1].recommendation).toBeDefined();
+    });
+
+    it('should respect maximum recommendations limit', () => {
+      const recommendations = recommendTeamsForProject(
+        mockProjects[2],
+        mockTeams,
+        [],
+        mockSolutions,
+        mockSkills,
+        2 // Limit to 2 recommendations
+      );
+
+      expect(recommendations).toHaveLength(2);
+    });
+
+    it('should handle projects requiring skills no teams have', () => {
+      const specializedProject = {
+        ...mockProjects[0],
+        solutionIds: [],
+      };
+      const specializedProjectSkills = [
+        { id: 'ps1', projectId: 'project1', skillId: 'skill4' }, // Vue.js only
+      ];
+
+      const recommendations = recommendTeamsForProject(
+        specializedProject,
+        mockTeams,
+        specializedProjectSkills,
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(recommendations).toHaveLength(3);
+      // Frontend team should be top (has React, same category as Vue.js)
+      expect(recommendations[0].compatibility.compatibilityScore).toBeCloseTo(
+        0.1,
+        1
+      ); // Small category bonus for Frontend team
+    });
+
+    it('should provide appropriate recommendations for different compatibility levels', () => {
+      const recommendations = recommendTeamsForProject(
+        mockProjects[2], // Full Stack Application
+        mockTeams,
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      const topRecommendation = recommendations[0];
+      if (topRecommendation.compatibility.compatibilityScore > 0.8) {
+        expect(topRecommendation.recommendation).toContain('Excellent match');
+      } else if (topRecommendation.compatibility.compatibilityScore > 0.6) {
+        expect(topRecommendation.recommendation).toContain('Good match');
+      }
+    });
+  });
+
+  describe('Edge Cases and Error Handling', () => {
+    it('should handle empty teams array', () => {
+      const compatibility = calculateTeamProjectCompatibility(
+        mockTeams[0],
+        mockProjects[0],
+        [],
+        [],
+        mockSkills
+      );
+
+      expect(compatibility.compatibilityScore).toBe(0);
+    });
+
+    it('should handle empty skills array', () => {
+      const coverage = analyzeSkillCoverage(mockTeams, []);
+
+      expect(coverage.totalSkills).toBe(0);
+      expect(coverage.coveragePercentage).toBe(0);
+    });
+
+    it('should handle projects with no solutions or skills', () => {
+      const emptyProject = {
+        ...mockProjects[0],
+        solutionIds: [],
+      };
+
+      const requiredSkills = getProjectRequiredSkills(
+        emptyProject,
+        [],
+        mockSolutions,
+        mockSkills
+      );
+
+      expect(requiredSkills).toHaveLength(0);
+    });
+
+    it('should handle teams with null or undefined targetSkills', () => {
+      const teamWithNullSkills = {
+        ...mockTeams[0],
+        targetSkills: null as any,
+      };
+
+      const filteredTeams = filterTeamsBySkills(
+        [teamWithNullSkills],
+        ['skill1'],
+        mockSkills
+      );
+
+      expect(filteredTeams).toHaveLength(0); // Should be filtered out due to 0% compatibility
+    });
+
+    it('should handle missing skill references gracefully', () => {
+      const teamWithInvalidSkills = {
+        ...mockTeams[0],
+        targetSkills: ['invalid-skill-id', 'skill1'],
+      };
+
+      const coverage = analyzeSkillCoverage(
+        [teamWithInvalidSkills],
+        mockSkills
+      );
+
+      const reactCoverage = coverage.skillCoverage.find(
+        sc => sc.skillName === 'React'
+      );
+      expect(reactCoverage?.coverageCount).toBe(1); // Should still count valid skill
+    });
+  });
+
+  describe('Performance Tests', () => {
+    it('should handle large numbers of teams efficiently', () => {
+      const largeTeamSet = Array.from({ length: 100 }, (_, i) => ({
+        ...mockTeams[0],
+        id: `team-${i}`,
+        name: `Team ${i}`,
+        targetSkills: ['skill1', 'skill2'], // Common skills
+      }));
+
+      const startTime = performance.now();
+      const coverage = analyzeSkillCoverage(largeTeamSet, mockSkills);
+      const endTime = performance.now();
+
+      expect(endTime - startTime).toBeLessThan(100); // Should complete within 100ms
+      expect(coverage.totalSkills).toBe(6);
+    });
+
+    it('should handle large numbers of skills efficiently', () => {
+      const largeSkillSet = Array.from({ length: 500 }, (_, i) => ({
+        id: `skill-${i}`,
+        name: `Skill ${i}`,
+        category: `Category ${Math.floor(i / 50)}`,
+        description: `Generated skill ${i}`,
+        createdDate: '2024-01-01T00:00:00Z',
+      }));
+
+      const startTime = performance.now();
+      const filteredTeams = filterTeamsBySkills(
+        mockTeams,
+        [`skill-1`, `skill-2`],
+        largeSkillSet
+      );
+      const endTime = performance.now();
+
+      expect(endTime - startTime).toBeLessThan(50); // Should complete within 50ms
+      expect(filteredTeams).toBeDefined();
+    });
+  });
+});

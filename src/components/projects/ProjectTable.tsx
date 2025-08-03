@@ -79,14 +79,19 @@ const formatBudgetDisplay = (amount: number): string => {
 };
 
 // Sortable Project Row Component
+import { Project, Epic, Allocation, Cycle, Person, Role, Team } from '@/types';
+
+// ...
+
+// Sortable Project Row Component
 interface SortableProjectRowProps {
   project: Project;
-  epics: any[];
-  allocations: any[];
-  cycles: any[];
-  people: any[];
-  roles: any[];
-  teams: any[];
+  epics: Epic[];
+  allocations: Allocation[];
+  cycles: Cycle[];
+  people: Person[];
+  roles: Role[];
+  teams: Team[];
   selectedProjects: Set<string>;
   onSelectProject: (projectId: string, checked: boolean) => void;
   onViewProject: (projectId: string) => void;

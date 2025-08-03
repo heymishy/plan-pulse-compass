@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Person, Team } from '@/types';
+import { Person, Team, TeamMoveImpact } from '@/types';
 import { analyzeTeamMoveImpact } from '@/utils/financialImpactUtils';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +16,9 @@ const FinancialImpactAnalysis: React.FC = () => {
   const { people, teams, roles, config } = useApp();
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<TeamMoveImpact | null>(
+    null
+  );
 
   const handleAnalyzeClick = () => {
     if (selectedPersonId && selectedTeamId) {

@@ -381,7 +381,8 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
       const changes: ScenarioChange[] = [];
 
       // Compare projects for financial impact
-      const projectCostChanges: any[] = [];
+      const projectCostChanges: ScenarioComparison['financialImpact']['projectCostChanges'] =
+        [];
       scenarioData.projects.forEach(scenarioProject => {
         const liveProject = liveData.projects.find(
           p => p.id === scenarioProject.id
@@ -405,7 +406,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
             entityId: scenarioProject.id,
             entityName: scenarioProject.name,
             changeType: 'modified',
-            description: `Budget changed from $${liveProject.budget?.toLocaleString() || 0} to $${scenarioProject.budget?.toLocaleString() || 0}`,
+            description: `Budget changed from ${liveProject.budget?.toLocaleString() || 0} to ${scenarioProject.budget?.toLocaleString() || 0}`,
             impact:
               Math.abs(costDifference) > 100000
                 ? 'high'
@@ -418,8 +419,8 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
                 fieldDisplayName: 'Budget',
                 oldValue: liveProject.budget,
                 newValue: scenarioProject.budget,
-                formattedOldValue: `$${liveProject.budget?.toLocaleString() || 0}`,
-                formattedNewValue: `$${scenarioProject.budget?.toLocaleString() || 0}`,
+                formattedOldValue: `${liveProject.budget?.toLocaleString() || 0}`,
+                formattedNewValue: `${scenarioProject.budget?.toLocaleString() || 0}`,
               },
             ],
           });
@@ -462,7 +463,8 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
       });
 
       // Compare teams for resource impact
-      const teamCapacityChanges: any[] = [];
+      const teamCapacityChanges: ScenarioComparison['resourceImpact']['teamCapacityChanges'] =
+        [];
       scenarioData.teams.forEach(scenarioTeam => {
         const liveTeam = liveData.teams.find(t => t.id === scenarioTeam.id);
         if (liveTeam && liveTeam.capacity !== scenarioTeam.capacity) {
