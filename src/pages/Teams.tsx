@@ -18,6 +18,7 @@ import {
   Target,
   Activity,
   Trash2,
+  ArrowRightLeft,
 } from 'lucide-react';
 import TeamTable from '@/components/teams/TeamTable';
 import TeamCards from '@/components/teams/TeamCards';
@@ -32,6 +33,7 @@ import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtiliz
 import EnterpriseTeamAnalytics from '@/components/teams/EnterpriseTeamAnalytics';
 import FinancialImpactAnalysis from '@/components/canvas/FinancialImpactAnalysis';
 import { ScenarioDebugInfo } from '@/components/scenarios/ScenarioDebugInfo';
+import SkillsMigrationDialog from '@/components/skills/SkillsMigrationDialog';
 
 const Teams = () => {
   const { teams, people, divisions, setTeams } = useApp();
@@ -48,6 +50,7 @@ const Teams = () => {
   const [selectedTeamForBuilder, setSelectedTeamForBuilder] = useState<
     Team | undefined
   >();
+  const [isMigrationDialogOpen, setIsMigrationDialogOpen] = useState(false);
 
   if (!isSetupComplete) {
     return (
@@ -141,6 +144,14 @@ const Teams = () => {
                 Remove Default Teams
               </Button>
             )}
+            <Button
+              variant="outline"
+              onClick={() => setIsMigrationDialogOpen(true)}
+              className="text-blue-600 border-blue-300 hover:bg-blue-50"
+            >
+              <ArrowRightLeft className="mr-2 h-4 w-4" />
+              Migrate Skills
+            </Button>
             <Button
               variant="outline"
               onClick={() => setIsPeopleMapperOpen(true)}
@@ -394,6 +405,11 @@ const Teams = () => {
         <PeopleTeamMapper
           isOpen={isPeopleMapperOpen}
           onClose={() => setIsPeopleMapperOpen(false)}
+        />
+
+        <SkillsMigrationDialog
+          open={isMigrationDialogOpen}
+          onOpenChange={setIsMigrationDialogOpen}
         />
       </div>
     </div>
