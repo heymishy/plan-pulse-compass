@@ -1,19 +1,26 @@
-import { Person, Project, Team, Allocation } from '../types';
-
-// Placeholder for more complex financial calculations
+import { Person, Team, Role, AppConfig } from '../types';
+import { calculatePersonCost } from './financialCalculations';
 
 /**
  * Calculates the total cost of a team based on its members' salaries.
  * @param team - The team to calculate the cost for.
  * @param people - A list of all people in the organization.
+ * @param roles - A list of all roles in the organization.
+ * @param config - The application configuration.
  * @returns The total annual cost of the team.
  */
-export const calculateTeamCost = (team: Team, people: Person[]): number => {
-  // This is a simplified calculation. A more realistic calculation would
-  // consider allocation percentages, contract types, and other factors.
+export const calculateTeamCost = (
+  team: Team,
+  people: Person[],
+  roles: Role[],
+  config: AppConfig
+): number => {
   const teamMembers = people.filter(p => p.teamId === team.id);
   const totalCost = teamMembers.reduce((acc, member) => {
-    return acc + (member.annualSalary || 0);
+    const role = roles.find(r => r.id === member.roleId);
+    if (!role) return acc;
+    const personCost = calculatePersonCost(member, role, config);
+    return acc + personCost.costPerYear;
   }, 0);
   return totalCost;
 };
@@ -23,27 +30,43 @@ export const calculateTeamCost = (team: Team, people: Person[]): number => {
  * @param person - The person being moved.
  * @param newTeam - The team the person is moving to.
  * @param people - A list of all people in the organization.
+ * @param roles - A list of all roles in the organization.
+ * @param teams - A list of all teams in the organization.
+ * @param config - The application configuration.
  * @returns An object detailing the financial impact.
  */
 export const analyzeTeamMoveImpact = (
   person: Person,
   newTeam: Team,
-  people: Person[]
+  people: Person[],
+  roles: Role[],
+  teams: Team[],
+  config: AppConfig
 ) => {
   const originalTeamId = person.teamId;
-  const originalTeam = people.filter(p => p.teamId === originalTeamId);
-  const newTeamMembers = people.filter(p => p.teamId === newTeam.id);
+  const originalTeam = teams.find(t => t.id === originalTeamId);
 
-  const originalTeamCost = originalTeam.reduce(
-    (acc, member) => acc + (member.annualSalary || 0),
-    0
-  );
-  const newTeamCost = newTeamMembers.reduce(
-    (acc, member) => acc + (member.annualSalary || 0),
-    0
-  );
+  if (!originalTeam) {
+    throw new Error('Original team not found');
+  }
 
-  const personCost = person.annualSalary || 0;
+  const originalTeamCost = calculateTeamCost(
+    originalTeam,
+    people,
+    roles,
+    config
+  );
+  const newTeamCost = calculateTeamCost(newTeam, people, roles, config);
+
+  const personRole = roles.find(r => r.id === person.roleId);
+  if (!personRole) {
+    throw new Error('Person role not found');
+  }
+  const personCost = calculatePersonCost(
+    person,
+    personRole,
+    config
+  ).costPerYear;
 
   return {
     personName: person.name,

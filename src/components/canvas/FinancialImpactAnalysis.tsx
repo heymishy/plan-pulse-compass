@@ -13,7 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const FinancialImpactAnalysis: React.FC = () => {
-  const { people, teams } = useApp();
+  const { people, teams, roles, config } = useApp();
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
@@ -23,7 +23,14 @@ const FinancialImpactAnalysis: React.FC = () => {
       const person = people.find(p => p.id === selectedPersonId);
       const team = teams.find(t => t.id === selectedTeamId);
       if (person && team) {
-        const result = analyzeTeamMoveImpact(person, team, people);
+        const result = analyzeTeamMoveImpact(
+          person,
+          team,
+          people,
+          roles,
+          teams,
+          config
+        );
         setAnalysisResult(result);
       }
     }
