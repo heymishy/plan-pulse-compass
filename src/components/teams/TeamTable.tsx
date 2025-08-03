@@ -23,7 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Edit2, Trash2, Users, Clock } from 'lucide-react';
+import { Edit2, Trash2, Users, Clock, Target } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Team } from '@/types';
@@ -39,7 +39,7 @@ interface TeamTableProps {
 }
 
 const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
-  const { people, divisions, setTeams, setPeople, roles } = useApp();
+  const { people, divisions, setTeams, setPeople, roles, skills } = useApp();
   const { toast } = useToast();
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -128,6 +128,7 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                   <TableHead>Division</TableHead>
                   <TableHead>Product Owner</TableHead>
                   <TableHead>Members</TableHead>
+                  <TableHead>Skills</TableHead>
                   <TableHead>Capacity</TableHead>
                   <TableHead>Utilization</TableHead>
                   <TableHead className="w-12">Actions</TableHead>
@@ -167,6 +168,36 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                           {members.length !== 1 ? 's' : ''}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-48">
+                          {team.targetSkills && team.targetSkills.length > 0 ? (
+                            team.targetSkills.slice(0, 3).map(skillId => {
+                              const skill = (skills || []).find(
+                                s => s.id === skillId
+                              );
+                              return skill ? (
+                                <Badge
+                                  key={skillId}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
+                                  {skill.name}
+                                </Badge>
+                              ) : null;
+                            })
+                          ) : (
+                            <span className="text-xs text-gray-400">
+                              No skills
+                            </span>
+                          )}
+                          {team.targetSkills &&
+                            team.targetSkills.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{team.targetSkills.length - 3}
+                              </Badge>
+                            )}
+                        </div>
+                      </TableCell>
                       <TableCell>{team.capacity}h/week</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
@@ -204,7 +235,7 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                 {teams.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="text-center py-8 text-gray-500"
                     >
                       No teams found

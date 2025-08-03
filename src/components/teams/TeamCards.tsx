@@ -13,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Edit2, Trash2, Users, Clock } from 'lucide-react';
+import { Edit2, Trash2, Users, Clock, Target } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Team } from '@/types';
@@ -29,7 +29,7 @@ interface TeamCardsProps {
 }
 
 const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
-  const { people, divisions, setTeams, setPeople, roles } = useApp();
+  const { people, divisions, setTeams, setPeople, roles, skills } = useApp();
   const { toast } = useToast();
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -156,6 +156,41 @@ const TeamCards: React.FC<TeamCardsProps> = ({ teams, onEditTeam }) => {
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">{team.capacity}h/week</span>
+                  </div>
+                </div>
+
+                {/* Skills Section */}
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Target className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">Skills:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {team.targetSkills && team.targetSkills.length > 0 ? (
+                      team.targetSkills.slice(0, 4).map(skillId => {
+                        const skill = (skills || []).find(
+                          s => s.id === skillId
+                        );
+                        return skill ? (
+                          <Badge
+                            key={skillId}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {skill.name}
+                          </Badge>
+                        ) : null;
+                      })
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        No skills defined
+                      </span>
+                    )}
+                    {team.targetSkills && team.targetSkills.length > 4 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{team.targetSkills.length - 4} more
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
