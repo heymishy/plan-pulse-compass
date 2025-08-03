@@ -20,6 +20,7 @@ import { CanvasControls } from '@/components/canvas/CanvasControls';
 import { CanvasStats } from '@/components/canvas/CanvasStats';
 import { CanvasLegend } from '@/components/canvas/CanvasLegend';
 import TeamCostVisualization from '@/components/canvas/TeamCostVisualization';
+import FinancialImpactAnalysis from '@/components/canvas/FinancialImpactAnalysis';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Canvas = () => {
@@ -59,9 +60,10 @@ const Canvas = () => {
       <CanvasHeader showMiniMap={showMiniMap} setShowMiniMap={setShowMiniMap} />
 
       <Tabs defaultValue="relationships" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="relationships">Project Relationships</TabsTrigger>
           <TabsTrigger value="team-cost">Team Cost Analysis</TabsTrigger>
+          <TabsTrigger value="financial-impact">Financial Impact</TabsTrigger>
         </TabsList>
 
         <TabsContent value="relationships" className="space-y-6">
@@ -116,6 +118,9 @@ const Canvas = () => {
 
         <TabsContent value="team-cost">
           <TeamCostVisualization />
+        </TabsContent>
+        <TabsContent value="financial-impact">
+          <FinancialImpactAnalysis />
         </TabsContent>
       </Tabs>
     </div>

@@ -22,6 +22,7 @@ import ProjectCards from '@/components/projects/ProjectCards';
 import ProjectDialog from '@/components/projects/ProjectDialog';
 import ProjectDetailsDialog from '@/components/projects/ProjectDetailsDialog';
 import { ProjectCommandCenterModal } from '@/components/projects/ProjectCommandCenterModal';
+import FinancialImpactAnalysis from '@/components/canvas/FinancialImpactAnalysis';
 import ProjectTeamFinderDialog from '@/components/scenarios/ProjectTeamFinderDialog';
 
 const Projects = () => {
@@ -222,6 +223,7 @@ const Projects = () => {
           <TabsList>
             <TabsTrigger value="projects">All Projects</TabsTrigger>
             <TabsTrigger value="analysis">Team Analysis</TabsTrigger>
+            <TabsTrigger value="financial-impact">Financial Impact</TabsTrigger>
           </TabsList>
 
           <TabsContent value="projects">
@@ -260,6 +262,9 @@ const Projects = () => {
                 </ProjectTeamFinderDialog>
               </CardContent>
             </Card>
+          </TabsContent>
+          <TabsContent value="financial-impact">
+            <FinancialImpactAnalysis />
           </TabsContent>
         </Tabs>
 

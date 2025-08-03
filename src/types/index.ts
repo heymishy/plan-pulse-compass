@@ -544,4 +544,5 @@ export type CanvasViewType =
   | 'scenario-analysis'
   | 'capacity-planning'
   | 'skill-gap-analysis'
-  | 'division-sizing';
+  | 'division-sizing'
+  | 'financial-impact-analysis';

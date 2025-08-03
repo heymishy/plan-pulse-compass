@@ -50,6 +50,7 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
     projects,
     teamMembers,
     getTeamMembers: getTeamMembersFromContext,
+    skills,
   } = useApp();
   const { toast } = useToast();
 
@@ -66,7 +67,7 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
     duration: { start: '', end: '' },
   });
 
-  const [newSkill, setNewSkill] = useState('');
+  const [selectedSkillId, setSelectedSkillId] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
 
   const isEditing = Boolean(teamId);
@@ -182,21 +183,26 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
   };
 
   const addTargetSkill = () => {
-    if (newSkill.trim() && !formData.targetSkills.includes(newSkill.trim())) {
+    if (selectedSkillId && !formData.targetSkills.includes(selectedSkillId)) {
       setFormData(prev => ({
         ...prev,
-        targetSkills: [...prev.targetSkills, newSkill.trim()],
+        targetSkills: [...prev.targetSkills, selectedSkillId],
       }));
-      setNewSkill('');
+      setSelectedSkillId('');
     }
   };
 
-  const removeTargetSkill = (skill: string) => {
+  const removeTargetSkill = (skillId: string) => {
     setFormData(prev => ({
       ...prev,
-      targetSkills: prev.targetSkills.filter(s => s !== skill),
+      targetSkills: prev.targetSkills.filter(s => s !== skillId),
     }));
   };
+
+  // Get available skills (not already added to team)
+  const availableSkills = (skills || []).filter(
+    skill => !formData.targetSkills.includes(skill.id)
+  );
 
   // Determine if the selected person is acting (not the natural PO from the team)
   const selectedPerson = formData.productOwnerId
@@ -400,36 +406,59 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
                       Define the key skills this team needs to be effective
                     </p>
                     <div className="flex gap-2 mb-3">
-                      <Input
-                        value={newSkill}
-                        onChange={e => setNewSkill(e.target.value)}
-                        placeholder="Add a skill (e.g., React, Product Management)"
-                        onKeyPress={e =>
-                          e.key === 'Enter' &&
-                          (e.preventDefault(), addTargetSkill())
-                        }
-                      />
-                      <Button type="button" onClick={addTargetSkill}>
+                      <Select
+                        value={selectedSkillId}
+                        onValueChange={setSelectedSkillId}
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select a skill to add..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableSkills.map(skill => (
+                            <SelectItem key={skill.id} value={skill.id}>
+                              <div className="flex items-center gap-2">
+                                <span>{skill.name}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {skill.category}
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        onClick={addTargetSkill}
+                        disabled={!selectedSkillId}
+                      >
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {formData.targetSkills.map(skill => (
-                        <Badge
-                          key={skill}
-                          variant="secondary"
-                          className="flex items-center gap-1"
-                        >
-                          {skill}
-                          <button
-                            type="button"
-                            onClick={() => removeTargetSkill(skill)}
-                            className="hover:text-destructive"
+                      {formData.targetSkills.map(skillId => {
+                        const skill = (skills || []).find(
+                          s => s.id === skillId
+                        );
+                        return skill ? (
+                          <Badge
+                            key={skillId}
+                            variant="secondary"
+                            className="flex items-center gap-1"
                           >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
+                            <span>{skill.name}</span>
+                            <Badge variant="outline" className="text-xs ml-1">
+                              {skill.category}
+                            </Badge>
+                            <button
+                              type="button"
+                              onClick={() => removeTargetSkill(skillId)}
+                              className="hover:text-destructive ml-1"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ) : null;
+                      })}
                     </div>
                   </div>
 

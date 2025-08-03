@@ -30,6 +30,7 @@ import TeamPortfolioOverview from '@/components/teams/TeamPortfolioOverview';
 import RunWorkAllocationView from '@/components/teams/RunWorkAllocationView';
 import TeamCapacityUtilizationMatrix from '@/components/teams/TeamCapacityUtilizationMatrix';
 import EnterpriseTeamAnalytics from '@/components/teams/EnterpriseTeamAnalytics';
+import FinancialImpactAnalysis from '@/components/canvas/FinancialImpactAnalysis';
 import { ScenarioDebugInfo } from '@/components/scenarios/ScenarioDebugInfo';
 
 const Teams = () => {
@@ -203,7 +204,7 @@ const Teams = () => {
         </div>
 
         <Tabs defaultValue="portfolio" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger
               value="portfolio"
               className="flex items-center space-x-2"
@@ -253,6 +254,13 @@ const Teams = () => {
             <TabsTrigger value="skills" className="flex items-center space-x-2">
               <Star className="h-4 w-4" />
               <span>Skills</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="financial-impact"
+              className="flex items-center space-x-2"
+            >
+              <Star className="h-4 w-4" />
+              <span>Financial Impact</span>
             </TabsTrigger>
           </TabsList>
 
@@ -371,6 +379,9 @@ const Teams = () => {
             {selectedTeamForSkills && (
               <TeamSkillsSummary teamId={selectedTeamForSkills} />
             )}
+          </TabsContent>
+          <TabsContent value="financial-impact">
+            <FinancialImpactAnalysis />
           </TabsContent>
         </Tabs>
 

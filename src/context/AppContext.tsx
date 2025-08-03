@@ -232,6 +232,8 @@ export interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+export { AppContext };
+
 export const useApp = () => {
   const context = useContext(AppContext);
   if (context === undefined) {

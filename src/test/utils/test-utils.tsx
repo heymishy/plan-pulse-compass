@@ -5,6 +5,8 @@ import { vi, afterEach } from 'vitest';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { AppContext } from '@/context/AppContext';
+import { Team, Skill, Person, Division, Role, Project } from '@/types';
 
 // Mock the Toaster component to avoid issues in tests
 vi.mock('@/components/ui/toaster', () => ({
@@ -160,4 +162,133 @@ export const waitForTextToAppear = (
 export const getSelectByIndex = (screenObj: ScreenType, index: number) => {
   const comboboxes = screenObj.getAllByRole('combobox');
   return comboboxes[index];
+};
+
+// Enhanced test provider that includes AppContext with mock data
+interface TestAppProviderProps {
+  teams?: Team[];
+  people?: Person[];
+  skills?: Skill[];
+  divisions?: Division[];
+  roles?: Role[];
+  projects?: Project[];
+  children?: React.ReactNode;
+}
+
+export const createTestAppProvider = (mockData: TestAppProviderProps = {}) => {
+  const {
+    teams = [],
+    people = [],
+    skills = [],
+    divisions = [],
+    roles = [],
+    projects = [],
+  } = mockData;
+
+  const mockContext = {
+    people,
+    teams,
+    skills,
+    divisions,
+    roles,
+    projects,
+    allocations: [],
+    teamMembers: [],
+    cycles: [],
+    epics: [],
+    solutions: [],
+    projectSkills: [],
+    projectSolutions: [],
+    releases: [],
+    runWorkCategories: [],
+    actualAllocations: [],
+    iterationReviews: [],
+    iterationSnapshots: [],
+    unmappedPeople: [],
+    goals: [],
+    northStar: null,
+    goalEpics: [],
+    goalMilestones: [],
+    goalTeams: [],
+    divisionLeadershipRoles: [],
+    personSkills: [],
+    milestones: [],
+    config: null,
+    isSetupComplete: true,
+    isDataLoading: false,
+    // Mock functions
+    setPeople: vi.fn(),
+    addPerson: vi.fn().mockResolvedValue({} as any),
+    updatePerson: vi.fn().mockResolvedValue(undefined),
+    deletePerson: vi.fn().mockResolvedValue(undefined),
+    setRoles: vi.fn(),
+    setTeams: vi.fn(),
+    addTeam: vi.fn().mockResolvedValue({} as any),
+    updateTeam: vi.fn().mockResolvedValue(undefined),
+    deleteTeam: vi.fn().mockResolvedValue(undefined),
+    setTeamMembers: vi.fn(),
+    addTeamMember: vi.fn().mockReturnValue({} as any),
+    updateTeamMember: vi.fn(),
+    removeTeamMember: vi.fn(),
+    getTeamMembers: vi.fn().mockReturnValue([]),
+    setDivisions: vi.fn(),
+    setUnmappedPeople: vi.fn(),
+    addUnmappedPerson: vi.fn(),
+    removeUnmappedPerson: vi.fn(),
+    setProjects: vi.fn(),
+    addProject: vi.fn().mockResolvedValue({} as any),
+    updateProject: vi.fn().mockResolvedValue(undefined),
+    deleteProject: vi.fn().mockResolvedValue(undefined),
+    setEpics: vi.fn(),
+    setReleases: vi.fn(),
+    setSolutions: vi.fn(),
+    setProjectSkills: vi.fn(),
+    setProjectSolutions: vi.fn(),
+    setAllocations: vi.fn(),
+    addAllocation: vi.fn().mockResolvedValue({} as any),
+    updateAllocation: vi.fn().mockResolvedValue(undefined),
+    deleteAllocation: vi.fn().mockResolvedValue(undefined),
+    setCycles: vi.fn(),
+    setRunWorkCategories: vi.fn(),
+    setActualAllocations: vi.fn(),
+    setIterationReviews: vi.fn(),
+    setIterationSnapshots: vi.fn(),
+    setConfig: vi.fn(),
+    setIsSetupComplete: vi.fn(),
+    setGoals: vi.fn(),
+    setNorthStar: vi.fn(),
+    setGoalEpics: vi.fn(),
+    setGoalMilestones: vi.fn(),
+    setGoalTeams: vi.fn(),
+    addGoal: vi.fn(),
+    updateGoal: vi.fn(),
+    setDivisionLeadershipRoles: vi.fn(),
+    addDivisionLeadershipRole: vi.fn().mockReturnValue({} as any),
+    updateDivisionLeadershipRole: vi.fn(),
+    removeDivisionLeadershipRole: vi.fn(),
+    getDivisionLeadershipRoles: vi.fn().mockReturnValue([]),
+    setSkills: vi.fn(),
+    setPersonSkills: vi.fn(),
+    addSkill: vi.fn().mockReturnValue({} as any),
+    updateSkill: vi.fn(),
+    deleteSkill: vi.fn(),
+    addPersonSkill: vi.fn().mockReturnValue({} as any),
+    updatePersonSkill: vi.fn(),
+    deletePersonSkill: vi.fn(),
+    getPersonSkills: vi.fn().mockReturnValue([]),
+  };
+
+  return ({ children }: { children: React.ReactNode }) => (
+    <BrowserRouter>
+      <ThemeProvider>
+        <SidebarProvider>
+          <TooltipProvider>
+            <AppContext.Provider value={mockContext as any}>
+              {children}
+            </AppContext.Provider>
+          </TooltipProvider>
+        </SidebarProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  );
 };
