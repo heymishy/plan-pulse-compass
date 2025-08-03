@@ -8,6 +8,35 @@
 
 A comprehensive team planning and resource management application designed for organizations that need to manage complex project portfolios, team allocations, and financial tracking.
 
+## 🎯 Features
+
+- **Team Management**: Create and manage development teams with capacity tracking
+- **Project Planning**: Define projects, epics, and user stories with comprehensive requirements
+- **Resource Allocation**: Allocate team members to projects with percentage-based capacity
+- **Timeline Visualization**: Interactive Gantt charts and timeline views for project tracking
+- **🆕 Skills-Based Planning**: Advanced team-project matching using AI-powered skill compatibility
+- **🆕 Intelligent Recommendations**: Get ranked team suggestions based on skill requirements
+- **🆕 Skill Gap Analysis**: Identify missing skills and training needs across your organization
+- **🆕 Coverage Assessment**: Monitor skill distribution and risk levels across teams
+- **Iteration Planning**: Sprint/iteration management with capacity planning
+- **Reporting & Analytics**: Comprehensive insights into team utilization and project progress
+
+## 🚀 Skills-Based Planning
+
+Plan Pulse Compass now includes powerful skills-based planning features:
+
+- **Smart Team Matching**: Find optimal teams for projects based on skill requirements
+- **Compatibility Scoring**: 0-100% match percentages with detailed breakdowns
+- **Gap Analysis**: Identify missing skills and training opportunities
+- **Risk Assessment**: Monitor skills coverage across your organization
+- **Intelligent Filtering**: Advanced team filtering with skill-based criteria
+
+### Quick Start with Skills
+
+- **📖 [5-Minute Quick Start](docs/QUICK_START_SKILLS.md)** - Get started immediately
+- **📚 [Complete User Guide](docs/USER_GUIDE_SKILLS.md)** - Comprehensive features guide
+- **🔧 [Implementation Guide](SKILLS_IMPLEMENTATION_GUIDE.md)** - Technical documentation
+
 ## Quick Start
 
 ```bash
@@ -75,6 +104,14 @@ npm run audit # Run security audit
 ```
 
 ## Documentation
+
+### Skills-Based Planning
+
+- **📖 [5-Minute Quick Start](docs/QUICK_START_SKILLS.md)** - Get started with skills features immediately
+- **📚 [Complete User Guide](docs/USER_GUIDE_SKILLS.md)** - Comprehensive skills planning guide
+- **🔧 [Implementation Guide](SKILLS_IMPLEMENTATION_GUIDE.md)** - Technical documentation and API reference
+
+### Development & Operations
 
 - [CI/CD Setup Guide](CI_CD_SETUP.md) - Complete pipeline documentation
 - [Testing Guide](TESTING.md) - Testing strategy and best practices
