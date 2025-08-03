@@ -115,8 +115,8 @@ describe('PowerBiImportWizard', () => {
     const epicInput = screen.getByLabelText('Epic CSV File');
     const storyInput = screen.getByLabelText('Story CSV File');
 
-    await user.upload(epicInput, epicFile);
-    await user.upload(storyInput, storyFile);
+    await user.upload(epicInput, [epicFile]);
+    await user.upload(storyInput, [storyFile]);
 
     // The component should auto-select current quarter by default
     // So the Next button should be enabled without manual selection
@@ -173,8 +173,8 @@ describe('PowerBiImportWizard', () => {
       type: 'text/csv',
     });
 
-    await user.upload(screen.getByLabelText('Epic CSV File'), epicFile);
-    await user.upload(screen.getByLabelText('Story CSV File'), storyFile);
+    await user.upload(screen.getByLabelText('Epic CSV File'), [epicFile]);
+    await user.upload(screen.getByLabelText('Story CSV File'), [storyFile]);
 
     // Go to next step
     const nextButton = screen.getByRole('button', { name: /next/i });
