@@ -16,21 +16,7 @@ import { render } from '@/test/utils/test-utils';
 import * as allocationImportUtils from '@/utils/allocationImportUtils';
 import { useApp } from '@/context/AppContext';
 
-// Mock the utils module with enhanced cleanup
-vi.mock('@/utils/allocationImportUtils', () => ({
-  parseAllocationCSV: vi.fn().mockResolvedValue(mockAllocationData),
-  validateAllocationImport: vi.fn().mockResolvedValue(mockValidationResult),
-  convertImportToAllocations: vi.fn().mockReturnValue(mockAllocations),
-  downloadAllocationSampleCSV: vi.fn(),
-}));
-
-// Mock the context with enhanced cleanup
-vi.mock('@/context/AppContext', () => ({
-  useApp: vi.fn(),
-}));
-
-const mockOnImportComplete = vi.fn();
-
+// Define mock data first before using in mocks
 const mockAllocationData = [
   {
     teamName: 'Team A',
@@ -78,6 +64,21 @@ const mockAllocations = [
   },
 ];
 
+// Mock the utils module with enhanced cleanup
+vi.mock('@/utils/allocationImportUtils', () => ({
+  parseAllocationCSV: vi.fn(),
+  validateAllocationImport: vi.fn(),
+  convertImportToAllocations: vi.fn(),
+  downloadAllocationSampleCSV: vi.fn(),
+}));
+
+// Mock the context with enhanced cleanup
+vi.mock('@/context/AppContext', () => ({
+  useApp: vi.fn(),
+}));
+
+const mockOnImportComplete = vi.fn();
+
 describe('AllocationImportDialog', () => {
   const mockAppData = {
     teams: mockTeams,
@@ -99,7 +100,7 @@ describe('AllocationImportDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useApp).mockReturnValue(mockAppData);
-    vi.mocked(allocationImportUtils.parseAllocationCSV).mockReturnValue(
+    vi.mocked(allocationImportUtils.parseAllocationCSV).mockResolvedValue(
       mockAllocationData
     );
     vi.mocked(allocationImportUtils.validateAllocationImport).mockReturnValue(
