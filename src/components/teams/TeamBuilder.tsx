@@ -108,6 +108,78 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     },
   });
 
+  // Helper functions for person details (Issue #70)
+  const getPersonRole = (person: any) => {
+    return roles.find(role => role.id === person.roleId);
+  };
+
+  const getPersonDivision = (person: any) => {
+    return divisions.find(division => division.id === person.divisionId);
+  };
+
+  const formatEmploymentType = (employmentType: string) => {
+    return employmentType === 'permanent' ? 'Permanent' : 'Contractor';
+  };
+
+  const formatRoleType = (roleType: string) => {
+    return roleType.charAt(0).toUpperCase() + roleType.slice(1);
+  };
+
+  // Team statistics calculations (Issue #70)
+  const calculateTeamStatistics = (teamMembers: any[]) => {
+    if (teamMembers.length === 0) return null;
+
+    const teamPeople = teamMembers
+      .map(member => people.find(p => p.id === member.personId))
+      .filter(Boolean);
+
+    // Employment type ratio
+    const permanentCount = teamPeople.filter(
+      p => p.employmentType === 'permanent'
+    ).length;
+    const contractorCount = teamPeople.filter(
+      p => p.employmentType === 'contractor'
+    ).length;
+    const total = teamPeople.length;
+
+    const permanentRatio = Math.round((permanentCount / total) * 100);
+    const contractorRatio = Math.round((contractorCount / total) * 100);
+
+    // Role type split
+    const roleTypeCounts = teamPeople.reduce(
+      (acc, person) => {
+        acc[person.roleType] = (acc[person.roleType] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    const roleTypeStats = Object.entries(roleTypeCounts).map(
+      ([type, count]) => ({
+        type: formatRoleType(type),
+        percentage: Math.round((count / total) * 100),
+      })
+    );
+
+    // Total cost calculation (simplified - based on role baseSalary * allocation)
+    const totalCost = teamPeople.reduce((sum, person) => {
+      const role = getPersonRole(person);
+      const member = teamMembers.find(m => m.personId === person.id);
+      const baseSalary = role?.baseSalary || 100000; // fallback salary
+      const allocation = (member?.allocation || 100) / 100;
+      return sum + baseSalary * allocation;
+    }, 0);
+
+    return {
+      employmentRatio: {
+        permanent: permanentRatio,
+        contractor: contractorRatio,
+      },
+      roleTypeStats,
+      totalCost,
+    };
+  };
+
   const currentTeamMembers = useMemo(() => {
     if (!selectedTeam) return [];
 
@@ -351,13 +423,21 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
   };
 
   const handleRemoveMember = (memberId: string) => {
-    // Find the team member to get the person ID
-    const teamMember = teamMembers.find(tm => tm.id === memberId);
-    if (teamMember) {
-      // Remove the team member record
-      removeTeamMember(memberId);
-      // Clear the person's teamId to move them back to unassigned
-      updatePerson(teamMember.personId, { teamId: undefined });
+    // Handle both real TeamMember IDs and temporary IDs
+    if (memberId.startsWith('temp-')) {
+      // Extract person ID from temporary ID format: 'temp-{personId}'
+      const personId = memberId.replace('temp-', '');
+      // Just clear the person's teamId to move them back to unassigned
+      updatePerson(personId, { teamId: undefined });
+    } else {
+      // Find the team member to get the person ID for real TeamMember records
+      const teamMember = teamMembers.find(tm => tm.id === memberId);
+      if (teamMember) {
+        // Remove the team member record
+        removeTeamMember(memberId);
+        // Clear the person's teamId to move them back to unassigned
+        updatePerson(teamMember.personId, { teamId: undefined });
+      }
     }
   };
 
@@ -748,6 +828,51 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                           <div className="text-xs text-gray-600">
                             {member.role} • {member.allocation}% allocation
                           </div>
+                          {/* Enhanced member details - Issue #70 */}
+                          <div className="mt-1 flex flex-wrap gap-1 text-xs">
+                            {(() => {
+                              const person = people.find(
+                                p => p.id === member.personId
+                              );
+                              if (!person) return null;
+                              const role = getPersonRole(person);
+                              const division = getPersonDivision(person);
+                              return (
+                                <>
+                                  {role && (
+                                    <Badge
+                                      variant="secondary"
+                                      className="text-xs px-1.5 py-0.5"
+                                    >
+                                      {role.name}
+                                    </Badge>
+                                  )}
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs px-1.5 py-0.5"
+                                  >
+                                    {formatEmploymentType(
+                                      person.employmentType
+                                    )}
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs px-1.5 py-0.5"
+                                  >
+                                    {formatRoleType(person.roleType)}
+                                  </Badge>
+                                  {division && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs px-1.5 py-0.5"
+                                    >
+                                      {division.name}
+                                    </Badge>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
                       <Button
@@ -771,6 +896,62 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* Team Statistics - Issue #70 */}
+              {(() => {
+                const stats = calculateTeamStatistics(currentTeamMembers);
+                if (!stats) return null;
+
+                return (
+                  <div>
+                    <h4 className="font-medium mb-2">Team Statistics</h4>
+                    <div className="space-y-3 text-sm">
+                      {/* Employment Ratio */}
+                      <div>
+                        <h5 className="text-xs font-medium text-gray-700 mb-1">
+                          Employment Type
+                        </h5>
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {stats.employmentRatio.permanent}% Permanent
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {stats.employmentRatio.contractor}% Contractor
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Role Type Split */}
+                      <div>
+                        <h5 className="text-xs font-medium text-gray-700 mb-1">
+                          Role Types
+                        </h5>
+                        <div className="flex gap-2 flex-wrap">
+                          {stats.roleTypeStats.map(({ type, percentage }) => (
+                            <Badge
+                              key={type}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {percentage}% {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Total Cost */}
+                      <div>
+                        <h5 className="text-xs font-medium text-gray-700 mb-1">
+                          Total Cost
+                        </h5>
+                        <Badge variant="secondary" className="text-xs">
+                          ${stats.totalCost.toLocaleString()} per year
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {selectedTeam.duration?.start && (
                 <div>
@@ -1035,7 +1216,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                   <div className="flex items-center space-x-3">
                     <Checkbox
                       checked={selectedPeople.has(person.id)}
-                      onChange={() => {}}
+                      onCheckedChange={() => {}}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
@@ -1052,6 +1233,39 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                       {person.email && (
                         <p className="text-xs text-gray-600">{person.email}</p>
                       )}
+                      {/* Enhanced person details - Issue #70 */}
+                      <div className="mt-2 space-y-1">
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          {getPersonRole(person) && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs px-2 py-0.5"
+                            >
+                              {getPersonRole(person)?.name}
+                            </Badge>
+                          )}
+                          <Badge
+                            variant="outline"
+                            className="text-xs px-2 py-0.5"
+                          >
+                            {formatEmploymentType(person.employmentType)}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="text-xs px-2 py-0.5"
+                          >
+                            {formatRoleType(person.roleType)}
+                          </Badge>
+                          {getPersonDivision(person) && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs px-2 py-0.5"
+                            >
+                              {getPersonDivision(person)?.name}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                       <div className="mt-1">
                         {getPersonSkillsDisplay(person)}
                       </div>
