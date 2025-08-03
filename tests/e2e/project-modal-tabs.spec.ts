@@ -1,4 +1,9 @@
-import { test, expect } from '@playwright/test';
+import {
+  test,
+  expect,
+  Page,
+  ConsoleMessage as PlaywrightConsoleMessage,
+} from '@playwright/test';
 
 interface ConsoleMessage {
   type: string;
@@ -6,10 +11,10 @@ interface ConsoleMessage {
   location?: string;
 }
 
-async function captureConsoleErrors(page: any): Promise<ConsoleMessage[]> {
+async function captureConsoleErrors(page: Page): Promise<ConsoleMessage[]> {
   const consoleMessages: ConsoleMessage[] = [];
 
-  page.on('console', (msg: any) => {
+  page.on('console', (msg: PlaywrightConsoleMessage) => {
     if (msg.type() === 'error' || msg.type() === 'warning') {
       consoleMessages.push({
         type: msg.type(),
@@ -21,7 +26,7 @@ async function captureConsoleErrors(page: any): Promise<ConsoleMessage[]> {
     }
   });
 
-  page.on('pageerror', (error: any) => {
+  page.on('pageerror', (error: Error) => {
     consoleMessages.push({
       type: 'error',
       text: `Page Error: ${error.message}`,
