@@ -369,9 +369,9 @@ describe('TeamBuilder', () => {
         expect(screen.getByText('John Doe')).toBeInTheDocument();
         expect(screen.getByText('Bob Wilson')).toBeInTheDocument();
 
-        // Should show multiple role titles, employment types, role types, divisions
-        expect(screen.getAllByText('Developer')).toHaveLength(4); // John's role + roleType instances
-        expect(screen.getAllByText('Manager')).toHaveLength(2); // Bob's role + roleType instances
+        // Should show multiple role titles, employment types, divisions (role type badge removed)
+        expect(screen.getAllByText('Developer')).toHaveLength(3); // John's role badge (2 team members) + unassigned person roleType
+        expect(screen.getAllByText('Manager')).toHaveLength(1); // Bob's role badge only
         expect(screen.getAllByText('Permanent')).toHaveLength(1); // Only John is permanent (Bob is contractor)
         expect(screen.getAllByText('Engineering')).toHaveLength(3); // Team section header + both team members show division
       });

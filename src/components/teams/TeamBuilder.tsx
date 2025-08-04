@@ -858,14 +858,6 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                                       person.employmentType
                                     )}
                                   </Badge>
-                                  <Badge
-                                    variant="outline"
-                                    className="text-xs px-1.5 py-0.5"
-                                  >
-                                    {formatRoleType(
-                                      getPersonRole(person)?.name
-                                    )}
-                                  </Badge>
                                   {division && (
                                     <Badge
                                       variant="outline"
