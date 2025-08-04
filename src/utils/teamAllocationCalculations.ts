@@ -106,6 +106,19 @@ export const calculateTeamAllocations = (
       projectEpics.some(epic => epic.id === allocation.epicId)
   );
 
+  // Debug logging to help identify allocation filtering issues
+  if (projectAllocations.length === 0) {
+    console.log('AllocatedTeamsTab Debug:', {
+      projectId: project.id,
+      projectName: project.name,
+      totalAllocations: allocations.length,
+      projectEpics: projectEpics.length,
+      allocationsWithEpicId: allocations.filter(a => a.epicId).length,
+      epicIds: projectEpics.map(e => e.id),
+      allocationEpicIds: allocations.filter(a => a.epicId).map(a => a.epicId),
+    });
+  }
+
   // Group allocations by team
   const teamAllocationsMap = new Map<string, Allocation[]>();
   projectAllocations.forEach(allocation => {
