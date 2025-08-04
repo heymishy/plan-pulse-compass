@@ -48,6 +48,7 @@ import { calculateProjectTotalBudget } from '@/utils/projectBudgetUtils';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/utils/currency';
 import ProjectFinancialYearBudgetEditor from './ProjectFinancialYearBudgetEditor';
+import AllocatedTeamsTab from './AllocatedTeamsTab';
 
 // Use centralized currency formatting utility for proper comma formatting
 const formatCurrencyDisplay = (amount: number): string => {
@@ -281,7 +282,7 @@ export const ProjectCommandCenterModal: React.FC<
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList
-            className="grid w-full grid-cols-6"
+            className="grid w-full grid-cols-7"
             data-testid="tab-navigation"
           >
             <TabsTrigger value="overview" data-testid="overview-tab">
@@ -305,6 +306,13 @@ export const ProjectCommandCenterModal: React.FC<
             >
               <Users className="h-4 w-4 mr-1" />
               Solutions & Skills
+            </TabsTrigger>
+            <TabsTrigger
+              value="allocated-teams"
+              data-testid="allocated-teams-tab"
+            >
+              <Users className="h-4 w-4 mr-1" />
+              Allocated Teams
             </TabsTrigger>
             <TabsTrigger
               value="progress-tracking"
@@ -745,6 +753,11 @@ export const ProjectCommandCenterModal: React.FC<
                   onSkillsChange={handleSkillsChange}
                 />
               </div>
+            </TabsContent>
+
+            {/* Allocated Teams Tab */}
+            <TabsContent value="allocated-teams" className="space-y-6">
+              <AllocatedTeamsTab project={project} />
             </TabsContent>
 
             {/* Progress & Tracking Tab */}
