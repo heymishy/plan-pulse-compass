@@ -106,7 +106,7 @@ describe('PowerBiImportWizard', () => {
     const onClose = vi.fn();
     render(<PowerBiImportWizard isOpen={true} onClose={onClose} />);
 
-    // Mock file upload
+    // Mock file upload using fireEvent instead of user.upload to avoid the JSDOM issue
     const epicFile = new File(['epic,data'], 'epics.csv', { type: 'text/csv' });
     const storyFile = new File(['story,data'], 'stories.csv', {
       type: 'text/csv',
@@ -115,13 +115,15 @@ describe('PowerBiImportWizard', () => {
     const epicInput = screen.getByLabelText('Epic CSV File');
     const storyInput = screen.getByLabelText('Story CSV File');
 
-    await user.upload(epicInput, [epicFile]);
-    await user.upload(storyInput, [storyFile]);
+    // Use fireEvent for file uploads instead of userEvent.upload
+    fireEvent.change(epicInput, { target: { files: [epicFile] } });
+    fireEvent.change(storyInput, { target: { files: [storyFile] } });
 
-    // The component should auto-select current quarter by default
-    // So the Next button should be enabled without manual selection
-    const nextButton = screen.getByRole('button', { name: /next/i });
-    expect(nextButton).not.toBeDisabled();
+    // Wait for state updates
+    await waitFor(() => {
+      const nextButton = screen.getByRole('button', { name: /next/i });
+      expect(nextButton).not.toBeDisabled();
+    });
   });
 
   it('should show step indicators', () => {
@@ -173,8 +175,13 @@ describe('PowerBiImportWizard', () => {
       type: 'text/csv',
     });
 
-    await user.upload(screen.getByLabelText('Epic CSV File'), [epicFile]);
-    await user.upload(screen.getByLabelText('Story CSV File'), [storyFile]);
+    // Use fireEvent for file uploads instead of userEvent.upload to avoid JSDOM issues
+    fireEvent.change(screen.getByLabelText('Epic CSV File'), {
+      target: { files: [epicFile] },
+    });
+    fireEvent.change(screen.getByLabelText('Story CSV File'), {
+      target: { files: [storyFile] },
+    });
 
     // Go to next step
     const nextButton = screen.getByRole('button', { name: /next/i });
