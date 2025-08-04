@@ -121,7 +121,8 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     return employmentType === 'permanent' ? 'Permanent' : 'Contractor';
   };
 
-  const formatRoleType = (roleType: string) => {
+  const formatRoleType = (roleType: string | undefined) => {
+    if (!roleType) return 'Unknown';
     return roleType.charAt(0).toUpperCase() + roleType.slice(1);
   };
 
@@ -148,7 +149,9 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
     // Role type split
     const roleTypeCounts = teamPeople.reduce(
       (acc, person) => {
-        acc[person.roleType] = (acc[person.roleType] || 0) + 1;
+        const role = getPersonRole(person);
+        const roleType = role?.name || 'Unknown';
+        acc[roleType] = (acc[roleType] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>
@@ -859,7 +862,9 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                                     variant="outline"
                                     className="text-xs px-1.5 py-0.5"
                                   >
-                                    {formatRoleType(person.roleType)}
+                                    {formatRoleType(
+                                      getPersonRole(person)?.name
+                                    )}
                                   </Badge>
                                   {division && (
                                     <Badge
@@ -1254,7 +1259,7 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
                             variant="outline"
                             className="text-xs px-2 py-0.5"
                           >
-                            {formatRoleType(person.roleType)}
+                            {formatRoleType(getPersonRole(person)?.name)}
                           </Badge>
                           {getPersonDivision(person) && (
                             <Badge
