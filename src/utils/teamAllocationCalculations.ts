@@ -397,7 +397,9 @@ export const aggregateTeamAllocationsToQuarterly = (
   financialYears: FinancialYear[],
   cycles: Cycle[]
 ): TeamQuarterlyAllocation[] => {
-  if (teamSummaries.length === 0) return [];
+  if (!teamSummaries || teamSummaries.length === 0) return [];
+  if (!financialYears || financialYears.length === 0) return [];
+  if (!cycles) return [];
 
   // Helper function to determine quarter from date
   const getQuarterFromDate = (
@@ -442,8 +444,8 @@ export const aggregateTeamAllocationsToQuarterly = (
 
   return teamSummaries.map(team => {
     // Find the relevant financial year (assume current FY for now)
-    const currentFY = financialYears.find(fy => fy.id === 'current') ||
-      financialYears[0] || {
+    const currentFY = financialYears?.find(fy => fy?.id === 'current') ||
+      financialYears?.[0] || {
         id: 'fy2024',
         name: 'FY2024',
         startDate: '2024-01-01',
