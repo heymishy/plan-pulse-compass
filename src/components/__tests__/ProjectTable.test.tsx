@@ -3,17 +3,20 @@ import { render, screen } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import ProjectTable from '@/components/projects/ProjectTable';
 import { useApp } from '@/context/AppContext';
+import { useSettings } from '@/context/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { Project } from '@/types';
 
 // Mock the contexts and hooks
 vi.mock('@/context/AppContext');
+vi.mock('@/context/SettingsContext');
 vi.mock('@/hooks/use-toast');
 vi.mock('@/utils/financialCalculations', () => ({
   calculateProjectCost: vi.fn(() => ({ totalCost: 100000 })),
 }));
 
 const mockUseApp = vi.mocked(useApp);
+const mockUseSettings = vi.mocked(useSettings);
 const mockUseToast = vi.mocked(useToast);
 
 describe('ProjectTable', () => {
@@ -48,6 +51,22 @@ describe('ProjectTable', () => {
     vi.clearAllMocks();
 
     mockUseToast.mockReturnValue({ toast: mockToast });
+
+    mockUseSettings.mockReturnValue({
+      config: {
+        financialYear: {
+          id: 'fy2024',
+          name: 'FY2024',
+          startDate: '2024-01-01',
+          endDate: '2024-12-31',
+          quarters: [],
+        },
+        priorityLevels: [],
+      },
+      isSetupComplete: true,
+      setConfig: vi.fn(),
+      setIsSetupComplete: vi.fn(),
+    });
 
     mockUseApp.mockReturnValue({
       projects: [],
