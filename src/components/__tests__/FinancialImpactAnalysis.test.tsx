@@ -6,6 +6,9 @@ import { AppProvider } from '@/context/AppContext';
 import { TeamProvider } from '@/context/TeamContext';
 import { SettingsProvider } from '@/context/SettingsContext';
 import { ScenarioProvider } from '@/context/ScenarioContext';
+import { ProjectProvider } from '@/context/ProjectContext';
+import { PlanningProvider } from '@/context/PlanningContext';
+import { GoalProvider } from '@/context/GoalContext';
 import { Person, Team } from '@/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -62,13 +65,19 @@ const queryClient = new QueryClient();
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ScenarioProvider>
-        <SettingsProvider>
-          <TeamProvider>
-            <AppProvider>{children}</AppProvider>
-          </TeamProvider>
-        </SettingsProvider>
-      </ScenarioProvider>
+      <SettingsProvider>
+        <TeamProvider>
+          <ProjectProvider>
+            <PlanningProvider>
+              <GoalProvider>
+                <ScenarioProvider>
+                  <AppProvider>{children}</AppProvider>
+                </ScenarioProvider>
+              </GoalProvider>
+            </PlanningProvider>
+          </ProjectProvider>
+        </TeamProvider>
+      </SettingsProvider>
     </QueryClientProvider>
   );
 };

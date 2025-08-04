@@ -159,6 +159,10 @@ jobs:
     timeout-minutes: 25
     needs: [comprehensive-testing]
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
     steps:
       - name: Checkout code
