@@ -110,6 +110,8 @@ const createMockPeople = (): Person[] => [
     teamId: 'team1',
     divisionId: 'division1',
     roleId: 'role1',
+    employmentType: 'permanent',
+    startDate: '2024-01-01',
   },
   {
     id: 'person2',
@@ -119,6 +121,30 @@ const createMockPeople = (): Person[] => [
     teamId: 'team2',
     divisionId: 'division2',
     roleId: 'role2',
+    employmentType: 'contractor',
+    startDate: '2024-01-01',
+  },
+  {
+    id: 'person3',
+    name: 'Bob Wilson',
+    email: 'bob@example.com',
+    isActive: true,
+    teamId: 'team1',
+    divisionId: 'division1',
+    roleId: 'role3', // Quality Engineer
+    employmentType: 'contractor',
+    startDate: '2024-01-01',
+  },
+  {
+    id: 'person4',
+    name: 'Alice Johnson',
+    email: 'alice@example.com',
+    isActive: true,
+    teamId: 'team1',
+    divisionId: 'division1',
+    roleId: 'role4', // Software Engineer
+    employmentType: 'permanent',
+    startDate: '2024-01-01',
   },
 ];
 
@@ -140,11 +166,29 @@ const createMockRoles = (): Role[] => [
     id: 'role1',
     name: 'Product Owner',
     description: 'Product owner role',
+    rateType: 'annual',
+    defaultAnnualSalary: 120000,
   },
   {
     id: 'role2',
     name: 'Developer',
     description: 'Developer role',
+    rateType: 'annual',
+    defaultAnnualSalary: 100000,
+  },
+  {
+    id: 'role3',
+    name: 'Quality Engineer',
+    description: 'Quality Engineer role',
+    rateType: 'annual',
+    defaultAnnualSalary: 95000,
+  },
+  {
+    id: 'role4',
+    name: 'Software Engineer',
+    description: 'Software Engineer role',
+    rateType: 'annual',
+    defaultAnnualSalary: 100000,
   },
 ];
 
@@ -452,6 +496,145 @@ describe('TeamTable Skills Display', () => {
 
       expect(screen.getAllByText('React.js')).toHaveLength(2); // React.js appears where React used to appear
       expect(screen.queryByText('React')).not.toBeInTheDocument();
+    });
+  });
+
+  // New tests for Issue #74 Enhancement
+  describe('Team Composition Metrics - Issue #74', () => {
+    it('should display Contract/Perm % column instead of Capacity', () => {
+      renderTeamTable();
+
+      // Should have new column header
+      expect(screen.getByText('Contract/Perm %')).toBeInTheDocument();
+
+      // Should NOT have old Capacity column
+      expect(screen.queryByText('Capacity')).not.toBeInTheDocument();
+    });
+
+    it('should display SE/QE Roles % column instead of Utilization', () => {
+      renderTeamTable();
+
+      // Should have new column header
+      expect(screen.getByText('SE/QE Roles %')).toBeInTheDocument();
+
+      // Should NOT have old Utilization column
+      expect(screen.queryByText('Utilization')).not.toBeInTheDocument();
+    });
+
+    it('should calculate permanent vs contractor percentages correctly', () => {
+      renderTeamTable();
+
+      // Team1 has 3 people: 2 permanent (John, Alice) + 1 contractor (Bob) = 67% perm, 33% cont
+      const team1Row = screen.getByText('Frontend Team').closest('tr');
+      expect(team1Row).toBeInTheDocument();
+      expect(team1Row).toHaveTextContent('67% perm');
+      expect(team1Row).toHaveTextContent('33% cont');
+    });
+
+    it('should calculate SE vs QE role percentages correctly', () => {
+      renderTeamTable();
+
+      // Team1 has: 1 PO (John), 1 QE (Bob), 1 SE (Alice) = 3 people
+      // SE/QE focus: 1 SE, 1 QE out of 3 = 33% SE, 33% QE
+      const team1Row = screen.getByText('Frontend Team').closest('tr');
+      expect(team1Row).toBeInTheDocument();
+      expect(team1Row).toHaveTextContent('33% SE');
+      expect(team1Row).toHaveTextContent('33% QE');
+    });
+
+    it('should display role composition with visual indicators', () => {
+      renderTeamTable();
+
+      const team1Row = screen.getByText('Frontend Team').closest('tr');
+      expect(team1Row).toBeInTheDocument();
+
+      // Should have visual progress bars or indicators
+      const roleCell = team1Row?.querySelector('td:nth-child(8)'); // SE/QE Roles % column (8th column)
+      expect(roleCell).toBeInTheDocument();
+
+      // Check for progress bar elements (role breakdown indicators)
+      const progressElements = roleCell?.querySelectorAll('div[class*="bg-"]');
+      expect(progressElements?.length).toBeGreaterThan(0);
+    });
+
+    it('should not display "(Team PO)" label in Product Owner column', () => {
+      renderTeamTable();
+
+      // Product Owner column should show clean names without labels
+      const team1Row = screen.getByText('Frontend Team').closest('tr');
+      expect(team1Row).toBeInTheDocument();
+      expect(team1Row).toHaveTextContent('John Doe');
+      expect(team1Row).not.toHaveTextContent('(Team PO)');
+      expect(team1Row).not.toHaveTextContent('(Acting)');
+      expect(team1Row).not.toHaveTextContent('(External)');
+    });
+
+    it('should handle teams with no members gracefully', () => {
+      const emptyTeams = [
+        {
+          id: 'empty-team',
+          name: 'Empty Team',
+          description: 'No members',
+          type: 'permanent' as const,
+          status: 'planning' as const,
+          capacity: 40,
+          divisionId: 'division1',
+          targetSkills: [],
+          createdDate: '2024-01-01T00:00:00Z',
+          lastModified: '2024-01-01T00:00:00Z',
+        },
+      ];
+
+      const TestProvider = createTestAppProvider({
+        teams: emptyTeams,
+        people: [],
+        skills: [],
+        divisions: mockDivisions,
+        roles: mockRoles,
+      });
+
+      render(
+        <TestProvider>
+          <TeamTable teams={emptyTeams} onEditTeam={mockOnEditTeam} />
+        </TestProvider>
+      );
+
+      const emptyTeamRow = screen.getByText('Empty Team').closest('tr');
+      expect(emptyTeamRow).toBeInTheDocument();
+
+      // Should show 0% for all metrics
+      expect(emptyTeamRow).toHaveTextContent('0% perm');
+      expect(emptyTeamRow).toHaveTextContent('0% cont');
+      expect(emptyTeamRow).toHaveTextContent('0% SE');
+      expect(emptyTeamRow).toHaveTextContent('0% QE');
+    });
+
+    it('should handle edge case with only contractors', () => {
+      const contractorOnlyPeople = createMockPeople().map(person => ({
+        ...person,
+        employmentType: 'contractor' as const,
+      }));
+
+      renderTeamTable({ people: contractorOnlyPeople });
+
+      const team1Row = screen.getByText('Frontend Team').closest('tr');
+      expect(team1Row).toBeInTheDocument();
+      expect(team1Row).toHaveTextContent('0% perm');
+      expect(team1Row).toHaveTextContent('100% cont');
+    });
+
+    it('should handle edge case with only permanent employees', () => {
+      const permanentOnlyPeople = createMockPeople().map(person => ({
+        ...person,
+        employmentType: 'permanent' as const,
+      }));
+
+      renderTeamTable({ people: permanentOnlyPeople });
+
+      const team1Row = screen.getByText('Frontend Team').closest('tr');
+      expect(team1Row).toBeInTheDocument();
+      expect(team1Row).toHaveTextContent('100% perm');
+      expect(team1Row).toHaveTextContent('0% cont');
     });
   });
 });

@@ -59,6 +59,30 @@ export interface RelatedProject {
   conflictingTeams: string[];
 }
 
+// New interfaces for quarterly aggregation
+export interface TeamQuarterlyAllocation {
+  teamId: string;
+  teamName: string;
+  financialYear: string;
+  quarters: {
+    Q1: QuarterSummary;
+    Q2: QuarterSummary;
+    Q3: QuarterSummary;
+    Q4: QuarterSummary;
+  };
+  totalCost: number;
+  totalAllocation: number;
+}
+
+export interface QuarterSummary {
+  allocation: number; // percentage
+  cost: number;
+  hasAllocation: boolean;
+  startDate: string;
+  endDate: string;
+  periodCount: number; // number of iterations/cycles in this quarter
+}
+
 /**
  * Calculate team allocation summaries for a project
  * Groups allocations by team and time period (FY, quarter, iteration)
@@ -362,4 +386,142 @@ export const findRelatedProjects = (
   return relatedProjects
     .sort((a, b) => b.matchPercentage - a.matchPercentage)
     .slice(0, 10); // Return top 10 most related projects
+};
+
+/**
+ * Aggregate team allocations into quarterly summaries for clean UX
+ * Groups all iterations and cycles within quarters for strategic view
+ */
+export const aggregateTeamAllocationsToQuarterly = (
+  teamSummaries: TeamAllocationSummary[],
+  financialYears: FinancialYear[],
+  cycles: Cycle[]
+): TeamQuarterlyAllocation[] => {
+  if (teamSummaries.length === 0) return [];
+
+  // Helper function to determine quarter from date
+  const getQuarterFromDate = (
+    date: string,
+    fyStart: string
+  ): 'Q1' | 'Q2' | 'Q3' | 'Q4' => {
+    const targetDate = new Date(date);
+    const fyStartDate = new Date(fyStart);
+
+    const monthsDiff =
+      (targetDate.getFullYear() - fyStartDate.getFullYear()) * 12 +
+      (targetDate.getMonth() - fyStartDate.getMonth());
+
+    if (monthsDiff < 3) return 'Q1';
+    if (monthsDiff < 6) return 'Q2';
+    if (monthsDiff < 9) return 'Q3';
+    return 'Q4';
+  };
+
+  // Helper function to get quarter date range
+  const getQuarterDateRange = (
+    quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4',
+    fyStart: string
+  ) => {
+    const fyStartDate = new Date(fyStart);
+    const startMonth = fyStartDate.getMonth();
+    const startYear = fyStartDate.getFullYear();
+
+    const quarterStartMonths = { Q1: 0, Q2: 3, Q3: 6, Q4: 9 };
+    const qStartMonth = (startMonth + quarterStartMonths[quarter]) % 12;
+    const qStartYear =
+      startYear + Math.floor((startMonth + quarterStartMonths[quarter]) / 12);
+
+    const startDate = new Date(qStartYear, qStartMonth, 1);
+    const endDate = new Date(qStartYear, qStartMonth + 3, 0); // Last day of quarter
+
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+  };
+
+  return teamSummaries.map(team => {
+    // Find the relevant financial year (assume current FY for now)
+    const currentFY = financialYears.find(fy => fy.id === 'current') ||
+      financialYears[0] || {
+        id: 'fy2024',
+        name: 'FY2024',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      };
+
+    // Initialize quarterly data
+    const quarters = {
+      Q1: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '',
+        endDate: '',
+        periodCount: 0,
+      },
+      Q2: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '',
+        endDate: '',
+        periodCount: 0,
+      },
+      Q3: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '',
+        endDate: '',
+        periodCount: 0,
+      },
+      Q4: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '',
+        endDate: '',
+        periodCount: 0,
+      },
+    };
+
+    // Set quarter date ranges
+    (['Q1', 'Q2', 'Q3', 'Q4'] as const).forEach(q => {
+      const range = getQuarterDateRange(q, currentFY.startDate);
+      quarters[q].startDate = range.startDate;
+      quarters[q].endDate = range.endDate;
+    });
+
+    // Aggregate allocations by quarter
+    team.allocations.forEach(allocation => {
+      const quarter = getQuarterFromDate(
+        allocation.startDate,
+        currentFY.startDate
+      );
+
+      quarters[quarter].allocation += allocation.allocatedPercentage;
+      quarters[quarter].cost += allocation.cost;
+      quarters[quarter].hasAllocation = true;
+      quarters[quarter].periodCount += 1;
+    });
+
+    // Average allocation percentages per quarter (since multiple periods can exist in a quarter)
+    (['Q1', 'Q2', 'Q3', 'Q4'] as const).forEach(q => {
+      if (quarters[q].periodCount > 0) {
+        quarters[q].allocation = Math.round(
+          quarters[q].allocation / quarters[q].periodCount
+        );
+      }
+    });
+
+    return {
+      teamId: team.teamId,
+      teamName: team.teamName,
+      financialYear: currentFY.name,
+      quarters,
+      totalCost: team.totalCost,
+      totalAllocation: team.totalAllocatedPercentage,
+    };
+  });
 };

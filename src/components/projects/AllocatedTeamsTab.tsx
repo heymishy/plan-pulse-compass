@@ -3,27 +3,133 @@ import { useApp } from '@/context/AppContext';
 import { Project } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { formatCurrency } from '@/utils/currency';
 import {
   calculateTeamAllocations,
-  calculateTimePeriodTotals,
   findRelatedProjects,
+  aggregateTeamAllocationsToQuarterly,
   TeamAllocationSummary,
-  TimePeriodTotals,
   RelatedProject,
+  TeamQuarterlyAllocation,
 } from '@/utils/teamAllocationCalculations';
+import { Progress } from '@/components/ui/progress';
 
 interface AllocatedTeamsTabProps {
   project: Project;
 }
+
+// Component for quarterly allocation display
+const QuarterlyTeamCard: React.FC<{ team: TeamQuarterlyAllocation }> = ({
+  team,
+}) => {
+  const getQuarterColor = (allocation: number) => {
+    if (allocation === 0) return 'bg-gray-100';
+    if (allocation < 25) return 'bg-green-100 border-green-200';
+    if (allocation < 50) return 'bg-yellow-100 border-yellow-200';
+    if (allocation < 75) return 'bg-orange-100 border-orange-200';
+    return 'bg-red-100 border-red-200';
+  };
+
+  const getProgressColor = (allocation: number) => {
+    if (allocation < 25) return 'bg-green-500';
+    if (allocation < 50) return 'bg-yellow-500';
+    if (allocation < 75) return 'bg-orange-500';
+    return 'bg-red-500';
+  };
+
+  return (
+    <Card className="h-full">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between text-base">
+          <span>{team.teamName}</span>
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline" className="text-xs">
+              {team.financialYear}
+            </Badge>
+            <Badge variant="secondary" className="font-mono text-xs">
+              {formatCurrency(team.totalCost)}
+            </Badge>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Quarterly Timeline */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium text-gray-700">
+              Quarterly Allocation
+            </span>
+            <span className="text-sm text-gray-500">
+              {team.totalAllocation}% total
+            </span>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2">
+            {(['Q1', 'Q2', 'Q3', 'Q4'] as const).map(quarter => {
+              const q = team.quarters[quarter];
+              return (
+                <div key={quarter} className="text-center">
+                  <div
+                    className={`p-3 rounded-lg border-2 transition-all hover:shadow-sm ${getQuarterColor(q.allocation)}`}
+                  >
+                    <div className="text-xs font-medium text-gray-600 mb-1">
+                      {quarter}
+                    </div>
+                    <div className="text-lg font-bold text-gray-900 mb-1">
+                      {q.hasAllocation ? `${q.allocation}%` : '—'}
+                    </div>
+                    {q.hasAllocation && (
+                      <div className="text-xs text-gray-600">
+                        {formatCurrency(q.cost)}
+                      </div>
+                    )}
+                  </div>
+                  {q.hasAllocation && (
+                    <div className="mt-2">
+                      <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div
+                          className={`h-1.5 rounded-full transition-all ${getProgressColor(q.allocation)}`}
+                          style={{ width: `${Math.min(q.allocation, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="pt-2 border-t border-gray-100">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-600">Active Quarters:</span>
+              <span className="ml-2 font-medium">
+                {
+                  Object.values(team.quarters).filter(q => q.hasAllocation)
+                    .length
+                }
+                /4
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">Avg per Quarter:</span>
+              <span className="ml-2 font-medium">
+                {Math.round(
+                  team.totalAllocation /
+                    Object.values(team.quarters).filter(q => q.hasAllocation)
+                      .length || 0
+                )}
+                %
+              </span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
   const {
@@ -64,10 +170,14 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
     config,
   ]);
 
-  // Calculate time period totals
-  const periodTotals = useMemo(() => {
-    return calculateTimePeriodTotals(teamSummaries);
-  }, [teamSummaries]);
+  // Aggregate to quarterly view for clean UX
+  const quarterlyAllocations = useMemo(() => {
+    return aggregateTeamAllocationsToQuarterly(
+      teamSummaries,
+      financialYears,
+      cycles
+    );
+  }, [teamSummaries, financialYears, cycles]);
 
   // Find related projects
   const relatedProjects = useMemo(() => {
@@ -81,152 +191,64 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
           Team Allocations & Cost Analysis
         </h3>
 
-        {/* Team Allocation Summaries */}
+        {/* Quarterly Team Allocations - Modern UX */}
         <div className="mb-8">
           <h4 className="text-md font-medium mb-3">
-            Team Allocation Summaries
+            Team Allocations by Quarter
           </h4>
-          {teamSummaries.length === 0 ? (
+          {quarterlyAllocations.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center text-gray-500">
                 No team allocations found for this project.
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {teamSummaries.map((team: TeamAllocationSummary) => (
-                <Card key={team.teamId}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center justify-between">
-                      <span>{team.teamName}</span>
-                      <Badge variant="outline">
-                        {formatCurrency(team.totalCost)}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Total Allocation:</span>
-                        <span className="font-medium">
-                          {team.totalAllocatedPercentage}%
-                        </span>
-                      </div>
-
-                      {/* Time Period Breakdown */}
-                      <div className="space-y-1">
-                        {team.allocations.map(period => (
-                          <div
-                            key={period.periodId}
-                            className="text-xs border-l-2 border-blue-200 pl-2"
-                          >
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">
-                                {period.periodName}
-                              </span>
-                              <div className="space-x-2">
-                                <span>{period.allocatedPercentage}%</span>
-                                <span className="font-mono">
-                                  {formatCurrency(period.cost)}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Team Members */}
-                            <div className="mt-1 space-y-1">
-                              {period.teamMembers.map(member => (
-                                <div
-                                  key={member.personId}
-                                  className="flex justify-between items-center"
-                                >
-                                  <div className="flex-1">
-                                    <span className="text-gray-700">
-                                      {member.personName}
-                                    </span>
-                                    <span className="ml-2 text-gray-500">
-                                      ({member.allocatedPercentage}%)
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    {member.skills.slice(0, 2).map(skill => (
-                                      <Badge
-                                        key={skill}
-                                        variant="secondary"
-                                        className="text-xs py-0 px-1"
-                                      >
-                                        {skill}
-                                      </Badge>
-                                    ))}
-                                    {member.skills.length > 2 && (
-                                      <Badge
-                                        variant="secondary"
-                                        className="text-xs py-0 px-1"
-                                      >
-                                        +{member.skills.length - 2}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {quarterlyAllocations.map((team: TeamQuarterlyAllocation) => (
+                <QuarterlyTeamCard key={team.teamId} team={team} />
               ))}
             </div>
           )}
         </div>
 
-        {/* Time Period Totals */}
+        {/* Project Summary */}
         <div className="mb-8">
-          <h4 className="text-md font-medium mb-3">
-            Cost Totals by Time Period
-          </h4>
+          <h4 className="text-md font-medium mb-3">Project Summary</h4>
           <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Period</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Total Cost</TableHead>
-                    <TableHead className="text-right">Teams</TableHead>
-                    <TableHead className="text-right">
-                      Total Allocation
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {periodTotals.map((period: TimePeriodTotals) => (
-                    <TableRow key={period.periodId}>
-                      <TableCell className="font-medium">
-                        {period.periodName}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {period.periodType === 'financial-year'
-                            ? 'FY'
-                            : period.periodType === 'quarter'
-                              ? 'Quarter'
-                              : 'Iteration'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {formatCurrency(period.totalCost)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {period.teamsCount} teams
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {period.totalAllocatedPercentage}%
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {quarterlyAllocations.length}
+                  </div>
+                  <div className="text-sm text-gray-600">Teams Involved</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {formatCurrency(
+                      quarterlyAllocations.reduce(
+                        (sum, team) => sum + team.totalCost,
+                        0
+                      )
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Budget</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {Math.round(
+                      quarterlyAllocations.reduce(
+                        (sum, team) => sum + team.totalAllocation,
+                        0
+                      ) / (quarterlyAllocations.length || 1)
+                    )}
+                    %
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Avg Team Allocation
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

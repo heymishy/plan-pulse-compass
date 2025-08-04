@@ -164,3 +164,182 @@ export const getDivisionName = (
   const division = divisions.find(d => d.id === divisionId);
   return division?.name || 'Unknown Division';
 };
+
+/**
+ * Calculate employment type percentages for a team
+ * Returns percentages of permanent vs contractor employees
+ */
+export const calculateEmploymentTypePercentages = (
+  teamId: string,
+  people: Person[]
+): { permanentPercentage: number; contractorPercentage: number } => {
+  const teamMembers = getTeamMembers(teamId, people);
+
+  if (teamMembers.length === 0) {
+    return { permanentPercentage: 0, contractorPercentage: 0 };
+  }
+
+  const permanentCount = teamMembers.filter(
+    p => p.employmentType === 'permanent'
+  ).length;
+  const contractorCount = teamMembers.filter(
+    p => p.employmentType === 'contractor'
+  ).length;
+  const totalCount = teamMembers.length;
+
+  return {
+    permanentPercentage: Math.round((permanentCount / totalCount) * 100),
+    contractorPercentage: Math.round((contractorCount / totalCount) * 100),
+  };
+};
+
+/**
+ * Calculate role composition percentages for SE and QE roles
+ * Returns percentages and role breakdown with other roles
+ */
+export const calculateRoleCompositionPercentages = (
+  teamId: string,
+  people: Person[],
+  roles: Role[]
+): {
+  sePercentage: number;
+  qePercentage: number;
+  otherPercentage: number;
+  roleBreakdown: Array<{
+    roleName: string;
+    count: number;
+    percentage: number;
+    color: string;
+  }>;
+} => {
+  const teamMembers = getTeamMembers(teamId, people);
+
+  if (teamMembers.length === 0) {
+    return {
+      sePercentage: 0,
+      qePercentage: 0,
+      otherPercentage: 0,
+      roleBreakdown: [],
+    };
+  }
+
+  // Count roles
+  const roleCounts = new Map<string, { name: string; count: number }>();
+
+  teamMembers.forEach(person => {
+    const role = roles.find(r => r.id === person.roleId);
+    const roleName = role?.name || 'Unknown Role';
+
+    if (roleCounts.has(roleName)) {
+      roleCounts.set(roleName, {
+        name: roleName,
+        count: roleCounts.get(roleName)!.count + 1,
+      });
+    } else {
+      roleCounts.set(roleName, { name: roleName, count: 1 });
+    }
+  });
+
+  const totalCount = teamMembers.length;
+
+  // Calculate SE and QE percentages
+  let seCount = 0;
+  let qeCount = 0;
+
+  roleCounts.forEach(({ name, count }) => {
+    const normalizedName = name.toLowerCase();
+    if (
+      normalizedName.includes('software engineer') ||
+      normalizedName === 'developer'
+    ) {
+      seCount += count;
+    } else if (
+      normalizedName.includes('quality engineer') ||
+      normalizedName.includes('qa') ||
+      normalizedName.includes('test engineer')
+    ) {
+      qeCount += count;
+    }
+  });
+
+  const sePercentage = Math.round((seCount / totalCount) * 100);
+  const qePercentage = Math.round((qeCount / totalCount) * 100);
+  const otherPercentage = 100 - sePercentage - qePercentage;
+
+  // Create role breakdown for visual display
+  const roleBreakdown = Array.from(roleCounts.entries())
+    .map(([roleName, { count }], index) => {
+      const percentage = Math.round((count / totalCount) * 100);
+      const colors = [
+        'bg-blue-500',
+        'bg-green-500',
+        'bg-purple-500',
+        'bg-orange-500',
+        'bg-pink-500',
+        'bg-gray-400',
+      ];
+
+      return {
+        roleName,
+        count,
+        percentage,
+        color: colors[index % colors.length],
+      };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    sePercentage,
+    qePercentage,
+    otherPercentage,
+    roleBreakdown,
+  };
+};
+
+/**
+ * Get clean product owner name without labels
+ * Returns just the name without "(Team PO)", "(Acting)", etc.
+ */
+export const getCleanProductOwnerName = (
+  team: Team,
+  people: Person[],
+  roles: Role[]
+): string => {
+  // Find Product Owner role first
+  const productOwnerRole = roles.find(
+    role =>
+      role.name.toLowerCase().includes('product owner') ||
+      role.name.toLowerCase().includes('po')
+  );
+
+  // Get all active team members
+  const teamMembers = people.filter(
+    person => person.teamId === team.id && person.isActive
+  );
+
+  // Find the natural PO (person with PO role in the team)
+  const naturalPO = productOwnerRole
+    ? teamMembers.find(person => person.roleId === productOwnerRole.id)
+    : null;
+
+  // If no explicit PO assigned to team, check for natural PO
+  if (!team.productOwnerId) {
+    if (naturalPO) {
+      return naturalPO.name;
+    }
+    return 'No Product Owner';
+  }
+
+  // Find the assigned PO person
+  const assignedPO = people.find(p => p.id === team.productOwnerId);
+  if (!assignedPO) {
+    // Fallback to natural PO if assigned PO not found
+    if (naturalPO) {
+      return naturalPO.name;
+    }
+    return 'Unknown Product Owner';
+  }
+
+  // Return clean name without any labels
+  return assignedPO.name;
+};

@@ -28,9 +28,11 @@ import { useApp } from '@/context/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Team } from '@/types';
 import {
-  getProductOwnerName,
   getTeamMembers,
   getDivisionName,
+  calculateEmploymentTypePercentages,
+  calculateRoleCompositionPercentages,
+  getCleanProductOwnerName,
 } from '@/utils/teamUtils';
 
 interface TeamTableProps {
@@ -129,20 +131,25 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                   <TableHead>Product Owner</TableHead>
                   <TableHead>Members</TableHead>
                   <TableHead>Skills</TableHead>
-                  <TableHead>Capacity</TableHead>
-                  <TableHead>Utilization</TableHead>
+                  <TableHead>Contract/Perm %</TableHead>
+                  <TableHead>SE/QE Roles %</TableHead>
                   <TableHead className="w-12">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teams.map(team => {
                   const members = getTeamMembers(team.id, people);
-                  const utilizationPercentage =
-                    members.length > 0
-                      ? Math.round(
-                          ((members.length * 40) / team.capacity) * 100
-                        )
-                      : 0;
+
+                  // Calculate new metrics for issue #74
+                  const employmentTypes = calculateEmploymentTypePercentages(
+                    team.id,
+                    people
+                  );
+                  const roleComposition = calculateRoleCompositionPercentages(
+                    team.id,
+                    people,
+                    roles
+                  );
 
                   return (
                     <TableRow key={team.id}>
@@ -160,7 +167,7 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                         {getDivisionName(team.divisionId, divisions)}
                       </TableCell>
                       <TableCell>
-                        {getProductOwnerName(team, people, roles)}
+                        {getCleanProductOwnerName(team, people, roles)}
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">
@@ -198,26 +205,43 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                             )}
                         </div>
                       </TableCell>
-                      <TableCell>{team.capacity}h/week</TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full ${
-                                utilizationPercentage > 100
-                                  ? 'bg-red-500'
-                                  : utilizationPercentage > 80
-                                    ? 'bg-yellow-500'
-                                    : 'bg-green-500'
-                              }`}
-                              style={{
-                                width: `${Math.min(utilizationPercentage, 100)}%`,
-                              }}
-                            />
+                        <div className="space-y-1">
+                          <div className="text-xs text-gray-600">
+                            {employmentTypes.permanentPercentage}% perm
                           </div>
-                          <span className="text-sm text-gray-600">
-                            {utilizationPercentage}%
-                          </span>
+                          <div className="text-xs text-gray-600">
+                            {employmentTypes.contractorPercentage}% cont
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-2">
+                          {/* SE/QE percentages */}
+                          <div className="space-y-1">
+                            <div className="text-xs text-gray-600">
+                              {roleComposition.sePercentage}% SE
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              {roleComposition.qePercentage}% QE
+                            </div>
+                          </div>
+
+                          {/* Visual role composition indicator */}
+                          <div className="flex space-x-1">
+                            {roleComposition.roleBreakdown
+                              .slice(0, 4)
+                              .map((role, index) => (
+                                <div
+                                  key={role.roleName}
+                                  className={`h-2 rounded-full ${role.color}`}
+                                  style={{
+                                    width: `${Math.max(role.percentage, 5)}%`,
+                                  }}
+                                  title={`${role.roleName}: ${role.count} (${role.percentage}%)`}
+                                />
+                              ))}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -235,7 +259,7 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                 {teams.length === 0 && (
                   <TableRow>
                     <TableCell
-                      colSpan={9}
+                      colSpan={8}
                       className="text-center py-8 text-gray-500"
                     >
                       No teams found
