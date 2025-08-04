@@ -26,6 +26,7 @@ vi.mock('@/utils/teamAllocationCalculations', () => ({
   calculateTeamAllocations: vi.fn(),
   calculateTimePeriodTotals: vi.fn(),
   findRelatedProjects: vi.fn(),
+  aggregateTeamAllocationsToQuarterly: vi.fn(),
 }));
 
 // Mock data following exact TypeScript interfaces
@@ -287,6 +288,92 @@ const mockAppConfig = {
   quarters: mockCycles,
 };
 
+// Mock quarterly allocation data for new function
+const mockQuarterlyAllocations = [
+  {
+    teamId: 'team-1',
+    teamName: 'Frontend Team',
+    financialYear: 'FY2024',
+    quarters: {
+      Q1: {
+        allocation: 80,
+        cost: 15000,
+        hasAllocation: true,
+        startDate: '2024-01-01',
+        endDate: '2024-03-31',
+        periodCount: 1,
+      },
+      Q2: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '2024-04-01',
+        endDate: '2024-06-30',
+        periodCount: 0,
+      },
+      Q3: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '2024-07-01',
+        endDate: '2024-09-30',
+        periodCount: 0,
+      },
+      Q4: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '2024-10-01',
+        endDate: '2024-12-31',
+        periodCount: 0,
+      },
+    },
+    totalCost: 15000,
+    totalAllocation: 80,
+  },
+  {
+    teamId: 'team-2',
+    teamName: 'Backend Team',
+    financialYear: 'FY2024',
+    quarters: {
+      Q1: {
+        allocation: 60,
+        cost: 12000,
+        hasAllocation: true,
+        startDate: '2024-01-01',
+        endDate: '2024-03-31',
+        periodCount: 1,
+      },
+      Q2: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '2024-04-01',
+        endDate: '2024-06-30',
+        periodCount: 0,
+      },
+      Q3: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '2024-07-01',
+        endDate: '2024-09-30',
+        periodCount: 0,
+      },
+      Q4: {
+        allocation: 0,
+        cost: 0,
+        hasAllocation: false,
+        startDate: '2024-10-01',
+        endDate: '2024-12-31',
+        periodCount: 0,
+      },
+    },
+    totalCost: 12000,
+    totalAllocation: 60,
+  },
+];
+
 describe('AllocatedTeamsTab', () => {
   const mockAppContext = {
     projects: [mockProject],
@@ -311,6 +398,7 @@ describe('AllocatedTeamsTab', () => {
       calculateTeamAllocations,
       calculateTimePeriodTotals,
       findRelatedProjects,
+      aggregateTeamAllocationsToQuarterly,
     } = await import('@/utils/teamAllocationCalculations');
 
     vi.mocked(calculateTeamAllocations).mockReturnValue(
@@ -318,6 +406,9 @@ describe('AllocatedTeamsTab', () => {
     );
     vi.mocked(calculateTimePeriodTotals).mockReturnValue(mockTimePeriodTotals);
     vi.mocked(findRelatedProjects).mockReturnValue(mockRelatedProjects);
+    vi.mocked(aggregateTeamAllocationsToQuarterly).mockReturnValue(
+      mockQuarterlyAllocations
+    );
   });
 
   describe('Basic Rendering', () => {
@@ -335,18 +426,18 @@ describe('AllocatedTeamsTab', () => {
       ).toBeInTheDocument();
     });
 
-    it('should show team allocation summaries section', () => {
-      render(<AllocatedTeamsTab project={mockProject} />);
-
-      expect(screen.getByText('Team Allocation Summaries')).toBeInTheDocument();
-    });
-
-    it('should show time period totals section', () => {
+    it('should show team allocations by quarter section', () => {
       render(<AllocatedTeamsTab project={mockProject} />);
 
       expect(
-        screen.getByText('Cost Totals by Time Period')
+        screen.getByText('Team Allocations by Quarter')
       ).toBeInTheDocument();
+    });
+
+    it('should show project summary section', () => {
+      render(<AllocatedTeamsTab project={mockProject} />);
+
+      expect(screen.getByText('Project Summary')).toBeInTheDocument();
     });
 
     it('should show related projects section', () => {
@@ -356,11 +447,11 @@ describe('AllocatedTeamsTab', () => {
     });
   });
 
-  describe('Team Allocation Summaries', () => {
+  describe('Quarterly Team Allocations', () => {
     it('should display allocated teams with their names', () => {
       render(<AllocatedTeamsTab project={mockProject} />);
 
-      expect(screen.getAllByText('Frontend Team')).toHaveLength(2); // Team name + conflict reference
+      expect(screen.getAllByText('Frontend Team')).toHaveLength(2); // Team card + related projects reference
       expect(screen.getByText('Backend Team')).toBeInTheDocument();
     });
 
@@ -379,47 +470,43 @@ describe('AllocatedTeamsTab', () => {
       expect(screen.getAllByText('60%')).toHaveLength(2); // Total allocation + period allocation for Backend team
     });
 
-    it('should show team member details', () => {
+    it('should show quarterly breakdown with quarters', () => {
       render(<AllocatedTeamsTab project={mockProject} />);
 
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+      // Each team should show Q1, Q2, Q3, Q4 labels (one per team)
+      expect(screen.getAllByText('Q1')).toHaveLength(2); // 2 teams × 1 Q1 label each
+      expect(screen.getAllByText('Q2')).toHaveLength(2); // 2 teams × 1 Q2 label each
+      expect(screen.getAllByText('Q3')).toHaveLength(2); // 2 teams × 1 Q3 label each
+      expect(screen.getAllByText('Q4')).toHaveLength(2); // 2 teams × 1 Q4 label each
     });
 
-    it('should display team member skills', () => {
+    it('should display financial year information', () => {
       render(<AllocatedTeamsTab project={mockProject} />);
 
-      expect(screen.getAllByText('React')).toHaveLength(3); // Team member badge + related project skills
-      expect(screen.getByText('TypeScript')).toBeInTheDocument();
-      expect(screen.getAllByText('Node.js')).toHaveLength(2); // Team member badge + related project skills
-      expect(screen.getByText('PostgreSQL')).toBeInTheDocument();
+      expect(screen.getAllByText('FY2024')).toHaveLength(2); // One for each team
     });
   });
 
-  describe('Time Period Analysis', () => {
-    it('should display period names and types', () => {
+  describe('Project Summary', () => {
+    it('should display teams involved count', () => {
       render(<AllocatedTeamsTab project={mockProject} />);
 
-      expect(screen.getAllByText('Q1 2024')).toHaveLength(3); // Team periods + period totals table
-      expect(screen.getByText('Quarter')).toBeInTheDocument();
+      expect(screen.getByText('2')).toBeInTheDocument(); // Teams count
+      expect(screen.getByText('Teams Involved')).toBeInTheDocument();
     });
 
-    it('should show period total costs', () => {
+    it('should show total budget', () => {
       render(<AllocatedTeamsTab project={mockProject} />);
 
-      expect(screen.getByText('$27,000')).toBeInTheDocument();
+      expect(screen.getByText('$27,000')).toBeInTheDocument(); // Total of 15k + 12k
+      expect(screen.getByText('Total Budget')).toBeInTheDocument();
     });
 
-    it('should display teams count per period', () => {
+    it('should display average team allocation', () => {
       render(<AllocatedTeamsTab project={mockProject} />);
 
-      expect(screen.getByText('2 teams')).toBeInTheDocument();
-    });
-
-    it('should show total allocated percentage per period', () => {
-      render(<AllocatedTeamsTab project={mockProject} />);
-
-      expect(screen.getAllByText('140%')).toHaveLength(1); // Period totals table
+      expect(screen.getByText('70%')).toBeInTheDocument(); // Average of 80% and 60%
+      expect(screen.getByText('Avg Team Allocation')).toBeInTheDocument();
     });
   });
 
@@ -460,10 +547,10 @@ describe('AllocatedTeamsTab', () => {
 
   describe('Empty States', () => {
     it('should handle projects with no team allocations', async () => {
-      const { calculateTeamAllocations } = await import(
-        '@/utils/teamAllocationCalculations'
-      );
+      const { calculateTeamAllocations, aggregateTeamAllocationsToQuarterly } =
+        await import('@/utils/teamAllocationCalculations');
       vi.mocked(calculateTeamAllocations).mockReturnValue([]);
+      vi.mocked(aggregateTeamAllocationsToQuarterly).mockReturnValue([]);
 
       render(<AllocatedTeamsTab project={mockProject} />);
 
@@ -509,15 +596,17 @@ describe('AllocatedTeamsTab', () => {
       );
     });
 
-    it('should call calculateTimePeriodTotals with team summaries', async () => {
-      const { calculateTimePeriodTotals } = await import(
+    it('should call aggregateTeamAllocationsToQuarterly with team summaries', async () => {
+      const { aggregateTeamAllocationsToQuarterly } = await import(
         '@/utils/teamAllocationCalculations'
       );
 
       render(<AllocatedTeamsTab project={mockProject} />);
 
-      expect(calculateTimePeriodTotals).toHaveBeenCalledWith(
-        mockTeamAllocationSummaries
+      expect(aggregateTeamAllocationsToQuarterly).toHaveBeenCalledWith(
+        mockTeamAllocationSummaries,
+        mockFinancialYears,
+        mockCycles
       );
     });
 
