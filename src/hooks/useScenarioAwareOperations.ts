@@ -491,9 +491,14 @@ export const useScenarioAwareOperations = () => {
     add: useCallback(
       async (allocationData: Omit<Allocation, 'id'>) => {
         if (!isInScenarioMode) {
-          // No direct add in planningContext, would need to implement
-          console.warn('Add allocation not implemented in live mode');
-          return;
+          // Implement live mode allocation save using planningContext
+          const newAllocation: Allocation = {
+            ...allocationData,
+            id: crypto.randomUUID(),
+          };
+
+          planningContext.setAllocations(prev => [...prev, newAllocation]);
+          return newAllocation;
         }
 
         const newAllocation: Allocation = {
@@ -519,14 +524,25 @@ export const useScenarioAwareOperations = () => {
 
         return newAllocation;
       },
-      [isInScenarioMode, createModification, updateScenarioData]
+      [
+        isInScenarioMode,
+        planningContext,
+        createModification,
+        updateScenarioData,
+      ]
     ),
 
     update: useCallback(
       async (allocationId: string, allocationData: Partial<Allocation>) => {
         if (!isInScenarioMode) {
-          // planningContext doesn't have direct update, would need to implement
-          console.warn('Update allocation not implemented in live mode');
+          // Implement live mode allocation update using planningContext
+          planningContext.setAllocations(prev =>
+            prev.map(allocation =>
+              allocation.id === allocationId
+                ? { ...allocation, ...allocationData }
+                : allocation
+            )
+          );
           return;
         }
 
@@ -565,6 +581,7 @@ export const useScenarioAwareOperations = () => {
       },
       [
         isInScenarioMode,
+        planningContext,
         scenarioContext,
         createModification,
         updateScenarioData,
@@ -574,7 +591,10 @@ export const useScenarioAwareOperations = () => {
     delete: useCallback(
       async (allocationId: string) => {
         if (!isInScenarioMode) {
-          console.warn('Delete allocation not implemented in live mode');
+          // Implement live mode allocation delete using planningContext
+          planningContext.setAllocations(prev =>
+            prev.filter(allocation => allocation.id !== allocationId)
+          );
           return;
         }
 
@@ -602,6 +622,7 @@ export const useScenarioAwareOperations = () => {
       },
       [
         isInScenarioMode,
+        planningContext,
         scenarioContext,
         createModification,
         updateScenarioData,
