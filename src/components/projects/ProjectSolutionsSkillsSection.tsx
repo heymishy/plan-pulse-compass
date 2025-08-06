@@ -300,7 +300,7 @@ const ProjectSolutionsSkillsSection: React.FC<
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="project-solutions-skills-section">
       <Tabs defaultValue="solutions" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="solutions">Solutions</TabsTrigger>
