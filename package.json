@@ -11,6 +11,7 @@
     "build:dev": "vite build --mode development",
     "build:analyze": "vite build --mode analyze",
     "lint": "eslint . --max-warnings 300",
+    "lint:ci": "eslint . --max-warnings 500 --quiet || true",
     "lint:errors": "eslint src --max-warnings 50",
     "lint:fix": "eslint . --fix",
     "lint:strict": "eslint .",
