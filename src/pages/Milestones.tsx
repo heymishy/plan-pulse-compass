@@ -16,6 +16,7 @@ import MilestoneTable from '@/components/milestones/MilestoneTable';
 import MilestoneCards from '@/components/milestones/MilestoneCards';
 import MilestoneDialog from '@/components/milestones/MilestoneDialog';
 import { Milestone } from '@/types';
+import SearchAndFilter from '@/components/planning/SearchAndFilter';
 
 const Milestones = () => {
   const { projects, setProjects } = useApp();
@@ -28,6 +29,11 @@ const Milestones = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null
   );
+  const [filters, setFilters] = useState({
+    searchQuery: '',
+    projectId: 'all',
+    status: 'all',
+  });
 
   // Get all milestones from all projects
   const allMilestones = projects.flatMap(project =>
@@ -37,6 +43,14 @@ const Milestones = () => {
       projectStatus: project.status,
     }))
   );
+
+  const filteredMilestones = allMilestones.filter(milestone => {
+    return (
+      (filters.searchQuery === '' || milestone.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) &&
+      (filters.projectId === 'all' || milestone.projectId === filters.projectId) &&
+      (filters.status === 'all' || milestone.status === filters.status)
+    );
+  });
 
   const handleCreateMilestone = () => {
     setSelectedMilestone(null);
@@ -124,6 +138,16 @@ const Milestones = () => {
             </Button>
           </div>
         </div>
+
+        <SearchAndFilter
+          filters={filters}
+          onFiltersChange={setFilters}
+          filterFields={[
+            { id: 'searchQuery', label: 'Search', type: 'text', placeholder: 'Search milestones...' },
+            { id: 'projectId', label: 'Project', type: 'select', options: projects.map(p => ({ value: p.id, label: p.name })) },
+            { id: 'status', label: 'Status', type: 'select', options: [{ value: 'not-started', label: 'Not Started' }, { value: 'in-progress', label: 'In Progress' }, { value: 'completed', label: 'Completed' }, { value: 'at-risk', label: 'At Risk' }] },
+          ]}
+        />
 
         {/* Status Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -215,12 +239,12 @@ const Milestones = () => {
         {/* Milestones List */}
         {viewMode === 'table' ? (
           <MilestoneTable
-            milestones={allMilestones}
+            milestones={filteredMilestones}
             onEditMilestone={handleEditMilestone}
           />
         ) : (
           <MilestoneCards
-            milestones={allMilestones}
+            milestones={filteredMilestones}
             onEditMilestone={handleEditMilestone}
           />
         )}

@@ -214,7 +214,7 @@ const Teams = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="portfolio" className="space-y-6">
+        <Tabs defaultValue="teams" className="space-y-6">
           <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger
               value="portfolio"
@@ -295,18 +295,19 @@ const Teams = () => {
                   className="pl-10"
                 />
               </div>
-              <select
-                value={selectedDivision}
-                onChange={e => setSelectedDivision(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">All Divisions</option>
-                {divisions.map(division => (
-                  <option key={division.id} value={division.id}>
-                    {division.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedDivision} onValueChange={setSelectedDivision}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Divisions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Divisions</SelectItem>
+                  {divisions.map(division => (
+                    <SelectItem key={division.id} value={division.id}>
+                      {division.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className="flex rounded-md shadow-sm">
                 <Button
                   variant={viewMode === 'table' ? 'default' : 'outline'}

@@ -24,14 +24,33 @@ import ProjectDetailsDialog from '@/components/projects/ProjectDetailsDialog';
 import { ProjectCommandCenterModal } from '@/components/projects/ProjectCommandCenterModal';
 import FinancialImpactAnalysis from '@/components/canvas/FinancialImpactAnalysis';
 import ProjectTeamFinderDialog from '@/components/scenarios/ProjectTeamFinderDialog';
+import SearchAndFilter from '@/components/planning/SearchAndFilter';
 
 const Projects = () => {
-  const { projects, epics, allocations, cycles, isSetupComplete } = useApp();
+  const { projects, epics, allocations, cycles, isSetupComplete, divisions, teams } = useApp();
   const { isInScenarioMode, activeScenarioId, scenarios } = useScenarios();
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    searchQuery: '',
+    divisionId: 'all',
+    teamId: 'all',
+    status: 'all',
+  });
+
+  const filteredProjects = projects.filter(project => {
+    const team = teams.find(t => t.projectIds?.includes(project.id));
+    const division = divisions.find(d => d.id === team?.divisionId);
+
+    return (
+      (filters.searchQuery === '' || project.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) &&
+      (filters.divisionId === 'all' || division?.id === filters.divisionId) &&
+      (filters.teamId === 'all' || team?.id === filters.teamId) &&
+      (filters.status === 'all' || project.status === filters.status)
+    );
+  });
 
   if (!isSetupComplete) {
     return (
@@ -160,6 +179,17 @@ const Projects = () => {
           </div>
         </div>
 
+        <SearchAndFilter
+          filters={filters}
+          onFiltersChange={setFilters}
+          filterFields={[
+            { id: 'searchQuery', label: 'Search', type: 'text', placeholder: 'Search projects...' },
+            { id: 'divisionId', label: 'Division', type: 'select', options: divisions.map(d => ({ value: d.id, label: d.name })) },
+            { id: 'teamId', label: 'Team', type: 'select', options: teams.map(t => ({ value: t.id, label: t.name })) },
+            { id: 'status', label: 'Status', type: 'select', options: [{ value: 'planning', label: 'Planning' }, { value: 'active', label: 'Active' }, { value: 'completed', label: 'Completed' }, { value: 'on-hold', label: 'On Hold' }, { value: 'cancelled', label: 'Cancelled' }] },
+          ]}
+        />
+
         {/* Project Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
@@ -229,13 +259,13 @@ const Projects = () => {
           <TabsContent value="projects">
             {viewMode === 'table' ? (
               <ProjectTable
-                projects={projects}
+                projects={filteredProjects}
                 onEditProject={handleEditProject}
                 onViewProject={handleViewProject}
               />
             ) : (
               <ProjectCards
-                projects={projects}
+                projects={filteredProjects}
                 onEditProject={handleEditProject}
                 onViewProject={handleViewProject}
               />

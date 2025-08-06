@@ -8,13 +8,34 @@ import PeopleTable from '@/components/people/PeopleTable';
 import PersonDialog from '@/components/teams/PersonDialog';
 import PersonSkillsDisplay from '@/components/people/PersonSkillsDisplay';
 import { Person } from '@/types';
+import SearchAndFilter from '@/components/planning/SearchAndFilter';
 
 const People = () => {
-  const { people, roles, teams, addPerson, updatePerson } = useApp();
+  const { people, roles, teams, addPerson, updatePerson, divisions } = useApp();
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [filters, setFilters] = useState({
+    searchQuery: '',
+    roleId: 'all',
+    teamId: 'all',
+    divisionId: 'all',
+    status: 'all',
+  });
+
+  const filteredPeople = people.filter(person => {
+    const team = teams.find(t => t.id === person.teamId);
+    const division = divisions.find(d => d.id === team?.divisionId);
+
+    return (
+      (filters.searchQuery === '' || person.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) &&
+      (filters.roleId === 'all' || person.roleId === filters.roleId) &&
+      (filters.teamId === 'all' || person.teamId === filters.teamId) &&
+      (filters.divisionId === 'all' || division?.id === filters.divisionId) &&
+      (filters.status === 'all' || (filters.status === 'active' && person.isActive) || (filters.status === 'inactive' && !person.isActive))
+    );
+  });
 
   const handleCreatePerson = () => {
     setSelectedPerson(null);
@@ -87,6 +108,18 @@ const People = () => {
           </div>
         </div>
 
+        <SearchAndFilter
+          filters={filters}
+          onFiltersChange={setFilters}
+          filterFields={[
+            { id: 'searchQuery', label: 'Search', type: 'text', placeholder: 'Search people...' },
+            { id: 'roleId', label: 'Role', type: 'select', options: roles.map(r => ({ value: r.id, label: r.name })) },
+            { id: 'teamId', label: 'Team', type: 'select', options: teams.map(t => ({ value: t.id, label: t.name })) },
+            { id: 'divisionId', label: 'Division', type: 'select', options: divisions.map(d => ({ value: d.id, label: d.name })) },
+            { id: 'status', label: 'Status', type: 'select', options: [{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }] },
+          ]}
+        />
+
         {/* Status Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
@@ -113,10 +146,10 @@ const People = () => {
 
         {/* People List */}
         {viewMode === 'table' ? (
-          <PeopleTable people={people} onEditPerson={handleEditPerson} />
+          <PeopleTable people={filteredPeople} onEditPerson={handleEditPerson} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {people.map(person => {
+            {filteredPeople.map(person => {
               const role = roles.find(r => r.id === person.roleId);
               const team = teams.find(t => t.id === person.teamId);
 

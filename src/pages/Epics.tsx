@@ -26,6 +26,7 @@ import EpicDialog from '@/components/projects/EpicDialog';
 import ReleaseDialog from '@/components/projects/ReleaseDialog';
 import EpicRankingDialog from '@/components/projects/EpicRankingDialog';
 import EpicsHeader from '@/components/projects/EpicsHeader';
+import SearchAndFilter from '@/components/planning/SearchAndFilter';
 import { Epic } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -228,163 +229,20 @@ const Epics = () => {
         />
 
         {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Filters & Search
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="search">Search</Label>
-                <Input
-                  id="search"
-                  placeholder="Search epics..."
-                  value={filters.search}
-                  onChange={e =>
-                    setFilters(prev => ({ ...prev, search: e.target.value }))
-                  }
-                />
-              </div>
-
-              <div>
-                <Label>Project</Label>
-                <Select
-                  value={filters.projectId}
-                  onValueChange={value =>
-                    setFilters(prev => ({ ...prev, projectId: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All projects" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Projects</SelectItem>
-                    {projects.map(project => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Division</Label>
-                <Select
-                  value={filters.divisionId}
-                  onValueChange={value =>
-                    setFilters(prev => ({ ...prev, divisionId: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All divisions" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Divisions</SelectItem>
-                    {divisions.map(division => (
-                      <SelectItem key={division.id} value={division.id}>
-                        {division.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Team</Label>
-                <Select
-                  value={filters.teamId}
-                  onValueChange={value =>
-                    setFilters(prev => ({ ...prev, teamId: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All teams" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Teams</SelectItem>
-                    {teams.map(team => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-              <div>
-                <Label>Status</Label>
-                <Select
-                  value={filters.status}
-                  onValueChange={value =>
-                    setFilters(prev => ({ ...prev, status: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="not-started">Not Started</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Release</Label>
-                <Select
-                  value={filters.releaseId}
-                  onValueChange={value =>
-                    setFilters(prev => ({ ...prev, releaseId: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All releases" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Releases</SelectItem>
-                    {releases.map(release => (
-                      <SelectItem key={release.id} value={release.id}>
-                        {release.name} ({release.version})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="startDate">Start Date From</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={filters.startDate}
-                  onChange={e =>
-                    setFilters(prev => ({ ...prev, startDate: e.target.value }))
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="endDate">Target Date To</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={filters.endDate}
-                  onChange={e =>
-                    setFilters(prev => ({ ...prev, endDate: e.target.value }))
-                  }
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <SearchAndFilter
+          filters={filters}
+          onFiltersChange={setFilters}
+          filterFields={[
+            { id: 'search', label: 'Search', type: 'text', placeholder: 'Search epics...' },
+            { id: 'projectId', label: 'Project', type: 'select', options: projects.map(p => ({ value: p.id, label: p.name })) },
+            { id: 'divisionId', label: 'Division', type: 'select', options: divisions.map(d => ({ value: d.id, label: d.name })) },
+            { id: 'teamId', label: 'Team', type: 'select', options: teams.map(t => ({ value: t.id, label: t.name })) },
+            { id: 'status', label: 'Status', type: 'select', options: [{ value: 'not-started', label: 'Not Started' }, { value: 'in-progress', label: 'In Progress' }, { value: 'completed', label: 'Completed' }] },
+            { id: 'releaseId', label: 'Release', type: 'select', options: releases.map(r => ({ value: r.id, label: `${r.name} (${r.version})` })) },
+            { id: 'startDate', label: 'Start Date From', type: 'text', placeholder: 'YYYY-MM-DD' },
+            { id: 'endDate', label: 'Target Date To', type: 'text', placeholder: 'YYYY-MM-DD' },
+          ]}
+        />
 
         {/* Bulk Actions */}
         {selectedEpics.length > 0 && (

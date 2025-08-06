@@ -19,6 +19,43 @@ import {
   Team,
 } from '@/types';
 
+// Helper function to create simple compatibility test
+const calculateSimpleTeamCompatibility = (
+  team: Team,
+  requiredSkills: string[],
+  skills: Skill[]
+) => {
+  const mockProject: Project = {
+    id: 'test-project',
+    name: 'Test Project',
+    description: 'Test project for compatibility',
+    status: 'planning',
+    priority: 'medium',
+    divisionId: 'dev',
+    startDate: '2024-01-15',
+    endDate: '2024-06-15',
+    budget: 100000,
+    createdDate: '2024-01-01T00:00:00Z',
+    lastModified: '2024-01-01T00:00:00Z',
+  };
+
+  const mockProjectSkills: ProjectSkill[] = requiredSkills.map((skillId, index) => ({
+    id: `ps-${index}`,
+    projectId: 'test-project',
+    skillId,
+    importance: 'medium',
+    notes: 'Test skill requirement',
+  }));
+
+  return calculateTeamProjectCompatibility(
+    team,
+    mockProject,
+    mockProjectSkills,
+    [],
+    skills
+  );
+};
+
 // Test data setup
 const testSkills: Skill[] = [
   { id: 'skill-1', name: 'React Development', category: 'frontend' },
@@ -281,27 +318,27 @@ describe('E2E Skills Workflow Tests', () => {
       const requiredSkills = ['skill-1', 'skill-2', 'skill-3'];
 
       // Frontend team has: React, UI/UX
-      const frontendCompatibility = calculateTeamProjectCompatibility(
+      const frontendCompatibility = calculateSimpleTeamCompatibility(
         testTeams[0], // Frontend Team
         requiredSkills,
         testSkills
       );
 
       // Backend team has: Node.js, Database
-      const backendCompatibility = calculateTeamProjectCompatibility(
+      const backendCompatibility = calculateSimpleTeamCompatibility(
         testTeams[1], // Backend Team
         requiredSkills,
         testSkills
       );
 
       // Frontend team should match 1 out of 3 skills (React)
-      expect(frontendCompatibility.exactMatches).toBe(1);
-      expect(frontendCompatibility.totalRequired).toBe(3);
+      expect(frontendCompatibility.skillsMatched).toBe(1);
+      expect(frontendCompatibility.skillsRequired).toBe(3);
       expect(frontendCompatibility.compatibilityScore).toBeGreaterThan(0);
 
       // Backend team should match 2 out of 3 skills (Node.js + Database)
-      expect(backendCompatibility.exactMatches).toBe(2);
-      expect(backendCompatibility.totalRequired).toBe(3);
+      expect(backendCompatibility.skillsMatched).toBe(2);
+      expect(backendCompatibility.skillsRequired).toBe(3);
       expect(backendCompatibility.compatibilityScore).toBeGreaterThan(
         frontendCompatibility.compatibilityScore
       );
@@ -331,21 +368,21 @@ describe('E2E Skills Workflow Tests', () => {
       const requiredSkills = ['skill-ai-ml'];
 
       // Test both teams for compatibility with ML skill
-      const frontendResult = calculateTeamProjectCompatibility(
+      const frontendResult = calculateSimpleTeamCompatibility(
         testTeams[0],
         requiredSkills,
         extendedSkills
       );
-      const backendResult = calculateTeamProjectCompatibility(
+      const backendResult = calculateSimpleTeamCompatibility(
         testTeams[1],
         requiredSkills,
         extendedSkills
       );
 
       // Neither team should have ML skills
-      expect(frontendResult.exactMatches).toBe(0);
+      expect(frontendResult.skillsMatched).toBe(0);
       expect(frontendResult.compatibilityScore).toBe(0);
-      expect(backendResult.exactMatches).toBe(0);
+      expect(backendResult.skillsMatched).toBe(0);
       expect(backendResult.compatibilityScore).toBe(0);
     });
   });
@@ -366,7 +403,7 @@ describe('E2E Skills Workflow Tests', () => {
           name: `Solution ${i}`,
           description: `Description ${i}`,
           category: 'test',
-          skills: [`skill-${i}`, `skill-${i + 1}`], // 2 skills per solution
+          skills: [`skill-${i * 2}`, `skill-${i * 2 + 1}`], // 2 unique skills per solution
           complexity: 'medium',
           estimatedEffort: 50,
           createdDate: '2024-01-01T00:00:00Z',
