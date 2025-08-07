@@ -69,20 +69,23 @@ export function calculateTeamProjectCompatibility(
 ### Successful Workflow
 
 1. **Claude**: "Here's the fix for Teams.tsx - add Select import on line 10"
-2. **USER**: _applies change_
-3. **USER**: "✅ All tests pass, ready to commit"
-4. **Total tokens**: ~500
+2. **Claude**: "**Please run tests**: `npm run test:core && npm run typecheck && npm run lint && npm run build` and share brief results"
+3. **USER**: _applies change, runs tests_
+4. **USER**: "✅ All tests pass, ready to commit"
+5. **Total tokens**: ~500
 
 ### Error Workflow
 
 1. **Claude**: "Here's the fix for skillBasedPlanning.ts"
-2. **USER**: _applies change, runs tests_
-3. **USER**: "❌ Still 2 fails: lines 67,89 - mock data issues"
-4. **Claude**: "Show me lines 60-75 where mock data is used"
-5. **USER**: _copies only those lines_
-6. **Claude**: "Fix the mock data structure - change X to Y"
-7. **USER**: "✅ All tests pass"
-8. **Total tokens**: ~800
+2. **Claude**: "**Please run tests**: `npm run test:core && npm run typecheck && npm run lint && npm run build` and share brief results"
+3. **USER**: _applies change, runs tests_
+4. **USER**: "❌ Still 2 fails: lines 67,89 - mock data issues"
+5. **Claude**: "Show me lines 60-75 where mock data is used"
+6. **USER**: _copies only those lines_
+7. **Claude**: "Fix the mock data structure - change X to Y"
+8. **Claude**: "**Please run tests again** and confirm results"
+9. **USER**: "✅ All tests pass"
+10. **Total tokens**: ~800
 
 ## Token Savings Breakdown
 
@@ -101,6 +104,7 @@ export function calculateTeamProjectCompatibility(
 - "Show me lines X-Y in [file] where [specific issue]"
 - "Copy the [function/component/interface] that has the [specific error]"
 - "Share the import section of [file] (usually lines 1-15)"
+- "**Please run tests**: `npm run test:core && npm run typecheck && npm run lint && npm run build` and share brief results"
 
 ### USER Responses
 
@@ -121,6 +125,17 @@ export function calculateTeamProjectCompatibility(
 
 **USER Response**: "Use ultra-optimized protocol - I'll run tests and share brief results"
 
+### Standard Test Request Format
+
+**Claude ALWAYS uses this exact format after providing code changes**:
+
+> **Please run tests**: `npm run test:core && npm run typecheck && npm run lint && npm run build` and share brief results
+>
+> Expected responses:
+>
+> - "✅ All tests pass, ready to commit"
+> - "❌ [count] fails: [file]:[lines] - [brief description]"
+
 ### If USER Shares Too Much Information
 
 **Claude Response**: "Thanks - I only need the brief error summary: file:line - error type"
@@ -128,6 +143,22 @@ export function calculateTeamProjectCompatibility(
 ### If Session Exceeds 3,000 Tokens
 
 **Action**: Stop, summarize findings, start new session with minimal context
+
+---
+
+## Claude Prompting Requirements
+
+**MANDATORY**: After every code change, Claude MUST prompt:
+
+```
+**Please run tests**: `npm run test:core && npm run typecheck && npm run lint && npm run build` and share brief results
+
+Expected responses:
+- "✅ All tests pass, ready to commit"
+- "❌ [count] fails: [file]:[lines] - [brief description]"
+```
+
+**Never assume tests pass** - always request explicit confirmation from USER.
 
 ---
 

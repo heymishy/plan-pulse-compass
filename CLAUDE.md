@@ -14,8 +14,8 @@
 **Workflow**:
 
 1. Claude provides code changes ONLY
-2. User runs: `npm run test:core && npm run lint && npm run typecheck`
-3. User shares: "✅ All pass" OR "❌ 3 test failures in utils/skillBasedPlanning.test.ts lines 45,67,89"
+2. **Claude ALWAYS prompts**: "**Please run tests**: `npm run test:core && npm run typecheck && npm run lint && npm run build` and share brief results"
+3. User runs tests and shares: "✅ All pass" OR "❌ 3 test failures in utils/skillBasedPlanning.test.ts lines 45,67,89"
 4. Claude fixes based on MINIMAL error info provided
 5. Repeat until user confirms "✅ All pass"
 
@@ -156,9 +156,10 @@ npm run test:integration # Share: brief failure summaries only
 ### Code-First Approach
 
 1. **Claude provides code changes ONLY**
-2. **USER copies code, runs tests, reports results**
-3. **Claude fixes based on minimal error info**
-4. **Repeat until USER confirms "✅ All pass"**
+2. **Claude prompts**: "**Please run tests** and share brief results"
+3. **USER copies code, runs tests, reports results**
+4. **Claude fixes based on minimal error info**
+5. **Repeat until USER confirms "✅ All pass"**
 
 ### Pre-Commit Checklist (USER-ONLY)
 
