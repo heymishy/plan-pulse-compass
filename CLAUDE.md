@@ -1,22 +1,53 @@
 # Plan Pulse Compass - Claude Development Guidelines
 
-## 🚀 Token Optimization Framework - MANDATORY
+## 🚀 ULTRA Token Optimization - MANDATORY 95% REDUCTION
 
-**🔥 CRITICAL**: All development sessions MUST follow the [Token Optimization Framework](./CLAUDE_OPTIMIZATION.md) to minimize token consumption by 87%.
+**🔥 CRITICAL**: ALL development sessions MUST follow the [ULTRA Token Optimization Protocol](./ULTRA_TOKEN_OPTIMIZATION.md) to achieve 95% token reduction.
 
-**Quick Reference**:
+**See detailed protocol in**: `ULTRA_TOKEN_OPTIMIZATION.md`
 
-- 🎯 Use targeted file sections (200-400 tokens vs 2000+)
-- 📊 Summary-first approach for problem solving
-- 🔄 Build context incrementally, not upfront
-- 📦 Compress tool results and focus on essentials
-- 🎛️ Batch related operations strategically
+### MANUAL-ONLY Testing Protocol
 
-**Tools Available**:
+**❌ NEVER run tests via Claude tools**  
+**✅ USER runs all tests manually and provides ONLY error summaries**
 
-- `./scripts/test-summary.sh` - Token-efficient test results
-- `./scripts/targeted-grep.sh` - Specific file section reading
-- Progressive investigation phases instead of full context loading
+**Workflow**:
+
+1. Claude provides code changes ONLY
+2. User runs: `npm run test:core && npm run lint && npm run typecheck`
+3. User shares: "✅ All pass" OR "❌ 3 test failures in utils/skillBasedPlanning.test.ts lines 45,67,89"
+4. Claude fixes based on MINIMAL error info provided
+5. Repeat until user confirms "✅ All pass"
+
+**Test Commands for User**:
+
+```bash
+# MANDATORY before any commit
+npm run test:core          # Share: pass/fail + file names only
+npm run lint               # Share: error count + file names only
+npm run typecheck          # Share: error count + file names only
+npm run build              # Share: pass/fail only
+
+# OPTIONAL
+npm run test:e2e           # Share: critical errors only
+npm run test:integration   # Share: failure summaries only
+```
+
+**Token Savings**: 2,000-8,000 tokens per test cycle → 50-200 tokens
+
+### Code Investigation Protocol
+
+**❌ NEVER read entire files**  
+**✅ USER provides specific line ranges and error context**
+
+**Workflow**:
+
+1. Claude asks: "Show me lines X-Y in file.ts where the error occurs"
+2. User copies ONLY the requested lines
+3. Claude provides targeted fix
+4. User applies and tests
+
+**Token Savings**: 2,000+ tokens per file → 200-400 tokens
 
 ---
 
@@ -64,148 +95,130 @@ Plan Pulse Compass is a comprehensive planning and project management applicatio
 - **Tests must be independent and repeatable**
 - **Test behavior, not implementation details**
 
-## Testing Requirements
+## ULTRA-Optimized Testing Workflow
 
-### Local Testing - MANDATORY BEFORE ANY COMMIT
+### USER-ONLY Testing Protocol - MANDATORY
 
-**ALWAYS** run the complete testing suite locally before committing ANY changes:
+**🚫 Claude NEVER runs test commands**  
+**✅ USER runs tests and shares MINIMAL results**
 
 ```bash
-# 1. Run core test suite (REQUIRED - must pass 100%)
-npm run test:core
+# MANDATORY sequence - USER runs, shares brief results
+npm run test:core      # Share: "✅ pass" or "❌ 3 fails: utils/skill.test.ts:45,67,89"
+npm run typecheck      # Share: "✅ pass" or "❌ 2 errors: Teams.tsx:15, utils/math.ts:32"
+npm run lint           # Share: "✅ pass" or "❌ 5 warnings: unused imports"
+npm run build          # Share: "✅ pass" or "❌ build failed: import error"
 
-# 2. Run type checking (REQUIRED - must pass)
-npm run type-check
-
-# 3. Run linting (REQUIRED - must pass)
-npm run lint
-
-# 4. Run full test suite with coverage (RECOMMENDED)
-npm run test:coverage
-
-# 5. Run integration tests (if applicable)
-npm run test:integration
-
-# 6. Run E2E tests locally (for critical changes)
-npm run test:e2e
+# OPTIONAL - only if requested by Claude
+npm run test:e2e       # Share: "✅ pass" or "❌ Teams page: Select undefined"
+npm run test:integration # Share: brief failure summaries only
 ```
 
-### Test Suite Organization
+**Communication Examples**:
 
-The project uses a multi-tier testing approach:
+- ✅ "All core tests pass, 2 lint warnings about unused imports in Teams.tsx"
+- ❌ "3 test failures in skillBasedPlanning.test.ts lines 45,67,89 - compatibility calc errors"
+- ❌ "TypeScript error in Teams.tsx:15 - Select component not found"
 
-#### Core Tests (`npm run test:core`)
+### Error Reporting Protocol
 
-- **Components**: Unit tests for all React components
-- **Utilities**: Unit tests for helper functions and utilities
-- **Context**: Tests for React Context providers and hooks
-- **Types**: TypeScript interface consistency validation
-- **Business Logic**: Core application logic tests
+**ULTRA-Compressed Error Sharing**:
 
-#### Integration Tests (`npm run test:integration`)
+- File name + line numbers only
+- Brief error type (import, type, logic)
+- NO full stack traces or detailed output
+- NO test code copying unless specifically requested
 
-- Component integration with context providers
-- API integration tests
-- Complex user workflows
+**Example Error Reports**:
 
-#### Non-Core Tests (`npm run test:non-core`)
+```
+❌ test:core - 3 fails:
+- skillBasedPlanning.test.ts:45 - compatibility calc wrong
+- skillBasedPlanning.test.ts:67 - missing mock data
+- Teams.test.tsx:89 - component render error
 
-- O365 integration tests
-- OCR functionality tests
-- External service integrations
-- Advanced features that don't block core functionality
+❌ typecheck - 2 errors:
+- Teams.tsx:15 - Select import missing
+- utils/math.ts:32 - return type mismatch
 
-#### UI/Layout Tests (`npm run test:layout`)
+✅ lint, build - all pass
+```
 
-- Visual regression tests
-- Responsive design validation
-- Accessibility compliance tests
+### Test Categories (Reference Only)
 
-#### E2E Tests (`npm run test:e2e`)
+- **Core**: Components, utilities, context, business logic
+- **Integration**: Context providers, complex workflows
+- **E2E**: User journeys, console errors, cross-browser
+- **Build**: TypeScript, linting, production build
 
-- Full user journey tests
-- Cross-browser compatibility
-- Performance validation
+## OPTIMIZED Development Workflow
 
-### Test Quality Standards
+### Code-First Approach
 
-- **Coverage Requirements**: ≥90% line coverage, ≥85% branch coverage
-- **Test Performance**: Core test suite must complete in <30 seconds
-- **Test Reliability**: Zero flaky tests - all tests must be deterministic
-- **Test Maintainability**: Tests should be readable and well-documented
+1. **Claude provides code changes ONLY**
+2. **USER copies code, runs tests, reports results**
+3. **Claude fixes based on minimal error info**
+4. **Repeat until USER confirms "✅ All pass"**
 
-## 🚨 CRITICAL TESTING REQUIREMENTS
-
-**ALL CHANGES MUST RUN COMPREHENSIVE LOCAL TESTS INCLUDING E2E TESTS BEFORE ANY COMMIT, PUSH, OR DEPLOYMENT**
-
-### Mandatory Test Execution Order
-
-**EVERY change, no matter how small, must complete this full testing sequence:**
+### Pre-Commit Checklist (USER-ONLY)
 
 ```bash
-# 1. MANDATORY - Core functionality tests
-npm run test:core
+# USER runs and reports: "✅ all pass" or "❌ brief error summary"
+npm run test:core && npm run typecheck && npm run lint && npm run build
 
-# 2. MANDATORY - TypeScript validation
-npm run typecheck
-
-# 3. MANDATORY - Code quality checks
-npm run lint
-
-# 4. MANDATORY - Production build verification
-npm run build
-
-# 5. MANDATORY - E2E console error detection
+# OPTIONAL - only if Claude requests E2E validation
 npx playwright test tests/e2e/page-console-errors.spec.ts
-
-# 6. MANDATORY - Critical user journey E2E tests
-npx playwright test tests/e2e/smoke-test-ci.spec.ts
-
-# 7. RECOMMENDED - Full test coverage validation
-npm run test:coverage
 ```
 
-**⚠️ ZERO EXCEPTIONS**: No commits, pushes, or deployments are allowed without completing ALL mandatory tests above.
+**Token Savings**: 5,000+ tokens per test cycle → 50-100 tokens
 
-## Pre-Commit Checklist
+## Code Investigation Protocol
 
-**MANDATORY checklist before ANY commit (NEVER skip E2E tests):**
+### File Reading Optimization
 
-- [ ] ✅ **TDD Cycle Completed**: Red → Green → Refactor cycle followed
-- [ ] ✅ **Core Tests Pass**: `npm run test:core` returns 100% pass rate
-- [ ] ✅ **Types Valid**: `npm run typecheck` passes without errors
-- [ ] ✅ **Linting Clean**: `npm run lint` passes without errors
-- [ ] ✅ **Build Successful**: `npm run build` completes without errors
-- [ ] ✅ **E2E Console Errors**: `npx playwright test tests/e2e/page-console-errors.spec.ts` shows NO errors
-- [ ] ✅ **E2E Smoke Tests**: `npx playwright test tests/e2e/smoke-test-ci.spec.ts` passes
-- [ ] ✅ **Integration Tests**: `npm run test:integration` passes (if applicable)
-- [ ] ✅ **Manual Testing**: Features tested manually in development environment
-- [ ] ✅ **Git Status Clean**: Only intended changes staged for commit
+**❌ NEVER**: Read entire files (2000+ tokens)
+**✅ ALWAYS**: Request specific line ranges (200-400 tokens)
 
-### Pre-Push/Deploy Checklist
+**Workflow**:
 
-**MANDATORY checklist before ANY push or deployment:**
+1. Claude asks: "Show me lines 45-67 in utils/skillBasedPlanning.ts where the error occurs"
+2. USER copies ONLY requested lines
+3. Claude provides targeted fix
+4. USER applies change and tests
 
-- [ ] ✅ **Full Test Suite**: `npm run test:coverage` achieves ≥90% coverage
-- [ ] ✅ **Comprehensive E2E Tests**: ALL E2E test suites pass without errors
-- [ ] ✅ **Console Error Validation**: NO console errors in ANY tested pages
-- [ ] ✅ **Cross-Browser Testing**: Major browsers tested (Chrome, Firefox, Safari, Edge)
-- [ ] ✅ **Performance Check**: No significant performance regressions
-- [ ] ✅ **Bundle Analysis**: Bundle size within acceptable limits
-- [ ] ✅ **Security Audit**: `npm audit` shows no high-severity vulnerabilities
-- [ ] ✅ **Production Deployment Test**: Deployed version verified to work correctly
-- [ ] ✅ **Documentation**: README and docs updated for new features
-- [ ] ✅ **Migration Strategy**: Database/breaking changes have migration plan
+### Error Context Sharing
 
-### E2E Test Requirements
+**❌ NEVER**: Share full stack traces, console output, or test results  
+**✅ ALWAYS**: Share minimal error summaries
 
-**E2E tests are NOT optional - they must pass for ALL changes:**
+**Examples**:
 
-- **Console Error Detection**: Every page must load without JavaScript console errors
-- **Critical User Flows**: All primary user journeys must function correctly
-- **Cross-Browser Compatibility**: Tests must pass in all supported browsers
-- **Performance Validation**: Page load times and interaction responsiveness verified
-- **Accessibility Compliance**: WCAG 2.1 AA standards maintained
+- "❌ 3 test fails in skillBasedPlanning.test.ts:45,67,89 - calc errors"
+- "❌ Teams.tsx:15 - Select import missing"
+- "✅ All tests pass, ready to commit"
+
+### Commit Protocol
+
+**USER-ONLY Checklist**:
+
+- [ ] Run: `npm run test:core && npm run typecheck && npm run lint && npm run build`
+- [ ] Report: "✅ all pass" or brief error summary
+- [ ] Apply Claude's fixes (if needed)
+- [ ] Repeat until "✅ all pass"
+- [ ] Commit and push
+
+### Token Usage Targets
+
+**Before Optimization**: 15,000-25,000 tokens per session  
+**After Optimization**: 1,000-3,000 tokens per session  
+**Savings**: 80-95% reduction
+
+**Key Savings**:
+
+- Test execution: 8,000 tokens → 50 tokens (99% reduction)
+- File reading: 2,000 tokens → 300 tokens (85% reduction)
+- Error investigation: 5,000 tokens → 500 tokens (90% reduction)
+- Context building: 10,000 tokens → 1,000 tokens (90% reduction)
 
 ## Code Quality Standards
 
