@@ -3,10 +3,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, BarChart3, LineChart, PieChart, Download, Share2, Settings, RefreshCw, ZoomIn, TrendingUp, Search, Filter, Calendar } from 'lucide-react';
+import {
+  AlertCircle,
+  BarChart3,
+  LineChart,
+  PieChart,
+  Download,
+  Share2,
+  Settings,
+  RefreshCw,
+  ZoomIn,
+  TrendingUp,
+  Search,
+  Filter,
+  Calendar,
+} from 'lucide-react';
 
 // Type definitions for analytics data
 export interface AnalyticsDataPoint {
@@ -159,12 +179,16 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
   onRefresh,
   onGenerateReport,
   onScheduleReport,
-  onShare
+  onShare,
 }) => {
+  // All hooks must be called before any early returns
   const [selectedFilters, setSelectedFilters] = useState<AnalyticsFilter[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedInsights, setExpandedInsights] = useState<Set<string>>(new Set());
-  const [insightSeverityFilter, setInsightSeverityFilter] = useState<string>('all');
+  const [expandedInsights, setExpandedInsights] = useState<Set<string>>(
+    new Set()
+  );
+  const [insightSeverityFilter, setInsightSeverityFilter] =
+    useState<string>('all');
   const [timeRangeSelector, setTimeRangeSelector] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [zoomedChart, setZoomedChart] = useState<string | null>(null);
@@ -173,107 +197,98 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [reportSchedulerOpen, setReportSchedulerOpen] = useState(false);
 
-  // Handle loading state
-  if (loading) {
-    return (
-      <Card className="w-full">
-        <CardContent className="flex items-center justify-center h-64">
-          <div data-testid="analytics-loading" className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <span>Loading analytics...</span>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const handleFilterChange = useCallback(
+    (filters: AnalyticsFilter[]) => {
+      setSelectedFilters(filters);
+      onFilterChange?.(filters);
+    },
+    [onFilterChange]
+  );
 
-  // Handle error state
-  if (error) {
-    return (
-      <Card className="w-full">
-        <CardContent className="flex items-center justify-center h-64">
-          <div data-testid="analytics-error" className="flex flex-col items-center gap-4">
-            <AlertCircle className="h-12 w-12 text-destructive" />
-            <div className="text-center">
-              <p className="text-lg font-medium">Analytics Error</p>
-              <p className="text-muted-foreground">{error}</p>
-            </div>
-            <Button 
-              data-testid="retry-button" 
-              onClick={onRefresh}
-              variant="outline"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const handleInsightClick = useCallback(
+    (insight: AnalyticsInsight) => {
+      onInsightClick?.(insight);
+    },
+    [onInsightClick]
+  );
 
-  // Handle empty state
-  const hasData = (dataPoints && dataPoints.length > 0) || (charts && charts.length > 0) || (insights && insights.length > 0);
-  
-  if (!hasData) {
-    return (
-      <Card className="w-full">
-        <CardContent className="flex items-center justify-center h-64">
-          <div data-testid="analytics-empty-state" className="text-center">
-            <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-lg font-medium">No analytics data available</p>
-            <p className="text-muted-foreground">Start collecting data to see analytics insights</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const handleChartClick = useCallback(
+    (chart: AnalyticsChart) => {
+      onChartClick?.(chart);
+    },
+    [onChartClick]
+  );
 
-  const handleFilterChange = useCallback((filters: AnalyticsFilter[]) => {
-    setSelectedFilters(filters);
-    onFilterChange?.(filters);
-  }, [onFilterChange]);
-
-  const handleInsightClick = useCallback((insight: AnalyticsInsight) => {
-    onInsightClick?.(insight);
-  }, [onInsightClick]);
-
-  const handleChartClick = useCallback((chart: AnalyticsChart) => {
-    onChartClick?.(chart);
-  }, [onChartClick]);
-
-  const handleDrillDown = useCallback((chartId: string) => {
-    setDrillDownView(chartId);
-    onDrillDown?.(chartId, { level: 'metric', chartId } as any);
-  }, [onDrillDown]);
+  const handleDrillDown = useCallback(
+    (chartId: string) => {
+      setDrillDownView(chartId);
+      onDrillDown?.(chartId, 'metric');
+    },
+    [onDrillDown]
+  );
 
   const handleZoomChart = useCallback((chartId: string) => {
     setZoomedChart(chartId);
   }, []);
 
-  const handleTimeRangeChange = useCallback((range: string) => {
-    const now = new Date();
-    let timeRange: TimeRange;
-    
-    switch (range) {
-      case 'last-hour':
-        timeRange = {
-          start: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
-          end: now.toISOString()
-        };
-        break;
-      case 'last-day':
-        timeRange = {
-          start: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
-          end: now.toISOString()
-        };
-        break;
-      default:
-        return;
-    }
-    
-    onTimeRangeChange?.(timeRange);
-  }, [onTimeRangeChange]);
+  const filteredCharts = useMemo(() => {
+    if (!charts) return [];
+    return charts.filter(chart => {
+      if (
+        searchQuery &&
+        !chart.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [charts, searchQuery]);
+
+  const filteredInsights = useMemo(() => {
+    if (!insights) return [];
+    return insights.filter(insight => {
+      if (
+        insightSeverityFilter !== 'all' &&
+        insight.severity !== insightSeverityFilter
+      ) {
+        return false;
+      }
+      if (
+        searchQuery &&
+        !insight.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [insights, insightSeverityFilter, searchQuery]);
+
+  const handleTimeRangeChange = useCallback(
+    (range: string) => {
+      const now = new Date();
+      let timeRange: TimeRange;
+
+      switch (range) {
+        case 'last-hour':
+          timeRange = {
+            start: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
+            end: now.toISOString(),
+          };
+          break;
+        case 'last-day':
+          timeRange = {
+            start: new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+            end: now.toISOString(),
+          };
+          break;
+        default:
+          return;
+      }
+
+      onTimeRangeChange?.(timeRange);
+    },
+    [onTimeRangeChange]
+  );
 
   const toggleInsightExpansion = useCallback((insightId: string) => {
     setExpandedInsights(prev => {
@@ -287,37 +302,95 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
     });
   }, []);
 
-  const filteredInsights = useMemo(() => {
-    if (!showInsights || !insights) return [];
-    
-    return insights.filter(insight => {
-      if (insightSeverityFilter !== 'all' && insight.severity !== insightSeverityFilter) {
-        return false;
-      }
-      if (searchQuery && !insight.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false;
-      }
-      return true;
-    });
-  }, [insights, insightSeverityFilter, searchQuery, showInsights]);
+  // Check if we have data
+  const hasData =
+    (dataPoints && dataPoints.length > 0) ||
+    (charts && charts.length > 0) ||
+    (insights && insights.length > 0);
 
-  const renderChart = useCallback((chart: AnalyticsChart) => {
+  // Handle loading state
+  if (loading) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex items-center justify-center h-64">
+          <div
+            data-testid="analytics-loading"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="h-4 w-4 animate-spin" />
+            <span>Loading analytics...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex items-center justify-center h-64">
+          <div
+            data-testid="analytics-error"
+            className="flex flex-col items-center gap-4"
+          >
+            <AlertCircle className="h-12 w-12 text-destructive" />
+            <div className="text-center">
+              <p className="text-lg font-medium">Analytics Error</p>
+              <p className="text-muted-foreground">{error}</p>
+            </div>
+            <Button
+              data-testid="retry-button"
+              onClick={onRefresh}
+              variant="outline"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Handle empty state
+  if (!hasData) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex items-center justify-center h-64">
+          <div data-testid="analytics-empty-state" className="text-center">
+            <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <p className="text-lg font-medium">No analytics data available</p>
+            <p className="text-muted-foreground">
+              Start collecting data to see analytics insights
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const renderChart = (chart: AnalyticsChart) => {
     if (customChartRenderer) {
       return customChartRenderer(chart);
     }
 
     const getChartIcon = (type: ChartType) => {
       switch (type) {
-        case 'line': return <LineChart className="h-4 w-4" />;
-        case 'bar': return <BarChart3 className="h-4 w-4" />;
-        case 'pie': return <PieChart className="h-4 w-4" />;
-        default: return <BarChart3 className="h-4 w-4" />;
+        case 'line':
+          return <LineChart className="h-4 w-4" />;
+        case 'bar':
+          return <BarChart3 className="h-4 w-4" />;
+        case 'pie':
+          return <PieChart className="h-4 w-4" />;
+        default:
+          return <BarChart3 className="h-4 w-4" />;
       }
     };
 
     return (
-      <Card 
-        key={chart.id} 
+      <Card
+        key={chart.id}
         className="cursor-pointer hover:shadow-md transition-shadow"
         data-testid={`chart-${chart.id}`}
         onClick={() => handleChartClick(chart)}
@@ -333,7 +406,7 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
                 size="sm"
                 variant="ghost"
                 data-testid={`zoom-${chart.id}`}
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   handleZoomChart(chart.id);
                 }}
@@ -345,7 +418,7 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               size="sm"
               variant="ghost"
               data-testid={`drill-down-${chart.id}`}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleDrillDown(chart.id);
               }}
@@ -357,11 +430,15 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
         <CardContent>
           <div className="h-32 flex items-center justify-center bg-muted rounded">
             <span className="text-muted-foreground text-sm">
-              {chart.type.toUpperCase()} Chart - {chart.dataPoints.length} points
+              {chart.type.toUpperCase()} Chart - {chart.dataPoints.length}{' '}
+              points
             </span>
           </div>
           {showChartStats && (
-            <div data-testid={`chart-stats-${chart.id}`} className="mt-2 text-xs text-muted-foreground">
+            <div
+              data-testid={`chart-stats-${chart.id}`}
+              className="mt-2 text-xs text-muted-foreground"
+            >
               {chart.dataPoints.length} data points
             </div>
           )}
@@ -382,22 +459,26 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
         </CardContent>
       </Card>
     );
-  }, [customChartRenderer, handleChartClick, enableZoom, handleZoomChart, handleDrillDown, showChartStats, lazyLoadCharts]);
+  };
 
-  const renderInsight = useCallback((insight: AnalyticsInsight) => {
+  const renderInsight = (insight: AnalyticsInsight) => {
     const getSeverityColor = (severity: string) => {
       switch (severity) {
-        case 'error': return 'destructive';
-        case 'warning': return 'secondary';
-        case 'success': return 'default';
-        default: return 'outline';
+        case 'error':
+          return 'destructive';
+        case 'warning':
+          return 'secondary';
+        case 'success':
+          return 'default';
+        default:
+          return 'outline';
       }
     };
 
     const isExpanded = expandedInsights.has(insight.id);
 
     return (
-      <Card 
+      <Card
         key={insight.id}
         className="cursor-pointer hover:shadow-md transition-shadow"
         data-testid={`insight-${insight.id}`}
@@ -406,17 +487,21 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle className="text-sm font-medium">{insight.title}</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">{insight.description}</p>
+              <CardTitle className="text-sm font-medium">
+                {insight.title}
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                {insight.description}
+              </p>
             </div>
             <div className="flex items-center gap-2 ml-2">
-              <Badge 
+              <Badge
                 variant={getSeverityColor(insight.severity) as any}
                 data-testid={`insight-severity-${insight.severity}`}
               >
                 {insight.severity}
               </Badge>
-              <Badge 
+              <Badge
                 variant="outline"
                 data-testid={`insight-type-${insight.type}`}
               >
@@ -434,7 +519,7 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               size="sm"
               variant="ghost"
               data-testid={`expand-insight-${insight.id}`}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 toggleInsightExpansion(insight.id);
               }}
@@ -455,10 +540,10 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
         </CardContent>
       </Card>
     );
-  }, [expandedInsights, handleInsightClick, toggleInsightExpansion]);
+  };
 
   return (
-    <div 
+    <div
       className="w-full space-y-6"
       data-testid="advanced-analytics-engine"
       role="region"
@@ -487,7 +572,10 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
             </Badge>
           )}
           {autoRefresh && (
-            <div data-testid="auto-refresh-indicator" className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div
+              data-testid="auto-refresh-indicator"
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+            >
               <RefreshCw className="h-3 w-3" />
               Auto-refresh
             </div>
@@ -498,13 +586,16 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
             </Badge>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* Data Points Summary */}
-          <div data-testid="data-points-summary" className="text-sm text-muted-foreground">
+          <div
+            data-testid="data-points-summary"
+            className="text-sm text-muted-foreground"
+          >
             {dataPoints ? dataPoints.length : 0} data points
           </div>
-          
+
           {/* Refresh Button */}
           <Button
             size="sm"
@@ -601,7 +692,7 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
                     <Input
                       placeholder="Search analytics..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={e => setSearchQuery(e.target.value)}
                       className="pl-10"
                       data-testid="analytics-search"
                     />
@@ -612,7 +703,10 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               {/* Time Range */}
               {showTimeRange && (
                 <div data-testid="time-range-selector">
-                  <Select onValueChange={handleTimeRangeChange} data-testid="time-range-select">
+                  <Select
+                    onValueChange={handleTimeRangeChange}
+                    data-testid="time-range-select"
+                  >
                     <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="Time range" />
                     </SelectTrigger>
@@ -636,20 +730,26 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
 
               {/* Filters */}
               {showFilters && (
-                <div data-testid="analytics-filters" className="flex items-center gap-2">
-                  <Select 
-                    onValueChange={(value) => {
+                <div
+                  data-testid="analytics-filters"
+                  className="flex items-center gap-2"
+                >
+                  <Select
+                    onValueChange={value => {
                       const filter: AnalyticsFilter = {
                         id: 'metric-filter',
                         field: 'metric',
                         operator: 'equals',
                         value: value.toLowerCase(),
-                        label: value
+                        label: value,
                       };
                       handleFilterChange([...selectedFilters, filter]);
                     }}
                   >
-                    <SelectTrigger className="w-[120px]" data-testid="metric-filter">
+                    <SelectTrigger
+                      className="w-[120px]"
+                      data-testid="metric-filter"
+                    >
                       <SelectValue placeholder="Metric" />
                     </SelectTrigger>
                     <SelectContent>
@@ -659,19 +759,22 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
                     </SelectContent>
                   </Select>
 
-                  <Select 
-                    onValueChange={(value) => {
+                  <Select
+                    onValueChange={value => {
                       const filter: AnalyticsFilter = {
                         id: 'category-filter',
                         field: 'category',
                         operator: 'equals',
                         value: value.toLowerCase(),
-                        label: value
+                        label: value,
                       };
                       handleFilterChange([...selectedFilters, filter]);
                     }}
                   >
-                    <SelectTrigger className="w-[120px]" data-testid="category-filter">
+                    <SelectTrigger
+                      className="w-[120px]"
+                      data-testid="category-filter"
+                    >
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -694,11 +797,14 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
 
               {/* Insight Filters */}
               {showInsights && (
-                <Select 
+                <Select
                   value={insightSeverityFilter}
                   onValueChange={setInsightSeverityFilter}
                 >
-                  <SelectTrigger className="w-[140px]" data-testid="insight-severity-filter">
+                  <SelectTrigger
+                    className="w-[140px]"
+                    data-testid="insight-severity-filter"
+                  >
                     <SelectValue placeholder="Severity" />
                   </SelectTrigger>
                   <SelectContent>
@@ -739,9 +845,15 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           {showInsights && <TabsTrigger value="insights">Insights</TabsTrigger>}
           {showReports && <TabsTrigger value="reports">Reports</TabsTrigger>}
-          {showPredictions && <TabsTrigger value="predictions">Predictions</TabsTrigger>}
-          {enableAnomalyDetection && <TabsTrigger value="anomalies">Anomalies</TabsTrigger>}
-          {showCorrelation && <TabsTrigger value="correlation">Correlation</TabsTrigger>}
+          {showPredictions && (
+            <TabsTrigger value="predictions">Predictions</TabsTrigger>
+          )}
+          {enableAnomalyDetection && (
+            <TabsTrigger value="anomalies">Anomalies</TabsTrigger>
+          )}
+          {showCorrelation && (
+            <TabsTrigger value="correlation">Correlation</TabsTrigger>
+          )}
         </TabsList>
 
         {/* Dashboard Tab */}
@@ -761,7 +873,9 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               </CardHeader>
               <CardContent>
                 <div className="h-64 bg-muted rounded flex items-center justify-center">
-                  <span className="text-muted-foreground">Zoomed chart view for {zoomedChart}</span>
+                  <span className="text-muted-foreground">
+                    Zoomed chart view for {zoomedChart}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -782,7 +896,9 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               </CardHeader>
               <CardContent>
                 <div className="h-32 bg-muted rounded flex items-center justify-center">
-                  <span className="text-muted-foreground">Detailed view for {drillDownView}</span>
+                  <span className="text-muted-foreground">
+                    Detailed view for {drillDownView}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -796,7 +912,10 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
           )}
 
           {/* Charts Grid */}
-          <div className={`grid gap-6 ${virtualized ? 'virtualized' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`} data-testid={virtualized ? 'virtualized-analytics' : undefined}>
+          <div
+            className={`grid gap-6 ${virtualized ? 'virtualized' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}
+            data-testid={virtualized ? 'virtualized-analytics' : undefined}
+          >
             {(charts || []).map(chart => {
               // Handle chart errors
               if (!chart.dataPoints) {
@@ -805,7 +924,9 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
                     <CardContent className="flex items-center justify-center h-32">
                       <div className="text-center">
                         <AlertCircle className="h-8 w-8 mx-auto mb-2 text-destructive" />
-                        <span className="text-sm text-muted-foreground">Chart Error</span>
+                        <span className="text-sm text-muted-foreground">
+                          Chart Error
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -822,7 +943,9 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               {filteredInsights.length === 0 ? (
                 <Card>
                   <CardContent className="flex items-center justify-center h-32">
-                    <span className="text-muted-foreground">No insights available</span>
+                    <span className="text-muted-foreground">
+                      No insights available
+                    </span>
                   </CardContent>
                 </Card>
               ) : (
@@ -869,7 +992,9 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               {filteredInsights.length === 0 ? (
                 <Card>
                   <CardContent className="flex items-center justify-center h-32">
-                    <span className="text-muted-foreground">No insights available</span>
+                    <span className="text-muted-foreground">
+                      No insights available
+                    </span>
                   </CardContent>
                 </Card>
               ) : (
@@ -949,12 +1074,20 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
                   <Card key={report.id}>
                     <CardHeader>
                       <CardTitle>{report.name}</CardTitle>
-                      <p className="text-sm text-muted-foreground">{report.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {report.description}
+                      </p>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Generated: {new Date(report.generatedAt).toLocaleDateString()}</span>
-                        <span>{report.charts.length} charts, {report.insights.length} insights</span>
+                        <span>
+                          Generated:{' '}
+                          {new Date(report.generatedAt).toLocaleDateString()}
+                        </span>
+                        <span>
+                          {report.charts.length} charts,{' '}
+                          {report.insights.length} insights
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -972,7 +1105,9 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               <Card>
                 <CardContent className="pt-6">
                   <div className="h-32 bg-muted rounded flex items-center justify-center">
-                    <span className="text-muted-foreground">Predictive analytics view</span>
+                    <span className="text-muted-foreground">
+                      Predictive analytics view
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -988,7 +1123,9 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               <Card>
                 <CardContent className="pt-6">
                   <div className="h-32 bg-muted rounded flex items-center justify-center">
-                    <span className="text-muted-foreground">Anomaly detection results</span>
+                    <span className="text-muted-foreground">
+                      Anomaly detection results
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -1010,7 +1147,9 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
                 <Card>
                   <CardContent className="pt-6">
                     <div className="h-32 bg-muted rounded flex items-center justify-center">
-                      <span className="text-muted-foreground">Correlation matrix</span>
+                      <span className="text-muted-foreground">
+                        Correlation matrix
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -1031,16 +1170,24 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               <label className="text-sm font-medium">Real-time Updates</label>
               <Switch
                 checked={config.enableRealTime}
-                onCheckedChange={(checked) => onConfigChange?.({ enableRealTime: checked })}
+                onCheckedChange={checked =>
+                  onConfigChange?.({ enableRealTime: checked })
+                }
                 data-testid="real-time-toggle"
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Refresh Interval (ms)</label>
+              <label className="text-sm font-medium">
+                Refresh Interval (ms)
+              </label>
               <Input
                 type="number"
                 value={config.refreshInterval}
-                onChange={(e) => onConfigChange?.({ refreshInterval: parseInt(e.target.value) })}
+                onChange={e =>
+                  onConfigChange?.({
+                    refreshInterval: parseInt(e.target.value),
+                  })
+                }
                 data-testid="refresh-interval-input"
                 className="mt-1"
               />
@@ -1060,11 +1207,17 @@ const AdvancedAnalyticsEngine: React.FC<AdvancedAnalyticsEngineProps> = ({
               <div className="space-y-2 mt-2">
                 <div>
                   <label className="text-xs">Performance Warning</label>
-                  <Input type="number" defaultValue={config.thresholds.performance?.warning} />
+                  <Input
+                    type="number"
+                    defaultValue={config.thresholds.performance?.warning}
+                  />
                 </div>
                 <div>
                   <label className="text-xs">Performance Critical</label>
-                  <Input type="number" defaultValue={config.thresholds.performance?.critical} />
+                  <Input
+                    type="number"
+                    defaultValue={config.thresholds.performance?.critical}
+                  />
                 </div>
               </div>
             </div>

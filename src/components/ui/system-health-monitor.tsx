@@ -1,15 +1,37 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { 
-  Activity, AlertTriangle, CheckCircle, Clock, Settings, 
-  RefreshCw, Filter, TrendingUp, TrendingDown, Minus,
-  MoreVertical, Download, Loader2, AlertCircle
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Settings,
+  RefreshCw,
+  Filter,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  MoreVertical,
+  Download,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 // Core types
@@ -51,7 +73,10 @@ export interface SystemHealthMonitorProps {
   onAlertAction: (alertId: string, action: string) => void;
   onMetricClick?: (metric: HealthMetric) => void;
   onRefresh?: () => void;
-  onThresholdUpdate?: (metricId: string, thresholds: { warning: number; critical: number }) => void;
+  onThresholdUpdate?: (
+    metricId: string,
+    thresholds: { warning: number; critical: number }
+  ) => void;
   onExport?: (format: string, data: any) => void;
   title?: string;
   className?: string;
@@ -82,7 +107,7 @@ export function SystemHealthMonitor({
   onRefresh,
   onThresholdUpdate,
   onExport,
-  title = "System Health",
+  title = 'System Health',
   className,
   loading = false,
   error,
@@ -99,19 +124,22 @@ export function SystemHealthMonitor({
   exportable = false,
   groupByCategory = false,
   enableThresholdConfig = false,
-  customMetricTemplate
+  customMetricTemplate,
 }: SystemHealthMonitorProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [alertSeverityFilter, setAlertSeverityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('name');
-  const [expandedMetrics, setExpandedMetrics] = useState<Set<string>>(new Set());
+  const [expandedMetrics, setExpandedMetrics] = useState<Set<string>>(
+    new Set()
+  );
   const [showThresholdConfig, setShowThresholdConfig] = useState(false);
 
   // All hooks must be called before early returns
   const filteredMetrics = useMemo(() => {
     if (!metrics || !metrics.length) return [];
     return metrics.filter(metric => {
-      if (categoryFilter !== 'all' && metric.category !== categoryFilter) return false;
+      if (categoryFilter !== 'all' && metric.category !== categoryFilter)
+        return false;
       return true;
     });
   }, [metrics, categoryFilter]);
@@ -121,7 +149,9 @@ export function SystemHealthMonitor({
     const sorted = [...filteredMetrics];
     if (sortBy === 'status') {
       const statusOrder = { critical: 3, warning: 2, healthy: 1, unknown: 0 };
-      return sorted.sort((a, b) => (statusOrder[b.status] || 0) - (statusOrder[a.status] || 0));
+      return sorted.sort(
+        (a, b) => (statusOrder[b.status] || 0) - (statusOrder[a.status] || 0)
+      );
     } else if (sortBy === 'value') {
       return sorted.sort((a, b) => b.value - a.value);
     } else {
@@ -132,7 +162,11 @@ export function SystemHealthMonitor({
   const filteredAlerts = useMemo(() => {
     if (!alerts || !alerts.length) return [];
     return alerts.filter(alert => {
-      if (alertSeverityFilter !== 'all' && alert.severity !== alertSeverityFilter) return false;
+      if (
+        alertSeverityFilter !== 'all' &&
+        alert.severity !== alertSeverityFilter
+      )
+        return false;
       return true;
     });
   }, [alerts, alertSeverityFilter]);
@@ -140,31 +174,101 @@ export function SystemHealthMonitor({
   const sortedAlerts = useMemo(() => {
     if (!filteredAlerts.length) return [];
     const sorted = [...filteredAlerts];
-    return sorted.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return sorted.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
   }, [filteredAlerts]);
 
   const systemStatus = useMemo(() => {
     if (!metrics || !metrics.length) return 'unknown';
-    
+
     const criticalCount = metrics.filter(m => m.status === 'critical').length;
     const warningCount = metrics.filter(m => m.status === 'warning').length;
-    
+
     if (criticalCount > 0) return 'critical';
     if (warningCount > 0) return 'warning';
     return 'healthy';
   }, [metrics]);
 
-  const handleHealthAction = useCallback((action: string, data?: any) => {
-    if (onHealthAction) {
-      onHealthAction(action, data);
+  const handleMetricExpand = useCallback((metricId: string) => {
+    setExpandedMetrics(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(metricId)) {
+        newSet.delete(metricId);
+      } else {
+        newSet.add(metricId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const overallHealth = useMemo(() => {
+    if (!metrics || !metrics.length) return 'Unknown';
+    if (metrics.some(m => m.status === 'critical')) return 'Critical';
+    if (metrics.some(m => m.status === 'warning')) return 'Warning';
+    if (metrics.some(m => m.status === 'unknown')) return 'Unknown';
+    return 'Healthy';
+  }, [metrics]);
+
+  const groupedMetrics = useMemo(() => {
+    if (!groupByCategory) {
+      return { all: sortedMetrics };
     }
-  }, [onHealthAction]);
+
+    const groups: Record<string, HealthMetric[]> = {};
+    sortedMetrics.forEach(metric => {
+      if (!groups[metric.category]) {
+        groups[metric.category] = [];
+      }
+      groups[metric.category].push(metric);
+    });
+
+    return groups;
+  }, [sortedMetrics, groupByCategory]);
+
+  const getStatusIcon = (status: HealthStatus) => {
+    switch (status) {
+      case 'healthy':
+        return CheckCircle;
+      case 'warning':
+        return AlertTriangle;
+      case 'critical':
+        return AlertCircle;
+      default:
+        return Activity;
+    }
+  };
+
+  const getStatusColor = (status: HealthStatus) => {
+    switch (status) {
+      case 'healthy':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'warning':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'critical':
+        return 'text-red-600 bg-red-50 border-red-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getTrendIcon = (trend: TrendDirection) => {
+    switch (trend) {
+      case 'increasing':
+        return TrendingUp;
+      case 'decreasing':
+        return TrendingDown;
+      default:
+        return Minus;
+    }
+  };
 
   // Error state
   if (error || !metrics) {
     return (
-      <div 
-        className={cn("w-full", className)}
+      <div
+        className={cn('w-full', className)}
         role="region"
         aria-label="System Health Monitor"
         data-testid="system-health-monitor"
@@ -186,8 +290,8 @@ export function SystemHealthMonitor({
   // Loading state
   if (loading) {
     return (
-      <div 
-        className={cn("w-full", className)}
+      <div
+        className={cn('w-full', className)}
         role="region"
         aria-label="System Health Monitor"
         data-testid="system-health-monitor"
@@ -204,109 +308,15 @@ export function SystemHealthMonitor({
     );
   }
 
-  // Filter metrics
-  const filteredMetrics = useMemo(() => {
-    return metrics.filter(metric => {
-      if (categoryFilter !== 'all' && metric.category !== categoryFilter) return false;
-      return true;
-    });
-  }, [metrics, categoryFilter]);
-
-  // Sort metrics
-  const sortedMetrics = useMemo(() => {
-    const sorted = [...filteredMetrics];
-    switch (sortBy) {
-      case 'status':
-        const statusOrder = { critical: 3, warning: 2, healthy: 1, unknown: 0 };
-        return sorted.sort((a, b) => (statusOrder[b.status] || 0) - (statusOrder[a.status] || 0));
-      case 'value':
-        return sorted.sort((a, b) => b.value - a.value);
-      case 'name':
-      default:
-        return sorted.sort((a, b) => a.name.localeCompare(b.name));
-    }
-  }, [filteredMetrics, sortBy]);
-
-  // Filter alerts
-  const filteredAlerts = useMemo(() => {
-    return alerts.filter(alert => {
-      if (alertSeverityFilter !== 'all' && alert.severity !== alertSeverityFilter) return false;
-      return true;
-    });
-  }, [alerts, alertSeverityFilter]);
-
-  // Calculate overall health status
-  const overallHealth = useMemo(() => {
-    if (metrics.some(m => m.status === 'critical')) return 'Critical';
-    if (metrics.some(m => m.status === 'warning')) return 'Warning';
-    if (metrics.some(m => m.status === 'unknown')) return 'Unknown';
-    return 'Healthy';
-  }, [metrics]);
-
-  // Group metrics by category
-  const groupedMetrics = useMemo(() => {
-    if (!groupByCategory) {
-      return { 'all': sortedMetrics };
-    }
-
-    const groups: Record<string, HealthMetric[]> = {};
-    sortedMetrics.forEach(metric => {
-      if (!groups[metric.category]) {
-        groups[metric.category] = [];
-      }
-      groups[metric.category].push(metric);
-    });
-    
-    return groups;
-  }, [sortedMetrics, groupByCategory]);
-
-  const getStatusIcon = (status: HealthStatus) => {
-    switch (status) {
-      case 'healthy': return CheckCircle;
-      case 'warning': return AlertTriangle;
-      case 'critical': return AlertCircle;
-      default: return Activity;
-    }
-  };
-
-  const getStatusColor = (status: HealthStatus) => {
-    switch (status) {
-      case 'healthy': return 'text-green-600 bg-green-50 border-green-200';
-      case 'warning': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'critical': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
-
-  const getTrendIcon = (trend: TrendDirection) => {
-    switch (trend) {
-      case 'increasing': return TrendingUp;
-      case 'decreasing': return TrendingDown;
-      default: return Minus;
-    }
-  };
-
-  const handleMetricExpand = useCallback((metricId: string) => {
-    setExpandedMetrics(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(metricId)) {
-        newSet.delete(metricId);
-      } else {
-        newSet.add(metricId);
-      }
-      return newSet;
-    });
-  }, []);
-
   return (
-    <div 
-      className={cn("w-full space-y-4", className)}
+    <div
+      className={cn('w-full space-y-4', className)}
       role="region"
       aria-label="System Health Monitor"
       data-testid="system-health-monitor"
     >
       {announceUpdates && (
-        <div 
+        <div
           data-testid="health-announcements"
           aria-live="polite"
           aria-atomic="true"
@@ -316,7 +326,10 @@ export function SystemHealthMonitor({
 
       {/* Auto-refresh indicator */}
       {autoRefresh && (
-        <div data-testid="auto-refresh-indicator" className="flex items-center gap-2 text-sm text-green-600">
+        <div
+          data-testid="auto-refresh-indicator"
+          className="flex items-center gap-2 text-sm text-green-600"
+        >
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
           <span>Auto-refresh enabled</span>
         </div>
@@ -329,18 +342,20 @@ export function SystemHealthMonitor({
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
               {title}
-              <Badge 
-                className={getStatusColor(overallHealth.toLowerCase() as HealthStatus)}
+              <Badge
+                className={getStatusColor(
+                  overallHealth.toLowerCase() as HealthStatus
+                )}
                 data-testid="overall-health-status"
               >
                 {overallHealth}
               </Badge>
             </CardTitle>
-            
+
             <div className="flex items-center gap-2">
               {onRefresh && (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={onRefresh}
                   data-testid="refresh-button"
@@ -369,7 +384,9 @@ export function SystemHealthMonitor({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => onExport?.('pdf', { metrics, alerts })}>
+                    <DropdownMenuItem
+                      onClick={() => onExport?.('pdf', { metrics, alerts })}
+                    >
                       Health Report
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -383,8 +400,14 @@ export function SystemHealthMonitor({
             <div className="flex items-center gap-4 mt-4">
               {showFilters && (
                 <>
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-40" data-testid="category-filter">
+                  <Select
+                    value={categoryFilter}
+                    onValueChange={setCategoryFilter}
+                  >
+                    <SelectTrigger
+                      className="w-40"
+                      data-testid="category-filter"
+                    >
                       <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -397,8 +420,14 @@ export function SystemHealthMonitor({
                   </Select>
 
                   {showAlerts && (
-                    <Select value={alertSeverityFilter} onValueChange={setAlertSeverityFilter}>
-                      <SelectTrigger className="w-40" data-testid="alert-severity-filter">
+                    <Select
+                      value={alertSeverityFilter}
+                      onValueChange={setAlertSeverityFilter}
+                    >
+                      <SelectTrigger
+                        className="w-40"
+                        data-testid="alert-severity-filter"
+                      >
                         <SelectValue placeholder="Alert Severity" />
                       </SelectTrigger>
                       <SelectContent>
@@ -433,7 +462,9 @@ export function SystemHealthMonitor({
           {showSummary && (
             <div className="mb-6" data-testid="performance-summary">
               <h3 className="font-medium mb-2">Summary</h3>
-              <p className="text-sm text-muted-foreground">{metrics.length} metrics monitored</p>
+              <p className="text-sm text-muted-foreground">
+                {metrics.length} metrics monitored
+              </p>
             </div>
           )}
 
@@ -457,46 +488,48 @@ export function SystemHealthMonitor({
 
           {/* Metrics */}
           <div className="space-y-4">
-            {groupByCategory ? (
-              Object.entries(groupedMetrics).map(([category, categoryMetrics]) => (
-                <div key={category} data-testid={`category-${category}`}>
-                  {category !== 'all' && (
-                    <h3 className="font-medium mb-2 capitalize">{category} ({categoryMetrics.length})</h3>
-                  )}
-                  <div className="space-y-2">
-                    {categoryMetrics.map((metric) => (
-                      <MetricCard
-                        key={metric.id}
-                        metric={metric}
-                        onMetricClick={onMetricClick}
-                        expanded={expandedMetrics.has(metric.id)}
-                        onExpand={handleMetricExpand}
-                        showTrends={showTrends}
-                        customTemplate={customMetricTemplate}
-                        getStatusIcon={getStatusIcon}
-                        getStatusColor={getStatusColor}
-                        getTrendIcon={getTrendIcon}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              sortedMetrics.map((metric) => (
-                <MetricCard
-                  key={metric.id}
-                  metric={metric}
-                  onMetricClick={onMetricClick}
-                  expanded={expandedMetrics.has(metric.id)}
-                  onExpand={handleMetricExpand}
-                  showTrends={showTrends}
-                  customTemplate={customMetricTemplate}
-                  getStatusIcon={getStatusIcon}
-                  getStatusColor={getStatusColor}
-                  getTrendIcon={getTrendIcon}
-                />
-              ))
-            )}
+            {groupByCategory
+              ? Object.entries(groupedMetrics).map(
+                  ([category, categoryMetrics]) => (
+                    <div key={category} data-testid={`category-${category}`}>
+                      {category !== 'all' && (
+                        <h3 className="font-medium mb-2 capitalize">
+                          {category} ({categoryMetrics.length})
+                        </h3>
+                      )}
+                      <div className="space-y-2">
+                        {categoryMetrics.map(metric => (
+                          <MetricCard
+                            key={metric.id}
+                            metric={metric}
+                            onMetricClick={onMetricClick}
+                            expanded={expandedMetrics.has(metric.id)}
+                            onExpand={handleMetricExpand}
+                            showTrends={showTrends}
+                            customTemplate={customMetricTemplate}
+                            getStatusIcon={getStatusIcon}
+                            getStatusColor={getStatusColor}
+                            getTrendIcon={getTrendIcon}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )
+              : sortedMetrics.map(metric => (
+                  <MetricCard
+                    key={metric.id}
+                    metric={metric}
+                    onMetricClick={onMetricClick}
+                    expanded={expandedMetrics.has(metric.id)}
+                    onExpand={handleMetricExpand}
+                    showTrends={showTrends}
+                    customTemplate={customMetricTemplate}
+                    getStatusIcon={getStatusIcon}
+                    getStatusColor={getStatusColor}
+                    getTrendIcon={getTrendIcon}
+                  />
+                ))}
           </div>
         </CardContent>
       </Card>
@@ -509,13 +542,14 @@ export function SystemHealthMonitor({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {filteredAlerts.map((alert) => (
+              {filteredAlerts.map(alert => (
                 <Card
                   key={alert.id}
                   className={cn(
-                    "transition-all",
+                    'transition-all',
                     alert.severity === 'critical' && 'border-red-200 bg-red-50',
-                    alert.severity === 'warning' && 'border-yellow-200 bg-yellow-50'
+                    alert.severity === 'warning' &&
+                      'border-yellow-200 bg-yellow-50'
                   )}
                   data-testid={`alert-${alert.id}`}
                 >
@@ -523,15 +557,19 @@ export function SystemHealthMonitor({
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="font-medium">{alert.title}</h4>
-                        <p className="text-sm text-muted-foreground">{alert.message}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {alert.message}
+                        </p>
                         <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                          <Badge 
+                          <Badge
                             variant="outline"
                             data-testid={`alert-${alert.severity}`}
                           >
                             {alert.severity}
                           </Badge>
-                          <span>{new Date(alert.timestamp).toLocaleTimeString()}</span>
+                          <span>
+                            {new Date(alert.timestamp).toLocaleTimeString()}
+                          </span>
                         </div>
                       </div>
                       <Button
@@ -568,7 +606,10 @@ export function SystemHealthMonitor({
 
       {/* Threshold Config */}
       {showThresholdConfig && (
-        <div data-testid="threshold-config" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+          data-testid="threshold-config"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        >
           <Card className="w-96">
             <CardHeader>
               <CardTitle>Configure Thresholds</CardTitle>
@@ -610,7 +651,7 @@ function MetricCard({
   customTemplate,
   getStatusIcon,
   getStatusColor,
-  getTrendIcon
+  getTrendIcon,
 }: MetricCardProps) {
   if (customTemplate) {
     return <div key={metric.id}>{customTemplate(metric)}</div>;
@@ -622,7 +663,7 @@ function MetricCard({
   return (
     <Card
       className={cn(
-        "transition-all cursor-pointer hover:shadow-md",
+        'transition-all cursor-pointer hover:shadow-md',
         getStatusColor(metric.status)
       )}
       data-testid={`metric-${metric.id}`}
@@ -640,27 +681,28 @@ function MetricCard({
               </Badge>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <div className="text-right">
               <div className="text-2xl font-bold">
-                {metric.value}{metric.unit}
+                {metric.value}
+                {metric.unit}
               </div>
               {showTrends && (
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <TrendIcon 
-                    className="h-3 w-3" 
+                  <TrendIcon
+                    className="h-3 w-3"
                     data-testid={`trend-${metric.trend}`}
                   />
                   {metric.trend}
                 </div>
               )}
             </div>
-            
+
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 onExpand(metric.id);
               }}
@@ -681,7 +723,9 @@ function MetricCard({
               <div>Warning: {metric.threshold.warning}%</div>
               <div>Critical: {metric.threshold.critical}%</div>
               <div>Category: {metric.category}</div>
-              <div>Updated: {new Date(metric.lastUpdated).toLocaleTimeString()}</div>
+              <div>
+                Updated: {new Date(metric.lastUpdated).toLocaleTimeString()}
+              </div>
             </div>
           </div>
         )}

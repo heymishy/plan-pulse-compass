@@ -10,6 +10,7 @@ test.describe('Foundation Setup (runs first)', () => {
 
   test('should complete setup wizard and create quarters with iterations', async ({
     page,
+    context,
   }) => {
     console.log('🚀 Starting foundation setup test...');
 
@@ -163,5 +164,9 @@ test.describe('Foundation Setup (runs first)', () => {
     ) {
       throw new Error('Foundation setup validation failed');
     }
+
+    // Save storage state for other tests to use
+    await context.storageState({ path: './tests/e2e/storage-state.json' });
+    console.log('💾 Setup storage state saved for other tests');
   });
 });

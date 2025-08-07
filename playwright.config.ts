@@ -61,9 +61,22 @@ export default defineConfig({
   },
 
   projects: [
+    // Setup project that runs first
+    {
+      name: 'setup',
+      testMatch: /.*1-setup-foundation\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    // Main tests that depend on setup
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
+      testIgnore: /.*1-setup-foundation\.spec\.ts/, // Exclude setup test from main run
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use the storage state saved by setup test (will be created by setup project)
+        storageState: './tests/e2e/storage-state.json',
+      },
     },
   ],
 
