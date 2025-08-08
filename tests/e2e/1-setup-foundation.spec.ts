@@ -120,10 +120,10 @@ test.describe('Foundation Setup (runs first)', () => {
       try {
         const cycles = JSON.parse(data);
         const iterations = cycles.filter(
-          (cycle: any) => cycle.type === 'iteration'
+          (cycle: { type: string }) => cycle.type === 'iteration'
         );
         const quarters = cycles.filter(
-          (cycle: any) => cycle.type === 'quarterly'
+          (cycle: { type: string }) => cycle.type === 'quarterly'
         );
         console.log(
           `Found ${quarters.length} quarters and ${iterations.length} iterations`

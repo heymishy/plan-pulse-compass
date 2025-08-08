@@ -77,8 +77,8 @@ test.describe('Page Console Error Detection', () => {
       // Disable animations and heavy features
       await page.addInitScript(() => {
         // Disable animations
-        (window as any).CSS = {
-          ...((window as any).CSS || {}),
+        (window as Record<string, any>).CSS = {
+          ...((window as Record<string, any>).CSS || {}),
           supports: () => false,
         };
         // Reduce timer precision
@@ -88,7 +88,7 @@ test.describe('Page Console Error Detection', () => {
           log: () => {},
           warn: () => {},
           error: () => {},
-        } as any;
+        } as Console;
       });
     }
   });

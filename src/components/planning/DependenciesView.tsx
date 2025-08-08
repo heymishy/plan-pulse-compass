@@ -354,7 +354,9 @@ const DependenciesView: React.FC<DependenciesViewProps> = ({
       {/* Main Tabs */}
       <Tabs
         value={activeTab}
-        onValueChange={(value: any) => setActiveTab(value)}
+        onValueChange={(value: 'overview' | 'projects' | 'epics') =>
+          setActiveTab(value)
+        }
         className="space-y-4"
       >
         <TabsList>

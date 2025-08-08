@@ -144,9 +144,11 @@ export async function verifyQuartersInDropdown(page: Page): Promise<void> {
 
       const parsedCycles = JSON.parse(cycles);
       const quarters = parsedCycles.filter(
-        (cycle: any) => cycle.type === 'quarterly'
+        (cycle: { type: string; name: string }) => cycle.type === 'quarterly'
       );
-      const q1Quarter = quarters.find((q: any) => q.name === '2024 Q1');
+      const q1Quarter = quarters.find(
+        (q: { name: string }) => q.name === '2024 Q1'
+      );
 
       console.log(`Found ${quarters.length} quarters total`);
       console.log(`Q1 2024 exists: ${!!q1Quarter}`);

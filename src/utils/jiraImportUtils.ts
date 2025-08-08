@@ -348,7 +348,7 @@ export function transformJiraToEpics(
   config: JiraImportConfig,
   existingProjects: Project[],
   existingPeople: Person[],
-  runWorkCategories: any[] // From app settings
+  runWorkCategories: RunWorkCategory[] // From app settings
 ): {
   epics: Partial<Epic>[];
   newPeople: Partial<Person>[];

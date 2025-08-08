@@ -223,7 +223,12 @@ const calculateTeamCostEfficiency = (
 const getTeamAvailabilityWindows = (
   teamId: string,
   data: PlanningEngineData
-): any[] => {
+): {
+  quarter: string;
+  utilization: number;
+  skills: string[];
+  projects: string[];
+}[] => {
   const now = new Date();
   const futureQuarters = data.cycles
     .filter(c => c.type === 'quarterly' && new Date(c.endDate) > now)
@@ -255,7 +260,7 @@ const getTeamAvailabilityWindows = (
 const getCurrentTeamAllocations = (
   teamId: string,
   data: PlanningEngineData
-): any[] => {
+): Allocation[] => {
   const now = new Date();
   const currentAllocations = data.allocations.filter(
     a =>

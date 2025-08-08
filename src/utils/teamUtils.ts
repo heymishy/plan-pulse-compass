@@ -158,7 +158,7 @@ export const getProductOwnerCandidates = (
  */
 export const getDivisionName = (
   divisionId: string | undefined,
-  divisions: any[]
+  divisions: Division[]
 ): string => {
   if (!divisionId) return 'No Division';
   const division = divisions.find(d => d.id === divisionId);

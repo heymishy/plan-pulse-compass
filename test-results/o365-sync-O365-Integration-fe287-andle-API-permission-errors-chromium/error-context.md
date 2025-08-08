@@ -180,7 +180,7 @@
     - img
     - text: dev
     - img
-    - text: Aug 8, 2025, 08:56 AM © 2024 Plan Pulse Compass • Team Planning & Resource Management
+    - text: Aug 8, 2025, 01:49 PM © 2024 Plan Pulse Compass • Team Planning & Resource Management
     - link "GitHub":
         - /url: https://github.com/heymishy/plan-pulse-compass
     - text: •

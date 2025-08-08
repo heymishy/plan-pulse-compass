@@ -155,7 +155,7 @@ export const useScenarioAwareOperations = () => {
 
         const changes = Object.entries(personData).map(([field, newValue]) => ({
           field,
-          oldValue: (existingPerson as any)[field],
+          oldValue: (existingPerson as Record<string, any>)[field],
           newValue,
         }));
 
@@ -277,7 +277,7 @@ export const useScenarioAwareOperations = () => {
 
         const changes = Object.entries(teamData).map(([field, newValue]) => ({
           field,
-          oldValue: (existingTeam as any)[field],
+          oldValue: (existingTeam as Record<string, any>)[field],
           newValue,
         }));
 
@@ -410,7 +410,7 @@ export const useScenarioAwareOperations = () => {
         const changes = Object.entries(projectData).map(
           ([field, newValue]) => ({
             field,
-            oldValue: (existingProject as any)[field],
+            oldValue: (existingProject as Record<string, any>)[field],
             newValue,
           })
         );
@@ -555,7 +555,7 @@ export const useScenarioAwareOperations = () => {
         const changes = Object.entries(allocationData).map(
           ([field, newValue]) => ({
             field,
-            oldValue: (existingAllocation as any)[field],
+            oldValue: (existingAllocation as Record<string, any>)[field],
             newValue,
           })
         );

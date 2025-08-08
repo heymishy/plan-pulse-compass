@@ -207,7 +207,13 @@ const TeamResourceAnalysis: React.FC<TeamResourceAnalysisProps> = ({
                           </p>
                           <div className="space-y-1">
                             {team.currentAllocations.map(
-                              (allocation: any, index: number) => (
+                              (
+                                allocation: {
+                                  project: string;
+                                  percentage: number;
+                                },
+                                index: number
+                              ) => (
                                 <div
                                   key={index}
                                   className="flex items-center justify-between text-sm bg-gray-50 p-2 rounded"
@@ -228,11 +234,13 @@ const TeamResourceAnalysis: React.FC<TeamResourceAnalysisProps> = ({
                       <div>
                         <p className="text-sm font-medium mb-2">Skill Gaps:</p>
                         <div className="flex flex-wrap gap-2">
-                          {team.skillGaps.map((gap: any) => (
-                            <Badge key={gap.skillId} variant="destructive">
-                              {gap.skillName}
-                            </Badge>
-                          ))}
+                          {team.skillGaps.map(
+                            (gap: { skillId: string; skillName: string }) => (
+                              <Badge key={gap.skillId} variant="destructive">
+                                {gap.skillName}
+                              </Badge>
+                            )
+                          )}
                         </div>
                       </div>
                     )}

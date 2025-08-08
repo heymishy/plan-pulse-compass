@@ -124,7 +124,22 @@ const Tracking = () => {
           projectName: project?.name || 'Unknown Project',
         };
       })
-      .filter(Boolean as any);
+      .filter(
+        (
+          item
+        ): item is {
+          name: string;
+          type: string;
+          isComplete: boolean;
+          epic?: Epic;
+          milestone?: {
+            id: string;
+            name: string;
+            dueDate: string;
+            isCompleted: boolean;
+          };
+        } => Boolean(item)
+      );
   }, [currentIterationReview, epics, projects]);
 
   if (!config) {

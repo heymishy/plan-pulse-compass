@@ -12,9 +12,9 @@ test.describe('Console Error Detection - CI Optimized', () => {
     // Disable heavy features for memory efficiency
     await page.addInitScript(() => {
       // Disable animations and reduce memory usage
-      (window as any).CSS = { supports: () => false };
+      (window as Record<string, any>).CSS = { supports: () => false };
       // Disable unnecessary features
-      (window as any).IntersectionObserver = class {
+      (window as Record<string, any>).IntersectionObserver = class {
         observe() {}
         unobserve() {}
         disconnect() {}

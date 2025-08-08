@@ -3,6 +3,11 @@ import {
   IterationReview,
   IterationSnapshot,
   Allocation,
+  Team,
+  Cycle,
+  Epic,
+  RunWorkCategory,
+  Project,
 } from '@/types';
 
 export interface ActualAllocationImport {
@@ -92,10 +97,10 @@ export const isChangeWorkEpicType = (epicType: string): boolean => {
 export const parseActualAllocationCSVWithMapping = (
   csvContent: string,
   mapping: Record<string, string>,
-  teams: any[],
-  cycles: any[],
-  epics: any[],
-  runWorkCategories: any[],
+  teams: Team[],
+  cycles: Cycle[],
+  epics: Epic[],
+  runWorkCategories: RunWorkCategory[],
   valueMappings?: Record<string, Record<string, string | number>>
 ): {
   allocations: ActualAllocation[];
@@ -294,9 +299,9 @@ export const parseActualAllocationCSVWithMapping = (
 export const parseIterationReviewCSVWithMapping = (
   csvContent: string,
   mapping: Record<string, string>,
-  cycles: any[],
-  epics: any[],
-  projects: any[],
+  cycles: Cycle[],
+  epics: Epic[],
+  projects: Project[],
   valueMappings?: Record<string, Record<string, string | number>>
 ): {
   reviews: IterationReview[];
@@ -435,7 +440,8 @@ export const parseIterationReviewCSVWithMapping = (
         iterationNumber,
         reviewDate:
           getValue('review_date') || new Date().toISOString().split('T')[0],
-        status: (getValue('status') as any) || 'not-started',
+        status:
+          (getValue('status') as 'draft' | 'submitted' | 'approved') || 'draft',
         completedEpics,
         completedMilestones,
         notes: getValue('notes') || undefined,
@@ -459,11 +465,11 @@ export const parseIterationReviewCSVWithMapping = (
 export const parseBulkTrackingCSVWithMapping = (
   csvContent: string,
   mapping: Record<string, string>,
-  teams: any[],
-  cycles: any[],
-  epics: any[],
-  runWorkCategories: any[],
-  projects: any[],
+  teams: Team[],
+  cycles: Cycle[],
+  epics: Epic[],
+  runWorkCategories: RunWorkCategory[],
+  projects: Project[],
   valueMappings?: Record<string, Record<string, string | number>>
 ): {
   allocations: ActualAllocation[];
@@ -772,7 +778,9 @@ export const parseBulkTrackingCSVWithMapping = (
           iterationNumber,
           reviewDate:
             getValue('review_date') || new Date().toISOString().split('T')[0],
-          status: (getValue('status') as any) || 'not-started',
+          status:
+            (getValue('status') as 'draft' | 'submitted' | 'approved') ||
+            'draft',
           completedEpics,
           completedMilestones,
           notes: getValue('notes') || undefined,
@@ -801,10 +809,10 @@ export const parseBulkTrackingCSVWithMapping = (
 // Legacy functions for backward compatibility
 export const parseActualAllocationCSV = (
   csvContent: string,
-  teams: any[],
-  cycles: any[],
-  epics: any[],
-  runWorkCategories: any[]
+  teams: Team[],
+  cycles: Cycle[],
+  epics: Epic[],
+  runWorkCategories: RunWorkCategory[]
 ): {
   allocations: ActualAllocation[];
   errors: { row: number; message: string }[];
@@ -842,9 +850,9 @@ export const parseActualAllocationCSV = (
 
 export const parseIterationReviewCSV = (
   csvContent: string,
-  cycles: any[],
-  epics: any[],
-  projects: any[]
+  cycles: Cycle[],
+  epics: Epic[],
+  projects: Project[]
 ): { reviews: IterationReview[]; errors: string[] } => {
   // Create default mapping based on expected headers
   const defaultMapping = {
@@ -872,11 +880,11 @@ export const parseIterationReviewCSV = (
 
 export const parseBulkTrackingCSV = (
   csvContent: string,
-  teams: any[],
-  cycles: any[],
-  epics: any[],
-  runWorkCategories: any[],
-  projects: any[]
+  teams: Team[],
+  cycles: Cycle[],
+  epics: Epic[],
+  runWorkCategories: RunWorkCategory[],
+  projects: Project[]
 ): {
   allocations: ActualAllocation[];
   reviews: IterationReview[];
@@ -1124,10 +1132,10 @@ export const downloadBulkTrackingSampleCSV = () => {
 export const exportTrackingDataCSV = (
   actualAllocations: ActualAllocation[],
   iterationReviews: IterationReview[],
-  teams: any[],
-  cycles: any[],
-  epics: any[],
-  runWorkCategories: any[]
+  teams: Team[],
+  cycles: Cycle[],
+  epics: Epic[],
+  runWorkCategories: RunWorkCategory[]
 ) => {
   const data = [
     [
@@ -1214,20 +1222,20 @@ export const exportTrackingDataCSV = (
 export const parsePlanningAllocationCSVWithMapping = (
   csvContent: string,
   mapping: Record<string, string>,
-  teams: any[],
-  cycles: any[],
-  epics: any[],
-  runWorkCategories: any[],
-  projects: any[],
+  teams: Team[],
+  cycles: Cycle[],
+  epics: Epic[],
+  runWorkCategories: RunWorkCategory[],
+  projects: Project[],
   valueMappings?: Record<string, Record<string, string | number>>
 ): {
   allocations: Allocation[];
   errors: { row: number; message: string }[];
-  newTeams?: any[];
-  newCycles?: any[];
-  newEpics?: any[];
-  newRunWorkCategories?: any[];
-  newProjects?: any[];
+  newTeams?: Team[];
+  newCycles?: Cycle[];
+  newEpics?: Epic[];
+  newRunWorkCategories?: RunWorkCategory[];
+  newProjects?: Project[];
 } => {
   const lines = parseCSV(csvContent);
   const headers = lines[0];
@@ -1237,11 +1245,11 @@ export const parsePlanningAllocationCSVWithMapping = (
   const errors: { row: number; message: string }[] = [];
 
   // Track new records that need to be created
-  const newTeams: any[] = [];
-  const newCycles: any[] = [];
-  const newEpics: any[] = [];
-  const newRunWorkCategories: any[] = [];
-  const newProjects: any[] = [];
+  const newTeams: Team[] = [];
+  const newCycles: Cycle[] = [];
+  const newEpics: Epic[] = [];
+  const newRunWorkCategories: RunWorkCategory[] = [];
+  const newProjects: Project[] = [];
 
   // Create reverse mapping from field ID to header index
   const fieldToIndex: Record<string, number> = {};
@@ -1278,7 +1286,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   };
 
   // Helper function to get or create team
-  const getOrCreateTeam = (teamName: string): any => {
+  const getOrCreateTeam = (teamName: string): Team => {
     let team = teams.find(t => t.name.toLowerCase() === teamName.toLowerCase());
     if (!team) {
       // Check if we already created this team in this import
@@ -1298,7 +1306,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   };
 
   // Helper function to get or create cycle
-  const getOrCreateCycle = (cycleName: string): any => {
+  const getOrCreateCycle = (cycleName: string): Cycle => {
     let cycle = cycles.find(
       c =>
         c.name.toLowerCase() === cycleName.toLowerCase() &&
@@ -1334,7 +1342,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   };
 
   // Helper function to get or create project
-  const getOrCreateProject = (projectName: string): any => {
+  const getOrCreateProject = (projectName: string): Project => {
     let project = projects.find(
       p => p.name.toLowerCase() === projectName.toLowerCase()
     );
@@ -1359,7 +1367,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   };
 
   // Helper function to get or create epic
-  const getOrCreateEpic = (epicName: string, projectName?: string): any => {
+  const getOrCreateEpic = (epicName: string, projectName?: string): Epic => {
     let epic = epics.find(e => e.name.toLowerCase() === epicName.toLowerCase());
     if (!epic) {
       // Check if we already created this epic in this import
@@ -1388,7 +1396,9 @@ export const parsePlanningAllocationCSVWithMapping = (
   };
 
   // Helper function to get or create run work category
-  const getOrCreateRunWorkCategory = (categoryName: string): any => {
+  const getOrCreateRunWorkCategory = (
+    categoryName: string
+  ): RunWorkCategory => {
     let category = runWorkCategories.find(
       r => r.name.toLowerCase() === categoryName.toLowerCase()
     );
@@ -1410,7 +1420,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   };
 
   // Helper function to determine if an epic belongs to a project
-  const isEpicPartOfProject = (epic: any): boolean => {
+  const isEpicPartOfProject = (epic: Epic): boolean => {
     // Check if epic has a projectId (either from existing data or newly created)
     if (epic.projectId) {
       return true;
@@ -1426,7 +1436,7 @@ export const parsePlanningAllocationCSVWithMapping = (
   };
 
   // Helper function to determine Epic Type based on project association
-  const determineEpicType = (epic: any, explicitEpicType?: string): string => {
+  const determineEpicType = (epic: Epic, explicitEpicType?: string): string => {
     // If explicit Epic Type is provided and it's a recognized type, use it
     if (
       explicitEpicType &&

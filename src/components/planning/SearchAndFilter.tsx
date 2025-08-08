@@ -1,13 +1,19 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Filter } from 'lucide-react';
 
 export interface SearchFilters {
   searchQuery: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | string[] | undefined;
 }
 
 interface FilterField {
@@ -24,7 +30,11 @@ interface SearchAndFilterProps {
   filterFields: FilterField[];
 }
 
-const SearchAndFilter: React.FC<SearchAndFilterProps> = ({ filters, onFiltersChange, filterFields }) => {
+const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
+  filters,
+  onFiltersChange,
+  filterFields,
+}) => {
   const handleInputChange = (id: string, value: string) => {
     onFiltersChange({ ...filters, [id]: value });
   };

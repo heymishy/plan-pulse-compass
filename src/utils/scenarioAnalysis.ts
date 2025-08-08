@@ -1,6 +1,14 @@
-import { 
-  Person, Team, Project, Skill, PersonSkill, ProjectSolution, Solution, 
-  Allocation, Cycle, ProjectSkill 
+import {
+  Person,
+  Team,
+  Project,
+  Skill,
+  PersonSkill,
+  ProjectSolution,
+  Solution,
+  Allocation,
+  Cycle,
+  ProjectSkill,
 } from '@/types';
 
 export interface SkillMatchDetail {
@@ -57,9 +65,17 @@ export const analyzeProjectTeamAvailability = (
     cycles: Cycle[];
   }
 ): ScenarioAnalysisResult => {
-  const { 
-    projects, teams, people, skills, personSkills, projectSolutions, 
-    projectSkills, solutions, allocations, cycles 
+  const {
+    projects,
+    teams,
+    people,
+    skills,
+    personSkills,
+    projectSolutions,
+    projectSkills,
+    solutions,
+    allocations,
+    cycles,
   } = data;
 
   const project = projects.find(p => p.id === projectId);
@@ -69,21 +85,29 @@ export const analyzeProjectTeamAvailability = (
 
   // Get current cycle for allocation analysis
   const now = new Date();
-  const activeCycle = cycles.find(c => 
-    new Date(c.startDate) <= now && new Date(c.endDate) >= now
+  const activeCycle = cycles.find(
+    c => new Date(c.startDate) <= now && new Date(c.endDate) >= now
   );
 
   // Get required skills for the project
   const requiredSkills = getProjectRequiredSkills(projectId, {
-    projectSolutions, projectSkills, solutions
+    projectSolutions,
+    projectSkills,
+    solutions,
   });
 
   // Analyze each team
-  const teamMatches = teams.map(team => 
-    analyzeTeamMatch(team, requiredSkills, {
-      people, skills, personSkills, allocations, activeCycle
-    })
-  ).sort((a, b) => b.overallScore - a.overallScore);
+  const teamMatches = teams
+    .map(team =>
+      analyzeTeamMatch(team, requiredSkills, {
+        people,
+        skills,
+        personSkills,
+        allocations,
+        activeCycle,
+      })
+    )
+    .sort((a, b) => b.overallScore - a.overallScore);
 
   // Identify skill gaps
   const skillGaps = identifySkillGaps(requiredSkills, teamMatches, skills);
@@ -97,7 +121,7 @@ export const analyzeProjectTeamAvailability = (
     requiredSkills: requiredSkills.map(s => s.skillId),
     teamMatches,
     skillGaps,
-    recommendedActions
+    recommendedActions,
   };
 };
 
@@ -110,9 +134,12 @@ const getProjectRequiredSkills = (
   }
 ) => {
   const { projectSolutions, projectSkills, solutions } = data;
-  
+
   const skillsSet = new Set<string>();
-  const skillImportance = new Map<string, 'critical' | 'important' | 'nice-to-have'>();
+  const skillImportance = new Map<
+    string,
+    'critical' | 'important' | 'nice-to-have'
+  >();
 
   // Get skills from project solutions
   const projectSols = projectSolutions.filter(ps => ps.projectId === projectId);
@@ -135,7 +162,7 @@ const getProjectRequiredSkills = (
 
   return Array.from(skillsSet).map(skillId => ({
     skillId,
-    importance: skillImportance.get(skillId) || 'nice-to-have'
+    importance: skillImportance.get(skillId) || 'nice-to-have',
   }));
 };
 
@@ -157,7 +184,7 @@ const analyzeTeamMatch = (
 
   // Get team's available skills
   const teamSkillsMap = new Map<string, SkillMatchDetail>();
-  
+
   teamMembers.forEach(person => {
     const memberSkills = personSkills.filter(ps => ps.personId === person.id);
     memberSkills.forEach(ps => {
@@ -169,13 +196,16 @@ const analyzeTeamMatch = (
             skillName: skill.name,
             hasSkill: true,
             proficiencyLevel: ps.proficiencyLevel,
-            personIds: [person.id]
+            personIds: [person.id],
           });
         } else {
           const existing = teamSkillsMap.get(ps.skillId)!;
           existing.personIds.push(person.id);
           // Keep highest proficiency level
-          if (getProficiencyValue(ps.proficiencyLevel) > getProficiencyValue(existing.proficiencyLevel || '')) {
+          if (
+            getProficiencyValue(ps.proficiencyLevel) >
+            getProficiencyValue(existing.proficiencyLevel || '')
+          ) {
             existing.proficiencyLevel = ps.proficiencyLevel;
           }
         }
@@ -187,38 +217,43 @@ const analyzeTeamMatch = (
   const skillBreakdown: SkillMatchDetail[] = requiredSkills.map(req => {
     const skill = skills.find(s => s.id === req.skillId);
     const teamSkill = teamSkillsMap.get(req.skillId);
-    
+
     return {
       skillId: req.skillId,
       skillName: skill?.name || 'Unknown',
       hasSkill: !!teamSkill,
       proficiencyLevel: teamSkill?.proficiencyLevel,
-      personIds: teamSkill?.personIds || []
+      personIds: teamSkill?.personIds || [],
     };
   });
 
   const matchedSkills = skillBreakdown.filter(s => s.hasSkill).length;
-  const skillMatchPercentage = requiredSkills.length > 0 
-    ? (matchedSkills / requiredSkills.length) * 100 
-    : 100;
+  const skillMatchPercentage =
+    requiredSkills.length > 0
+      ? (matchedSkills / requiredSkills.length) * 100
+      : 100;
 
   // Calculate availability
   let usedCapacity = 0;
   const conflictingAllocations: Allocation[] = [];
-  
+
   if (activeCycle) {
-    const teamAllocations = allocations.filter(a => 
-      a.teamId === team.id && a.cycleId === activeCycle.id
+    const teamAllocations = allocations.filter(
+      a => a.teamId === team.id && a.cycleId === activeCycle.id
     );
-    
-    usedCapacity = teamAllocations.reduce((sum, alloc) => sum + alloc.percentage, 0);
+
+    usedCapacity = teamAllocations.reduce(
+      (sum, alloc) => sum + alloc.percentage,
+      0
+    );
     conflictingAllocations.push(...teamAllocations);
   }
 
   const availabilityPercentage = Math.max(0, 100 - usedCapacity);
 
   // Calculate overall score (weighted)
-  const overallScore = (skillMatchPercentage * 0.7) + (availabilityPercentage * 0.3);
+  const overallScore =
+    skillMatchPercentage * 0.7 + availabilityPercentage * 0.3;
 
   return {
     teamId: team.id,
@@ -230,7 +265,7 @@ const analyzeTeamMatch = (
     conflictingAllocations,
     availablePeople: teamMembers,
     totalCapacity: team.capacity,
-    usedCapacity
+    usedCapacity,
   };
 };
 
@@ -252,9 +287,9 @@ const identifySkillGaps = (
         skillId: req.skillId,
         skillName: skill?.name || 'Unknown',
         required: true,
-        importance: req.importance as any,
+        importance: req.importance as 'low' | 'medium' | 'high',
         availableInTeam: false,
-        alternativeSkills: [] // Could be enhanced with skill similarity
+        alternativeSkills: [], // Could be enhanced with skill similarity
       });
     }
   });
@@ -271,22 +306,35 @@ const generateRecommendations = (
   if (teamMatches.length > 0) {
     const bestMatch = teamMatches[0];
     if (bestMatch.overallScore > 70) {
-      recommendations.push(`Consider ${bestMatch.teamName} - excellent match (${Math.round(bestMatch.overallScore)}% overall score)`);
-    } else if (bestMatch.skillMatchPercentage > 80 && bestMatch.availabilityPercentage < 30) {
-      recommendations.push(`${bestMatch.teamName} has the right skills but limited availability. Consider adjusting timelines.`);
+      recommendations.push(
+        `Consider ${bestMatch.teamName} - excellent match (${Math.round(bestMatch.overallScore)}% overall score)`
+      );
+    } else if (
+      bestMatch.skillMatchPercentage > 80 &&
+      bestMatch.availabilityPercentage < 30
+    ) {
+      recommendations.push(
+        `${bestMatch.teamName} has the right skills but limited availability. Consider adjusting timelines.`
+      );
     }
   }
 
   if (skillGaps.length > 0) {
     const criticalGaps = skillGaps.filter(g => g.importance === 'critical');
     if (criticalGaps.length > 0) {
-      recommendations.push(`Critical skill gaps identified: ${criticalGaps.map(g => g.skillName).join(', ')}. Consider training or hiring.`);
+      recommendations.push(
+        `Critical skill gaps identified: ${criticalGaps.map(g => g.skillName).join(', ')}. Consider training or hiring.`
+      );
     }
   }
 
-  const highUtilizationTeams = teamMatches.filter(t => t.availabilityPercentage < 20);
+  const highUtilizationTeams = teamMatches.filter(
+    t => t.availabilityPercentage < 20
+  );
   if (highUtilizationTeams.length > 0) {
-    recommendations.push(`High utilization detected in ${highUtilizationTeams.length} teams. Consider resource balancing.`);
+    recommendations.push(
+      `High utilization detected in ${highUtilizationTeams.length} teams. Consider resource balancing.`
+    );
   }
 
   return recommendations;
@@ -294,10 +342,15 @@ const generateRecommendations = (
 
 const getProficiencyValue = (level: string): number => {
   switch (level) {
-    case 'expert': return 4;
-    case 'advanced': return 3;
-    case 'intermediate': return 2;
-    case 'beginner': return 1;
-    default: return 0;
+    case 'expert':
+      return 4;
+    case 'advanced':
+      return 3;
+    case 'intermediate':
+      return 2;
+    case 'beginner':
+      return 1;
+    default:
+      return 0;
   }
 };

@@ -154,14 +154,14 @@ export interface TemplateModification {
   filter?: {
     field: string;
     operator: 'equals' | 'contains' | 'greater-than' | 'less-than';
-    value: any;
+    value: string | number | boolean;
   };
 
   // What to change
   changes: {
     field: string;
     operation: 'set' | 'add' | 'subtract' | 'multiply';
-    value: any; // Can be a parameter placeholder like "{{budgetReduction}}"
+    value: string | number | boolean; // Can be a parameter placeholder like "{{budgetReduction}}"
   }[];
 }
 
@@ -171,10 +171,10 @@ export interface TemplateParameter {
   description: string;
   type: 'number' | 'percentage' | 'text' | 'date' | 'select';
   required: boolean;
-  defaultValue?: any;
+  defaultValue?: string | number | boolean;
 
   // For select type
-  options?: { value: any; label: string }[];
+  options?: { value: string | number; label: string }[];
 
   // Validation
   min?: number;
@@ -263,8 +263,8 @@ export interface ScenarioChange {
   details: {
     field: string;
     fieldDisplayName: string;
-    oldValue: any;
-    newValue: any;
+    oldValue: string | number | boolean | null | undefined;
+    newValue: string | number | boolean | null | undefined;
     formattedOldValue?: string;
     formattedNewValue?: string;
   }[];
@@ -286,7 +286,7 @@ export interface ScenarioContextType {
   createScenario: (params: CreateScenarioParams) => Promise<string>;
   createScenarioFromTemplate: (
     templateId: string,
-    parameters: Record<string, any>
+    parameters: Record<string, string | number | boolean>
   ) => Promise<string>;
   switchToScenario: (scenarioId: string) => Promise<void>;
   switchToLive: () => void;
@@ -316,7 +316,7 @@ export interface CreateScenarioParams {
   name: string;
   description?: string;
   templateId?: string;
-  templateParameters?: Record<string, any>;
+  templateParameters?: Record<string, string | number | boolean>;
   expiresAt?: string;
 }
 
