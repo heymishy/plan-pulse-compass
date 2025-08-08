@@ -1,0 +1,163 @@
+# Page snapshot
+
+```yaml
+- heading "Plan Pulse Compass" [level=2]
+- img
+- textbox "Search navigation... (⌘K)"
+- button "Minimize sidebar":
+    - img
+- img
+- text: Recent
+- list:
+    - listitem:
+        - link "Projects Add to favorites":
+            - /url: /projects
+            - img
+            - text: Projects
+            - button "Add to favorites":
+                - img
+- img
+- text: Overview
+- img
+- list:
+    - listitem:
+        - link "Dashboard Add to favorites":
+            - /url: /dashboard
+            - img
+            - text: Dashboard
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Strategy Canvas New Add to favorites":
+            - /url: /canvas
+            - img
+            - text: Strategy Canvas New
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Scenario Analysis Add to favorites":
+            - /url: /scenario-analysis
+            - img
+            - text: Scenario Analysis
+            - button "Add to favorites":
+                - img
+- img
+- text: Resources
+- img
+- list:
+    - listitem:
+        - link "Teams Add to favorites":
+            - /url: /teams
+            - img
+            - text: Teams
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "People Add to favorites":
+            - /url: /people
+            - img
+            - text: People
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Skills Add to favorites":
+            - /url: /skills
+            - img
+            - text: Skills
+            - button "Add to favorites":
+                - img
+- img
+- text: Planning
+- img
+- img
+- text: Execution
+- img
+- img
+- text: Insights
+- img
+- img
+- text: Administration
+- img
+- main:
+    - heading "Plan Pulse Compass" [level=1]
+    - button "Live Plan":
+        - text: Live Plan
+        - img
+    - navigation "Breadcrumb navigation":
+        - navigation "breadcrumb":
+            - list:
+                - listitem:
+                    - link "Home":
+                        - /url: /
+                        - img
+                        - text: Home
+                - listitem:
+                    - link "Projects" [disabled]:
+                        - img
+                        - text: Projects
+    - main:
+        - heading "Projects" [level=1]
+        - paragraph: Manage your project portfolio and team allocations
+        - link "Scenario Analysis":
+            - /url: /scenario-analysis
+            - img
+            - text: Scenario Analysis
+        - button "Find Teams":
+            - img
+            - text: Find Teams
+        - button:
+            - img
+        - button:
+            - img
+        - button "Add Project":
+            - img
+            - text: Add Project
+        - heading "Filters & Search" [level=3]:
+            - img
+            - text: Filters & Search
+        - text: Search
+        - textbox "Search"
+        - text: Division
+        - combobox: All
+        - text: Team
+        - combobox: All
+        - text: Status
+        - combobox: All
+        - heading "Total Projects" [level=3]
+        - text: 0 All Status
+        - heading "Active" [level=3]
+        - text: 0 In Progress
+        - heading "Total Budget" [level=3]
+        - text: $0.0M
+        - img
+        - text: Budget
+        - heading "With Allocations" [level=3]
+        - text: '0'
+        - img
+        - text: Active
+        - tablist:
+            - tab "All Projects"
+            - tab "Team Analysis"
+            - tab "Financial Impact" [selected]
+        - tabpanel "Financial Impact":
+            - heading "Financial Impact Analysis" [level=2]
+            - text: Person
+            - combobox "Person": Select a person
+            - text: New Team
+            - combobox "New Team": Select a new team
+            - button "Analyze" [disabled]
+    - text: 'v0.0.22 Build #dev'
+    - img
+    - text: dev
+    - img
+    - text: dev
+    - img
+    - text: Aug 8, 2025, 08:54 AM © 2024 Plan Pulse Compass • Team Planning & Resource Management
+    - link "GitHub":
+        - /url: https://github.com/heymishy/plan-pulse-compass
+    - text: •
+    - link "Settings":
+        - /url: /settings
+- region "Notifications (F8)":
+    - list
+```

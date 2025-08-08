@@ -1,0 +1,162 @@
+# Page snapshot
+
+```yaml
+- heading "Plan Pulse Compass" [level=2]
+- img
+- textbox "Search navigation... (⌘K)"
+- button "Minimize sidebar":
+    - img
+- img
+- text: Recent
+- list:
+    - listitem:
+        - link "People Add to favorites":
+            - /url: /people
+            - img
+            - text: People
+            - button "Add to favorites":
+                - img
+- img
+- text: Overview
+- img
+- list:
+    - listitem:
+        - link "Dashboard Add to favorites":
+            - /url: /dashboard
+            - img
+            - text: Dashboard
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Strategy Canvas New Add to favorites":
+            - /url: /canvas
+            - img
+            - text: Strategy Canvas New
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Scenario Analysis Add to favorites":
+            - /url: /scenario-analysis
+            - img
+            - text: Scenario Analysis
+            - button "Add to favorites":
+                - img
+- img
+- text: Resources
+- img
+- list:
+    - listitem:
+        - link "Teams Add to favorites":
+            - /url: /teams
+            - img
+            - text: Teams
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "People Add to favorites":
+            - /url: /people
+            - img
+            - text: People
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Skills Add to favorites":
+            - /url: /skills
+            - img
+            - text: Skills
+            - button "Add to favorites":
+                - img
+- img
+- text: Planning
+- img
+- img
+- text: Execution
+- img
+- img
+- text: Insights
+- img
+- img
+- text: Administration
+- img
+- main:
+    - heading "Plan Pulse Compass" [level=1]
+    - button "Live Plan":
+        - text: Live Plan
+        - img
+    - navigation "Breadcrumb navigation":
+        - navigation "breadcrumb":
+            - list:
+                - listitem:
+                    - link "Home":
+                        - /url: /
+                        - img
+                        - text: Home
+                - listitem:
+                    - link "Teams":
+                        - /url: /teams
+                        - img
+                        - text: Teams
+                - listitem:
+                    - link "People" [disabled]:
+                        - img
+                        - text: People
+    - main:
+        - heading "People" [level=1]
+        - paragraph: Manage your team members and their skills
+        - button:
+            - img
+        - button:
+            - img
+        - button "Add Person":
+            - img
+            - text: Add Person
+        - heading "Filters & Search" [level=3]:
+            - img
+            - text: Filters & Search
+        - text: Search
+        - textbox "Search"
+        - text: Role
+        - combobox: All
+        - text: Team
+        - combobox: All
+        - text: Division
+        - combobox: All
+        - text: Status
+        - combobox: All
+        - heading "Active" [level=3]
+        - text: 0 Active
+        - heading "Inactive" [level=3]
+        - text: 0 Inactive
+        - table:
+            - rowgroup:
+                - row "Select all people Name Email Role Team Division Top Skills Type Compensation Status Actions":
+                    - cell "Select all people":
+                        - checkbox "Select all people"
+                    - cell "Name"
+                    - cell "Email"
+                    - cell "Role"
+                    - cell "Team"
+                    - cell "Division"
+                    - cell "Top Skills"
+                    - cell "Type"
+                    - cell "Compensation"
+                    - cell "Status"
+                    - cell "Actions"
+            - rowgroup:
+                - row "No people found":
+                    - cell "No people found"
+    - text: 'v0.0.22 Build #dev'
+    - img
+    - text: dev
+    - img
+    - text: dev
+    - img
+    - text: Aug 8, 2025, 08:51 AM © 2024 Plan Pulse Compass • Team Planning & Resource Management
+    - link "GitHub":
+        - /url: https://github.com/heymishy/plan-pulse-compass
+    - text: •
+    - link "Settings":
+        - /url: /settings
+- region "Notifications (F8)":
+    - list
+```

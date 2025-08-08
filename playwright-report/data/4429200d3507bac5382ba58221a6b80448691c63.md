@@ -1,0 +1,64 @@
+# Page snapshot
+
+```yaml
+- main:
+    - main:
+        - tabpanel "All Projects":
+            - status
+- dialog "Project to Edit 1754599777761":
+    - heading "Project to Edit 1754599777761" [level=2]
+    - text: planning
+    - button:
+        - img
+    - tablist:
+        - tab "Overview" [selected]:
+            - img
+            - text: Overview
+        - tab "Epics & Timeline":
+            - img
+            - text: Epics & Timeline
+        - tab "Financials":
+            - img
+            - text: Financials
+        - tab "Solutions & Skills":
+            - img
+            - text: Solutions & Skills
+        - tab "Allocated Teams":
+            - img
+            - text: Allocated Teams
+        - tab "Progress & Tracking":
+            - img
+            - text: Progress & Tracking
+        - tab "SteerCo Report":
+            - img
+            - text: SteerCo Report
+    - tabpanel "Overview":
+        - heading "Project Details" [level=3]
+        - text: Project Name
+        - textbox "Project Name": Project to Edit 1754599777761
+        - text: Description
+        - textbox "Description"
+        - text: Status
+        - combobox: Planning
+        - text: Priority
+        - combobox
+        - heading "Timeline" [level=3]
+        - text: Start Date
+        - textbox "Start Date": 2025-08-08
+        - text: End Date
+        - textbox "End Date"
+        - text: 'Projected End: Not calculated'
+        - heading "Budget & Cost" [level=3]
+        - text: Budget $
+        - spinbutton "Budget"
+        - text: 'Est. Cost: $0 0 Total Epics 0 Completed Epics 0 Milestones $0 Monthly Burn'
+    - button "Cancel":
+        - img
+        - text: Cancel
+    - button "Save Changes":
+        - img
+        - text: Save Changes
+    - button "Close":
+        - img
+        - text: Close
+```

@@ -1,0 +1,166 @@
+# Page snapshot
+
+```yaml
+- heading "Plan Pulse Compass" [level=2]
+- img
+- textbox "Search navigation... (⌘K)"
+- button "Minimize sidebar":
+    - img
+- img
+- text: Recent
+- list:
+    - listitem:
+        - link "Milestones Add to favorites":
+            - /url: /milestones
+            - img
+            - text: Milestones
+            - button "Add to favorites":
+                - img
+- img
+- text: Overview
+- img
+- list:
+    - listitem:
+        - link "Dashboard Add to favorites":
+            - /url: /dashboard
+            - img
+            - text: Dashboard
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Strategy Canvas New Add to favorites":
+            - /url: /canvas
+            - img
+            - text: Strategy Canvas New
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Scenario Analysis Add to favorites":
+            - /url: /scenario-analysis
+            - img
+            - text: Scenario Analysis
+            - button "Add to favorites":
+                - img
+- img
+- text: Resources
+- img
+- list:
+    - listitem:
+        - link "Teams Add to favorites":
+            - /url: /teams
+            - img
+            - text: Teams
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "People Add to favorites":
+            - /url: /people
+            - img
+            - text: People
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Skills Add to favorites":
+            - /url: /skills
+            - img
+            - text: Skills
+            - button "Add to favorites":
+                - img
+- img
+- text: Planning
+- img
+- img
+- text: Execution
+- img
+- img
+- text: Insights
+- img
+- img
+- text: Administration
+- img
+- main:
+    - heading "Plan Pulse Compass" [level=1]
+    - button "Live Plan":
+        - text: Live Plan
+        - img
+    - navigation "Breadcrumb navigation":
+        - navigation "breadcrumb":
+            - list:
+                - listitem:
+                    - link "Home":
+                        - /url: /
+                        - img
+                        - text: Home
+                - listitem:
+                    - link "Projects":
+                        - /url: /projects
+                        - img
+                        - text: Projects
+                - listitem:
+                    - link "Milestones" [disabled]:
+                        - img
+                        - text: Milestones
+    - main:
+        - heading "Milestones" [level=1]
+        - paragraph: Track project milestones and delivery dates
+        - button:
+            - img
+        - button:
+            - img
+        - button "New Milestone":
+            - img
+            - text: New Milestone
+        - heading "Filters & Search" [level=3]:
+            - img
+            - text: Filters & Search
+        - text: Search
+        - textbox "Search"
+        - text: Project
+        - combobox: All
+        - text: Status
+        - combobox: All
+        - heading "Not Started" [level=3]:
+            - img
+            - text: Not Started
+        - text: 0 Pending
+        - heading "In Progress" [level=3]:
+            - img
+            - text: In Progress
+        - text: 0 Active
+        - heading "Completed" [level=3]:
+            - img
+            - text: Completed
+        - text: 0 Done
+        - heading "At Risk" [level=3]:
+            - img
+            - text: At Risk
+        - text: 0 Risk
+        - heading "Upcoming" [level=3]
+        - text: 0 Next 7 days
+        - heading "Overdue" [level=3]
+        - text: 0 Past Due
+        - table:
+            - rowgroup:
+                - row "Milestone Name Project Status Due Date Description Actions":
+                    - cell "Milestone Name"
+                    - cell "Project"
+                    - cell "Status"
+                    - cell "Due Date"
+                    - cell "Description"
+                    - cell "Actions"
+            - rowgroup
+    - text: 'v0.0.22 Build #dev'
+    - img
+    - text: dev
+    - img
+    - text: dev
+    - img
+    - text: Aug 8, 2025, 08:51 AM © 2024 Plan Pulse Compass • Team Planning & Resource Management
+    - link "GitHub":
+        - /url: https://github.com/heymishy/plan-pulse-compass
+    - text: •
+    - link "Settings":
+        - /url: /settings
+- region "Notifications (F8)":
+    - list
+```

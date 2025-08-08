@@ -1,0 +1,137 @@
+# Page snapshot
+
+```yaml
+- heading "Plan Pulse Compass" [level=2]
+- img
+- textbox "Search navigation... (⌘K)"
+- button "Minimize sidebar":
+    - img
+- img
+- text: Recent
+- list:
+    - listitem:
+        - link "Progress Tracking Add to favorites":
+            - /url: /tracking
+            - img
+            - text: Progress Tracking
+            - button "Add to favorites":
+                - img
+- img
+- text: Overview
+- img
+- list:
+    - listitem:
+        - link "Dashboard Add to favorites":
+            - /url: /dashboard
+            - img
+            - text: Dashboard
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Strategy Canvas New Add to favorites":
+            - /url: /canvas
+            - img
+            - text: Strategy Canvas New
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Scenario Analysis Add to favorites":
+            - /url: /scenario-analysis
+            - img
+            - text: Scenario Analysis
+            - button "Add to favorites":
+                - img
+- img
+- text: Resources
+- img
+- list:
+    - listitem:
+        - link "Teams Add to favorites":
+            - /url: /teams
+            - img
+            - text: Teams
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "People Add to favorites":
+            - /url: /people
+            - img
+            - text: People
+            - button "Add to favorites":
+                - img
+    - listitem:
+        - link "Skills Add to favorites":
+            - /url: /skills
+            - img
+            - text: Skills
+            - button "Add to favorites":
+                - img
+- img
+- text: Planning
+- img
+- img
+- text: Execution
+- img
+- img
+- text: Insights
+- img
+- img
+- text: Administration
+- img
+- main:
+    - heading "Plan Pulse Compass" [level=1]
+    - button "Live Plan":
+        - text: Live Plan
+        - img
+    - navigation "Breadcrumb navigation":
+        - navigation "breadcrumb":
+            - list:
+                - listitem:
+                    - link "Home":
+                        - /url: /
+                        - img
+                        - text: Home
+                - listitem:
+                    - link "Allocations":
+                        - /url: /allocations
+                        - img
+                        - text: Allocations
+                - listitem:
+                    - link "Progress Tracking" [disabled]:
+                        - img
+                        - text: Progress Tracking
+    - main:
+        - heading "Tracking Controls" [level=2]
+        - text: Quarter
+        - combobox: 2024 Q1 ()
+        - text: Iteration
+        - combobox [disabled]
+        - text: Team
+        - combobox: All Teams
+        - main:
+            - heading "Progress Tracking" [level=1]
+            - paragraph: Track actual progress against planned allocations
+            - button "Import Actual Allocations":
+                - img
+                - text: Import Actual Allocations
+            - button "Import Reviews":
+                - img
+                - text: Import Reviews
+            - img
+            - heading "No Data Available" [level=3]
+            - paragraph: No iterations found for this quarter.
+    - text: 'v0.0.22 Build #dev'
+    - img
+    - text: dev
+    - img
+    - text: dev
+    - img
+    - text: Aug 8, 2025, 08:52 AM © 2024 Plan Pulse Compass • Team Planning & Resource Management
+    - link "GitHub":
+        - /url: https://github.com/heymishy/plan-pulse-compass
+    - text: •
+    - link "Settings":
+        - /url: /settings
+- region "Notifications (F8)":
+    - list
+```
