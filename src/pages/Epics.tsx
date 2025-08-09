@@ -83,15 +83,13 @@ const Epics = () => {
       const matchesSearch =
         !filters.search ||
         epic.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        epic.description?.toLowerCase().includes(filters.search.toLowerCase());
+        (epic.description &&
+          epic.description
+            .toLowerCase()
+            .includes(filters.search.toLowerCase()));
 
       const matchesProject =
         filters.projectId === 'all' || epic.projectId === filters.projectId;
-      const matchesDivision =
-        filters.divisionId === 'all' ||
-        epic.divisionName ===
-          divisions.find(d => d.id === filters.divisionId)?.name;
-      const matchesTeam = filters.teamId === 'all';
       const matchesStatus =
         filters.status === 'all' || epic.status === filters.status;
       const matchesRelease =
@@ -109,8 +107,6 @@ const Epics = () => {
       return (
         matchesSearch &&
         matchesProject &&
-        matchesDivision &&
-        matchesTeam &&
         matchesStatus &&
         matchesRelease &&
         matchesStartDate &&
@@ -233,14 +229,61 @@ const Epics = () => {
           filters={filters}
           onFiltersChange={setFilters}
           filterFields={[
-            { id: 'search', label: 'Search', type: 'text', placeholder: 'Search epics...' },
-            { id: 'projectId', label: 'Project', type: 'select', options: projects.map(p => ({ value: p.id, label: p.name })) },
-            { id: 'divisionId', label: 'Division', type: 'select', options: divisions.map(d => ({ value: d.id, label: d.name })) },
-            { id: 'teamId', label: 'Team', type: 'select', options: teams.map(t => ({ value: t.id, label: t.name })) },
-            { id: 'status', label: 'Status', type: 'select', options: [{ value: 'not-started', label: 'Not Started' }, { value: 'in-progress', label: 'In Progress' }, { value: 'completed', label: 'Completed' }] },
-            { id: 'releaseId', label: 'Release', type: 'select', options: releases.map(r => ({ value: r.id, label: `${r.name} (${r.version})` })) },
-            { id: 'startDate', label: 'Start Date From', type: 'text', placeholder: 'YYYY-MM-DD' },
-            { id: 'endDate', label: 'Target Date To', type: 'text', placeholder: 'YYYY-MM-DD' },
+            {
+              id: 'search',
+              label: 'Search',
+              type: 'text',
+              placeholder: 'Search epics...',
+            },
+            {
+              id: 'projectId',
+              label: 'Project',
+              type: 'select',
+              options: projects.map(p => ({ value: p.id, label: p.name })),
+            },
+            {
+              id: 'divisionId',
+              label: 'Division',
+              type: 'select',
+              options: divisions.map(d => ({ value: d.id, label: d.name })),
+            },
+            {
+              id: 'teamId',
+              label: 'Team',
+              type: 'select',
+              options: teams.map(t => ({ value: t.id, label: t.name })),
+            },
+            {
+              id: 'status',
+              label: 'Status',
+              type: 'select',
+              options: [
+                { value: 'not-started', label: 'Not Started' },
+                { value: 'in-progress', label: 'In Progress' },
+                { value: 'completed', label: 'Completed' },
+              ],
+            },
+            {
+              id: 'releaseId',
+              label: 'Release',
+              type: 'select',
+              options: releases.map(r => ({
+                value: r.id,
+                label: `${r.name} (${r.version})`,
+              })),
+            },
+            {
+              id: 'startDate',
+              label: 'Start Date From',
+              type: 'text',
+              placeholder: 'YYYY-MM-DD',
+            },
+            {
+              id: 'endDate',
+              label: 'Target Date To',
+              type: 'text',
+              placeholder: 'YYYY-MM-DD',
+            },
           ]}
         />
 

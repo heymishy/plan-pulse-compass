@@ -49,7 +49,7 @@ test.describe('CRUD Operations - Consolidated Management Tests', () => {
     {
       name: 'Epics',
       path: '/epics',
-      createButton: 'Add Epic',
+      createButton: 'New Epic',
       createDialog: 'Create New Epic',
       nameField: '#name',
       requiredFields: { name: 'Test Epic' },
@@ -98,10 +98,10 @@ test.describe('CRUD Operations - Consolidated Management Tests', () => {
       // Click create button
       await page.click(`button:has-text("${entity.createButton}")`);
 
-      // Wait for dialog
-      await expect(page.locator('[role="dialog"]')).toBeVisible({
-        timeout: 10000,
-      });
+      // Wait for dialog and animation to complete
+      const dialog = page.locator('[role="dialog"]');
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+      await page.waitForSelector('[role="dialog"][data-state="open"]');
 
       // Fill required fields
       const itemName = `${entity.requiredFields.name} ${Date.now()}`;
@@ -130,15 +130,13 @@ test.describe('CRUD Operations - Consolidated Management Tests', () => {
       }
 
       // Submit form
-      const createButton = page
-        .locator(
-          'button:has-text("Create"), button:has-text("Add"), button[type="submit"]'
-        )
-        .first();
+      const createButton = dialog.locator(
+        'button:has-text("Create"), button:has-text("Add"), button[type="submit"]'
+      );
       await createButton.click();
 
-      // Wait for success or dialog close
-      await page.waitForTimeout(2000);
+      // Wait for dialog to close
+      await expect(dialog).toBeHidden({ timeout: 10000 });
 
       // Verify creation (either in UI or localStorage)
       const itemVisible = await page.locator(`text="${itemName}"`).isVisible();
