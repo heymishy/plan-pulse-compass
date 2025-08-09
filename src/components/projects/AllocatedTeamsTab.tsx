@@ -3,134 +3,20 @@ import { useApp } from '@/context/AppContext';
 import { Project } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/utils/currency';
 import {
-  calculateTeamAllocations,
-  findRelatedProjects,
-  aggregateTeamAllocationsToQuarterly,
-  TeamAllocationSummary,
-  RelatedProject,
-  TeamQuarterlyAllocation,
-} from '@/utils/teamAllocationCalculations';
-import { Progress } from '@/components/ui/progress';
-import ProjectTeamRecommendations from '@/components/skills/ProjectTeamRecommendations';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { getProjectRequiredSkills } from '@/utils/skillBasedPlanning';
+import { Users, CheckCircle, AlertTriangle, X, Info } from 'lucide-react';
 
 interface AllocatedTeamsTabProps {
   project: Project;
 }
-
-// Component for quarterly allocation display
-const QuarterlyTeamCard: React.FC<{ team: TeamQuarterlyAllocation }> = ({
-  team,
-}) => {
-  const getQuarterColor = (allocation: number) => {
-    if (allocation === 0) return 'bg-gray-100';
-    if (allocation < 25) return 'bg-green-100 border-green-200';
-    if (allocation < 50) return 'bg-yellow-100 border-yellow-200';
-    if (allocation < 75) return 'bg-orange-100 border-orange-200';
-    return 'bg-red-100 border-red-200';
-  };
-
-  const getProgressColor = (allocation: number) => {
-    if (allocation < 25) return 'bg-green-500';
-    if (allocation < 50) return 'bg-yellow-500';
-    if (allocation < 75) return 'bg-orange-500';
-    return 'bg-red-500';
-  };
-
-  return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between text-base">
-          <span>{team.teamName}</span>
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="text-xs">
-              {team.financialYear}
-            </Badge>
-            <Badge variant="secondary" className="font-mono text-xs">
-              {formatCurrency(team.totalCost)}
-            </Badge>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Quarterly Timeline */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-700">
-              Quarterly Allocation
-            </span>
-            <span className="text-sm text-gray-500">
-              {team.totalAllocation}% total
-            </span>
-          </div>
-
-          <div className="grid grid-cols-4 gap-2">
-            {(['Q1', 'Q2', 'Q3', 'Q4'] as const).map(quarter => {
-              const q = team.quarters[quarter];
-              return (
-                <div key={quarter} className="text-center">
-                  <div
-                    className={`p-3 rounded-lg border-2 transition-all hover:shadow-sm ${getQuarterColor(q.allocation)}`}
-                  >
-                    <div className="text-xs font-medium text-gray-600 mb-1">
-                      {quarter}
-                    </div>
-                    <div className="text-lg font-bold text-gray-900 mb-1">
-                      {q.hasAllocation ? `${q.allocation}%` : '—'}
-                    </div>
-                    {q.hasAllocation && (
-                      <div className="text-xs text-gray-600">
-                        {formatCurrency(q.cost)}
-                      </div>
-                    )}
-                  </div>
-                  {q.hasAllocation && (
-                    <div className="mt-2">
-                      <div className="w-full bg-gray-200 rounded-full h-1.5">
-                        <div
-                          className={`h-1.5 rounded-full transition-all ${getProgressColor(q.allocation)}`}
-                          style={{ width: `${Math.min(q.allocation, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Summary Stats */}
-        <div className="pt-2 border-t border-gray-100">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">Active Quarters:</span>
-              <span className="ml-2 font-medium">
-                {
-                  Object.values(team.quarters).filter(q => q.hasAllocation)
-                    .length
-                }
-                /4
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-600">Avg per Quarter:</span>
-              <span className="ml-2 font-medium">
-                {Math.round(
-                  team.totalAllocation /
-                    Object.values(team.quarters).filter(q => q.hasAllocation)
-                      .length || 0
-                )}
-                %
-              </span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
   const {
@@ -138,217 +24,471 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
     allocations,
     teams,
     people,
-    roles,
     cycles,
-    financialYears,
     projects,
     projectSkills,
-    config,
+    projectSolutions,
+    solutions,
+    skills,
+    personSkills,
   } = useApp();
 
-  // Calculate team allocation data
-  const teamSummaries = useMemo(() => {
-    return calculateTeamAllocations(
+  // Get all required skills for this project (from solutions and manual skills)
+  const allProjectSkillsInfo = useMemo(() => {
+    if (!project) return [];
+    return getProjectRequiredSkills(
       project,
-      epics,
-      allocations,
-      teams,
-      people,
-      roles,
-      cycles,
-      financialYears,
-      config
+      projectSkills,
+      solutions,
+      skills,
+      projectSolutions
     );
+  }, [project, projectSkills, solutions, skills, projectSolutions]);
+
+  // Team allocation analysis for all teams
+  const teamAllocationAnalysis = useMemo(() => {
+    if (!project) return [];
+
+    return teams.map(team => {
+      // Get current quarter allocations for this team
+      const now = new Date();
+      const currentQuarterCycles = (cycles || []).filter(c => {
+        const cycleStart = new Date(c.startDate);
+        const cycleEnd = new Date(c.endDate);
+        // Include cycles that overlap with current time or are in current quarter
+        return (
+          (now >= cycleStart && now <= cycleEnd) ||
+          (cycleStart.getFullYear() === now.getFullYear() &&
+            Math.floor(cycleStart.getMonth() / 3) ===
+              Math.floor(now.getMonth() / 3))
+        );
+      });
+
+      const currentQuarterCycleIds = currentQuarterCycles.map(c => c.id);
+
+      const teamAllocations = (allocations || []).filter(
+        alloc =>
+          alloc.teamId === team.id &&
+          currentQuarterCycleIds.includes(alloc.cycleId)
+      );
+
+      // Group by project/epic and create detailed breakdown
+      const allocationsByProject = new Map<
+        string,
+        {
+          projectId: string;
+          projectName: string;
+          isCurrentProject: boolean;
+          allocationType: string;
+          allocations: Array<{ cycleId: string; percentage: number }>;
+        }
+      >();
+
+      // Process each allocation
+      teamAllocations.forEach(alloc => {
+        let allocationType = 'unknown';
+        let displayName = 'Unknown';
+        let targetProjectId = '';
+
+        if (alloc.epicId) {
+          // Epic-based allocation
+          const epic = (epics || []).find(e => e.id === alloc.epicId);
+          if (epic) {
+            const epicProject = (projects || []).find(
+              p => p.id === epic.projectId
+            );
+            if (epicProject) {
+              allocationType = 'project';
+              displayName = epicProject.name;
+              targetProjectId = epicProject.id;
+            }
+          }
+        } else if (alloc.projectId) {
+          // Direct project allocation
+          const directProject = (projects || []).find(
+            p => p.id === alloc.projectId
+          );
+          if (directProject) {
+            allocationType = 'project';
+            displayName = directProject.name;
+            targetProjectId = directProject.id;
+          }
+        } else {
+          // Run work or other allocation types
+          allocationType = 'runwork';
+          displayName = 'Run Work';
+          targetProjectId = 'runwork';
+        }
+
+        if (allocationType === 'unknown') return;
+
+        const key = `${targetProjectId}-${allocationType}`;
+        if (!allocationsByProject.has(key)) {
+          allocationsByProject.set(key, {
+            projectId: targetProjectId,
+            projectName: displayName,
+            isCurrentProject: targetProjectId === project.id,
+            allocationType,
+            allocations: [],
+          });
+        }
+
+        allocationsByProject.get(key)!.allocations.push({
+          cycleId: alloc.cycleId,
+          percentage: alloc.percentage,
+        });
+      });
+
+      // Calculate total run work and project percentages for this team
+      const totalRunWork = teamAllocations
+        .filter(alloc => !alloc.epicId && !alloc.projectId)
+        .reduce((sum, alloc) => sum + alloc.percentage, 0);
+      const totalProject = teamAllocations
+        .filter(alloc => alloc.epicId || alloc.projectId)
+        .reduce((sum, alloc) => sum + alloc.percentage, 0);
+
+      // Convert to final format with iteration breakdown
+      const currentAllocations = Array.from(allocationsByProject.values()).map(
+        allocation => {
+          // Create iteration breakdown for all cycles in quarter
+          const iterationBreakdown = currentQuarterCycles.map(cycle => {
+            const cycleAllocation = allocation.allocations.find(
+              a => a.cycleId === cycle.id
+            );
+            return {
+              cycleId: cycle.id,
+              cycleName:
+                cycle.name || `I${currentQuarterCycles.indexOf(cycle) + 1}`,
+              percentage: cycleAllocation?.percentage || 0,
+            };
+          });
+
+          const totalPercentage = allocation.allocations.reduce(
+            (sum, a) => sum + a.percentage,
+            0
+          );
+
+          return {
+            projectId: allocation.projectId,
+            projectName: allocation.projectName,
+            percentage: totalPercentage,
+            cycleId: allocation.allocations[0]?.cycleId || '',
+            isCurrentProject: allocation.isCurrentProject,
+            allocationType: allocation.allocationType,
+            iterationBreakdown,
+            totalRunWork,
+            totalProject,
+          };
+        }
+      );
+
+      // Check if team has skills needed for this project
+      const teamSkillIds = new Set<string>();
+      const teamMemberIds = new Set(
+        people.filter(p => p.teamId === team.id).map(p => p.id)
+      );
+      const personSkillsForTeam = personSkills.filter(ps =>
+        teamMemberIds.has(ps.personId)
+      );
+
+      if (personSkillsForTeam.length > 0) {
+        personSkillsForTeam.forEach(ps => teamSkillIds.add(ps.skillId));
+      } else if (team.targetSkills && team.targetSkills.length > 0) {
+        team.targetSkills.forEach(skillId => teamSkillIds.add(skillId));
+      }
+
+      const requiredSkillIds = allProjectSkillsInfo.map(skill => skill.skillId);
+      const matchingSkillsCount = requiredSkillIds.filter(skillId =>
+        teamSkillIds.has(skillId)
+      ).length;
+      const skillCompatibility =
+        requiredSkillIds.length > 0
+          ? matchingSkillsCount / requiredSkillIds.length
+          : 0;
+
+      return {
+        id: team.id,
+        name: team.name,
+        memberCount: (people || []).filter(p => p.teamId === team.id).length,
+        currentAllocations,
+        skillCompatibility,
+        matchingSkillsCount,
+        totalRequiredSkills: requiredSkillIds.length,
+        hasCurrentProjectAllocation: currentAllocations.some(
+          alloc => alloc.isCurrentProject
+        ),
+        totalAllocationPercentage: totalRunWork + totalProject,
+      };
+    });
   }, [
-    project,
-    epics,
-    allocations,
     teams,
-    people,
-    roles,
+    project,
     cycles,
-    financialYears,
-    config,
+    allocations,
+    epics,
+    projects,
+    people,
+    personSkills,
+    allProjectSkillsInfo,
   ]);
 
-  // Aggregate to quarterly view for clean UX
-  const quarterlyAllocations = useMemo(() => {
-    return aggregateTeamAllocationsToQuarterly(
-      teamSummaries,
-      financialYears,
-      cycles
-    );
-  }, [teamSummaries, financialYears, cycles]);
-
-  // Find related projects
-  const relatedProjects = useMemo(() => {
-    return findRelatedProjects(project, projects, projectSkills, teamSummaries);
-  }, [project, projects, projectSkills, teamSummaries]);
+  const getGapIcon = (hasAllocation: boolean, skillCompatibility: number) => {
+    if (hasAllocation && skillCompatibility > 0.7) {
+      return <CheckCircle className="h-4 w-4 text-green-600" />;
+    } else if (hasAllocation || skillCompatibility > 0.5) {
+      return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+    } else {
+      return <X className="h-4 w-4 text-red-600" />;
+    }
+  };
 
   return (
     <div data-testid="allocated-teams-tab" className="space-y-6">
-      <div className="mb-8">
-        <ProjectTeamRecommendations selectedProjectId={project.id} />
-      </div>
       <div>
-        <h3 className="text-lg font-semibold mb-4">
-          Team Allocations & Cost Analysis
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Team Allocation Analysis - {project.name}
         </h3>
 
-        {/* Quarterly Team Allocations - Modern UX */}
-        <div className="mb-8">
-          <h4 className="text-md font-medium mb-3">
-            Team Allocations by Quarter
-          </h4>
-          {quarterlyAllocations.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center text-gray-500">
-                No team allocations found for this project.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {quarterlyAllocations.map((team: TeamQuarterlyAllocation) => (
-                <QuarterlyTeamCard key={team.teamId} team={team} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Project Summary */}
-        <div className="mb-8">
-          <h4 className="text-md font-medium mb-3">Project Summary</h4>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {quarterlyAllocations.length}
-                  </div>
-                  <div className="text-sm text-gray-600">Teams Involved</div>
-                </div>
-                <div className="text-center">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <div>
                   <div className="text-2xl font-bold text-green-600">
-                    {formatCurrency(
-                      quarterlyAllocations.reduce(
-                        (sum, team) => sum + team.totalCost,
-                        0
-                      )
-                    )}
+                    {
+                      teamAllocationAnalysis.filter(
+                        t => t.hasCurrentProjectAllocation
+                      ).length
+                    }
                   </div>
-                  <div className="text-sm text-gray-600">Total Budget</div>
+                  <div className="text-sm text-gray-600">Allocated Teams</div>
                 </div>
-                <div className="text-center">
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-blue-600" />
+                <div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {
+                      teamAllocationAnalysis.filter(
+                        t => t.skillCompatibility > 0.5
+                      ).length
+                    }
+                  </div>
+                  <div className="text-sm text-gray-600">Skill Matches</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                <div>
                   <div className="text-2xl font-bold text-orange-600">
-                    {Math.round(
-                      quarterlyAllocations.reduce(
-                        (sum, team) => sum + team.totalAllocation,
-                        0
-                      ) / (quarterlyAllocations.length || 1)
-                    )}
-                    %
+                    {
+                      teamAllocationAnalysis.filter(
+                        t => t.totalAllocationPercentage > 80
+                      ).length
+                    }
                   </div>
-                  <div className="text-sm text-gray-600">
-                    Avg Team Allocation
+                  <div className="text-sm text-gray-600">High Utilization</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-gray-600" />
+                <div>
+                  <div className="text-2xl font-bold text-gray-600">
+                    {
+                      teamAllocationAnalysis.filter(
+                        t => t.totalAllocationPercentage === 0
+                      ).length
+                    }
                   </div>
+                  <div className="text-sm text-gray-600">Available Teams</div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Related Projects Analysis */}
-        <div>
-          <h4 className="text-md font-medium mb-3">
-            Related Projects Analysis
-          </h4>
-          {relatedProjects.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center text-gray-500">
-                No related projects found based on skill requirements.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {relatedProjects.map((relatedProject: RelatedProject) => (
-                <Card key={relatedProject.projectId}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h5 className="font-medium">
-                        {relatedProject.projectName}
-                      </h5>
-                      <Badge
-                        variant={
-                          relatedProject.matchPercentage > 70
-                            ? 'default'
-                            : relatedProject.matchPercentage > 40
-                              ? 'secondary'
-                              : 'outline'
-                        }
-                      >
-                        {relatedProject.matchPercentage}% match
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600">Required Skills:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {relatedProject.requiredSkills.map(skill => (
-                            <Badge
-                              key={skill}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {skill}
-                            </Badge>
-                          ))}
+        {/* Team Analysis Table */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-48">Team</TableHead>
+                  <TableHead className="w-32">Skill Match</TableHead>
+                  <TableHead>Current Quarter Allocations</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {teamAllocationAnalysis
+                  .sort((a, b) => {
+                    // Sort by: current project allocation, then skill compatibility, then availability
+                    if (
+                      a.hasCurrentProjectAllocation !==
+                      b.hasCurrentProjectAllocation
+                    ) {
+                      return a.hasCurrentProjectAllocation ? -1 : 1;
+                    }
+                    if (a.skillCompatibility !== b.skillCompatibility) {
+                      return b.skillCompatibility - a.skillCompatibility;
+                    }
+                    return (
+                      a.totalAllocationPercentage - b.totalAllocationPercentage
+                    );
+                  })
+                  .map(team => (
+                    <TableRow key={team.id}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            {getGapIcon(
+                              team.hasCurrentProjectAllocation,
+                              team.skillCompatibility
+                            )}
+                            <div className="font-medium">{team.name}</div>
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {team.memberCount} members
+                          </div>
                         </div>
-                      </div>
-
-                      <div>
-                        <span className="text-gray-600">Matching:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {relatedProject.matchingSkills.map(skill => (
-                            <Badge
-                              key={skill}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {skill}
-                            </Badge>
-                          ))}
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div
+                            className={`text-sm font-medium ${
+                              team.skillCompatibility > 0.7
+                                ? 'text-green-600'
+                                : team.skillCompatibility > 0.5
+                                  ? 'text-yellow-600'
+                                  : 'text-red-600'
+                            }`}
+                          >
+                            {Math.round(team.skillCompatibility * 100)}%
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {team.matchingSkillsCount}/
+                            {team.totalRequiredSkills} skills
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-2">
+                          {/* Summary: Run Work vs Project Split */}
+                          {team.currentAllocations.length > 0 ? (
+                            <>
+                              <div className="p-2 bg-gray-50 rounded border text-xs">
+                                <div className="font-semibold text-gray-700 mb-1">
+                                  Quarter Summary:
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>
+                                    Run Work:{' '}
+                                    {team.currentAllocations[0]?.totalRunWork ||
+                                      0}
+                                    %
+                                  </span>
+                                  <span>
+                                    Projects:{' '}
+                                    {team.currentAllocations[0]?.totalProject ||
+                                      0}
+                                    %
+                                  </span>
+                                </div>
+                              </div>
 
-                    {relatedProject.conflictingTeams.length > 0 && (
-                      <div className="mt-3 p-2 bg-yellow-50 rounded text-sm">
-                        <span className="text-yellow-800 font-medium">
-                          Team Conflicts:
-                        </span>
-                        <div className="mt-1">
-                          {relatedProject.conflictingTeams.map(teamId => {
-                            const team = teams.find(t => t.id === teamId);
-                            return team ? (
-                              <Badge
-                                key={teamId}
-                                variant="secondary"
-                                className="text-xs mr-1"
-                              >
-                                {team.name}
-                              </Badge>
-                            ) : null;
-                          })}
+                              {/* Individual Project/RunWork Allocations */}
+                              {team.currentAllocations.map(alloc => (
+                                <div
+                                  key={`${alloc.projectId}-${alloc.allocationType}`}
+                                  className={`p-2 rounded border text-xs space-y-2 ${
+                                    alloc.isCurrentProject
+                                      ? 'bg-green-50 border-green-200'
+                                      : alloc.allocationType === 'runwork'
+                                        ? 'bg-yellow-50 border-yellow-200'
+                                        : 'bg-blue-50 border-blue-200'
+                                  }`}
+                                >
+                                  {/* Project/RunWork Name and Total */}
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">
+                                      {alloc.isCurrentProject
+                                        ? 'Current project allocated'
+                                        : alloc.allocationType === 'runwork'
+                                          ? 'Run Work'
+                                          : alloc.projectName}
+                                    </span>
+                                    <Badge
+                                      variant={
+                                        alloc.isCurrentProject
+                                          ? 'default'
+                                          : alloc.allocationType === 'runwork'
+                                            ? 'secondary'
+                                            : 'outline'
+                                      }
+                                      className="text-xs"
+                                    >
+                                      {alloc.percentage}%
+                                    </Badge>
+                                  </div>
+
+                                  {/* Iteration Breakdown */}
+                                  <div className="text-xs text-gray-600">
+                                    <div className="grid grid-cols-3 gap-1">
+                                      {alloc.iterationBreakdown.map(iter => (
+                                        <div
+                                          key={iter.cycleId}
+                                          className={`text-center p-1 rounded ${
+                                            iter.percentage > 0
+                                              ? 'bg-white border'
+                                              : 'bg-gray-100'
+                                          }`}
+                                        >
+                                          <div className="font-mono">
+                                            {iter.cycleName}:
+                                          </div>
+                                          <div
+                                            className={
+                                              iter.percentage > 0
+                                                ? 'font-semibold'
+                                                : ''
+                                            }
+                                          >
+                                            {iter.percentage}%
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          ) : (
+                            <div className="text-sm text-gray-500 italic p-2 bg-gray-50 rounded">
+                              No current allocations - Available
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

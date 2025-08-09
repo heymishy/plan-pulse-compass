@@ -66,6 +66,26 @@ interface SkillAnalysis {
     proficiencyLevels: { [key: string]: number };
   };
   gap: 'covered' | 'partial' | 'missing';
+  teamsWithSkill: Array<{
+    id: string;
+    name: string;
+    memberCount: number;
+    currentAllocations: Array<{
+      projectId: string;
+      projectName: string;
+      percentage: number;
+      cycleId: string;
+      isCurrentProject: boolean;
+      allocationType: string;
+      iterationBreakdown: Array<{
+        cycleId: string;
+        cycleName: string;
+        percentage: number;
+      }>;
+      totalRunWork: number;
+      totalProject: number;
+    }>;
+  }>;
 }
 
 const ProjectSolutionsSkillsSection: React.FC<
@@ -77,7 +97,17 @@ const ProjectSolutionsSkillsSection: React.FC<
   onSolutionsChange,
   onSkillsChange,
 }) => {
-  const { projects, solutions, skills, people, teams, personSkills } = useApp();
+  const {
+    projects,
+    solutions,
+    skills,
+    people,
+    teams,
+    personSkills,
+    allocations,
+    cycles,
+    epics,
+  } = useApp();
   const project = projects.find(p => p.id === projectId);
 
   // Form states
@@ -108,37 +138,23 @@ const ProjectSolutionsSkillsSection: React.FC<
       projectSolutions
     );
 
-    // Debug logging
-    console.log('ProjectSolutionsSkillsSection Debug:', {
-      projectId: project.id,
-      projectSolutions: projectSolutions.length,
-      solutions: solutions.length,
-      allProjectSkillsInfo: result,
-      solutionDetails: projectSolutions.map(ps => {
-        const sol = solutions.find(s => s.id === ps.solutionId);
-        return {
-          projectSolutionId: ps.id,
-          solutionId: ps.solutionId,
-          solutionName: sol?.name,
-          solutionSkills: sol?.skills,
-        };
-      }),
-    });
-
     return result;
   }, [project, projectSkills, solutions, skills, projectSolutions]);
 
   // Solution-derived skills only (no manual project skills)
   const solutionDerivedSkills = useMemo(() => {
-    return allProjectSkillsInfo
-      .filter(info => info.source === 'solution')
-      .map(info => ({
-        id: `solution-${projectId}-${info.skillId}`,
-        projectId,
-        skillId: info.skillId,
-        importance: 'medium' as const, // Default importance for solution-derived skills
-        source: info.source,
-      }));
+    const solutionSkills = allProjectSkillsInfo.filter(
+      info => info.source === 'solution'
+    );
+    const result = solutionSkills.map(info => ({
+      id: `solution-${projectId}-${info.skillId}`,
+      projectId,
+      skillId: info.skillId,
+      importance: 'medium' as const, // Default importance for solution-derived skills
+      source: info.source,
+    }));
+
+    return result;
   }, [allProjectSkillsInfo, projectId]);
 
   // Skill analysis for forward planning (only solution-derived skills)
@@ -153,17 +169,33 @@ const ProjectSolutionsSkillsSection: React.FC<
         const skill = (skills || []).find(s => s.id === ps.skillId);
         if (!skill) return null;
 
-        // Calculate team coverage
-        const teamMembers = (people || []).filter(p =>
-          (teams || []).some(t => t.id === p.teamId)
+        // Calculate team coverage - check teams directly (supports 0-member teams)
+        const teamsWithSkill = (teams || []).filter(team =>
+          team.targetSkills?.includes(ps.skillId)
         );
 
-        const skillHolders = teamMembers.filter(person =>
-          (personSkills || []).some(
-            pSkill =>
-              pSkill.personId === person.id && pSkill.skillId === ps.skillId
-          )
+        // Get all team members from teams that have the skill
+        const peopleInSkillTeams = (people || []).filter(person =>
+          teamsWithSkill.some(team => team.id === person.teamId)
         );
+
+        // Also get people who have the skill individually (not in skill teams)
+        const peopleWithPersonalSkill = (people || []).filter(
+          person =>
+            (personSkills || []).some(
+              pSkill =>
+                pSkill.personId === person.id && pSkill.skillId === ps.skillId
+            ) && !teamsWithSkill.some(team => team.id === person.teamId)
+        );
+
+        // Total people who have access to this skill
+        const skillHolders = [
+          ...peopleInSkillTeams,
+          ...peopleWithPersonalSkill,
+        ];
+
+        // Total potential people (all people in organization)
+        const allPeople = people || [];
 
         const proficiencyLevels = skillHolders.reduce(
           (acc, person) => {
@@ -181,14 +213,23 @@ const ProjectSolutionsSkillsSection: React.FC<
         );
 
         const coveragePercent =
-          teamMembers.length > 0
-            ? (skillHolders.length / teamMembers.length) * 100
-            : 0;
+          allPeople.length > 0
+            ? (skillHolders.length / allPeople.length) * 100
+            : teamsWithSkill.length > 0
+              ? 100
+              : 0; // 100% if teams exist but no people, 0% if no teams
 
         let gap: 'covered' | 'partial' | 'missing';
-        if (coveragePercent >= 50) gap = 'covered';
-        else if (coveragePercent > 0) gap = 'partial';
-        else gap = 'missing';
+        // If teams have the skill, consider it covered even with 0 members
+        if (teamsWithSkill.length > 0) {
+          gap = skillHolders.length > 0 ? 'covered' : 'partial'; // covered if people in teams, partial if empty teams
+        } else if (coveragePercent >= 50) {
+          gap = 'covered';
+        } else if (coveragePercent > 0) {
+          gap = 'partial';
+        } else {
+          gap = 'missing';
+        }
 
         return {
           skillId: ps.skillId,
@@ -199,14 +240,166 @@ const ProjectSolutionsSkillsSection: React.FC<
           source: ps.source,
           teamCoverage: {
             available: skillHolders.length,
-            total: teamMembers.length,
+            total: allPeople.length,
             proficiencyLevels,
           },
           gap,
+          teamsWithSkill: teamsWithSkill.map(team => {
+            const memberCount = (people || []).filter(
+              p => p.teamId === team.id
+            ).length;
+
+            // Get current quarter allocations for this team
+            const now = new Date();
+            const currentQuarterCycles = (cycles || []).filter(c => {
+              const cycleStart = new Date(c.startDate);
+              const cycleEnd = new Date(c.endDate);
+              // Include cycles that overlap with current time or are in current quarter
+              return (
+                (now >= cycleStart && now <= cycleEnd) ||
+                (cycleStart.getFullYear() === now.getFullYear() &&
+                  Math.floor(cycleStart.getMonth() / 3) ===
+                    Math.floor(now.getMonth() / 3))
+              );
+            });
+
+            const currentQuarterCycleIds = currentQuarterCycles.map(c => c.id);
+
+            const teamAllocations = (allocations || []).filter(
+              alloc =>
+                alloc.teamId === team.id &&
+                currentQuarterCycleIds.includes(alloc.cycleId) // All current quarter allocations
+            );
+
+            // Group by project/epic and create detailed breakdown
+            const allocationsByProject = new Map<
+              string,
+              {
+                projectId: string;
+                projectName: string;
+                isCurrentProject: boolean;
+                allocationType: string;
+                allocations: Array<{ cycleId: string; percentage: number }>;
+              }
+            >();
+
+            // Process each allocation
+            teamAllocations.forEach(alloc => {
+              let allocationType = 'unknown';
+              let displayName = 'Unknown';
+              let targetProjectId = '';
+
+              if (alloc.epicId) {
+                // Epic-based allocation
+                const epic = (epics || []).find(e => e.id === alloc.epicId);
+                if (epic) {
+                  const epicProject = (projects || []).find(
+                    p => p.id === epic.projectId
+                  );
+                  if (epicProject) {
+                    allocationType = 'project';
+                    displayName = epicProject.name;
+                    targetProjectId = epicProject.id;
+                  }
+                }
+              } else if (alloc.projectId) {
+                // Direct project allocation
+                const directProject = (projects || []).find(
+                  p => p.id === alloc.projectId
+                );
+                if (directProject) {
+                  allocationType = 'project';
+                  displayName = directProject.name;
+                  targetProjectId = directProject.id;
+                }
+              } else {
+                // Run work or other allocation types
+                allocationType = 'runwork';
+                displayName = 'Run Work';
+                targetProjectId = 'runwork';
+              }
+
+              if (allocationType === 'unknown') return;
+
+              const key = `${targetProjectId}-${allocationType}`;
+              if (!allocationsByProject.has(key)) {
+                allocationsByProject.set(key, {
+                  projectId: targetProjectId,
+                  projectName: displayName,
+                  isCurrentProject: targetProjectId === projectId,
+                  allocationType,
+                  allocations: [],
+                });
+              }
+
+              allocationsByProject.get(key)!.allocations.push({
+                cycleId: alloc.cycleId,
+                percentage: alloc.percentage,
+              });
+            });
+
+            // Calculate total run work and project percentages for this team
+            const totalRunWork = teamAllocations
+              .filter(alloc => !alloc.epicId && !alloc.projectId)
+              .reduce((sum, alloc) => sum + alloc.percentage, 0);
+            const totalProject = teamAllocations
+              .filter(alloc => alloc.epicId || alloc.projectId)
+              .reduce((sum, alloc) => sum + alloc.percentage, 0);
+
+            // Convert to final format with iteration breakdown
+            const projectAllocations = Array.from(
+              allocationsByProject.values()
+            ).map(allocation => {
+              // Create iteration breakdown for all cycles in quarter
+              const iterationBreakdown = currentQuarterCycles.map(cycle => {
+                const cycleAllocation = allocation.allocations.find(
+                  a => a.cycleId === cycle.id
+                );
+                return {
+                  cycleId: cycle.id,
+                  cycleName:
+                    cycle.name || `I${currentQuarterCycles.indexOf(cycle) + 1}`,
+                  percentage: cycleAllocation?.percentage || 0,
+                };
+              });
+
+              const totalPercentage = allocation.allocations.reduce(
+                (sum, a) => sum + a.percentage,
+                0
+              );
+
+              return {
+                projectId: allocation.projectId,
+                projectName: allocation.projectName,
+                percentage: totalPercentage,
+                cycleId: allocation.allocations[0]?.cycleId || '',
+                isCurrentProject: allocation.isCurrentProject,
+                allocationType: allocation.allocationType,
+                iterationBreakdown,
+                totalRunWork,
+                totalProject,
+              };
+            });
+
+            return {
+              id: team.id,
+              name: team.name,
+              memberCount,
+              currentAllocations: projectAllocations,
+            };
+          }),
         };
       })
       .filter(Boolean) as SkillAnalysis[];
-  }, [allProjectSkillsInfo, skills, people, teams, personSkills]);
+  }, [
+    allProjectSkillsInfo,
+    skills,
+    people,
+    teams,
+    personSkills,
+    allocations,
+    projects,
+  ]);
 
   const handleAddSolution = () => {
     if (!selectedSolutionId) return;
@@ -603,11 +796,9 @@ const ProjectSolutionsSkillsSection: React.FC<
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Skill</TableHead>
-                        <TableHead>Importance</TableHead>
-                        <TableHead>Team Coverage</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Proficiency Levels</TableHead>
+                        <TableHead className="w-48">Skill</TableHead>
+                        <TableHead className="w-64">Teams with Skill</TableHead>
+                        <TableHead>Current Allocations</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -635,65 +826,213 @@ const ProjectSolutionsSkillsSection: React.FC<
                         .map(analysis => (
                           <TableRow key={analysis.skillId}>
                             <TableCell>
-                              <div>
+                              <div className="space-y-1">
                                 <div className="font-medium">
                                   {analysis.skillName}
                                 </div>
-                                <Badge variant="outline" className="text-xs">
-                                  {analysis.category}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={getImportanceBadgeVariant(
-                                  analysis.importance
-                                )}
-                              >
-                                {analysis.importance}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <Progress
-                                    value={
-                                      analysis.teamCoverage.total > 0
-                                        ? (analysis.teamCoverage.available /
-                                            analysis.teamCoverage.total) *
-                                          100
-                                        : 0
-                                    }
-                                    className="flex-1"
-                                  />
-                                  <span className="text-sm text-gray-600">
-                                    {analysis.teamCoverage.available}/
-                                    {analysis.teamCoverage.total}
-                                  </span>
+                                <div className="flex flex-wrap gap-1">
+                                  <Badge variant="outline" className="text-xs">
+                                    {analysis.category}
+                                  </Badge>
+                                  <Badge
+                                    variant={getImportanceBadgeVariant(
+                                      analysis.importance
+                                    )}
+                                    className="text-xs"
+                                  >
+                                    {analysis.importance}
+                                  </Badge>
+                                  <div className="flex items-center gap-1">
+                                    {getGapIcon(analysis.gap)}
+                                    <span className="text-xs text-gray-600 capitalize">
+                                      {analysis.gap}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                {getGapIcon(analysis.gap)}
-                                <span className="capitalize">
-                                  {analysis.gap}
-                                </span>
+                              <div className="space-y-2">
+                                {analysis.teamsWithSkill.length === 0 ? (
+                                  <div className="text-sm text-gray-500 italic">
+                                    No teams assigned
+                                  </div>
+                                ) : (
+                                  analysis.teamsWithSkill.map(team => {
+                                    // Get proficiency levels for this team and skill
+                                    const teamProficiencies = Object.entries(
+                                      analysis.teamCoverage.proficiencyLevels ||
+                                        {}
+                                    )
+                                      .filter(([_, count]) => count > 0)
+                                      .map(
+                                        ([level, count]) => `${level}(${count})`
+                                      )
+                                      .join(', ');
+
+                                    return (
+                                      <div
+                                        key={team.id}
+                                        className="p-2 bg-gray-50 rounded border"
+                                      >
+                                        <div className="flex items-center justify-between mb-1">
+                                          <div className="font-medium text-sm">
+                                            {team.name}
+                                          </div>
+                                          <Badge
+                                            variant="secondary"
+                                            className="text-xs"
+                                          >
+                                            {team.memberCount === 0
+                                              ? 'Available'
+                                              : 'Active'}
+                                          </Badge>
+                                        </div>
+                                        <div className="text-xs text-gray-600 space-y-1">
+                                          <div>{team.memberCount} members</div>
+                                          {teamProficiencies && (
+                                            <div>
+                                              Skills: {teamProficiencies}
+                                            </div>
+                                          )}
+                                          {team.currentAllocations.length >
+                                            0 && (
+                                            <div>
+                                              {team.currentAllocations.length}{' '}
+                                              allocation
+                                              {team.currentAllocations.length >
+                                              1
+                                                ? 's'
+                                                : ''}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })
+                                )}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {Object.entries(
-                                  analysis.teamCoverage.proficiencyLevels || {}
-                                ).map(([level, count]) => (
-                                  <Badge
-                                    key={level}
-                                    variant="outline"
-                                    className="text-xs"
-                                  >
-                                    {level}: {count}
-                                  </Badge>
-                                ))}
+                              <div className="space-y-2">
+                                {analysis.teamsWithSkill.length === 0 ? (
+                                  <div className="text-sm text-gray-500 italic">
+                                    No teams with this skill
+                                  </div>
+                                ) : (
+                                  analysis.teamsWithSkill.map(team => (
+                                    <div key={team.id} className="space-y-1">
+                                      <div className="text-sm font-medium">
+                                        {team.name}
+                                      </div>
+                                      {team.currentAllocations.length === 0 ? (
+                                        <div className="text-xs text-gray-500 italic">
+                                          No current allocations - Available
+                                        </div>
+                                      ) : (
+                                        <div className="space-y-2">
+                                          {/* Summary: Run Work vs Project Split */}
+                                          {team.currentAllocations.length >
+                                            0 && (
+                                            <div className="p-2 bg-gray-50 rounded border text-xs">
+                                              <div className="font-semibold text-gray-700 mb-1">
+                                                Quarter Summary:
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span>
+                                                  Run Work:{' '}
+                                                  {team.currentAllocations[0]
+                                                    ?.totalRunWork || 0}
+                                                  %
+                                                </span>
+                                                <span>
+                                                  Projects:{' '}
+                                                  {team.currentAllocations[0]
+                                                    ?.totalProject || 0}
+                                                  %
+                                                </span>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Individual Project/RunWork Allocations */}
+                                          {team.currentAllocations.map(
+                                            alloc => (
+                                              <div
+                                                key={`${alloc.projectId}-${alloc.allocationType}`}
+                                                className={`p-2 rounded border text-xs space-y-2 ${
+                                                  alloc.isCurrentProject
+                                                    ? 'bg-green-50 border-green-200'
+                                                    : alloc.allocationType ===
+                                                        'runwork'
+                                                      ? 'bg-yellow-50 border-yellow-200'
+                                                      : 'bg-blue-50 border-blue-200'
+                                                }`}
+                                              >
+                                                {/* Project/RunWork Name and Total */}
+                                                <div className="flex items-center justify-between">
+                                                  <span className="font-medium">
+                                                    {alloc.isCurrentProject
+                                                      ? 'Current project allocated'
+                                                      : alloc.allocationType ===
+                                                          'runwork'
+                                                        ? 'Run Work'
+                                                        : alloc.projectName}
+                                                  </span>
+                                                  <Badge
+                                                    variant={
+                                                      alloc.isCurrentProject
+                                                        ? 'default'
+                                                        : alloc.allocationType ===
+                                                            'runwork'
+                                                          ? 'secondary'
+                                                          : 'outline'
+                                                    }
+                                                    className="text-xs"
+                                                  >
+                                                    {alloc.percentage}%
+                                                  </Badge>
+                                                </div>
+
+                                                {/* Iteration Breakdown */}
+                                                <div className="text-xs text-gray-600">
+                                                  <div className="grid grid-cols-3 gap-1">
+                                                    {alloc.iterationBreakdown.map(
+                                                      iter => (
+                                                        <div
+                                                          key={iter.cycleId}
+                                                          className={`text-center p-1 rounded ${
+                                                            iter.percentage > 0
+                                                              ? 'bg-white border'
+                                                              : 'bg-gray-100'
+                                                          }`}
+                                                        >
+                                                          <div className="font-mono">
+                                                            {iter.cycleName}:
+                                                          </div>
+                                                          <div
+                                                            className={
+                                                              iter.percentage >
+                                                              0
+                                                                ? 'font-semibold'
+                                                                : ''
+                                                            }
+                                                          >
+                                                            {iter.percentage}%
+                                                          </div>
+                                                        </div>
+                                                      )
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            )
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))
+                                )}
                               </div>
                             </TableCell>
                           </TableRow>

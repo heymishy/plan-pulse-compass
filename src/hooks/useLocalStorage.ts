@@ -51,20 +51,8 @@ export function useEncryptedLocalStorage<T>(
             if (isMounted) {
               setStoredValue(JSON.parse(decrypted));
             }
-            // Only log for development or smaller datasets to prevent console spam
-            if (
-              process.env.NODE_ENV === 'development' ||
-              JSON.stringify(decrypted).length < 50000
-            ) {
-              console.log(
-                `Successfully loaded and decrypted data for key "${key}"`
-              );
-            }
           } else {
             // Data is unencrypted (old format), migrate it
-            console.log(
-              `Old data format detected for key "${key}". Migrating to encrypted format.`
-            );
             if (isMounted) {
               setStoredValue(parsedItem);
             }
@@ -73,9 +61,6 @@ export function useEncryptedLocalStorage<T>(
               derivedKey
             );
             window.localStorage.setItem(key, JSON.stringify(encrypted));
-            console.log(
-              `Successfully migrated and encrypted data for key "${key}"`
-            );
           }
         } else if (isMounted) {
           setStoredValue(initialValue);
@@ -120,15 +105,6 @@ export function useEncryptedLocalStorage<T>(
             derivedKey
           );
           window.localStorage.setItem(key, JSON.stringify(encrypted));
-          // Only log for development or smaller datasets to prevent console spam
-          if (
-            process.env.NODE_ENV === 'development' ||
-            JSON.stringify(valueToStore).length < 50000
-          ) {
-            console.log(
-              `Successfully encrypted and saved data for key "${key}"`
-            );
-          }
 
           // Trigger storage event for cross-component synchronization
           if (typeof window !== 'undefined' && window.dispatchEvent) {
@@ -168,16 +144,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       const item = window.localStorage.getItem(key);
       if (item) {
         const parsed = JSON.parse(item);
-        // Only log for development or smaller datasets to prevent console spam
-        if (
-          process.env.NODE_ENV === 'development' ||
-          JSON.stringify(parsed).length < 50000
-        ) {
-          console.log(`Successfully loaded data for key "${key}"`);
-        }
         return parsed;
       }
-      console.log(`No stored data found for key "${key}", using initial value`);
       return initialValue;
     } catch (error) {
       console.error(`Error reading from localStorage key "${key}":`, error);
@@ -229,13 +197,6 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       if (item) {
         const parsed = JSON.parse(item);
         setStoredValue(parsed);
-        // Only log for development or smaller datasets to prevent console spam
-        if (
-          process.env.NODE_ENV === 'development' ||
-          JSON.stringify(parsed).length < 50000
-        ) {
-          console.log(`Synced data for key "${key}" on mount`);
-        }
       }
     } catch (error) {
       console.error(`Error syncing from localStorage key "${key}":`, error);
@@ -247,13 +208,6 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         try {
           const parsed = JSON.parse(e.newValue);
           setStoredValue(parsed);
-          // Only log for development or smaller datasets to prevent console spam
-          if (
-            process.env.NODE_ENV === 'development' ||
-            JSON.stringify(parsed).length < 50000
-          ) {
-            console.log(`Synced data for key "${key}" from storage event`);
-          }
         } catch (error) {
           console.error(`Error parsing storage event for key "${key}":`, error);
         }
