@@ -3,6 +3,7 @@ import {
   createQuartersAndIterations,
   waitForLocalStorageData,
   verifyQuartersInDropdown,
+  waitForAppReady,
 } from './test-helpers';
 
 test.describe('Foundation Setup (runs first)', () => {
@@ -23,10 +24,19 @@ test.describe('Foundation Setup (runs first)', () => {
       try {
         await page.goto('/setup', { timeout: 15000 });
         await page.waitForLoadState('domcontentloaded');
-        await page.waitForTimeout(2000);
+
+        // Wait for app to be fully ready
+        await waitForAppReady(page);
 
         if (page.url().includes('/setup')) {
           console.log('📝 Completing setup wizard...');
+
+          // Wait for form elements to be visible and ready
+          await page.waitForSelector('#fyStart', { timeout: 8000 });
+          await page.waitForSelector(
+            'input[name="iterationLength"][value="fortnightly"]',
+            { timeout: 8000 }
+          );
 
           // Fill setup form with better error handling
           await page.fill('#fyStart', '2024-01-01');

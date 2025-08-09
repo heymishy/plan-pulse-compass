@@ -11,14 +11,22 @@ import {
   recommendTeamsForProject,
   analyzeSkillCoverage,
 } from '@/utils/skillBasedPlanning';
-import { Team, Project, Skill, Solution, ProjectSolution } from '@/types';
+import {
+  Team,
+  Project,
+  Skill,
+  Solution,
+  ProjectSolution,
+  ProjectSkill,
+} from '@/types';
 
 // Performance test data generators
 const generateSkills = (count: number): Skill[] =>
   Array.from({ length: count }, (_, i) => ({
     id: `skill-${i}`,
     name: `Skill ${i}`,
-    category: `category-${i % 10}`, // 10 different categories
+    category: `category-${i % 10}`,
+    createdDate: '2024-01-01T00:00:00Z',
   }));
 
 const generateTeams = (
@@ -56,10 +64,7 @@ const generateSolutions = (
       { length: skillsPerSolution },
       (_, j) => `skill-${(i * skillsPerSolution + j) % totalSkills}`
     ),
-    complexity: 'medium',
-    estimatedEffort: 50,
     createdDate: '2024-01-01T00:00:00Z',
-    lastModified: '2024-01-01T00:00:00Z',
   }));
 
 const generateProjects = (count: number): Project[] =>
@@ -68,11 +73,11 @@ const generateProjects = (count: number): Project[] =>
     name: `Project ${i}`,
     description: `Performance test project ${i}`,
     status: 'planning',
-    priority: 'medium',
-    divisionId: 'dev',
     startDate: '2024-01-15',
     endDate: '2024-06-15',
-    budget: 100000,
+    milestones: [],
+    priority: 500,
+    ranking: i + 1,
     createdDate: '2024-01-01T00:00:00Z',
     lastModified: '2024-01-01T00:00:00Z',
   }));
@@ -87,11 +92,11 @@ describe('Skills Performance Tests', () => {
         name: 'Performance Test Project',
         description: 'Large scale performance test',
         status: 'planning',
-        priority: 'high',
-        divisionId: 'dev',
         startDate: '2024-01-15',
         endDate: '2024-06-15',
-        budget: 500000,
+        milestones: [],
+        priority: 500,
+        ranking: 1,
         createdDate: '2024-01-01T00:00:00Z',
         lastModified: '2024-01-01T00:00:00Z',
       };
@@ -107,13 +112,15 @@ describe('Skills Performance Tests', () => {
       const startTime = performance.now();
 
       // Test compatibility calculation for all teams
-      const projectSkills = requiredSkills.map((skillId, index) => ({
-        id: `ps-${index}`,
-        projectId: project.id,
-        skillId,
-        importance: 'medium' as const,
-        notes: 'Test requirement',
-      }));
+      const projectSkills: ProjectSkill[] = requiredSkills.map(
+        (skillId, index) => ({
+          id: `ps-${index}`,
+          projectId: project.id,
+          skillId,
+          importance: 'medium' as const,
+          notes: 'Test requirement',
+        })
+      );
 
       const compatibilityResults = teams.map(team =>
         calculateTeamProjectCompatibility(
@@ -121,7 +128,8 @@ describe('Skills Performance Tests', () => {
           project,
           projectSkills,
           [],
-          skills
+          skills,
+          []
         )
       );
 
@@ -136,7 +144,7 @@ describe('Skills Performance Tests', () => {
           result =>
             typeof result.compatibilityScore === 'number' &&
             result.compatibilityScore >= 0 &&
-            result.compatibilityScore <= 100
+            result.compatibilityScore <= 1
         )
       ).toBe(true);
     });
@@ -153,29 +161,33 @@ describe('Skills Performance Tests', () => {
         name: 'Performance Test Project',
         description: 'Large scale performance test',
         status: 'planning',
-        priority: 'high',
-        divisionId: 'dev',
         startDate: '2024-01-15',
         endDate: '2024-06-15',
-        budget: 500000,
+        milestones: [],
+        priority: 500,
+        ranking: 1,
         createdDate: '2024-01-01T00:00:00Z',
         lastModified: '2024-01-01T00:00:00Z',
       };
 
-      const projectSkills = requiredSkills.map((skillId, index) => ({
-        id: `ps-${index}`,
-        projectId: project.id,
-        skillId,
-        importance: 'high' as const,
-        notes: 'Performance test requirement',
-      }));
+      const projectSkills: ProjectSkill[] = requiredSkills.map(
+        (skillId, index) => ({
+          id: `ps-${index}`,
+          projectId: project.id,
+          skillId,
+          importance: 'high' as const,
+          notes: 'Performance test requirement',
+        })
+      );
 
       const bestTeams = recommendTeamsForProject(
         project,
         teams,
         projectSkills,
         [],
-        skills
+        skills,
+        [],
+        3
       );
 
       const endTime = performance.now();
@@ -192,18 +204,6 @@ describe('Skills Performance Tests', () => {
     it('should handle complex skill coverage analysis efficiently', () => {
       const skills = generateSkills(100);
       const teams = generateTeams(50, 12, 100);
-      const projects = generateProjects(25);
-
-      // Create project skills for each project
-      const allProjectSkills = projects.map(project => ({
-        projectId: project.id,
-        requiredSkills: skills
-          .slice(
-            Math.floor(Math.random() * 50),
-            Math.floor(Math.random() * 30) + 20
-          )
-          .map(s => s.id),
-      }));
 
       const startTime = performance.now();
 
@@ -214,7 +214,7 @@ describe('Skills Performance Tests', () => {
 
       // Should complete within 200ms for complex analysis
       expect(duration).toBeLessThan(200);
-      expect(coverageAnalysis.totalSkills).toBeLessThanOrEqual(100);
+      expect(coverageAnalysis.totalSkills).toBe(100);
       expect(coverageAnalysis.coveredSkills).toBeLessThanOrEqual(
         coverageAnalysis.totalSkills
       );
@@ -247,22 +247,24 @@ describe('Skills Performance Tests', () => {
         name: 'Test Project',
         description: 'Test project',
         status: 'planning',
-        priority: 'medium',
-        divisionId: 'dev',
         startDate: '2024-01-15',
         endDate: '2024-06-15',
-        budget: 100000,
+        milestones: [],
+        priority: 500,
+        ranking: 1,
         createdDate: '2024-01-01T00:00:00Z',
         lastModified: '2024-01-01T00:00:00Z',
       };
 
-      const projectSkills = requiredSkills.map((skillId, index) => ({
-        id: `ps-${index}`,
-        projectId: mockProject.id,
-        skillId,
-        importance: 'medium' as const,
-        notes: 'Test requirement',
-      }));
+      const projectSkills: ProjectSkill[] = requiredSkills.map(
+        (skillId, index) => ({
+          id: `ps-${index}`,
+          projectId: mockProject.id,
+          skillId,
+          importance: 'medium' as const,
+          notes: 'Test requirement',
+        })
+      );
 
       const results = teamsWithNoSkills.map(team =>
         calculateTeamProjectCompatibility(
@@ -270,7 +272,8 @@ describe('Skills Performance Tests', () => {
           mockProject,
           projectSkills,
           [],
-          skills
+          skills,
+          []
         )
       );
 
@@ -296,29 +299,33 @@ describe('Skills Performance Tests', () => {
         name: 'All Skills Performance Test',
         description: 'Test requiring all skills',
         status: 'planning',
-        priority: 'high',
-        divisionId: 'dev',
         startDate: '2024-01-15',
         endDate: '2024-06-15',
-        budget: 1000000,
+        milestones: [],
+        priority: 500,
+        ranking: 1,
         createdDate: '2024-01-01T00:00:00Z',
         lastModified: '2024-01-01T00:00:00Z',
       };
 
-      const projectSkills = allSkillIds.map((skillId, index) => ({
-        id: `ps-all-${index}`,
-        projectId: project.id,
-        skillId,
-        importance: 'high' as const,
-        notes: 'Critical requirement',
-      }));
+      const projectSkills: ProjectSkill[] = allSkillIds.map(
+        (skillId, index) => ({
+          id: `ps-all-${index}`,
+          projectId: project.id,
+          skillId,
+          importance: 'high' as const,
+          notes: 'Critical requirement',
+        })
+      );
 
       const bestTeam = recommendTeamsForProject(
         project,
         teams,
         projectSkills,
         [],
-        skills
+        skills,
+        [],
+        3
       );
 
       const endTime = performance.now();

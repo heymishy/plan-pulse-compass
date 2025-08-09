@@ -39,6 +39,11 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
     onFiltersChange({ ...filters, [id]: value });
   };
 
+  // Safety check for filterFields
+  if (!filterFields || !Array.isArray(filterFields)) {
+    return null;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -69,7 +74,7 @@ const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    {field.options?.map(option => (
+                    {(field.options || []).map(option => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>

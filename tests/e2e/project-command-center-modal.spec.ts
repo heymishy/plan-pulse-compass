@@ -22,6 +22,13 @@ test.describe('ProjectCommandCenterModal E2E Tests', () => {
       '[data-testid="projects-page"], [data-testid="projects-container"]',
       { timeout: 5000 }
     );
+
+    // Wait for any projects or buttons to be loaded
+    await page.waitForTimeout(1000); // Allow initial render
+    await page.waitForSelector(
+      'button:has-text("Edit"), button:has-text("Add Project"), button:has-text("View")',
+      { timeout: 10000, state: 'visible' }
+    );
   });
 
   test('should open ProjectCommandCenterModal from project list', async ({

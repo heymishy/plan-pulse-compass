@@ -10,6 +10,7 @@ import {
   Cycle,
   ProjectSkill,
 } from '@/types';
+import { getProjectRequiredSkills as getRequiredSkillsUtil } from './skillBasedPlanning';
 
 export interface SkillMatchDetail {
   skillId: string;
@@ -36,7 +37,7 @@ export interface SkillGap {
   skillId: string;
   skillName: string;
   required: boolean;
-  importance: 'critical' | 'important' | 'nice-to-have';
+  importance: 'low' | 'medium' | 'high';
   availableInTeam: boolean;
   alternativeSkills: string[];
 }
@@ -90,10 +91,11 @@ export const analyzeProjectTeamAvailability = (
   );
 
   // Get required skills for the project
-  const requiredSkills = getProjectRequiredSkills(projectId, {
+  const requiredSkills = getProjectRequiredSkills(project, {
     projectSolutions,
     projectSkills,
     solutions,
+    skills,
   });
 
   // Analyze each team
@@ -126,43 +128,29 @@ export const analyzeProjectTeamAvailability = (
 };
 
 const getProjectRequiredSkills = (
-  projectId: string,
+  project: Project,
   data: {
     projectSolutions: ProjectSolution[];
     projectSkills: ProjectSkill[];
     solutions: Solution[];
+    skills: Skill[];
   }
 ) => {
-  const { projectSolutions, projectSkills, solutions } = data;
+  const { projectSolutions, projectSkills, solutions, skills } = data;
 
-  const skillsSet = new Set<string>();
-  const skillImportance = new Map<
-    string,
-    'critical' | 'important' | 'nice-to-have'
-  >();
+  const requiredSkills = getRequiredSkillsUtil(
+    project,
+    projectSkills,
+    solutions,
+    skills,
+    projectSolutions
+  );
 
-  // Get skills from project solutions
-  const projectSols = projectSolutions.filter(ps => ps.projectId === projectId);
-  projectSols.forEach(ps => {
-    const solution = solutions.find(s => s.id === ps.solutionId);
-    if (solution) {
-      solution.skillIds.forEach(skillId => {
-        skillsSet.add(skillId);
-        skillImportance.set(skillId, ps.isPrimary ? 'critical' : 'important');
-      });
-    }
-  });
-
-  // Get direct project skills
-  const directSkills = projectSkills.filter(ps => ps.projectId === projectId);
-  directSkills.forEach(ps => {
-    skillsSet.add(ps.skillId);
-    skillImportance.set(ps.skillId, ps.importance);
-  });
-
-  return Array.from(skillsSet).map(skillId => ({
-    skillId,
-    importance: skillImportance.get(skillId) || 'nice-to-have',
+  return requiredSkills.map(skill => ({
+    skillId: skill.skillId,
+    importance:
+      projectSkills.find(ps => ps.skillId === skill.skillId)?.importance ||
+      'medium',
   }));
 };
 

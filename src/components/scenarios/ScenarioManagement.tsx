@@ -242,7 +242,10 @@ export const ScenarioManagement: React.FC<ScenarioManagementProps> = ({
             <Trash2 className="h-4 w-4 mr-2" />
             Cleanup Expired
           </Button>
-          <Button onClick={() => setShowCreateDialog(true)}>
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            data-testid="create-scenario-button"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create Scenario
           </Button>

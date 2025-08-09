@@ -134,8 +134,10 @@ jobs:
           CI: true
           NODE_OPTIONS: '--max-old-space-size=512'
 
-      - name: Run E2E smoke test (critical paths only)
-        run: npx playwright test tests/e2e/smoke-test-ci.spec.ts --workers=1
+      - name: Run optimized E2E tests (consolidated suite)
+        run: |
+          # Run our newly optimized test suite (45-60 tests instead of 150+)
+          npx playwright test tests/e2e/console-errors-ci.spec.ts tests/e2e/crud-operations.spec.ts tests/e2e/all-pages-responsive.spec.ts --workers=1
         continue-on-error: true # Don't block pipeline if E2E fails due to resource constraints
         env:
           CI: true

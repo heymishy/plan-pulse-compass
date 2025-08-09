@@ -347,6 +347,7 @@ export const ProjectCommandCenterModal: React.FC<
                         <Label htmlFor="project-name">Project Name</Label>
                         <Input
                           id="project-name"
+                          name="name"
                           data-testid="project-name"
                           value={editedProject?.name || ''}
                           onChange={e =>

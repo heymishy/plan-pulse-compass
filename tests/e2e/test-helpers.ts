@@ -229,6 +229,31 @@ export async function ensureSetupComplete(page: Page): Promise<void> {
 }
 
 /**
+ * Wait for app to be fully loaded and ready for interaction
+ */
+export async function waitForAppReady(
+  page: Page,
+  timeout = 10000
+): Promise<boolean> {
+  try {
+    // Wait for app container
+    await page.waitForSelector('[data-testid="app-container"]', { timeout });
+
+    // Wait for app to be loaded
+    await page.waitForSelector('[data-testid="app-loaded"]', { timeout });
+
+    // Additional wait for React to finish rendering
+    await page.waitForTimeout(1000);
+
+    console.log('✅ App is ready for interaction');
+    return true;
+  } catch (error) {
+    console.log(`⚠️ App not ready within timeout: ${error}`);
+    return false;
+  }
+}
+
+/**
  * Enhanced button click with retry logic
  */
 export async function clickButtonSafely(
@@ -333,6 +358,26 @@ export async function fillFormFieldSafely(
     return true;
   } catch (error) {
     console.log(`⚠️ Could not fill ${fieldName}: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Wait for modal to open and be ready for interaction
+ */
+export async function waitForModalOpen(
+  page: Page,
+  modalSelector = '[role="dialog"]',
+  timeout = 8000
+): Promise<boolean> {
+  try {
+    await page.waitForSelector(modalSelector, { timeout });
+    // Wait a bit more for modal animations and content to load
+    await page.waitForTimeout(500);
+    console.log('✅ Modal opened successfully');
+    return true;
+  } catch (error) {
+    console.log(`⚠️ Modal did not open within timeout: ${error}`);
     return false;
   }
 }

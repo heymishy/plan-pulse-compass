@@ -62,7 +62,10 @@ function App() {
                     <Router>
                       <KeyboardShortcutsProvider>
                         <SidebarProvider defaultOpen={true}>
-                          <div className="flex h-screen w-screen bg-background overflow-hidden">
+                          <div
+                            data-testid="app-container"
+                            className="flex h-screen w-screen bg-background overflow-hidden"
+                          >
                             <Sidebar
                               side="left"
                               variant="sidebar"
@@ -71,18 +74,20 @@ function App() {
                             >
                               <EnhancedNavigation />
                             </Sidebar>
-                            <SidebarInset className="flex-1 min-w-0 h-full overflow-hidden">
+                            <SidebarInset className="flex-1 w-full h-full overflow-hidden">
                               <div className="flex flex-col h-full w-full overflow-hidden">
                                 <ScenarioBanner />
                                 <div className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                                   <div className="flex flex-col space-y-3">
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center space-x-4">
-                                        <h1 className="text-lg font-semibold">
+                                    <div className="flex items-center justify-between min-w-0">
+                                      <div className="flex items-center space-x-4 min-w-0">
+                                        <h1 className="text-lg font-semibold truncate">
                                           Plan Pulse Compass
                                         </h1>
                                       </div>
-                                      <ScenarioSwitcher />
+                                      <div className="flex-shrink-0">
+                                        <ScenarioSwitcher />
+                                      </div>
                                     </div>
                                     <PageBreadcrumb
                                       showDescription={false}
@@ -90,7 +95,10 @@ function App() {
                                     />
                                   </div>
                                 </div>
-                                <main className="flex-1 w-full max-w-none overflow-auto">
+                                <main
+                                  data-testid="app-loaded"
+                                  className="flex-1 w-full max-w-none overflow-auto"
+                                >
                                   <Suspense
                                     fallback={
                                       <div className="flex items-center justify-center h-64">

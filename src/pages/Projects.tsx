@@ -27,7 +27,15 @@ import ProjectTeamFinderDialog from '@/components/scenarios/ProjectTeamFinderDia
 import SearchAndFilter from '@/components/planning/SearchAndFilter';
 
 const Projects = () => {
-  const { projects, epics, allocations, cycles, isSetupComplete, divisions, teams } = useApp();
+  const {
+    projects,
+    epics,
+    allocations,
+    cycles,
+    isSetupComplete,
+    divisions,
+    teams,
+  } = useApp();
   const { isInScenarioMode, activeScenarioId, scenarios } = useScenarios();
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -45,7 +53,10 @@ const Projects = () => {
     const division = divisions.find(d => d.id === team?.divisionId);
 
     return (
-      (filters.searchQuery === '' || project.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) &&
+      (filters.searchQuery === '' ||
+        project.name
+          .toLowerCase()
+          .includes(filters.searchQuery.toLowerCase())) &&
       (filters.divisionId === 'all' || division?.id === filters.divisionId) &&
       (filters.teamId === 'all' || team?.id === filters.teamId) &&
       (filters.status === 'all' || project.status === filters.status)
@@ -122,8 +133,14 @@ const Projects = () => {
     : null;
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden">
-      <div className="flex-1 p-6 space-y-6 w-full overflow-auto">
+    <div
+      className="h-full w-full flex flex-col overflow-hidden"
+      data-testid="projects-page"
+    >
+      <div
+        className="flex-1 p-6 space-y-6 w-full overflow-auto"
+        data-testid="projects-container"
+      >
         {/* Scenario Banner */}
         {isInScenarioMode && <ScenarioBanner />}
 
@@ -183,10 +200,36 @@ const Projects = () => {
           filters={filters}
           onFiltersChange={setFilters}
           filterFields={[
-            { id: 'searchQuery', label: 'Search', type: 'text', placeholder: 'Search projects...' },
-            { id: 'divisionId', label: 'Division', type: 'select', options: divisions.map(d => ({ value: d.id, label: d.name })) },
-            { id: 'teamId', label: 'Team', type: 'select', options: teams.map(t => ({ value: t.id, label: t.name })) },
-            { id: 'status', label: 'Status', type: 'select', options: [{ value: 'planning', label: 'Planning' }, { value: 'active', label: 'Active' }, { value: 'completed', label: 'Completed' }, { value: 'on-hold', label: 'On Hold' }, { value: 'cancelled', label: 'Cancelled' }] },
+            {
+              id: 'searchQuery',
+              label: 'Search',
+              type: 'text',
+              placeholder: 'Search projects...',
+            },
+            {
+              id: 'divisionId',
+              label: 'Division',
+              type: 'select',
+              options: divisions.map(d => ({ value: d.id, label: d.name })),
+            },
+            {
+              id: 'teamId',
+              label: 'Team',
+              type: 'select',
+              options: teams.map(t => ({ value: t.id, label: t.name })),
+            },
+            {
+              id: 'status',
+              label: 'Status',
+              type: 'select',
+              options: [
+                { value: 'planning', label: 'Planning' },
+                { value: 'active', label: 'Active' },
+                { value: 'completed', label: 'Completed' },
+                { value: 'on-hold', label: 'On Hold' },
+                { value: 'cancelled', label: 'Cancelled' },
+              ],
+            },
           ]}
         />
 
