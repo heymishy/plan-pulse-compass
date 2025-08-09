@@ -39,7 +39,7 @@ const SkillsBasedTeamFilter: React.FC<SkillsBasedTeamFilterProps> = ({
   minCompatibilityScore = 0.3,
   onMinCompatibilityChange,
 }) => {
-  const { teams, skills } = useApp();
+  const { teams, skills, projectSolutions } = useApp();
   const [localSelectedSkills, setLocalSelectedSkills] =
     useState<string[]>(selectedSkills);
   const [localMinScore, setLocalMinScore] = useState<number>(

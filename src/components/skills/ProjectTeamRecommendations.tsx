@@ -38,7 +38,14 @@ const ProjectTeamRecommendations: React.FC<ProjectTeamRecommendationsProps> = ({
   maxRecommendations = 5,
   showDetailedAnalysis = true,
 }) => {
-  const { projects, teams, skills, solutions, projectSkills } = useApp();
+  const {
+    projects,
+    teams,
+    skills,
+    solutions,
+    projectSkills,
+    projectSolutions,
+  } = useApp();
   const [localSelectedProjectId, setLocalSelectedProjectId] = useState<string>(
     selectedProjectId || ''
   );
@@ -62,6 +69,7 @@ const ProjectTeamRecommendations: React.FC<ProjectTeamRecommendationsProps> = ({
       relevantProjectSkills,
       solutions,
       skills,
+      projectSolutions,
       maxRecommendations
     );
   }, [
@@ -70,6 +78,7 @@ const ProjectTeamRecommendations: React.FC<ProjectTeamRecommendationsProps> = ({
     projectSkills,
     solutions,
     skills,
+    projectSolutions,
     maxRecommendations,
   ]);
 

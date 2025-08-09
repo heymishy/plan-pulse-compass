@@ -1,4 +1,11 @@
-import { Team, Project, Skill, ProjectSkill, Solution } from '@/types';
+import {
+  Team,
+  Project,
+  Skill,
+  ProjectSkill,
+  Solution,
+  ProjectSolution,
+} from '@/types';
 
 /**
  * Skills-Based Planning Utilities
@@ -65,7 +72,8 @@ export function getProjectRequiredSkills(
   project: Project,
   projectSkills: ProjectSkill[],
   solutions: Solution[],
-  skills: Skill[]
+  skills: Skill[],
+  projectSolutions: ProjectSolution[]
 ): Array<{
   skillId: string;
   skillName: string;
@@ -85,8 +93,12 @@ export function getProjectRequiredSkills(
   });
 
   // Add solution skills
-  project.solutionIds?.forEach(solutionId => {
-    const solution = solutions.find(s => s.id === solutionId);
+  const relevantProjectSolutions = projectSolutions.filter(
+    ps => ps.projectId === project.id
+  );
+
+  relevantProjectSolutions.forEach(projectSolution => {
+    const solution = solutions.find(s => s.id === projectSolution.solutionId);
     if (solution?.skills) {
       solution.skills.forEach(skillId => {
         requiredSkillIds.add(skillId);
@@ -126,13 +138,15 @@ export function calculateTeamProjectCompatibility(
   project: Project,
   projectSkills: ProjectSkill[],
   solutions: Solution[],
-  skills: Skill[]
+  skills: Skill[],
+  projectSolutions: ProjectSolution[]
 ): TeamProjectCompatibility {
   const requiredSkills = getProjectRequiredSkills(
     project,
     projectSkills,
     solutions,
-    skills
+    skills,
+    projectSolutions
   );
   const teamSkillIds = new Set(team.targetSkills || []);
 
@@ -276,13 +290,15 @@ export function analyzeProjectSkillGaps(
   teams: Team[],
   projectSkills: ProjectSkill[],
   solutions: Solution[],
-  skills: Skill[]
+  skills: Skill[],
+  projectSolutions: ProjectSolution[]
 ): SkillGapAnalysis {
   const requiredSkills = getProjectRequiredSkills(
     project,
     projectSkills,
     solutions,
-    skills
+    skills,
+    projectSolutions
   );
 
   // Calculate compatibility for each team
@@ -292,7 +308,8 @@ export function analyzeProjectSkillGaps(
       project,
       projectSkills,
       solutions,
-      skills
+      skills,
+      projectSolutions
     )
   );
 
@@ -572,6 +589,7 @@ export function recommendTeamsForProject(
   projectSkills: ProjectSkill[],
   solutions: Solution[],
   skills: Skill[],
+  projectSolutions: ProjectSolution[],
   maxRecommendations = 3
 ): Array<{
   team: Team;
@@ -585,7 +603,8 @@ export function recommendTeamsForProject(
       project,
       projectSkills,
       solutions,
-      skills
+      skills,
+      projectSolutions
     )
   );
 

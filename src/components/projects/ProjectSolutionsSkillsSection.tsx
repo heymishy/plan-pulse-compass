@@ -9,6 +9,7 @@ import {
   Person,
   Team,
 } from '@/types';
+import { getProjectRequiredSkills } from '@/utils/skillBasedPlanning';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,8 @@ const ProjectSolutionsSkillsSection: React.FC<
   onSolutionsChange,
   onSkillsChange,
 }) => {
-  const { solutions, skills, people, teams, personSkills } = useApp();
+  const { projects, solutions, skills, people, teams, personSkills } = useApp();
+  const project = projects.find(p => p.id === projectId);
 
   // Form states
   const [showAddSolution, setShowAddSolution] = useState(false);
@@ -103,49 +105,36 @@ const ProjectSolutionsSkillsSection: React.FC<
     [solutions, projectSolutions]
   );
 
-  // Get skills from solutions automatically
-  const skillsFromSolutions = useMemo(() => {
-    const skillIds = new Set<string>();
-    const result: ProjectSkill[] = [];
-
-    (projectSolutions || []).forEach(ps => {
-      const solution = (solutions || []).find(s => s.id === ps.solutionId);
-      if (solution && solution.skills && Array.isArray(solution.skills)) {
-        solution.skills.forEach(skillId => {
-          if (!skillIds.has(skillId)) {
-            skillIds.add(skillId);
-            result.push({
-              id: `solution-${ps.solutionId}-${skillId}`,
-              projectId,
-              skillId,
-              importance: ps.importance,
-              notes: `Required by ${solution.name}`,
-            });
-          }
-        });
-      }
-    });
-
-    return result;
-  }, [projectSolutions, solutions, projectId]);
+  const allProjectSkillsInfo = useMemo(() => {
+    if (!project) return [];
+    return getProjectRequiredSkills(
+      project,
+      projectSkills,
+      solutions,
+      skills,
+      projectSolutions
+    );
+  }, [project, projectSkills, solutions, skills, projectSolutions]);
 
   // Combined skills (from solutions + manual)
   const allProjectSkills = useMemo(() => {
-    const combined = [...skillsFromSolutions];
-
-    // Add manual skills that aren't already covered by solutions
-    (projectSkills || []).forEach(ps => {
-      if (!skillsFromSolutions.some(sfs => sfs.skillId === ps.skillId)) {
-        combined.push(ps);
-      }
-    });
+    const combined = allProjectSkillsInfo.map(info => ({
+      id: `${info.source}-${projectId}-${info.skillId}`,
+      projectId,
+      skillId: info.skillId,
+      importance:
+        projectSkills.find(ps => ps.skillId === info.skillId)?.importance ||
+        'medium',
+      notes: projectSkills.find(ps => ps.skillId === info.skillId)?.notes,
+    }));
 
     return combined;
-  }, [skillsFromSolutions, projectSkills]);
+  }, [allProjectSkillsInfo, projectId, projectSkills]);
 
   // Skill analysis for forward planning
   const skillAnalysis = useMemo((): SkillAnalysis[] => {
-    return allProjectSkills
+    if (!allProjectSkillsInfo) return [];
+    return allProjectSkillsInfo
       .map(ps => {
         const skill = (skills || []).find(s => s.id === ps.skillId);
         if (!skill) return null;
@@ -191,11 +180,13 @@ const ProjectSolutionsSkillsSection: React.FC<
           skillId: ps.skillId,
           skillName: skill.name,
           category: skill.category,
-          required: ps.importance === 'high',
-          importance: ps.importance,
-          source: skillsFromSolutions.some(sfs => sfs.skillId === ps.skillId)
-            ? 'solution'
-            : 'manual',
+          required:
+            projectSkills.find(p => p.skillId === ps.skillId)?.importance ===
+            'high',
+          importance:
+            projectSkills.find(p => p.skillId === ps.skillId)?.importance ||
+            'medium',
+          source: ps.source,
           teamCoverage: {
             available: skillHolders.length,
             total: teamMembers.length,
@@ -206,12 +197,12 @@ const ProjectSolutionsSkillsSection: React.FC<
       })
       .filter(Boolean) as SkillAnalysis[];
   }, [
-    allProjectSkills,
+    allProjectSkillsInfo,
     skills,
     people,
     teams,
     personSkills,
-    skillsFromSolutions,
+    projectSkills,
   ]);
 
   // Available skills for manual addition
@@ -503,9 +494,10 @@ const ProjectSolutionsSkillsSection: React.FC<
                       const skill = (skills || []).find(
                         s => s.id === ps.skillId
                       );
-                      const isFromSolution = skillsFromSolutions.some(
-                        sfs => sfs.skillId === ps.skillId
-                      );
+                      const isFromSolution =
+                        allProjectSkillsInfo?.find(
+                          sfs => sfs.skillId === ps.skillId
+                        )?.source === 'solution';
 
                       if (!skill) return null;
 
