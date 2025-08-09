@@ -18,6 +18,8 @@ import {
   Solution,
   ProjectSolution,
   ProjectSkill,
+  Person,
+  PersonSkill,
 } from '@/types';
 
 // Performance test data generators
@@ -122,6 +124,7 @@ describe('Skills Performance Tests', () => {
         })
       );
 
+      // Use team-level skills for performance testing (simpler and faster)
       const compatibilityResults = teams.map(team =>
         calculateTeamProjectCompatibility(
           team,
@@ -186,6 +189,8 @@ describe('Skills Performance Tests', () => {
         projectSkills,
         [],
         skills,
+        [],
+        [],
         [],
         3
       );
@@ -324,6 +329,8 @@ describe('Skills Performance Tests', () => {
         projectSkills,
         [],
         skills,
+        [],
+        [],
         [],
         3
       );

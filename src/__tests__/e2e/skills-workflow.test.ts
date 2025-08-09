@@ -16,9 +16,12 @@ import {
   ProjectSolution,
   ProjectSkill,
   Team,
+  Person,
+  PersonSkill,
 } from '@/types';
 
 // Helper function to create simple compatibility test
+// Uses team-level skills (team.targetSkills) for simplicity
 const calculateSimpleTeamCompatibility = (
   team: Team,
   requiredSkills: string[],
@@ -48,6 +51,7 @@ const calculateSimpleTeamCompatibility = (
     })
   );
 
+  // Use team-level skills - no need for person data in this case
   return calculateTeamProjectCompatibility(
     team,
     mockProject,

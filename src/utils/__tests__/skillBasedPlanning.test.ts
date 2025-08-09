@@ -14,6 +14,8 @@ import {
   ProjectSkill,
   Solution,
   ProjectSolution,
+  Person,
+  PersonSkill,
 } from '@/types';
 
 describe('Skills-Based Planning Utilities', () => {
@@ -23,6 +25,8 @@ describe('Skills-Based Planning Utilities', () => {
   let mockProjectSkills: ProjectSkill[];
   let mockSolutions: Solution[];
   let mockProjectSolutions: ProjectSolution[];
+  let mockPeople: Person[];
+  let mockPersonSkills: PersonSkill[];
 
   beforeEach(() => {
     mockSkills = [
@@ -227,6 +231,59 @@ describe('Skills-Based Planning Utilities', () => {
         importance: 'high',
       },
     ];
+
+    mockPeople = [
+      {
+        id: 'person1',
+        name: 'John Doe',
+        email: 'john@example.com',
+        teamId: 'team1',
+        role: 'developer',
+        status: 'active',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'person2',
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        teamId: 'team2',
+        role: 'developer',
+        status: 'active',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'person3',
+        name: 'Bob Johnson',
+        email: 'bob@example.com',
+        teamId: 'team3',
+        role: 'developer',
+        status: 'active',
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+    ];
+
+    mockPersonSkills = [
+      {
+        id: 'ps1',
+        personId: 'person1',
+        skillId: 'skill1', // React
+        proficiencyLevel: 'advanced',
+        yearsOfExperience: 3,
+        lastUsed: '2024-01-01',
+        certified: false,
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+      {
+        id: 'ps2',
+        personId: 'person1',
+        skillId: 'skill3', // TypeScript
+        proficiencyLevel: 'intermediate',
+        yearsOfExperience: 2,
+        lastUsed: '2024-01-01',
+        certified: false,
+        createdDate: '2024-01-01T00:00:00Z',
+      },
+    ];
   });
 
   describe('getProjectRequiredSkills', () => {
@@ -322,7 +379,9 @@ describe('Skills-Based Planning Utilities', () => {
         mockProjectSkills.filter(ps => ps.projectId === 'project1'),
         mockSolutions,
         mockSkills,
-        mockProjectSolutions
+        mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills
       );
 
       expect(compatibility.teamId).toBe('team1');
@@ -435,7 +494,9 @@ describe('Skills-Based Planning Utilities', () => {
         [],
         mockSolutions,
         mockSkills,
-        mockProjectSolutions
+        mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills
       );
 
       expect(analysis.projectId).toBe('project3');
@@ -450,7 +511,9 @@ describe('Skills-Based Planning Utilities', () => {
         mockProjectSkills.filter(ps => ps.projectId === 'project1'),
         mockSolutions,
         mockSkills,
-        mockProjectSolutions
+        mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills
       );
 
       const vueGap = analysis.recommendations.skillGaps.find(
@@ -467,7 +530,9 @@ describe('Skills-Based Planning Utilities', () => {
         [],
         mockSolutions,
         mockSkills,
-        mockProjectSolutions
+        mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills
       );
 
       const dockerGap = analysis.recommendations.skillGaps.find(
@@ -483,7 +548,9 @@ describe('Skills-Based Planning Utilities', () => {
         [],
         mockSolutions,
         mockSkills,
-        mockProjectSolutions
+        mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills
       );
 
       expect(analysis.recommendations.trainingNeeds).toBeDefined();
@@ -509,7 +576,9 @@ describe('Skills-Based Planning Utilities', () => {
         pythonOnlyProjectSkills,
         mockSolutions,
         mockSkills,
-        []
+        [],
+        mockPeople,
+        mockPersonSkills
       );
 
       expect(analysis.recommendations.bestTeam).toBeNull();
@@ -522,6 +591,8 @@ describe('Skills-Based Planning Utilities', () => {
         mockTeams,
         ['skill1', 'skill3'], // React, TypeScript
         mockSkills,
+        mockPeople,
+        mockPersonSkills,
         0.5 // 50% minimum compatibility
       );
 
@@ -535,6 +606,8 @@ describe('Skills-Based Planning Utilities', () => {
         mockTeams,
         ['skill1', 'skill2', 'skill3'], // React, Node.js, TypeScript
         mockSkills,
+        mockPeople,
+        mockPersonSkills,
         0.3
       );
 
@@ -548,6 +621,8 @@ describe('Skills-Based Planning Utilities', () => {
         mockTeams,
         ['skill1', 'skill2'], // React, Node.js
         mockSkills,
+        mockPeople,
+        mockPersonSkills,
         0.4
       );
 
@@ -558,7 +633,13 @@ describe('Skills-Based Planning Utilities', () => {
     });
 
     it('should handle empty skill requirements', () => {
-      const filteredTeams = filterTeamsBySkills(mockTeams, [], mockSkills);
+      const filteredTeams = filterTeamsBySkills(
+        mockTeams,
+        [],
+        mockSkills,
+        mockPeople,
+        mockPersonSkills
+      );
 
       expect(filteredTeams).toHaveLength(mockTeams.length);
       expect(
@@ -571,6 +652,8 @@ describe('Skills-Based Planning Utilities', () => {
         mockTeams,
         ['skill1', 'skill2', 'skill3'], // React, Node.js, TypeScript
         mockSkills,
+        mockPeople,
+        mockPersonSkills,
         0.8 // 80% minimum compatibility
       );
 
@@ -581,7 +664,12 @@ describe('Skills-Based Planning Utilities', () => {
 
   describe('analyzeSkillCoverage', () => {
     it('should calculate overall skill coverage', () => {
-      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+      const coverage = analyzeSkillCoverage(
+        mockTeams,
+        mockSkills,
+        mockPeople,
+        mockPersonSkills
+      );
 
       expect(coverage.totalSkills).toBe(6);
       expect(coverage.coveredSkills).toBe(5);
@@ -589,7 +677,12 @@ describe('Skills-Based Planning Utilities', () => {
     });
 
     it('should identify skills coverage per skill', () => {
-      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+      const coverage = analyzeSkillCoverage(
+        mockTeams,
+        mockSkills,
+        mockPeople,
+        mockPersonSkills
+      );
 
       const reactCoverage = coverage.skillCoverage.find(
         sc => sc.skillName === 'React'
@@ -605,7 +698,12 @@ describe('Skills-Based Planning Utilities', () => {
     });
 
     it('should analyze coverage by category', () => {
-      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+      const coverage = analyzeSkillCoverage(
+        mockTeams,
+        mockSkills,
+        mockPeople,
+        mockPersonSkills
+      );
 
       expect(coverage.categoryAnalysis['Frontend']).toBeDefined();
       expect(coverage.categoryAnalysis['Frontend'].totalSkills).toBe(2);
@@ -614,7 +712,12 @@ describe('Skills-Based Planning Utilities', () => {
     });
 
     it('should identify well-covered and at-risk skills', () => {
-      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+      const coverage = analyzeSkillCoverage(
+        mockTeams,
+        mockSkills,
+        mockPeople,
+        mockPersonSkills
+      );
 
       expect(coverage.recommendations.skillsAtRisk).toContain('Vue.js');
       expect(coverage.recommendations.skillsWellCovered).toContain(
@@ -623,7 +726,12 @@ describe('Skills-Based Planning Utilities', () => {
     });
 
     it('should identify categories needing attention', () => {
-      const coverage = analyzeSkillCoverage(mockTeams, mockSkills);
+      const coverage = analyzeSkillCoverage(
+        mockTeams,
+        mockSkills,
+        mockPeople,
+        mockPersonSkills
+      );
 
       expect(coverage.recommendations.categoriesNeedingAttention).toContain(
         'Frontend'
@@ -636,7 +744,13 @@ describe('Skills-Based Planning Utilities', () => {
         { ...mockTeams[1], targetSkills: [] },
       ];
 
-      const coverage = analyzeSkillCoverage(teamsWithoutSkills, mockSkills);
+      // Use empty people and person skills arrays to truly test "no skills" scenario
+      const coverage = analyzeSkillCoverage(
+        teamsWithoutSkills,
+        mockSkills,
+        [],
+        []
+      );
 
       expect(coverage.coveredSkills).toBe(0);
       expect(coverage.coveragePercentage).toBe(0);
@@ -653,6 +767,8 @@ describe('Skills-Based Planning Utilities', () => {
         mockSolutions,
         mockSkills,
         mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills,
         3
       );
 
@@ -670,6 +786,8 @@ describe('Skills-Based Planning Utilities', () => {
         mockSolutions,
         mockSkills,
         mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills,
         2
       );
 
@@ -688,6 +806,8 @@ describe('Skills-Based Planning Utilities', () => {
         mockSolutions,
         mockSkills,
         mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills,
         2 // Limit to 2 recommendations
       );
 
@@ -713,7 +833,9 @@ describe('Skills-Based Planning Utilities', () => {
         specializedProjectSkills,
         mockSolutions,
         mockSkills,
-        []
+        [],
+        mockPeople,
+        mockPersonSkills
       );
 
       expect(recommendations).toHaveLength(3);
@@ -730,7 +852,9 @@ describe('Skills-Based Planning Utilities', () => {
         [],
         mockSolutions,
         mockSkills,
-        mockProjectSolutions
+        mockProjectSolutions,
+        mockPeople,
+        mockPersonSkills
       );
 
       const topRecommendation = recommendations[0];
@@ -785,10 +909,13 @@ describe('Skills-Based Planning Utilities', () => {
         targetSkills: null as any,
       };
 
+      // Use empty people and person skills arrays to truly test null targetSkills scenario
       const filteredTeams = filterTeamsBySkills(
         [teamWithNullSkills],
         ['skill1'],
-        mockSkills
+        mockSkills,
+        [],
+        []
       );
 
       expect(filteredTeams).toHaveLength(0);
@@ -802,7 +929,9 @@ describe('Skills-Based Planning Utilities', () => {
 
       const coverage = analyzeSkillCoverage(
         [teamWithInvalidSkills],
-        mockSkills
+        mockSkills,
+        mockPeople,
+        mockPersonSkills
       );
 
       const reactCoverage = coverage.skillCoverage.find(
@@ -842,7 +971,9 @@ describe('Skills-Based Planning Utilities', () => {
       const filteredTeams = filterTeamsBySkills(
         mockTeams,
         [`skill-1`, `skill-2`],
-        largeSkillSet
+        largeSkillSet,
+        mockPeople,
+        mockPersonSkills
       );
       const endTime = performance.now();
 

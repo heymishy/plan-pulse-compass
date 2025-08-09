@@ -211,11 +211,7 @@ export const ProjectCommandCenterModal: React.FC<
     const otherProjectSolutions = projectSolutions.filter(
       ps => ps.projectId !== project.id
     );
-    const updatedSolutions = [
-      ...otherProjectSolutions,
-      ...solutions.map(s => ({ ...s, projectId: project.id })),
-    ];
-    setProjectSolutions(updatedSolutions);
+    setProjectSolutions([...otherProjectSolutions, ...solutions]);
   };
 
   const handleSkillsChange = (skills: ProjectSkill[]) => {
@@ -225,11 +221,7 @@ export const ProjectCommandCenterModal: React.FC<
     const otherProjectSkills = projectSkills.filter(
       ps => ps.projectId !== project.id
     );
-    const updatedSkills = [
-      ...otherProjectSkills,
-      ...skills.map(s => ({ ...s, projectId: project.id })),
-    ];
-    setProjectSkills(updatedSkills);
+    setProjectSkills([...otherProjectSkills, ...skills]);
   };
 
   if (!isOpen || !project) {

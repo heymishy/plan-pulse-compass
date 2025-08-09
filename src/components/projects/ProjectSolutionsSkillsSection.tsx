@@ -48,9 +48,9 @@ import {
 interface ProjectSolutionsSkillsSectionProps {
   projectId: string;
   projectSolutions: ProjectSolution[];
-  projectSkills: ProjectSkill[];
+  projectSkills: ProjectSkill[]; // Still needed for backward compatibility, but only used for Team Analysis
   onSolutionsChange: (solutions: ProjectSolution[]) => void;
-  onSkillsChange: (skills: ProjectSkill[]) => void;
+  onSkillsChange: (skills: ProjectSkill[]) => void; // Still needed for backward compatibility
 }
 
 interface SkillAnalysis {
@@ -88,13 +88,6 @@ const ProjectSolutionsSkillsSection: React.FC<
   >('medium');
   const [solutionNotes, setSolutionNotes] = useState('');
 
-  const [showAddSkill, setShowAddSkill] = useState(false);
-  const [selectedSkillId, setSelectedSkillId] = useState('');
-  const [skillImportance, setSkillImportance] = useState<
-    'low' | 'medium' | 'high'
-  >('medium');
-  const [skillNotes, setSkillNotes] = useState('');
-
   // Get available solutions (not already added)
   const availableSolutions = useMemo(
     () =>
@@ -107,34 +100,55 @@ const ProjectSolutionsSkillsSection: React.FC<
 
   const allProjectSkillsInfo = useMemo(() => {
     if (!project) return [];
-    return getProjectRequiredSkills(
+    const result = getProjectRequiredSkills(
       project,
       projectSkills,
       solutions,
       skills,
       projectSolutions
     );
+
+    // Debug logging
+    console.log('ProjectSolutionsSkillsSection Debug:', {
+      projectId: project.id,
+      projectSolutions: projectSolutions.length,
+      solutions: solutions.length,
+      allProjectSkillsInfo: result,
+      solutionDetails: projectSolutions.map(ps => {
+        const sol = solutions.find(s => s.id === ps.solutionId);
+        return {
+          projectSolutionId: ps.id,
+          solutionId: ps.solutionId,
+          solutionName: sol?.name,
+          solutionSkills: sol?.skills,
+        };
+      }),
+    });
+
+    return result;
   }, [project, projectSkills, solutions, skills, projectSolutions]);
 
-  // Combined skills (from solutions + manual)
-  const allProjectSkills = useMemo(() => {
-    const combined = allProjectSkillsInfo.map(info => ({
-      id: `${info.source}-${projectId}-${info.skillId}`,
-      projectId,
-      skillId: info.skillId,
-      importance:
-        projectSkills.find(ps => ps.skillId === info.skillId)?.importance ||
-        'medium',
-      notes: projectSkills.find(ps => ps.skillId === info.skillId)?.notes,
-    }));
-
-    return combined;
-  }, [allProjectSkillsInfo, projectId, projectSkills]);
-
-  // Skill analysis for forward planning
-  const skillAnalysis = useMemo((): SkillAnalysis[] => {
-    if (!allProjectSkillsInfo) return [];
+  // Solution-derived skills only (no manual project skills)
+  const solutionDerivedSkills = useMemo(() => {
     return allProjectSkillsInfo
+      .filter(info => info.source === 'solution')
+      .map(info => ({
+        id: `solution-${projectId}-${info.skillId}`,
+        projectId,
+        skillId: info.skillId,
+        importance: 'medium' as const, // Default importance for solution-derived skills
+        source: info.source,
+      }));
+  }, [allProjectSkillsInfo, projectId]);
+
+  // Skill analysis for forward planning (only solution-derived skills)
+  const skillAnalysis = useMemo((): SkillAnalysis[] => {
+    const solutionSkills = allProjectSkillsInfo.filter(
+      info => info.source === 'solution'
+    );
+    if (!solutionSkills.length) return [];
+
+    return solutionSkills
       .map(ps => {
         const skill = (skills || []).find(s => s.id === ps.skillId);
         if (!skill) return null;
@@ -180,12 +194,8 @@ const ProjectSolutionsSkillsSection: React.FC<
           skillId: ps.skillId,
           skillName: skill.name,
           category: skill.category,
-          required:
-            projectSkills.find(p => p.skillId === ps.skillId)?.importance ===
-            'high',
-          importance:
-            projectSkills.find(p => p.skillId === ps.skillId)?.importance ||
-            'medium',
+          required: false, // Solution skills are required by default, but not "high" priority
+          importance: 'medium' as const, // Default importance for solution-derived skills
           source: ps.source,
           teamCoverage: {
             available: skillHolders.length,
@@ -196,23 +206,7 @@ const ProjectSolutionsSkillsSection: React.FC<
         };
       })
       .filter(Boolean) as SkillAnalysis[];
-  }, [
-    allProjectSkillsInfo,
-    skills,
-    people,
-    teams,
-    personSkills,
-    projectSkills,
-  ]);
-
-  // Available skills for manual addition
-  const availableSkills = useMemo(
-    () =>
-      (skills || []).filter(
-        skill => !allProjectSkills.some(ps => ps.skillId === skill.id)
-      ),
-    [skills, allProjectSkills]
-  );
+  }, [allProjectSkillsInfo, skills, people, teams, personSkills]);
 
   const handleAddSolution = () => {
     if (!selectedSolutionId) return;
@@ -238,30 +232,6 @@ const ProjectSolutionsSkillsSection: React.FC<
     onSolutionsChange(
       projectSolutions.filter(ps => ps.solutionId !== solutionId)
     );
-  };
-
-  const handleAddSkill = () => {
-    if (!selectedSkillId) return;
-
-    const newSkill: ProjectSkill = {
-      id: `pk-${Date.now()}`,
-      projectId,
-      skillId: selectedSkillId,
-      importance: skillImportance,
-      notes: skillNotes.trim() || undefined,
-    };
-
-    onSkillsChange([...projectSkills, newSkill]);
-
-    // Reset form
-    setSelectedSkillId('');
-    setSkillImportance('medium');
-    setSkillNotes('');
-    setShowAddSkill(false);
-  };
-
-  const handleRemoveSkill = (skillId: string) => {
-    onSkillsChange(projectSkills.filter(ps => ps.skillId !== skillId));
   };
 
   const getImportanceBadgeVariant = (importance: string) => {
@@ -456,166 +426,99 @@ const ProjectSolutionsSkillsSection: React.FC<
           </Card>
         </TabsContent>
 
-        {/* Skills Tab */}
+        {/* Skills Tab - Read-only, derived from solutions */}
         <TabsContent value="skills" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Project Skills</span>
-                <Button
-                  onClick={() => setShowAddSkill(true)}
-                  size="sm"
-                  disabled={availableSkills.length === 0}
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Custom Skill
-                </Button>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-5 w-5" />
+                Required Skills (From Solutions)
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {allProjectSkills.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
-                  No skills defined. Add solutions or custom skills to define
-                  project requirements.
+              {solutionDerivedSkills.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  No skills defined. Add solutions in the Solutions tab to
+                  automatically populate required skills.
                 </p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Skill</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Importance</TableHead>
-                      <TableHead>Source</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allProjectSkills.map(ps => {
-                      const skill = (skills || []).find(
-                        s => s.id === ps.skillId
-                      );
-                      const isFromSolution =
-                        allProjectSkillsInfo?.find(
-                          sfs => sfs.skillId === ps.skillId
-                        )?.source === 'solution';
+                <div className="space-y-4">
+                  <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                    <Info className="h-4 w-4 inline mr-2" />
+                    Skills are automatically derived from selected solutions. To
+                    modify skills, add or remove solutions in the Solutions tab.
+                  </div>
 
-                      if (!skill) return null;
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Skill</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Importance</TableHead>
+                        <TableHead>From Solution</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {solutionDerivedSkills.map(ps => {
+                        const skill = (skills || []).find(
+                          s => s.id === ps.skillId
+                        );
+                        const solution = allProjectSkillsInfo
+                          .filter(
+                            info =>
+                              info.skillId === ps.skillId &&
+                              info.source === 'solution'
+                          )
+                          .map(info => {
+                            const projectSolution = projectSolutions.find(
+                              pSol =>
+                                solutions
+                                  .find(s => s.id === pSol.solutionId)
+                                  ?.skills?.includes(info.skillId)
+                            );
+                            return projectSolution
+                              ? solutions.find(
+                                  s => s.id === projectSolution.solutionId
+                                )
+                              : null;
+                          })
+                          .filter(Boolean)[0];
 
-                      return (
-                        <TableRow key={ps.id}>
-                          <TableCell>
-                            <div>
+                        if (!skill) return null;
+
+                        return (
+                          <TableRow key={ps.id}>
+                            <TableCell>
                               <div className="font-medium">{skill.name}</div>
-                              {ps.notes && (
+                              {skill.description && (
                                 <div className="text-sm text-gray-500">
-                                  {ps.notes}
+                                  {skill.description}
                                 </div>
                               )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{skill.category}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={getImportanceBadgeVariant(ps.importance)}
-                            >
-                              {ps.importance}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={isFromSolution ? 'default' : 'secondary'}
-                            >
-                              {isFromSolution ? 'Solution' : 'Manual'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {!isFromSolution && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveSkill(ps.skillId)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{skill.category}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={getImportanceBadgeVariant(
+                                  ps.importance
+                                )}
                               >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-
-              {/* Add Skill Form */}
-              {showAddSkill && (
-                <Card className="mt-4">
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="skill-select">Skill</Label>
-                        <Select
-                          value={selectedSkillId}
-                          onValueChange={setSelectedSkillId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a skill" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableSkills.map(skill => (
-                              <SelectItem key={skill.id} value={skill.id}>
-                                {skill.name} ({skill.category})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="skill-importance">Importance</Label>
-                        <Select
-                          value={skillImportance}
-                          onValueChange={(value: 'low' | 'medium' | 'high') =>
-                            setSkillImportance(value)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <Label htmlFor="skill-notes">Notes (optional)</Label>
-                      <Textarea
-                        id="skill-notes"
-                        value={skillNotes}
-                        onChange={e => setSkillNotes(e.target.value)}
-                        placeholder="Additional notes about this skill requirement..."
-                        rows={2}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2 mt-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowAddSkill(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleAddSkill}
-                        disabled={!selectedSkillId}
-                      >
-                        Add Skill
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                                {ps.importance}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="default">
+                                {solution?.name || 'Solution'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>

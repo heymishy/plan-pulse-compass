@@ -13,6 +13,7 @@ import {
   TeamQuarterlyAllocation,
 } from '@/utils/teamAllocationCalculations';
 import { Progress } from '@/components/ui/progress';
+import ProjectTeamRecommendations from '@/components/skills/ProjectTeamRecommendations';
 
 interface AllocatedTeamsTabProps {
   project: Project;
@@ -186,6 +187,9 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
 
   return (
     <div data-testid="allocated-teams-tab" className="space-y-6">
+      <div className="mb-8">
+        <ProjectTeamRecommendations selectedProjectId={project.id} />
+      </div>
       <div>
         <h3 className="text-lg font-semibold mb-4">
           Team Allocations & Cost Analysis

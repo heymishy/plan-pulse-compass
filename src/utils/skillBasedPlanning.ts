@@ -5,6 +5,8 @@ import {
   ProjectSkill,
   Solution,
   ProjectSolution,
+  Person,
+  PersonSkill,
 } from '@/types';
 
 /**
@@ -132,6 +134,7 @@ export function getProjectRequiredSkills(
 
 /**
  * Calculate compatibility score between a team and project based on skills
+ * Supports skills defined at either team level (targetSkills) or person level (personSkills)
  */
 export function calculateTeamProjectCompatibility(
   team: Team,
@@ -139,7 +142,9 @@ export function calculateTeamProjectCompatibility(
   projectSkills: ProjectSkill[],
   solutions: Solution[],
   skills: Skill[],
-  projectSolutions: ProjectSolution[]
+  projectSolutions: ProjectSolution[],
+  people: Person[] = [],
+  personSkills: PersonSkill[] = []
 ): TeamProjectCompatibility {
   const requiredSkills = getProjectRequiredSkills(
     project,
@@ -148,7 +153,26 @@ export function calculateTeamProjectCompatibility(
     skills,
     projectSolutions
   );
-  const teamSkillIds = new Set(team.targetSkills || []);
+
+  // Get team skills from either team.targetSkills or person skills, prioritizing person skills
+  let teamSkillIds = new Set<string>();
+
+  // First check if team members have individual skills assigned
+  const teamMemberIds = new Set(
+    people.filter(p => p.teamId === team.id).map(p => p.id)
+  );
+  const personSkillsForTeam = personSkills.filter(ps =>
+    teamMemberIds.has(ps.personId)
+  );
+
+  if (personSkillsForTeam.length > 0) {
+    // Use person-level skills if they exist
+    teamSkillIds = new Set(personSkillsForTeam.map(ps => ps.skillId));
+  } else if (team.targetSkills && team.targetSkills.length > 0) {
+    // Fall back to team-level skills if no person skills exist
+    teamSkillIds = new Set(team.targetSkills);
+  }
+  // If neither exists, teamSkillIds remains empty
 
   const skillMatches: SkillMatch[] = [];
   const categoryDistribution: Record<
@@ -179,12 +203,11 @@ export function calculateTeamProjectCompatibility(
       categoryDistribution[skill.category].matched++;
     } else {
       // Check for category match (team has other skills in same category)
-      const teamHasCategorySkill = (team.targetSkills || []).some(
-        teamSkillId => {
-          const teamSkill = skills.find(s => s.id === teamSkillId);
-          return teamSkill?.category === skill.category;
-        }
-      );
+      const teamSkills = Array.from(teamSkillIds);
+      const teamHasCategorySkill = teamSkills.some(teamSkillId => {
+        const teamSkill = skills.find(s => s.id === teamSkillId);
+        return teamSkill?.category === skill.category;
+      });
 
       if (teamHasCategorySkill) {
         matchType = 'category';
@@ -291,7 +314,9 @@ export function analyzeProjectSkillGaps(
   projectSkills: ProjectSkill[],
   solutions: Solution[],
   skills: Skill[],
-  projectSolutions: ProjectSolution[]
+  projectSolutions: ProjectSolution[],
+  people: Person[],
+  personSkills: PersonSkill[]
 ): SkillGapAnalysis {
   const requiredSkills = getProjectRequiredSkills(
     project,
@@ -309,7 +334,9 @@ export function analyzeProjectSkillGaps(
       projectSkills,
       solutions,
       skills,
-      projectSolutions
+      projectSolutions,
+      people,
+      personSkills
     )
   );
 
@@ -411,11 +438,14 @@ export function analyzeProjectSkillGaps(
 
 /**
  * Filter teams based on required skills
+ * Supports skills defined at either team level or person level
  */
 export function filterTeamsBySkills(
   teams: Team[],
   requiredSkillIds: string[],
   skills: Skill[],
+  people: Person[] = [],
+  personSkills: PersonSkill[] = [],
   minCompatibilityScore = 0.3
 ): Array<{ team: Team; compatibilityScore: number; matchingSkills: string[] }> {
   if (requiredSkillIds.length === 0)
@@ -427,7 +457,22 @@ export function filterTeamsBySkills(
 
   return teams
     .map(team => {
-      const teamSkillIds = new Set(team.targetSkills || []);
+      // Get team skills from either person skills or team targetSkills
+      let teamSkillIds = new Set<string>();
+
+      const teamMemberIds = new Set(
+        people.filter(p => p.teamId === team.id).map(p => p.id)
+      );
+      const personSkillsForTeam = personSkills.filter(ps =>
+        teamMemberIds.has(ps.personId)
+      );
+
+      if (personSkillsForTeam.length > 0) {
+        teamSkillIds = new Set(personSkillsForTeam.map(ps => ps.skillId));
+      } else if (team.targetSkills && team.targetSkills.length > 0) {
+        teamSkillIds = new Set(team.targetSkills);
+      }
+
       const matchingSkillIds = requiredSkillIds.filter(skillId =>
         teamSkillIds.has(skillId)
       );
@@ -450,10 +495,13 @@ export function filterTeamsBySkills(
 
 /**
  * Get skill coverage analysis across all teams
+ * Supports skills defined at either team level or person level
  */
 export function analyzeSkillCoverage(
   teams: Team[],
-  skills: Skill[]
+  skills: Skill[],
+  people: Person[] = [],
+  personSkills: PersonSkill[] = []
 ): {
   totalSkills: number;
   coveredSkills: number;
@@ -484,7 +532,24 @@ export function analyzeSkillCoverage(
 } {
   const skillCoverage = skills.map(skill => {
     const teamsWithSkill = teams
-      .filter(team => (team.targetSkills || []).includes(skill.id))
+      .filter(team => {
+        // Check both person skills and team target skills
+        const teamMemberIds = new Set(
+          people.filter(p => p.teamId === team.id).map(p => p.id)
+        );
+        const personSkillsForTeam = personSkills.filter(ps =>
+          teamMemberIds.has(ps.personId)
+        );
+
+        if (personSkillsForTeam.length > 0) {
+          // Use person-level skills if they exist
+          return personSkillsForTeam.some(ps => ps.skillId === skill.id);
+        } else if (team.targetSkills && team.targetSkills.length > 0) {
+          // Fall back to team-level skills
+          return team.targetSkills.includes(skill.id);
+        }
+        return false;
+      })
       .map(team => ({ teamId: team.id, teamName: team.name }));
 
     const coverageCount = teamsWithSkill.length;
@@ -590,6 +655,8 @@ export function recommendTeamsForProject(
   solutions: Solution[],
   skills: Skill[],
   projectSolutions: ProjectSolution[],
+  people: Person[],
+  personSkills: PersonSkill[],
   maxRecommendations = 3
 ): Array<{
   team: Team;
@@ -604,7 +671,9 @@ export function recommendTeamsForProject(
       projectSkills,
       solutions,
       skills,
-      projectSolutions
+      projectSolutions,
+      people,
+      personSkills
     )
   );
 
