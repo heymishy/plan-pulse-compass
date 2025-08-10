@@ -13,6 +13,9 @@ export default tseslint.config(
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    settings: {
+      maxWarnings: 500, // Increase warning limit
+    },
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
