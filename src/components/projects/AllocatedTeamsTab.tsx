@@ -156,12 +156,18 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
       });
 
       // Calculate total run work and project percentages for this team
-      const totalRunWork = teamAllocations
+      // Use max instead of sum to prevent 600% display from 6x100% iterations
+      const runWorkPercentages = teamAllocations
         .filter(alloc => !alloc.epicId && !alloc.projectId)
-        .reduce((sum, alloc) => sum + alloc.percentage, 0);
-      const totalProject = teamAllocations
+        .map(alloc => alloc.percentage);
+      const totalRunWork =
+        runWorkPercentages.length > 0 ? Math.max(...runWorkPercentages) : 0;
+
+      const projectPercentages = teamAllocations
         .filter(alloc => alloc.epicId || alloc.projectId)
-        .reduce((sum, alloc) => sum + alloc.percentage, 0);
+        .map(alloc => alloc.percentage);
+      const totalProject =
+        projectPercentages.length > 0 ? Math.max(...projectPercentages) : 0;
 
       // Convert to final format with iteration breakdown
       const currentAllocations = Array.from(allocationsByProject.values()).map(
@@ -613,9 +619,14 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
                                             )
                                               ? formatCycleName(
                                                   iter.cycleName,
-                                                  true
+                                                  true,
+                                                  false
                                                 )
-                                              : formatCycleName(iter.cycleName)}
+                                              : formatCycleName(
+                                                  iter.cycleName,
+                                                  false,
+                                                  true
+                                                )}
                                           </div>
                                           <div
                                             className={

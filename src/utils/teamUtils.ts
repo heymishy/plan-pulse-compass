@@ -173,17 +173,29 @@ export const getDivisionName = (
  */
 export const formatCycleName = (
   cycleName: string,
-  isQuarterTotal = false
+  isQuarterTotal = false,
+  useSimpleIteration = false
 ): string => {
   // Match patterns like "FY25 Q4 - Iteration 1" or "2025 Q1 - Iteration 3"
   const match = cycleName.match(/^(.+?)\s*-\s*Iteration\s+(\d+)$/i);
   if (match) {
     const [, fyQuarter, iterationNum] = match;
+
+    // If we want simple iteration format (I1, I2, I3, etc.)
+    if (useSimpleIteration) {
+      return `I${iterationNum}`;
+    }
+
     return `${fyQuarter.trim()} ${iterationNum}`;
   }
 
-  // For quarter totals, add a colon to indicate it's a summary
+  // For quarter totals, show as "Q2 total:" instead of "Q2 2025:"
   if (isQuarterTotal) {
+    // Extract quarter info like "Q2" from "FY25 Q2" or "2025 Q2"
+    const quarterMatch = cycleName.match(/(Q\d+)/i);
+    if (quarterMatch) {
+      return `${quarterMatch[1]} total:`;
+    }
     return `${cycleName}:`;
   }
 
