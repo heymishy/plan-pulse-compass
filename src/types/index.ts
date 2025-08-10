@@ -421,7 +421,8 @@ export interface Solution {
   name: string;
   description: string;
   category: string;
-  skills: string[];
+  skills?: string[]; // Optional for backward compatibility
+  skillIds?: string[]; // Alternative property name used in some places
   createdDate: string;
 }
 

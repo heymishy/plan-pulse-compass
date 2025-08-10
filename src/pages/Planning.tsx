@@ -70,6 +70,7 @@ import {
 } from '@/components/planning/AllocationClipboard';
 import { applyFilters, getDefaultFilterPresets } from '@/utils/filterUtils';
 import { Allocation, Cycle } from '@/types';
+import FinancialYearMatrix from '@/components/planning/FinancialYearMatrix';
 
 const Planning = () => {
   const {
@@ -94,7 +95,12 @@ const Planning = () => {
   const [selectedFinancialYear, setSelectedFinancialYear] =
     useState<string>('all');
   const [viewMode, setViewMode] = useState<
-    'matrix' | 'bulk' | 'heatmap' | 'timeline' | 'dependencies'
+    | 'matrix'
+    | 'bulk'
+    | 'heatmap'
+    | 'timeline'
+    | 'dependencies'
+    | 'financial-year'
   >('matrix');
   const [activeTab, setActiveTab] = useState<
     'planning' | 'analysis' | 'advanced' | 'scenarios'
@@ -122,6 +128,8 @@ const Planning = () => {
   );
   const [selectedAllocation, setSelectedAllocation] =
     useState<Allocation | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [selectedEpicId, setSelectedEpicId] = useState<string>('');
   const [prefilledData, setPrefilledData] = useState<{
     teamId?: string;
     iterationNumber?: number;
@@ -1025,6 +1033,19 @@ const Planning = () => {
                         <div className="flex items-center border rounded-md">
                           <Button
                             variant={
+                              viewMode === 'financial-year'
+                                ? 'default'
+                                : 'ghost'
+                            }
+                            size="sm"
+                            onClick={() => setViewMode('financial-year')}
+                            className="rounded-r-none border-r"
+                          >
+                            <Calendar className="h-4 w-4 mr-1" />
+                            Financial Year
+                          </Button>
+                          <Button
+                            variant={
                               viewMode === 'matrix' ? 'default' : 'ghost'
                             }
                             size="sm"
@@ -1249,6 +1270,41 @@ const Planning = () => {
               {selectedCycleId && iterations.length > 0 && (
                 <div className="w-full overflow-x-auto">
                   <div className="min-w-full">
+                    {viewMode === 'financial-year' && (
+                      <div className="w-full max-w-none">
+                        <FinancialYearMatrix
+                          teams={filteredData.teams}
+                          cycles={cycles}
+                          allocations={allocations}
+                          projects={projects}
+                          epics={epics}
+                          runWorkCategories={runWorkCategories}
+                          selectedFinancialYear={selectedFinancialYear}
+                          financialYearOptions={financialYearOptions}
+                          onCreateAllocation={(teamId, cycleId, projectId) => {
+                            // Create a project-level allocation (no epic)
+                            setSelectedAllocation(null);
+                            setSelectedTeamId(teamId);
+                            setSelectedCycleId(cycleId);
+                            setSelectedProjectId(projectId || '');
+                            setSelectedEpicId('');
+                            setIsAllocationDialogOpen(true);
+                          }}
+                          onEditAllocation={allocation => {
+                            setSelectedAllocation(allocation);
+                            setSelectedTeamId(allocation.teamId);
+                            setSelectedCycleId(allocation.cycleId);
+                            const epic = epics.find(
+                              e => e.id === allocation.epicId
+                            );
+                            setSelectedProjectId(epic?.projectId || '');
+                            setSelectedEpicId(allocation.epicId || '');
+                            setIsAllocationDialogOpen(true);
+                          }}
+                        />
+                      </div>
+                    )}
+
                     {viewMode === 'matrix' && (
                       <div className="w-full max-w-none">
                         <PlanningMatrix

@@ -101,8 +101,10 @@ export function getProjectRequiredSkills(
 
   relevantProjectSolutions.forEach(projectSolution => {
     const solution = solutions.find(s => s.id === projectSolution.solutionId);
-    if (solution?.skills) {
-      solution.skills.forEach(skillId => {
+    // Fix: Check for both 'skills' and 'skillIds' properties for backward compatibility
+    const solutionSkills = solution?.skills || solution?.skillIds || [];
+    if (solutionSkills && solutionSkills.length > 0) {
+      solutionSkills.forEach(skillId => {
         requiredSkillIds.add(skillId);
         if (!skillSources[skillId]) {
           skillSources[skillId] = 'solution';

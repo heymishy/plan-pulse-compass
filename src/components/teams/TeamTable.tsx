@@ -34,6 +34,7 @@ import {
   calculateRoleCompositionPercentages,
   getCleanProductOwnerName,
 } from '@/utils/teamUtils';
+import RoleComposition from './RoleComposition';
 
 interface TeamTableProps {
   teams: Team[];
@@ -113,6 +114,27 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
             Delete Selected
           </Button>
         )}
+      </div>
+
+      {/* Role Composition Legend */}
+      <div className="flex items-center gap-6 text-xs border-b border-gray-200 pb-2">
+        <span className="font-medium text-gray-700">Team Role Colors:</span>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-2 bg-blue-500 rounded-full"></div>
+          <span>Primary</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-2 bg-green-500 rounded-full"></div>
+          <span>Secondary</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-2 bg-purple-500 rounded-full"></div>
+          <span>Support</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-2 bg-orange-500 rounded-full"></div>
+          <span>Other</span>
+        </div>
       </div>
 
       {/* Teams Table */}
@@ -216,33 +238,7 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-2">
-                          {/* SE/QE percentages */}
-                          <div className="space-y-1">
-                            <div className="text-xs text-gray-600">
-                              {roleComposition.sePercentage}% SE
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {roleComposition.qePercentage}% QE
-                            </div>
-                          </div>
-
-                          {/* Visual role composition indicator */}
-                          <div className="flex space-x-1">
-                            {roleComposition.roleBreakdown
-                              .slice(0, 4)
-                              .map((role, index) => (
-                                <div
-                                  key={role.roleName}
-                                  className={`h-2 rounded-full ${role.color}`}
-                                  style={{
-                                    width: `${Math.max(role.percentage, 5)}%`,
-                                  }}
-                                  title={`${role.roleName}: ${role.count} (${role.percentage}%)`}
-                                />
-                              ))}
-                          </div>
-                        </div>
+                        <RoleComposition team={team} size="sm" />
                       </TableCell>
                       <TableCell>
                         <Button
