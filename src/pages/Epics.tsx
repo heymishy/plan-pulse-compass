@@ -448,7 +448,7 @@ const Epics = () => {
           isOpen={isEpicDialogOpen}
           onClose={() => setIsEpicDialogOpen(false)}
           epic={selectedEpic}
-          projectId={selectedEpic?.projectId || ''}
+          projectId={selectedEpic?.projectId} // Only pass projectId if editing existing epic
         />
 
         <ReleaseDialog

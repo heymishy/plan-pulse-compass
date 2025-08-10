@@ -33,6 +33,7 @@ import {
   calculateEmploymentTypePercentages,
   calculateRoleCompositionPercentages,
   getCleanProductOwnerName,
+  getRoleCompositionLegend,
 } from '@/utils/teamUtils';
 import RoleComposition from './RoleComposition';
 
@@ -46,6 +47,12 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
   const { toast } = useToast();
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Get a sample team for legend (first team with members)
+  const sampleTeam = teams.find(team => {
+    const members = people.filter(p => p.teamId === team.id && p.isActive);
+    return members.length > 0;
+  });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -117,25 +124,17 @@ const TeamTable: React.FC<TeamTableProps> = ({ teams, onEditTeam }) => {
       </div>
 
       {/* Role Composition Legend */}
-      <div className="flex items-center gap-6 text-xs border-b border-gray-200 pb-2">
-        <span className="font-medium text-gray-700">Team Role Colors:</span>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-2 bg-blue-500 rounded-full"></div>
-          <span>Primary</span>
+      {sampleTeam && (
+        <div className="flex items-center gap-6 text-xs border-b border-gray-200 pb-2">
+          <span className="font-medium text-gray-700">Role Types:</span>
+          {getRoleCompositionLegend(sampleTeam.id, people, roles).map(role => (
+            <div key={role.roleName} className="flex items-center gap-1">
+              <div className={`w-3 h-2 rounded-full ${role.color}`}></div>
+              <span>{role.roleName}</span>
+            </div>
+          ))}
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-2 bg-green-500 rounded-full"></div>
-          <span>Secondary</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-2 bg-purple-500 rounded-full"></div>
-          <span>Support</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-2 bg-orange-500 rounded-full"></div>
-          <span>Other</span>
-        </div>
-      </div>
+      )}
 
       {/* Teams Table */}
       <Card>

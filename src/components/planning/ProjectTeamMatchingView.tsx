@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -31,11 +30,8 @@ import {
   Users,
   Search,
   Target,
-  Zap,
-  Brain,
-  Clock,
-  TrendingUp,
-  TrendingDown,
+  ArrowUpDown,
+  Building2,
   Minus,
   Info,
   AlertCircle,
@@ -61,18 +57,20 @@ interface ProjectTeamMatchingViewProps {
   cycles: any[];
 }
 
-interface MatchingMatrix {
+interface MatrixCell {
   projectId: string;
-  projectName: string;
-  priority: string;
-  requiredSkills: number;
-  teamMatches: Array<{
-    teamId: string;
-    teamName: string;
-    compatibility: TeamProjectCompatibility;
-    capacityStatus: 'available' | 'partial' | 'overloaded';
-    capacityPercentage: number;
-  }>;
+  teamId: string;
+  matchType: 'excellent' | 'good' | 'fair' | 'poor' | 'no-capacity';
+  compatibilityScore: number;
+  capacityStatus: 'available' | 'partial' | 'overloaded';
+  skillsMatched: number;
+  skillsRequired: number;
+  reasoning: string[];
+}
+
+interface DivisionGroup {
+  division: string;
+  teams: Team[];
 }
 
 const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
@@ -87,11 +85,29 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   allocations,
   cycles,
 }) => {
-  // Filter states
+  // Filter and sort states
   const [projectFilter, setProjectFilter] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('all');
-  const [matchFilter, setMatchFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('compatibility');
+  const [divisionFilter, setDivisionFilter] = useState('all');
+  const [matchTypeFilter, setMatchTypeFilter] = useState('all');
+  const [projectSortBy, setProjectSortBy] = useState('name');
+  const [teamSortBy, setTeamSortBy] = useState('division');
+
+  // Group teams by division
+  const divisionGroups = useMemo((): DivisionGroup[] => {
+    const divisionsMap = new Map<string, Team[]>();
+
+    teams.forEach(team => {
+      const division = team.division || 'Unassigned';
+      if (!divisionsMap.has(division)) {
+        divisionsMap.set(division, []);
+      }
+      divisionsMap.get(division)!.push(team);
+    });
+
+    return Array.from(divisionsMap.entries())
+      .map(([division, teams]) => ({ division, teams }))
+      .sort((a, b) => a.division.localeCompare(b.division));
+  }, [teams]);
 
   // Calculate team capacity utilization
   const teamCapacityMap = useMemo(() => {
@@ -119,7 +135,6 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
           currentQuarterCycleIds.includes(alloc.cycleId)
       );
 
-      // Calculate maximum allocation percentage for this team
       const totalPercentage = teamAllocations.reduce(
         (sum: number, alloc: any) => sum + alloc.percentage,
         0
@@ -131,31 +146,26 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     return capacityMap;
   }, [teams, allocations, cycles]);
 
-  // Create matching matrix
-  const matchingMatrix = useMemo((): MatchingMatrix[] => {
-    return projects.map(project => {
-      const requiredSkillsInfo = getProjectRequiredSkills(
-        project,
-        projectSkills,
-        solutions,
-        skills,
-        projectSolutions
-      );
+  // Create matrix cells for all project-team combinations
+  const matrixData = useMemo((): MatrixCell[] => {
+    const cells: MatrixCell[] = [];
 
-      const teamMatches = teams.map(team => {
+    projects.forEach(project => {
+      teams.forEach(team => {
         const compatibility = calculateTeamProjectCompatibility(
           team,
           project,
-          skills,
-          people,
-          personSkills,
           projectSkills,
           solutions,
-          projectSolutions
+          skills,
+          projectSolutions,
+          people,
+          personSkills
         );
 
         const capacityPercentage = teamCapacityMap.get(team.id) || 0;
         let capacityStatus: 'available' | 'partial' | 'overloaded';
+        let matchType: 'excellent' | 'good' | 'fair' | 'poor' | 'no-capacity';
 
         if (capacityPercentage <= 60) {
           capacityStatus = 'available';
@@ -165,27 +175,34 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
           capacityStatus = 'overloaded';
         }
 
-        return {
-          teamId: team.id,
-          teamName: team.name,
-          compatibility,
-          capacityStatus,
-          capacityPercentage,
-        };
-      });
+        // Determine match type based on compatibility and capacity
+        if (
+          capacityStatus === 'overloaded' &&
+          compatibility.compatibilityScore < 0.7
+        ) {
+          matchType = 'no-capacity';
+        } else {
+          matchType = compatibility.recommendation as
+            | 'excellent'
+            | 'good'
+            | 'fair'
+            | 'poor';
+        }
 
-      return {
-        projectId: project.id,
-        projectName: project.name,
-        priority: project.priority || 'medium',
-        requiredSkills: requiredSkillsInfo.length,
-        teamMatches: teamMatches.sort(
-          (a, b) =>
-            b.compatibility.compatibilityScore -
-            a.compatibility.compatibilityScore
-        ),
-      };
+        cells.push({
+          projectId: project.id,
+          teamId: team.id,
+          matchType,
+          compatibilityScore: compatibility.compatibilityScore,
+          capacityStatus,
+          skillsMatched: compatibility.skillsMatched,
+          skillsRequired: compatibility.skillsRequired,
+          reasoning: compatibility.reasoning,
+        });
+      });
     });
+
+    return cells;
   }, [
     projects,
     teams,
@@ -198,99 +215,100 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     teamCapacityMap,
   ]);
 
-  // Apply filters and sorting
-  const filteredMatrix = useMemo(() => {
-    const filtered = matchingMatrix.filter(item => {
-      // Project name filter
-      if (
-        projectFilter &&
-        !item.projectName.toLowerCase().includes(projectFilter.toLowerCase())
-      ) {
-        return false;
-      }
+  // Apply filters and get sorted projects and teams
+  const filteredProjects = useMemo(() => {
+    let filtered = projects;
 
-      // Priority filter
-      if (priorityFilter !== 'all' && item.priority !== priorityFilter) {
-        return false;
-      }
-
-      // Match quality filter
-      if (matchFilter !== 'all') {
-        const bestMatch = item.teamMatches[0]?.compatibility.recommendation;
-        if (matchFilter === 'excellent' && bestMatch !== 'excellent')
-          return false;
-        if (
-          matchFilter === 'good' &&
-          !['excellent', 'good'].includes(bestMatch)
-        )
-          return false;
-        if (matchFilter === 'poor' && bestMatch !== 'poor') return false;
-      }
-
-      return true;
-    });
-
-    // Apply sorting
-    if (sortBy === 'compatibility') {
-      filtered.sort((a, b) => {
-        const aScore = a.teamMatches[0]?.compatibility.compatibilityScore || 0;
-        const bScore = b.teamMatches[0]?.compatibility.compatibilityScore || 0;
-        return bScore - aScore;
-      });
-    } else if (sortBy === 'priority') {
-      const priorityOrder = { high: 3, medium: 2, low: 1 };
-      filtered.sort(
-        (a, b) =>
-          (priorityOrder as any)[b.priority] -
-          (priorityOrder as any)[a.priority]
+    // Project name filter
+    if (projectFilter) {
+      filtered = filtered.filter(project =>
+        project.name.toLowerCase().includes(projectFilter.toLowerCase())
       );
-    } else if (sortBy === 'name') {
-      filtered.sort((a, b) => a.projectName.localeCompare(b.projectName));
+    }
+
+    // Apply project sorting
+    if (projectSortBy === 'name') {
+      filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+    } else if (projectSortBy === 'priority') {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      filtered = [...filtered].sort(
+        (a, b) =>
+          (priorityOrder as any)[b.priority || 'medium'] -
+          (priorityOrder as any)[a.priority || 'medium']
+      );
     }
 
     return filtered;
-  }, [matchingMatrix, projectFilter, priorityFilter, matchFilter, sortBy]);
+  }, [projects, projectFilter, projectSortBy]);
 
-  const getCompatibilityIcon = (recommendation: string) => {
-    switch (recommendation) {
+  const filteredDivisionGroups = useMemo(() => {
+    let filtered = divisionGroups;
+
+    // Division filter
+    if (divisionFilter !== 'all') {
+      filtered = filtered.filter(group => group.division === divisionFilter);
+    }
+
+    // Apply team sorting within divisions
+    filtered = filtered.map(group => ({
+      ...group,
+      teams: [...group.teams].sort((a, b) => {
+        if (teamSortBy === 'name') {
+          return a.name.localeCompare(b.name);
+        } else if (teamSortBy === 'capacity') {
+          const aCapacity = teamCapacityMap.get(a.id) || 0;
+          const bCapacity = teamCapacityMap.get(b.id) || 0;
+          return aCapacity - bCapacity;
+        }
+        return 0;
+      }),
+    }));
+
+    return filtered;
+  }, [divisionGroups, divisionFilter, teamSortBy, teamCapacityMap]);
+
+  // Get cell data for project-team combination
+  const getCellData = (
+    projectId: string,
+    teamId: string
+  ): MatrixCell | null => {
+    return (
+      matrixData.find(
+        cell => cell.projectId === projectId && cell.teamId === teamId
+      ) || null
+    );
+  };
+
+  // Get cell styling based on match type
+  const getCellStyling = (
+    matchType: MatrixCell['matchType'],
+    capacityStatus: string
+  ) => {
+    const baseClasses =
+      'w-12 h-8 border border-gray-200 cursor-pointer transition-all hover:scale-110 hover:z-10 relative';
+
+    switch (matchType) {
       case 'excellent':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return `${baseClasses} bg-green-500 hover:bg-green-600`;
       case 'good':
-        return <TrendingUp className="h-4 w-4 text-blue-600" />;
+        return `${baseClasses} bg-blue-500 hover:bg-blue-600`;
       case 'fair':
-        return <Minus className="h-4 w-4 text-yellow-600" />;
+        return `${baseClasses} bg-yellow-500 hover:bg-yellow-600`;
       case 'poor':
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return `${baseClasses} bg-red-300 hover:bg-red-400`;
+      case 'no-capacity':
+        return `${baseClasses} bg-red-700 hover:bg-red-800 opacity-80`;
       default:
-        return <AlertCircle className="h-4 w-4 text-gray-600" />;
+        return `${baseClasses} bg-gray-200 hover:bg-gray-300`;
     }
   };
 
-  const getCapacityIcon = (status: string) => {
-    switch (status) {
-      case 'available':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'partial':
-        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
-      case 'overloaded':
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
-  const getPriorityBadgeVariant = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'destructive';
-      case 'medium':
-        return 'default';
-      case 'low':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
+  // Get unique divisions for filter
+  const uniqueDivisions = useMemo(() => {
+    return Array.from(
+      new Set(teams.map(team => team.division || 'Unassigned'))
+    ).sort();
+  }, [teams]);
 
   return (
     <div className="space-y-6">
@@ -299,12 +317,12 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
-            Project-Team Skills Matching
+            Project-Team Skills Matrix
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          {/* Controls */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -315,201 +333,248 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
               />
             </div>
 
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <Select value={divisionFilter} onValueChange={setDivisionFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Priority" />
+                <SelectValue placeholder="Division" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="high">High Priority</SelectItem>
-                <SelectItem value="medium">Medium Priority</SelectItem>
-                <SelectItem value="low">Low Priority</SelectItem>
+                <SelectItem value="all">All Divisions</SelectItem>
+                {uniqueDivisions.map(division => (
+                  <SelectItem key={division} value={division}>
+                    {division}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Select value={matchFilter} onValueChange={setMatchFilter}>
+            <Select value={projectSortBy} onValueChange={setProjectSortBy}>
               <SelectTrigger>
-                <SelectValue placeholder="Match Quality" />
+                <SelectValue placeholder="Sort Projects" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Matches</SelectItem>
-                <SelectItem value="excellent">Excellent Matches</SelectItem>
-                <SelectItem value="good">Good Matches</SelectItem>
-                <SelectItem value="poor">Poor Matches</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="compatibility">Best Match</SelectItem>
+                <SelectItem value="name">
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown className="h-3 w-3" />
+                    Name
+                  </div>
+                </SelectItem>
                 <SelectItem value="priority">Priority</SelectItem>
-                <SelectItem value="name">Project Name</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={teamSortBy} onValueChange={setTeamSortBy}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sort Teams" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="division">Division</SelectItem>
+                <SelectItem value="name">
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown className="h-3 w-3" />
+                    Name
+                  </div>
+                </SelectItem>
+                <SelectItem value="capacity">Capacity</SelectItem>
               </SelectContent>
             </Select>
 
             <div className="text-sm text-gray-600 flex items-center gap-2">
               <Info className="h-4 w-4" />
-              {filteredMatrix.length} projects
+              {filteredProjects.length} projects
+            </div>
+
+            <div className="text-sm text-gray-600 flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              {filteredDivisionGroups.reduce(
+                (sum, group) => sum + group.teams.length,
+                0
+              )}{' '}
+              teams
             </div>
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg mb-6">
-            <div className="text-sm font-medium">Skill Match:</div>
-            <div className="flex items-center gap-1 text-xs">
-              <CheckCircle className="h-3 w-3 text-green-600" />
-              Excellent (90%+)
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              <TrendingUp className="h-3 w-3 text-blue-600" />
-              Good (70-89%)
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              <Minus className="h-3 w-3 text-yellow-600" />
-              Fair (50-69%)
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              <XCircle className="h-3 w-3 text-red-600" />
-              Poor (&lt;50%)
-            </div>
-
-            <div className="border-l pl-4 ml-4 text-sm font-medium">
-              Capacity:
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              <CheckCircle className="h-3 w-3 text-green-600" />
-              Available (&lt;60%)
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              <AlertTriangle className="h-3 w-3 text-yellow-600" />
-              Partial (60-85%)
-            </div>
-            <div className="flex items-center gap-1 text-xs">
-              <XCircle className="h-3 w-3 text-red-600" />
-              Overloaded (&gt;85%)
+          <div className="flex flex-wrap gap-6 p-4 bg-gray-50 rounded-lg mb-6">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium">Skill Match:</span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-xs">Excellent (90%+)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                  <span className="text-xs">Good (70-89%)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <span className="text-xs">Fair (50-69%)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-red-300 rounded"></div>
+                  <span className="text-xs">Poor (&lt;50%)</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-red-700 rounded opacity-80"></div>
+                  <span className="text-xs">No Capacity</span>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Projects List */}
-      <div className="space-y-4">
-        {filteredMatrix.map(project => (
-          <Card key={project.projectId} className="overflow-hidden">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <CardTitle className="text-lg">
-                    {project.projectName}
-                  </CardTitle>
-                  <Badge variant={getPriorityBadgeVariant(project.priority)}>
-                    {project.priority}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    <Brain className="h-3 w-3 mr-1" />
-                    {project.requiredSkills} skills
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* Team matches */}
-              <div className="space-y-3">
-                {project.teamMatches.slice(0, 5).map(teamMatch => (
-                  <TooltipProvider key={teamMatch.teamId}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              {getCompatibilityIcon(
-                                teamMatch.compatibility.recommendation
-                              )}
-                              <span className="font-medium">
-                                {teamMatch.teamName}
-                              </span>
-                            </div>
-                            <Progress
-                              value={
-                                teamMatch.compatibility.compatibilityScore * 100
-                              }
-                              className="w-24"
-                            />
-                            <span className="text-sm text-gray-600">
-                              {Math.round(
-                                teamMatch.compatibility.compatibilityScore * 100
-                              )}
-                              %
-                            </span>
-                          </div>
+      {/* Matrix Grid */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-48 sticky left-0 bg-white z-20 border-r">
+                    Teams / Projects
+                  </TableHead>
+                  {filteredProjects.map(project => (
+                    <TableHead
+                      key={project.id}
+                      className="text-center min-w-16 px-1 h-32"
+                    >
+                      <div className="h-full flex flex-col items-center justify-end pb-2">
+                        <div
+                          className="transform -rotate-45 origin-bottom whitespace-nowrap text-xs font-medium mb-2"
+                          style={{ transformOrigin: 'center bottom' }}
+                        >
+                          {project.name.length > 15
+                            ? `${project.name.substring(0, 15)}...`
+                            : project.name}
+                        </div>
+                        {project.priority && (
+                          <Badge
+                            variant={
+                              project.priority === 'high'
+                                ? 'destructive'
+                                : project.priority === 'medium'
+                                  ? 'default'
+                                  : 'secondary'
+                            }
+                            className="text-xs"
+                          >
+                            {project.priority.charAt(0).toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDivisionGroups.map(divisionGroup => (
+                  <React.Fragment key={divisionGroup.division}>
+                    {/* Division Header */}
+                    <TableRow className="bg-gray-100">
+                      <TableCell
+                        colSpan={filteredProjects.length + 1}
+                        className="font-semibold text-gray-700 sticky left-0 z-10"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4" />
+                          {divisionGroup.division} ({divisionGroup.teams.length}{' '}
+                          teams)
+                        </div>
+                      </TableCell>
+                    </TableRow>
 
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                              {getCapacityIcon(teamMatch.capacityStatus)}
-                              <span className="text-sm text-gray-600">
-                                {teamMatch.capacityPercentage}% capacity
-                              </span>
-                            </div>
+                    {/* Team Rows */}
+                    {divisionGroup.teams.map(team => (
+                      <TableRow key={team.id} className="hover:bg-gray-50">
+                        <TableCell className="sticky left-0 bg-white z-10 border-r font-medium">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">{team.name}</span>
                             <div className="text-xs text-gray-500">
-                              {teamMatch.compatibility.skillsMatched}/
-                              {teamMatch.compatibility.skillsRequired} skills
+                              {teamCapacityMap.get(team.id) || 0}%
                             </div>
                           </div>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm">
-                        <div className="space-y-2">
-                          <div className="font-medium">
-                            {teamMatch.teamName} - {project.projectName}
-                          </div>
-                          <div className="text-sm">
-                            <div>
-                              Skills Match:{' '}
-                              {teamMatch.compatibility.skillsMatched} of{' '}
-                              {teamMatch.compatibility.skillsRequired}
-                            </div>
-                            <div>
-                              Compatibility:{' '}
-                              {Math.round(
-                                teamMatch.compatibility.compatibilityScore * 100
+                        </TableCell>
+
+                        {filteredProjects.map(project => {
+                          const cellData = getCellData(project.id, team.id);
+
+                          return (
+                            <TableCell
+                              key={`${team.id}-${project.id}`}
+                              className="p-1 text-center"
+                            >
+                              {cellData ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div
+                                        className={getCellStyling(
+                                          cellData.matchType,
+                                          cellData.capacityStatus
+                                        )}
+                                      >
+                                        <div className="text-xs text-white font-semibold leading-none pt-1">
+                                          {Math.round(
+                                            cellData.compatibilityScore * 100
+                                          )}
+                                        </div>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-sm">
+                                      <div className="space-y-2">
+                                        <div className="font-medium">
+                                          {team.name} × {project.name}
+                                        </div>
+                                        <div className="text-sm">
+                                          <div>Match: {cellData.matchType}</div>
+                                          <div>
+                                            Skills: {cellData.skillsMatched}/
+                                            {cellData.skillsRequired}
+                                          </div>
+                                          <div>
+                                            Compatibility:{' '}
+                                            {Math.round(
+                                              cellData.compatibilityScore * 100
+                                            )}
+                                            %
+                                          </div>
+                                          <div>
+                                            Capacity:{' '}
+                                            {teamCapacityMap.get(team.id) || 0}%
+                                            ({cellData.capacityStatus})
+                                          </div>
+                                          <div className="mt-2 text-xs text-gray-600">
+                                            {cellData.reasoning.join('. ')}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <div className="w-12 h-8 bg-gray-100"></div>
                               )}
-                              %
-                            </div>
-                            <div>
-                              Current Capacity: {teamMatch.capacityPercentage}%
-                            </div>
-                            <div className="mt-2 text-xs text-gray-600">
-                              {teamMatch.compatibility.reasoning.join('. ')}
-                            </div>
-                          </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
                 ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
-                {project.teamMatches.length > 5 && (
-                  <div className="text-center py-2">
-                    <Button variant="ghost" size="sm">
-                      View {project.teamMatches.length - 5} more teams
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredMatrix.length === 0 && (
+      {(filteredProjects.length === 0 ||
+        filteredDivisionGroups.length === 0) && (
         <Card>
           <CardContent className="py-8 text-center">
             <div className="text-gray-500">
               <Search className="h-8 w-8 mx-auto mb-2" />
-              No projects match your current filters.
+              No data matches your current filters.
             </div>
           </CardContent>
         </Card>

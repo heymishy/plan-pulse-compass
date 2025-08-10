@@ -26,7 +26,7 @@ interface EpicDialogProps {
   isOpen: boolean;
   onClose: () => void;
   epic: Epic | null;
-  projectId: string;
+  projectId?: string; // Optional - if provided, project field is disabled/hidden
 }
 
 const EpicDialog: React.FC<EpicDialogProps> = ({
@@ -35,7 +35,7 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
   epic,
   projectId,
 }) => {
-  const { epics, setEpics, teams, releases } = useApp();
+  const { epics, setEpics, teams, releases, projects } = useApp();
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -53,6 +53,7 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
     deploymentDate: '',
     isToggleEnabled: false,
     toggleEnabledDate: '',
+    projectId: projectId || '', // Add project selection to form data
   });
 
   useEffect(() => {
@@ -72,6 +73,7 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
         deploymentDate: epic.deploymentDate || '',
         isToggleEnabled: epic.isToggleEnabled || false,
         toggleEnabledDate: epic.toggleEnabledDate || '',
+        projectId: epic.projectId, // Include project in edit mode
       });
     } else {
       setFormData({
@@ -89,9 +91,10 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
         deploymentDate: '',
         isToggleEnabled: false,
         toggleEnabledDate: '',
+        projectId: projectId || '', // Use provided projectId or empty for new epics
       });
     }
-  }, [epic, isOpen]);
+  }, [epic, isOpen, projectId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,12 +108,21 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
       return;
     }
 
+    if (!formData.projectId) {
+      toast({
+        title: 'Error',
+        description: 'Project selection is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const newEpic: Epic = {
       id: epic?.id || `epic-${Date.now()}`,
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
       status: formData.status,
-      projectId,
+      projectId: formData.projectId,
       estimatedEffort: formData.estimatedEffort
         ? parseInt(formData.estimatedEffort)
         : undefined,
@@ -170,6 +182,45 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
                 required
               />
             </div>
+
+            {/* Project Selection - only show if not locked to specific project */}
+            {!projectId && (
+              <div className="md:col-span-2">
+                <Label>Project *</Label>
+                <Select
+                  value={formData.projectId}
+                  onValueChange={(value: string) =>
+                    setFormData(prev => ({ ...prev, projectId: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects
+                      .filter(
+                        p => p.status === 'active' || p.status === 'planning'
+                      )
+                      .map(project => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Show selected project name if locked */}
+            {projectId && (
+              <div className="md:col-span-2">
+                <Label>Project</Label>
+                <div className="p-2 bg-gray-50 rounded border">
+                  {projects.find(p => p.id === projectId)?.name ||
+                    'Unknown Project'}
+                </div>
+              </div>
+            )}
 
             <div className="md:col-span-2">
               <Label htmlFor="description">Description</Label>
