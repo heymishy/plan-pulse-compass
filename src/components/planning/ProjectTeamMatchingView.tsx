@@ -231,11 +231,15 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
       filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
     } else if (projectSortBy === 'priority') {
       const priorityOrder = { high: 3, medium: 2, low: 1 };
-      filtered = [...filtered].sort(
-        (a, b) =>
-          (priorityOrder as any)[b.priority || 'medium'] -
-          (priorityOrder as any)[a.priority || 'medium']
-      );
+      filtered = [...filtered].sort((a, b) => {
+        const aPriority =
+          typeof a.priority === 'string' ? a.priority : 'medium';
+        const bPriority =
+          typeof b.priority === 'string' ? b.priority : 'medium';
+        return (
+          (priorityOrder as any)[bPriority] - (priorityOrder as any)[aPriority]
+        );
+      });
     }
 
     return filtered;
@@ -459,7 +463,11 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
                             }
                             className="text-xs"
                           >
-                            {project.priority.charAt(0).toUpperCase()}
+                            {typeof project.priority === 'string'
+                              ? project.priority.charAt(0).toUpperCase()
+                              : String(project.priority)
+                                  .charAt(0)
+                                  .toUpperCase()}
                           </Badge>
                         )}
                       </div>
