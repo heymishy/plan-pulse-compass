@@ -38,8 +38,6 @@ import {
   XCircle,
   ChevronDown,
   ChevronRight,
-  Expand,
-  Minimize,
 } from 'lucide-react';
 import { Project, Team, Skill, Solution } from '@/types';
 import {
@@ -483,26 +481,6 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     });
   };
 
-  const expandAllProjects = () => {
-    setCollapsedProjects(new Set());
-    setShowOnlyExpandedProjects(false);
-  };
-
-  const collapseAllProjects = () => {
-    setCollapsedProjects(new Set(filteredProjects.map(p => p.id)));
-    setShowOnlyExpandedProjects(true);
-  };
-
-  const expandAllDivisions = () => {
-    setCollapsedDivisions(new Set());
-    setShowOnlyExpandedDivisions(false);
-  };
-
-  const collapseAllDivisions = () => {
-    setCollapsedDivisions(new Set(filteredDivisionGroups.map(d => d.division)));
-    setShowOnlyExpandedDivisions(true);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -583,57 +561,6 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
                 0
               )}{' '}
               teams
-            </div>
-          </div>
-
-          {/* Expand/Collapse Controls */}
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">
-                Projects:
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={expandAllProjects}
-                className="flex items-center gap-1"
-              >
-                <Expand className="h-3 w-3" />
-                Expand All
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={collapseAllProjects}
-                className="flex items-center gap-1"
-              >
-                <Minimize className="h-3 w-3" />
-                Collapse All
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">
-                Divisions:
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={expandAllDivisions}
-                className="flex items-center gap-1"
-              >
-                <Expand className="h-3 w-3" />
-                Expand All
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={collapseAllDivisions}
-                className="flex items-center gap-1"
-              >
-                <Minimize className="h-3 w-3" />
-                Collapse All
-              </Button>
             </div>
           </div>
 
