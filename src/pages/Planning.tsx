@@ -173,11 +173,6 @@ const Planning = () => {
         endDate,
       };
 
-      // Debug logging for current year
-      if (year === currentYear) {
-        console.log('Planning: Generated current FY option:', fyOption);
-      }
-
       years.push(fyOption);
     }
 
@@ -223,10 +218,6 @@ const Planning = () => {
         // Set current FY if it has quarters
         if (currentFYQuarters.length > 0) {
           setSelectedFinancialYear(currentFY);
-          console.log(
-            'Planning: Auto-selected current financial year:',
-            currentFY
-          );
         }
       }
     }
@@ -241,10 +232,6 @@ const Planning = () => {
   const filterQuartersByFinancialYear = (quarters: typeof cycles) => {
     // If no financial year is selected or "all" is selected, show all quarters
     if (!selectedFinancialYear || selectedFinancialYear === 'all') {
-      console.log(
-        'Planning: No financial year selected or "all" selected, showing all quarters:',
-        quarters.length
-      );
       return quarters;
     }
 
@@ -275,29 +262,9 @@ const Planning = () => {
         (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
         (quarterStart <= fyStart && quarterEnd >= fyEnd);
 
-      // Debug logging for the first few quarters
-      if (quarters.indexOf(quarter) < 3) {
-        console.log(
-          `Planning: Debug quarter "${quarter.name}":`,
-          `Quarter: ${quarter.startDate} to ${quarter.endDate}`,
-          `FY: ${selectedFY.startDate} to ${selectedFY.endDate}`,
-          `Overlaps: ${overlaps}`
-        );
-      }
-
       return overlaps;
     });
 
-    console.log(
-      'Planning: Filtering quarters for FY:',
-      selectedFY.label,
-      'Input quarters:',
-      quarters.length,
-      'Filtered quarters:',
-      filtered.length,
-      'Quarter names:',
-      filtered.map(q => q.name)
-    );
     return filtered;
   };
 
@@ -454,9 +421,6 @@ const Planning = () => {
       setIsWaitingForIterations(true);
       const timer = setTimeout(
         () => {
-          console.log(
-            `Planning: Retrying iteration loading (attempt ${iterationRetryCount + 1})`
-          );
           setIterationRetryCount(prev => prev + 1);
           setIsWaitingForIterations(false);
         },
