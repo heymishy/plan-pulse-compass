@@ -675,6 +675,7 @@ const FYProjectPlanning: React.FC = () => {
             personSkills={personSkills}
             allocations={allocations}
             cycles={cycles}
+            divisions={divisions}
           />
         </TabsContent>
 

@@ -47,6 +47,7 @@ import {
   getProjectRequiredSkills,
   TeamProjectCompatibility,
 } from '@/utils/skillBasedPlanning';
+import { getDivisionName } from '@/utils/teamUtils';
 
 interface ProjectTeamMatchingViewProps {
   projects: Project[];
@@ -59,6 +60,7 @@ interface ProjectTeamMatchingViewProps {
   personSkills: any[];
   allocations: any[];
   cycles: any[];
+  divisions: any[];
 }
 
 interface MatrixCell {
@@ -88,6 +90,7 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   personSkills,
   allocations,
   cycles,
+  divisions,
 }) => {
   // Filter and sort states
   const [projectFilter, setProjectFilter] = useState('');
@@ -190,22 +193,33 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     }
   }, [showOnlyExpandedDivisions]);
 
-  // Group teams by division
+  // Group teams by division (using divisionId like in PlanningMatrix)
   const divisionGroups = useMemo((): DivisionGroup[] => {
     const divisionsMap = new Map<string, Team[]>();
 
     teams.forEach(team => {
-      const division = team.division || 'Unassigned';
-      if (!divisionsMap.has(division)) {
-        divisionsMap.set(division, []);
+      const divisionKey = team.divisionId || 'no-division';
+      if (!divisionsMap.has(divisionKey)) {
+        divisionsMap.set(divisionKey, []);
       }
-      divisionsMap.get(division)!.push(team);
+      divisionsMap.get(divisionKey)!.push(team);
+    });
+
+    // Sort teams within each division
+    divisionsMap.forEach(teamsInDivision => {
+      teamsInDivision.sort((a, b) => a.name.localeCompare(b.name));
     });
 
     return Array.from(divisionsMap.entries())
-      .map(([division, teams]) => ({ division, teams }))
+      .map(([divisionKey, teams]) => ({
+        division:
+          divisionKey === 'no-division'
+            ? 'Unassigned Teams'
+            : getDivisionName(divisionKey, divisions),
+        teams,
+      }))
       .sort((a, b) => a.division.localeCompare(b.division));
-  }, [teams]);
+  }, [teams, divisions]);
 
   // Calculate team capacity utilization
   const teamCapacityMap = useMemo(() => {
@@ -432,10 +446,17 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
 
   // Get unique divisions for filter
   const uniqueDivisions = useMemo(() => {
-    return Array.from(
-      new Set(teams.map(team => team.division || 'Unassigned'))
-    ).sort();
-  }, [teams]);
+    const divisionKeys = Array.from(
+      new Set(teams.map(team => team.divisionId || 'no-division'))
+    );
+    return divisionKeys
+      .map(divisionKey =>
+        divisionKey === 'no-division'
+          ? 'Unassigned Teams'
+          : getDivisionName(divisionKey, divisions)
+      )
+      .sort();
+  }, [teams, divisions]);
 
   // Collapse/expand helper functions
   const toggleProjectCollapse = (projectId: string) => {
