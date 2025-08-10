@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getProjectRequiredSkills } from '@/utils/skillBasedPlanning';
+import { formatCycleName } from '@/utils/teamUtils';
 import {
   Users,
   CheckCircle,
@@ -178,10 +179,15 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
             };
           });
 
-          const totalPercentage = allocation.allocations.reduce(
-            (sum, a) => sum + a.percentage,
-            0
+          // Calculate proper quarterly percentage (max of iterations, not sum)
+          // This prevents 6x100% from showing as 600%
+          const iterationPercentages = allocation.allocations.map(
+            a => a.percentage
           );
+          const totalPercentage =
+            iterationPercentages.length > 0
+              ? Math.max(...iterationPercentages)
+              : 0;
 
           return {
             projectId: allocation.projectId,
@@ -600,8 +606,16 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
                                               : 'bg-gray-100'
                                           }`}
                                         >
-                                          <div className="font-mono">
-                                            {iter.cycleName}:
+                                          <div className="font-mono text-xs">
+                                            {iter.cycleName.includes('Q') &&
+                                            !iter.cycleName.includes(
+                                              'Iteration'
+                                            )
+                                              ? formatCycleName(
+                                                  iter.cycleName,
+                                                  true
+                                                )
+                                              : formatCycleName(iter.cycleName)}
                                           </div>
                                           <div
                                             className={

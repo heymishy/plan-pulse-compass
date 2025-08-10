@@ -166,6 +166,32 @@ export const getDivisionName = (
 };
 
 /**
+ * Format cycle name to shortened display format
+ * "FY25 Q4 - Iteration 1" -> "FY25 Q4 1"
+ * "2025 Q1 - Iteration 3" -> "2025 Q1 3"
+ * Quarter totals show as "Q2 2025:" (with colon for totals)
+ */
+export const formatCycleName = (
+  cycleName: string,
+  isQuarterTotal = false
+): string => {
+  // Match patterns like "FY25 Q4 - Iteration 1" or "2025 Q1 - Iteration 3"
+  const match = cycleName.match(/^(.+?)\s*-\s*Iteration\s+(\d+)$/i);
+  if (match) {
+    const [, fyQuarter, iterationNum] = match;
+    return `${fyQuarter.trim()} ${iterationNum}`;
+  }
+
+  // For quarter totals, add a colon to indicate it's a summary
+  if (isQuarterTotal) {
+    return `${cycleName}:`;
+  }
+
+  // If no match, return original (fallback)
+  return cycleName;
+};
+
+/**
  * Calculate employment type percentages for a team
  * Returns percentages of permanent vs contractor employees
  */
@@ -342,4 +368,26 @@ export const getCleanProductOwnerName = (
 
   // Return clean name without any labels
   return assignedPO.name;
+};
+
+/**
+ * Get role names with colors for legend display
+ * Returns the actual role breakdown with names for display
+ */
+export const getRoleCompositionLegend = (
+  teamId: string,
+  people: Person[],
+  roles: Role[]
+): Array<{
+  roleName: string;
+  count: number;
+  percentage: number;
+  color: string;
+}> => {
+  const composition = calculateRoleCompositionPercentages(
+    teamId,
+    people,
+    roles
+  );
+  return composition.roleBreakdown.slice(0, 4); // Show top 4 roles
 };

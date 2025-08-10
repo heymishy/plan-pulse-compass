@@ -10,6 +10,7 @@ import {
   Team,
 } from '@/types';
 import { getProjectRequiredSkills } from '@/utils/skillBasedPlanning';
+import { formatCycleName } from '@/utils/teamUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -1007,8 +1008,20 @@ const ProjectSolutionsSkillsSection: React.FC<
                                                               : 'bg-gray-100'
                                                           }`}
                                                         >
-                                                          <div className="font-mono">
-                                                            {iter.cycleName}:
+                                                          <div className="font-mono text-xs">
+                                                            {iter.cycleName.includes(
+                                                              'Q'
+                                                            ) &&
+                                                            !iter.cycleName.includes(
+                                                              'Iteration'
+                                                            )
+                                                              ? formatCycleName(
+                                                                  iter.cycleName,
+                                                                  true
+                                                                )
+                                                              : formatCycleName(
+                                                                  iter.cycleName
+                                                                )}
                                                           </div>
                                                           <div
                                                             className={
