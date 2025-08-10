@@ -46,6 +46,7 @@ import {
 import { Project, Team, Cycle, Skill, Solution } from '@/types';
 import { getProjectRequiredSkills } from '@/utils/skillBasedPlanning';
 import { getDivisionName } from '@/utils/teamUtils';
+import ProjectTeamMatchingView from '@/components/planning/ProjectTeamMatchingView';
 
 interface FYProjectPlanningData {
   fyProjects: Project[];
@@ -652,13 +653,30 @@ const FYProjectPlanning: React.FC = () => {
       </Card>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="projects" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="matching" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="matching">Project-Team Matching</TabsTrigger>
           <TabsTrigger value="projects">Project Risk Assessment</TabsTrigger>
           <TabsTrigger value="teams">Team Capacity Analysis</TabsTrigger>
           <TabsTrigger value="skills">Skill Bottlenecks</TabsTrigger>
           <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
         </TabsList>
+
+        {/* Project-Team Matching Tab */}
+        <TabsContent value="matching" className="space-y-4">
+          <ProjectTeamMatchingView
+            projects={projects}
+            teams={teams}
+            skills={skills}
+            solutions={solutions}
+            projectSolutions={projectSolutions}
+            projectSkills={projectSkills}
+            people={people}
+            personSkills={personSkills}
+            allocations={allocations}
+            cycles={cycles}
+          />
+        </TabsContent>
 
         <TabsContent value="projects" className="space-y-4">
           <Card>
