@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import {
   Project,
   Epic,
   RunWorkCategory,
+  Division,
 } from '@/types';
 import {
   Thermometer,
@@ -17,6 +18,9 @@ import {
   CheckCircle,
   BarChart3,
   Info,
+  ChevronDown,
+  ChevronRight,
+  Building2,
 } from 'lucide-react';
 import {
   generateHeatMapData,
@@ -31,6 +35,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { getDivisionName } from '@/utils/teamUtils';
+import { useApp } from '@/context/AppContext';
 
 interface HeatMapViewProps {
   teams: Team[];
@@ -41,6 +47,7 @@ interface HeatMapViewProps {
   projects: Project[];
   epics: Epic[];
   runWorkCategories: RunWorkCategory[];
+  divisions: Division[];
   hideEmptyRows?: boolean;
 }
 
@@ -53,8 +60,13 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
   projects,
   epics,
   runWorkCategories,
+  divisions,
   hideEmptyRows = false,
 }) => {
+  const { people } = useApp();
+  const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(
+    new Set()
+  );
   const heatMapData = useMemo(() => {
     return generateHeatMapData(teams, iterations, allocations);
   }, [teams, iterations, allocations]);
@@ -121,6 +133,70 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
       // Multiple allocations - for now, edit the first one
       onEditAllocation(cellAllocations[0]);
     }
+  };
+
+  // Group teams by division, filtering out empty default teams when real teams exist
+  const teamsByDivision = useMemo(() => {
+    const grouped = new Map<string, Team[]>();
+    // Check if there are teams with active members
+    const teamsWithMembers = teams.filter(team => {
+      const activeMembers = people.filter(
+        p => p.teamId === team.id && p.isActive
+      );
+      return activeMembers.length > 0;
+    });
+
+    const effectiveTeams =
+      teamsWithMembers.length > 0 ? teamsWithMembers : teams;
+
+    effectiveTeams.forEach(team => {
+      const divisionKey = team.divisionId || 'no-division';
+      if (!grouped.has(divisionKey)) {
+        grouped.set(divisionKey, []);
+      }
+      grouped.get(divisionKey)!.push(team);
+    });
+
+    return grouped;
+  }, [teams, people]);
+
+  // Get division display name
+  const getDivisionDisplayName = (divisionKey: string) => {
+    if (divisionKey === 'no-division') return 'Unassigned Teams';
+    return getDivisionName(divisionKey, divisions);
+  };
+
+  // Toggle division expansion
+  const toggleDivision = (divisionKey: string) => {
+    setExpandedDivisions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(divisionKey)) {
+        newSet.delete(divisionKey);
+      } else {
+        newSet.add(divisionKey);
+      }
+      return newSet;
+    });
+  };
+
+  // Initialize all divisions as expanded on first render
+  React.useEffect(() => {
+    setExpandedDivisions(new Set(Array.from(teamsByDivision.keys())));
+  }, [teamsByDivision]);
+
+  // Filter teams based on hideEmptyRows
+  const getFilteredTeamsForDivision = (teamsInDivision: Team[]) => {
+    if (!hideEmptyRows) return teamsInDivision;
+    return teamsInDivision.filter(team => {
+      // Check if team has any allocations across all iterations
+      return iterations.some((_, index) => {
+        const iterationAllocations = getTeamIterationAllocations(
+          team.id,
+          index + 1
+        );
+        return iterationAllocations.length > 0;
+      });
+    });
   };
 
   return (

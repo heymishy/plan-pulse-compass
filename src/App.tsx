@@ -41,6 +41,7 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Canvas = lazy(() => import('./pages/Canvas'));
 const ScenarioAnalysis = lazy(() => import('./pages/ScenarioAnalysis'));
 const OCRPage = lazy(() => import('./pages/OCRPage'));
+const FYProjectPlanning = lazy(() => import('./pages/FYProjectPlanning'));
 import { Toaster } from '@/components/ui/toaster';
 import {
   SidebarProvider,
@@ -158,6 +159,10 @@ function App() {
                                       <Route
                                         path="/journey-planning"
                                         element={<JourneyPlanning />}
+                                      />
+                                      <Route
+                                        path="/fy-planning"
+                                        element={<FYProjectPlanning />}
                                       />
                                       <Route
                                         path="/allocations"

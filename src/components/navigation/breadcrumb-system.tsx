@@ -32,6 +32,7 @@ import {
   Map,
   FileText,
   MoreHorizontal,
+  TrendingUp,
 } from 'lucide-react';
 
 import {
@@ -152,6 +153,14 @@ const breadcrumbData: Record<string, BreadcrumbItemData> = {
     icon: Map,
     parent: '/planning',
     description: 'Long-term roadmap planning',
+  },
+  '/fy-planning': {
+    id: 'fy-planning',
+    label: 'FY Portfolio Planning',
+    path: '/fy-planning',
+    icon: TrendingUp,
+    parent: '/planning',
+    description: 'Strategic portfolio planning for financial year',
   },
   '/allocations': {
     id: 'allocations',

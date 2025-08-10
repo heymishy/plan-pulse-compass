@@ -238,6 +238,22 @@ const navigationGroups: NavigationGroup[] = [
         description: 'Long-term roadmap planning',
         keywords: ['journey', 'roadmap', 'long-term', 'timeline'],
       },
+      {
+        id: 'fy-planning',
+        path: '/fy-planning',
+        icon: TrendingUp,
+        label: 'FY Portfolio Planning',
+        description: 'Strategic portfolio planning for financial year',
+        keywords: [
+          'fy',
+          'portfolio',
+          'strategic',
+          'capacity',
+          'hiring',
+          'bottlenecks',
+        ],
+        isPro: true,
+      },
     ],
   },
   {

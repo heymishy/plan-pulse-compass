@@ -226,30 +226,14 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
 
   // Get allocations for a specific team and quarter, aggregating iteration allocations
   const getTeamQuarterAllocations = (teamId: string, quarterId: string) => {
-    console.log(`🔍 DEBUG: Analyzing team ${teamId} for quarter ${quarterId}`);
-
     // First, get all iterations that belong to this quarter
     const iterationsInQuarter = cycles.filter(
       cycle => cycle.type === 'iteration' && cycle.parentCycleId === quarterId
     );
     const iterationIds = iterationsInQuarter.map(iter => iter.id);
-    console.log(
-      `📅 Found ${iterationsInQuarter.length} iterations with parentCycleId=${quarterId}:`,
-      iterationIds
-    );
 
     // Get all allocations for this team in this quarter or its iterations
     const teamAllocations = allocations.filter(a => a.teamId === teamId);
-    console.log(
-      `👥 Team has ${teamAllocations.length} total allocations:`,
-      teamAllocations.map(a => ({
-        id: a.id,
-        cycleId: a.cycleId,
-        percentage: a.percentage,
-      }))
-    );
-    console.log(`🔍 Quarter ID: ${quarterId}`);
-    console.log(`🔍 Iteration IDs: ${iterationIds.join(', ')}`);
 
     // Separate iteration and direct quarter allocations
     const iterationAllocations = teamAllocations.filter(a =>
@@ -258,25 +242,16 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
     const directQuarterAllocations = teamAllocations.filter(
       a => a.cycleId === quarterId
     );
-    console.log(
-      `🔄 Found ${iterationAllocations.length} iteration allocations and ${directQuarterAllocations.length} direct quarter allocations`
-    );
 
     // If no proper parent relationships exist, try to identify iterations by checking
     // if they're cycles that aren't quarters and have allocations in the same time range
     let effectiveIterationAllocations = iterationAllocations;
     if (iterationIds.length === 0 && directQuarterAllocations.length === 0) {
-      console.log(
-        `🔧 No direct relationships found, searching by date range...`
-      );
       // Get the quarter date range
       const quarter = cycles.find(c => c.id === quarterId);
       if (quarter) {
         const quarterStart = new Date(quarter.startDate);
         const quarterEnd = new Date(quarter.endDate);
-        console.log(
-          `📊 Quarter date range: ${quarter.startDate} to ${quarter.endDate}`
-        );
 
         // Find iteration-type cycles that fall within the quarter timeframe
         const possibleIterations = cycles.filter(cycle => {
@@ -286,15 +261,8 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
         });
 
         const possibleIterationIds = possibleIterations.map(iter => iter.id);
-        console.log(
-          `🎯 Found ${possibleIterations.length} possible iterations by date:`,
-          possibleIterationIds
-        );
         effectiveIterationAllocations = teamAllocations.filter(a =>
           possibleIterationIds.includes(a.cycleId)
-        );
-        console.log(
-          `✅ Effective iteration allocations: ${effectiveIterationAllocations.length}`
         );
       }
     }
@@ -304,7 +272,6 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
       ...effectiveIterationAllocations,
       ...directQuarterAllocations,
     ];
-    console.log(`📋 Total allocations to process: ${allAllocations.length}`);
 
     // Group allocations by key and calculate proper quarterly percentages
     const allocationGroups = new Map<
@@ -350,15 +317,6 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
     const aggregatedAllocations: Allocation[] = [];
 
     allocationGroups.forEach(({ allocations, key, baseAllocation }) => {
-      console.log(
-        `🔍 Processing group "${key}" with ${allocations.length} allocations:`,
-        allocations.map(a => ({
-          id: a.id,
-          cycleId: a.cycleId,
-          percentage: a.percentage,
-        }))
-      );
-
       // Determine if these are iteration or quarter allocations
       const iterationAllocs = allocations.filter(
         a =>
@@ -367,10 +325,6 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
             effectiveIterationAllocations.some(ia => ia.id === a.id))
       );
       const quarterAllocs = allocations.filter(a => a.cycleId === quarterId);
-
-      console.log(
-        `📊 Group "${key}": ${iterationAllocs.length} iteration allocs, ${quarterAllocs.length} quarter allocs`
-      );
 
       let quarterlyPercentage: number;
 
@@ -384,9 +338,6 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
         quarterlyPercentage = Math.round(
           totalPercentage / iterationAllocs.length
         );
-        console.log(
-          `🧮 ITERATION AVERAGING: ${totalPercentage} total ÷ ${iterationAllocs.length} iterations = ${quarterlyPercentage}%`
-        );
       } else if (quarterAllocs.length > 0 && iterationAllocs.length === 0) {
         // SPECIAL CASE: Check if we have 6 quarter allocations that should be treated as iteration allocations
         // This happens when Planning Matrix creates allocations with quarter IDs instead of iteration IDs
@@ -399,17 +350,11 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
           quarterlyPercentage = Math.round(
             totalPercentage / quarterAllocs.length
           );
-          console.log(
-            `🧮 QUARTER-TO-ITERATION AVERAGING: ${totalPercentage} total ÷ ${quarterAllocs.length} quarter allocs = ${quarterlyPercentage}% (treating as iterations)`
-          );
         } else {
           // Pure quarter allocations - sum them up (from Quick Add)
           quarterlyPercentage = quarterAllocs.reduce(
             (sum, a) => sum + a.percentage,
             0
-          );
-          console.log(
-            `📍 QUARTER SUMMING: ${quarterlyPercentage}% (direct quarter allocation)`
           );
         }
       } else if (iterationAllocs.length > 0 && quarterAllocs.length > 0) {
@@ -422,17 +367,9 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
           0
         );
         quarterlyPercentage = Math.round(iterationAvg + quarterSum);
-        console.log(
-          `🔀 MIXED: ${iterationAvg}% (iteration avg) + ${quarterSum}% (quarter sum) = ${quarterlyPercentage}%`
-        );
       } else {
         quarterlyPercentage = 0;
-        console.log(`❌ NO ALLOCATIONS: Setting to 0%`);
       }
-
-      console.log(
-        `✅ Final percentage for group "${key}": ${quarterlyPercentage}%`
-      );
 
       aggregatedAllocations.push({
         ...baseAllocation,

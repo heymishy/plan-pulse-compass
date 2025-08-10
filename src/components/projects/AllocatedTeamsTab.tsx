@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Project } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -12,7 +13,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getProjectRequiredSkills } from '@/utils/skillBasedPlanning';
-import { Users, CheckCircle, AlertTriangle, X, Info } from 'lucide-react';
+import {
+  Users,
+  CheckCircle,
+  AlertTriangle,
+  X,
+  Info,
+  Search,
+} from 'lucide-react';
 
 interface AllocatedTeamsTabProps {
   project: Project;
@@ -31,7 +39,14 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
     solutions,
     skills,
     personSkills,
+    divisions,
   } = useApp();
+
+  // Filter states
+  const [teamFilter, setTeamFilter] = useState('');
+  const [skillFilter, setSkillFilter] = useState('');
+  const [allocationFilter, setAllocationFilter] = useState('');
+  const [divisionFilter, setDivisionFilter] = useState('');
 
   // Get all required skills for this project (from solutions and manual skills)
   const allProjectSkillsInfo = useMemo(() => {
@@ -232,6 +247,94 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
     allProjectSkillsInfo,
   ]);
 
+  // Apply filters to team allocation analysis
+  const filteredTeamAnalysis = useMemo(() => {
+    return teamAllocationAnalysis.filter(team => {
+      // Team name filter
+      if (
+        teamFilter &&
+        !team.name.toLowerCase().includes(teamFilter.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Division filter
+      if (divisionFilter) {
+        const teamData = teams.find(t => t.id === team.id);
+        const division = divisions.find(d => d.id === teamData?.divisionId);
+        const divisionName = division?.name || '';
+        if (
+          !divisionName.toLowerCase().includes(divisionFilter.toLowerCase())
+        ) {
+          return false;
+        }
+      }
+
+      // Skill filter - check if team has any matching skills
+      if (skillFilter) {
+        const teamSkillNames: string[] = [];
+        const teamMemberIds = new Set(
+          people.filter(p => p.teamId === team.id).map(p => p.id)
+        );
+        const personSkillsForTeam = personSkills.filter(ps =>
+          teamMemberIds.has(ps.personId)
+        );
+
+        personSkillsForTeam.forEach(ps => {
+          const skill = skills.find(s => s.id === ps.skillId);
+          if (skill) {
+            teamSkillNames.push(skill.name);
+          }
+        });
+
+        // Also check team target skills
+        const teamData = teams.find(t => t.id === team.id);
+        if (teamData?.targetSkills) {
+          teamData.targetSkills.forEach(skillId => {
+            const skill = skills.find(s => s.id === skillId);
+            if (skill) {
+              teamSkillNames.push(skill.name);
+            }
+          });
+        }
+
+        const hasMatchingSkill = teamSkillNames.some(skillName =>
+          skillName.toLowerCase().includes(skillFilter.toLowerCase())
+        );
+
+        if (!hasMatchingSkill) {
+          return false;
+        }
+      }
+
+      // Allocation filter - check project names in current allocations
+      if (allocationFilter) {
+        const hasMatchingAllocation = team.currentAllocations.some(alloc =>
+          alloc.projectName
+            .toLowerCase()
+            .includes(allocationFilter.toLowerCase())
+        );
+
+        if (!hasMatchingAllocation) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    teamAllocationAnalysis,
+    teamFilter,
+    skillFilter,
+    allocationFilter,
+    divisionFilter,
+    teams,
+    divisions,
+    people,
+    personSkills,
+    skills,
+  ]);
+
   const getGapIcon = (hasAllocation: boolean, skillCompatibility: number) => {
     if (hasAllocation && skillCompatibility > 0.7) {
       return <CheckCircle className="h-4 w-4 text-green-600" />;
@@ -250,6 +353,46 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
           Team Allocation Analysis - {project.name}
         </h3>
 
+        {/* Search/Filter Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter by team name..."
+              value={teamFilter}
+              onChange={e => setTeamFilter(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter by skill..."
+              value={skillFilter}
+              onChange={e => setSkillFilter(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter by project allocation..."
+              value={allocationFilter}
+              onChange={e => setAllocationFilter(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter by division..."
+              value={divisionFilter}
+              onChange={e => setDivisionFilter(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
         {/* Summary Cards */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           <Card>
@@ -259,7 +402,7 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
                 <div>
                   <div className="text-2xl font-bold text-green-600">
                     {
-                      teamAllocationAnalysis.filter(
+                      filteredTeamAnalysis.filter(
                         t => t.hasCurrentProjectAllocation
                       ).length
                     }
@@ -276,7 +419,7 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
                 <div>
                   <div className="text-2xl font-bold text-blue-600">
                     {
-                      teamAllocationAnalysis.filter(
+                      filteredTeamAnalysis.filter(
                         t => t.skillCompatibility > 0.5
                       ).length
                     }
@@ -293,7 +436,7 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
                 <div>
                   <div className="text-2xl font-bold text-orange-600">
                     {
-                      teamAllocationAnalysis.filter(
+                      filteredTeamAnalysis.filter(
                         t => t.totalAllocationPercentage > 80
                       ).length
                     }
@@ -310,7 +453,7 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
                 <div>
                   <div className="text-2xl font-bold text-gray-600">
                     {
-                      teamAllocationAnalysis.filter(
+                      filteredTeamAnalysis.filter(
                         t => t.totalAllocationPercentage === 0
                       ).length
                     }
@@ -334,7 +477,7 @@ const AllocatedTeamsTab: React.FC<AllocatedTeamsTabProps> = ({ project }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {teamAllocationAnalysis
+                {filteredTeamAnalysis
                   .sort((a, b) => {
                     // Sort by: current project allocation, then skill compatibility, then availability
                     if (
