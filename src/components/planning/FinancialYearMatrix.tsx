@@ -9,12 +9,28 @@ import {
 } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  Plus,
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  DollarSign,
+  TrendingUp,
+} from 'lucide-react';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
 import { useApp } from '@/context/AppContext';
 import { toast } from '@/components/ui/use-toast';
+import { getRoleCompositionLegend } from '@/utils/teamUtils';
 import RoleComposition from '../teams/RoleComposition';
 import QuickAllocationDialog from './QuickAllocationDialog';
+import {
+  calculateQuarterlyFinancialSummary,
+  calculateTeamCostBreakdown,
+  calculateAllocationCostImpact,
+  formatCurrency,
+  getBudgetStatus,
+  type QuarterlyFinancialSummary,
+} from '@/utils/financialImpactUtils';
 
 interface FinancialYearMatrixProps {
   teams: Team[];
@@ -50,7 +66,7 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
   onCreateAllocation,
   onEditAllocation,
 }) => {
-  const { addAllocation, divisions, people, roles } = useApp();
+  const { addAllocation, divisions, people, roles, config } = useApp();
   const [quickDialogOpen, setQuickDialogOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
@@ -58,9 +74,40 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
     new Set(divisions.map(d => d.id)) // Expand all divisions by default
   );
 
-  // Group teams by division
+  // Get a sample team for legend (first team with members)
+  const sampleTeam = teams.find(team => {
+    const members = people.filter(p => p.teamId === team.id && p.isActive);
+    return members.length > 0;
+  });
+
+  // Group teams by division, filtering out empty default teams when real teams exist
   const teamsByDivision = useMemo(() => {
-    const grouped = teams.reduce(
+    // Check if there are teams with active members
+    const teamsWithMembers = teams.filter(team => {
+      const activeMembers = people.filter(
+        p => p.teamId === team.id && p.isActive
+      );
+      return activeMembers.length > 0;
+    });
+
+    // Default team names that should be hidden when real teams exist
+    const defaultTeamNames = ['Engineering', 'Product', 'Design', 'Marketing'];
+
+    // If there are teams with members, filter out empty default teams
+    const filteredTeams =
+      teamsWithMembers.length > 0
+        ? teams.filter(team => {
+            const activeMembers = people.filter(
+              p => p.teamId === team.id && p.isActive
+            );
+            // Keep teams that either have members or aren't default teams
+            return (
+              activeMembers.length > 0 || !defaultTeamNames.includes(team.name)
+            );
+          })
+        : teams; // If no teams have members, show all teams
+
+    const grouped = filteredTeams.reduce(
       (acc, team) => {
         const divisionId = team.divisionId || 'unknown';
         if (!acc[divisionId]) {
@@ -78,7 +125,7 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
     });
 
     return grouped;
-  }, [teams]);
+  }, [teams, people]);
 
   // Get division name by ID
   const getDivisionName = (divisionId: string) => {
@@ -161,16 +208,250 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
 
   const quarters = getQuartersForFinancialYear();
 
-  // Get allocations for a specific team and quarter
-  const getTeamQuarterAllocations = (teamId: string, quarterId: string) => {
-    return allocations.filter(
-      a => a.teamId === teamId && a.cycleId === quarterId
+  // Calculate financial summaries for each quarter
+  const quarterlyFinancialSummaries = quarters.map(quarter => {
+    const quarterBudget = 0; // TODO: Get from project budgets or configuration
+    return calculateQuarterlyFinancialSummary(
+      quarter,
+      allocations,
+      teams,
+      people,
+      roles,
+      projects,
+      epics,
+      config,
+      quarterBudget
     );
+  });
+
+  // Get allocations for a specific team and quarter, aggregating iteration allocations
+  const getTeamQuarterAllocations = (teamId: string, quarterId: string) => {
+    console.log(`🔍 DEBUG: Analyzing team ${teamId} for quarter ${quarterId}`);
+
+    // First, get all iterations that belong to this quarter
+    const iterationsInQuarter = cycles.filter(
+      cycle => cycle.type === 'iteration' && cycle.parentCycleId === quarterId
+    );
+    const iterationIds = iterationsInQuarter.map(iter => iter.id);
+    console.log(
+      `📅 Found ${iterationsInQuarter.length} iterations with parentCycleId=${quarterId}:`,
+      iterationIds
+    );
+
+    // Get all allocations for this team in this quarter or its iterations
+    const teamAllocations = allocations.filter(a => a.teamId === teamId);
+    console.log(
+      `👥 Team has ${teamAllocations.length} total allocations:`,
+      teamAllocations.map(a => ({
+        id: a.id,
+        cycleId: a.cycleId,
+        percentage: a.percentage,
+      }))
+    );
+    console.log(`🔍 Quarter ID: ${quarterId}`);
+    console.log(`🔍 Iteration IDs: ${iterationIds.join(', ')}`);
+
+    // Separate iteration and direct quarter allocations
+    const iterationAllocations = teamAllocations.filter(a =>
+      iterationIds.includes(a.cycleId)
+    );
+    const directQuarterAllocations = teamAllocations.filter(
+      a => a.cycleId === quarterId
+    );
+    console.log(
+      `🔄 Found ${iterationAllocations.length} iteration allocations and ${directQuarterAllocations.length} direct quarter allocations`
+    );
+
+    // If no proper parent relationships exist, try to identify iterations by checking
+    // if they're cycles that aren't quarters and have allocations in the same time range
+    let effectiveIterationAllocations = iterationAllocations;
+    if (iterationIds.length === 0 && directQuarterAllocations.length === 0) {
+      console.log(
+        `🔧 No direct relationships found, searching by date range...`
+      );
+      // Get the quarter date range
+      const quarter = cycles.find(c => c.id === quarterId);
+      if (quarter) {
+        const quarterStart = new Date(quarter.startDate);
+        const quarterEnd = new Date(quarter.endDate);
+        console.log(
+          `📊 Quarter date range: ${quarter.startDate} to ${quarter.endDate}`
+        );
+
+        // Find iteration-type cycles that fall within the quarter timeframe
+        const possibleIterations = cycles.filter(cycle => {
+          if (cycle.type !== 'iteration') return false;
+          const cycleStart = new Date(cycle.startDate);
+          return cycleStart >= quarterStart && cycleStart <= quarterEnd;
+        });
+
+        const possibleIterationIds = possibleIterations.map(iter => iter.id);
+        console.log(
+          `🎯 Found ${possibleIterations.length} possible iterations by date:`,
+          possibleIterationIds
+        );
+        effectiveIterationAllocations = teamAllocations.filter(a =>
+          possibleIterationIds.includes(a.cycleId)
+        );
+        console.log(
+          `✅ Effective iteration allocations: ${effectiveIterationAllocations.length}`
+        );
+      }
+    }
+
+    // Combine all relevant allocations
+    const allAllocations = [
+      ...effectiveIterationAllocations,
+      ...directQuarterAllocations,
+    ];
+    console.log(`📋 Total allocations to process: ${allAllocations.length}`);
+
+    // Group allocations by key and calculate proper quarterly percentages
+    const allocationGroups = new Map<
+      string,
+      {
+        allocations: Allocation[];
+        key: string;
+        baseAllocation: Allocation;
+      }
+    >();
+
+    allAllocations.forEach(allocation => {
+      let key: string;
+
+      if (allocation.runWorkCategoryId) {
+        key = `run-${allocation.runWorkCategoryId}`;
+      } else if (allocation.epicId) {
+        const epic = epics.find(e => e.id === allocation.epicId);
+        const project = epic
+          ? projects.find(p => p.id === epic.projectId)
+          : null;
+        key = project ? `project-${project.id}` : `epic-${allocation.epicId}`;
+      } else {
+        const noteMatch = allocation.notes?.match(/Quick allocation to (.+)/);
+        if (noteMatch) {
+          key = `project-${noteMatch[1]}`;
+        } else {
+          key = `allocation-${allocation.id}`;
+        }
+      }
+
+      if (!allocationGroups.has(key)) {
+        allocationGroups.set(key, {
+          allocations: [],
+          key,
+          baseAllocation: allocation,
+        });
+      }
+      allocationGroups.get(key)!.allocations.push(allocation);
+    });
+
+    // Convert groups to aggregated allocations
+    const aggregatedAllocations: Allocation[] = [];
+
+    allocationGroups.forEach(({ allocations, key, baseAllocation }) => {
+      console.log(
+        `🔍 Processing group "${key}" with ${allocations.length} allocations:`,
+        allocations.map(a => ({
+          id: a.id,
+          cycleId: a.cycleId,
+          percentage: a.percentage,
+        }))
+      );
+
+      // Determine if these are iteration or quarter allocations
+      const iterationAllocs = allocations.filter(
+        a =>
+          iterationIds.includes(a.cycleId) ||
+          (iterationIds.length === 0 &&
+            effectiveIterationAllocations.some(ia => ia.id === a.id))
+      );
+      const quarterAllocs = allocations.filter(a => a.cycleId === quarterId);
+
+      console.log(
+        `📊 Group "${key}": ${iterationAllocs.length} iteration allocs, ${quarterAllocs.length} quarter allocs`
+      );
+
+      let quarterlyPercentage: number;
+
+      if (iterationAllocs.length > 0 && quarterAllocs.length === 0) {
+        // Pure iteration allocations - calculate average (this is the key fix)
+        // 6 iterations × 100% = 600% total, but shows 100% average capacity per iteration
+        const totalPercentage = iterationAllocs.reduce(
+          (sum, a) => sum + a.percentage,
+          0
+        );
+        quarterlyPercentage = Math.round(
+          totalPercentage / iterationAllocs.length
+        );
+        console.log(
+          `🧮 ITERATION AVERAGING: ${totalPercentage} total ÷ ${iterationAllocs.length} iterations = ${quarterlyPercentage}%`
+        );
+      } else if (quarterAllocs.length > 0 && iterationAllocs.length === 0) {
+        // SPECIAL CASE: Check if we have 6 quarter allocations that should be treated as iteration allocations
+        // This happens when Planning Matrix creates allocations with quarter IDs instead of iteration IDs
+        if (quarterAllocs.length === 6 && iterationIds.length === 6) {
+          // 6 allocations to same project at quarter level = likely iteration allocations stored incorrectly
+          const totalPercentage = quarterAllocs.reduce(
+            (sum, a) => sum + a.percentage,
+            0
+          );
+          quarterlyPercentage = Math.round(
+            totalPercentage / quarterAllocs.length
+          );
+          console.log(
+            `🧮 QUARTER-TO-ITERATION AVERAGING: ${totalPercentage} total ÷ ${quarterAllocs.length} quarter allocs = ${quarterlyPercentage}% (treating as iterations)`
+          );
+        } else {
+          // Pure quarter allocations - sum them up (from Quick Add)
+          quarterlyPercentage = quarterAllocs.reduce(
+            (sum, a) => sum + a.percentage,
+            0
+          );
+          console.log(
+            `📍 QUARTER SUMMING: ${quarterlyPercentage}% (direct quarter allocation)`
+          );
+        }
+      } else if (iterationAllocs.length > 0 && quarterAllocs.length > 0) {
+        // Mixed - average iterations, sum quarters
+        const iterationAvg =
+          iterationAllocs.reduce((sum, a) => sum + a.percentage, 0) /
+          iterationAllocs.length;
+        const quarterSum = quarterAllocs.reduce(
+          (sum, a) => sum + a.percentage,
+          0
+        );
+        quarterlyPercentage = Math.round(iterationAvg + quarterSum);
+        console.log(
+          `🔀 MIXED: ${iterationAvg}% (iteration avg) + ${quarterSum}% (quarter sum) = ${quarterlyPercentage}%`
+        );
+      } else {
+        quarterlyPercentage = 0;
+        console.log(`❌ NO ALLOCATIONS: Setting to 0%`);
+      }
+
+      console.log(
+        `✅ Final percentage for group "${key}": ${quarterlyPercentage}%`
+      );
+
+      aggregatedAllocations.push({
+        ...baseAllocation,
+        id: key,
+        percentage: quarterlyPercentage,
+        notes: baseAllocation.notes,
+      });
+    });
+
+    return aggregatedAllocations;
   };
 
   // Calculate team capacity for a quarter
   const getTeamQuarterCapacity = (team: Team, quarter: Cycle) => {
     const quarterAllocations = getTeamQuarterAllocations(team.id, quarter.id);
+
+    // The total percentage should be the sum of aggregated allocations
+    // Since getTeamQuarterAllocations already averages iteration allocations,
+    // we can safely sum the returned percentages
     const totalPercentage = quarterAllocations.reduce(
       (sum, a) => sum + a.percentage,
       0
@@ -282,6 +563,12 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
 
   const renderAllocationCell = (team: Team, quarter: Cycle) => {
     const capacity = getTeamQuarterCapacity(team, quarter);
+    const teamCostBreakdown = calculateTeamCostBreakdown(
+      team,
+      people,
+      roles,
+      config
+    );
 
     return (
       <div className="min-h-[80px] p-2 flex flex-col gap-2">
@@ -325,40 +612,61 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
             }
           }
 
+          // Calculate cost impact for this allocation
+          const costImpact = calculateAllocationCostImpact(
+            allocation,
+            team,
+            quarter,
+            teamCostBreakdown,
+            projects,
+            epics
+          );
+
           return (
             <div
               key={allocation.id}
-              className={`flex items-center justify-between cursor-pointer hover:opacity-90 p-1 rounded-r ${getAllocationColor(allocation)}`}
+              className={`flex flex-col cursor-pointer hover:opacity-90 p-1 rounded-r ${getAllocationColor(allocation)}`}
               onClick={() => onEditAllocation?.(allocation)}
             >
-              <div className="flex-1 min-w-0">
-                <div
-                  className="text-xs font-medium truncate"
-                  title={displayName}
-                >
-                  {displayName}
-                </div>
-                {allocationLabel && (
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
                   <div
-                    className="text-xs text-gray-500 truncate"
-                    title={allocationLabel}
+                    className="text-xs font-medium truncate"
+                    title={displayName}
                   >
-                    {allocationLabel}
+                    {displayName}
                   </div>
-                )}
+                  {allocationLabel && (
+                    <div
+                      className="text-xs text-gray-500 truncate"
+                      title={allocationLabel}
+                    >
+                      {allocationLabel}
+                    </div>
+                  )}
+                </div>
+                <Badge
+                  variant={
+                    capacity.isOverAllocated
+                      ? 'destructive'
+                      : allocation.percentage === 100
+                        ? 'default'
+                        : 'secondary'
+                  }
+                  className="text-xs"
+                >
+                  {allocation.percentage}%
+                </Badge>
               </div>
-              <Badge
-                variant={
-                  capacity.isOverAllocated
-                    ? 'destructive'
-                    : allocation.percentage === 100
-                      ? 'default'
-                      : 'secondary'
-                }
-                className="text-xs"
-              >
-                {allocation.percentage}%
-              </Badge>
+              <div className="flex items-center justify-between mt-1">
+                <div className="text-xs text-gray-600 flex items-center gap-1">
+                  <DollarSign className="w-3 h-3" />
+                  {formatCurrency(costImpact.cycleCost, config.currencySymbol)}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {costImpact.cycleLength}w
+                </div>
+              </div>
             </div>
           );
         })}
@@ -423,25 +731,24 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
             </div>
 
             {/* Role Composition Legend */}
-            <div className="flex items-center gap-3 text-xs">
-              <span className="font-medium text-gray-700">Team Roles:</span>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-2 bg-blue-500 rounded-full"></div>
-                <span>Primary</span>
+            {sampleTeam && (
+              <div className="flex items-center gap-3 text-xs">
+                <span className="font-medium text-gray-700">Role Types:</span>
+                {getRoleCompositionLegend(sampleTeam.id, people, roles).map(
+                  role => (
+                    <div
+                      key={role.roleName}
+                      className="flex items-center gap-1"
+                    >
+                      <div
+                        className={`w-3 h-2 rounded-full ${role.color}`}
+                      ></div>
+                      <span>{role.roleName}</span>
+                    </div>
+                  )
+                )}
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-2 bg-green-500 rounded-full"></div>
-                <span>Secondary</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-2 bg-purple-500 rounded-full"></div>
-                <span>Support</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-2 bg-orange-500 rounded-full"></div>
-                <span>Other</span>
-              </div>
-            </div>
+            )}
           </div>
           <Badge variant="outline">
             {selectedFinancialYear !== 'all'
@@ -451,6 +758,58 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
               : 'All Years'}
           </Badge>
         </div>
+
+        {/* Financial Summary Header */}
+        {quarterlyFinancialSummaries.length > 0 && (
+          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Financial Impact Summary
+              </h3>
+              <div className="text-xs text-gray-500">
+                Quarterly allocation costs
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {quarterlyFinancialSummaries.map(summary => {
+                const budgetStatus = getBudgetStatus(
+                  summary.utilizationPercentage
+                );
+                const statusColor =
+                  budgetStatus === 'under'
+                    ? 'text-yellow-600 bg-yellow-50 border-yellow-200'
+                    : budgetStatus === 'optimal'
+                      ? 'text-green-600 bg-green-50 border-green-200'
+                      : 'text-red-600 bg-red-50 border-red-200';
+
+                return (
+                  <div
+                    key={summary.quarterId}
+                    className={`border rounded-lg p-3 ${statusColor}`}
+                  >
+                    <div className="font-medium text-sm mb-1">
+                      {summary.quarterName}
+                    </div>
+                    <div className="text-lg font-bold">
+                      {formatCurrency(
+                        summary.allocatedCost,
+                        config.currencySymbol
+                      )}
+                    </div>
+                    <div className="text-xs mt-1 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      {summary.utilizationPercentage.toFixed(0)}% utilized
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {summary.teamBreakdown.length} teams allocated
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {quarters.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
@@ -515,6 +874,12 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
                       {expandedDivisions.has(divisionId) &&
                         divisionTeams.map(team => {
                           const teamInfo = getTeamInfo(team);
+                          const teamCostBreakdown = calculateTeamCostBreakdown(
+                            team,
+                            people,
+                            roles,
+                            config
+                          );
                           return (
                             <tr key={team.id} className="hover:bg-gray-50">
                               <td className="border p-2 pl-6 font-semibold sticky left-0 bg-white z-10">
@@ -529,6 +894,14 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
                                   )}
                                   <div className="text-xs text-gray-500">
                                     Capacity: {team.capacity}h/week
+                                  </div>
+                                  <div className="text-xs text-gray-600 flex items-center gap-1">
+                                    <DollarSign className="w-3 h-3" />
+                                    {formatCurrency(
+                                      teamCostBreakdown.totalQuarterlyCost,
+                                      config.currencySymbol
+                                    )}
+                                    /qtr
                                   </div>
                                 </div>
                               </td>

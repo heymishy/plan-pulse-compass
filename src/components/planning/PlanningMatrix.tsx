@@ -21,12 +21,20 @@ import {
   ChevronDown,
   ChevronRight,
   Building2,
+  DollarSign,
 } from 'lucide-react';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
 import { getDisplayName } from '@/utils/shortnameUtils';
-import { getDivisionName } from '@/utils/teamUtils';
+import { getDivisionName, getRoleCompositionLegend } from '@/utils/teamUtils';
 import { BulkSelection } from './BulkOperationsPanel';
 import { ClipboardControls } from './AllocationClipboard';
+import {
+  calculateTeamCostBreakdown,
+  formatCurrency,
+  type TeamCostBreakdown,
+} from '@/utils/financialImpactUtils';
+import { useApp } from '@/context/AppContext';
+import RoleComposition from '../teams/RoleComposition';
 
 interface PlanningMatrixProps {
   teams: Team[];
@@ -59,6 +67,7 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
   onBulkSelectionChange,
   isBulkMode = false,
 }) => {
+  const { people, roles, config } = useApp();
   const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(
     new Set()
   );
@@ -163,11 +172,36 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
     );
   };
 
-  // Group teams by division
+  // Group teams by division, filtering out empty default teams when real teams exist
   const teamsByDivision = useMemo(() => {
     const grouped = new Map<string, Team[]>();
 
-    teams.forEach(team => {
+    // Check if there are teams with active members
+    const teamsWithMembers = teams.filter(team => {
+      const activeMembers = people.filter(
+        p => p.teamId === team.id && p.isActive
+      );
+      return activeMembers.length > 0;
+    });
+
+    // Default team names that should be hidden when real teams exist
+    const defaultTeamNames = ['Engineering', 'Product', 'Design', 'Marketing'];
+
+    // If there are teams with members, filter out empty default teams
+    const filteredTeams =
+      teamsWithMembers.length > 0
+        ? teams.filter(team => {
+            const activeMembers = people.filter(
+              p => p.teamId === team.id && p.isActive
+            );
+            // Keep teams that either have members or aren't default teams
+            return (
+              activeMembers.length > 0 || !defaultTeamNames.includes(team.name)
+            );
+          })
+        : teams; // If no teams have members, show all teams
+
+    filteredTeams.forEach(team => {
       const divisionKey = team.divisionId || 'no-division';
       if (!grouped.has(divisionKey)) {
         grouped.set(divisionKey, []);
@@ -181,7 +215,7 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
     });
 
     return grouped;
-  }, [teams]);
+  }, [teams, people]);
 
   // Get division display name
   const getDivisionDisplayName = (divisionKey: string) => {
@@ -223,11 +257,32 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
     });
   };
 
+  // Get a sample team for legend (first team with members)
+  const sampleTeam = teams.find(team => {
+    const members = people.filter(p => p.teamId === team.id && p.isActive);
+    return members.length > 0;
+  });
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle>Team Allocation Matrix</CardTitle>
+
+          {/* Role Composition Legend */}
+          {sampleTeam && (
+            <div className="flex items-center gap-6 text-xs border-b border-gray-200 pb-2">
+              <span className="font-medium text-gray-700">Role Types:</span>
+              {getRoleCompositionLegend(sampleTeam.id, people, roles).map(
+                role => (
+                  <div key={role.roleName} className="flex items-center gap-1">
+                    <div className={`w-3 h-2 rounded-full ${role.color}`}></div>
+                    <span>{role.roleName}</span>
+                  </div>
+                )
+              )}
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -289,6 +344,13 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
                         {/* Teams in Division */}
                         {isExpanded &&
                           filteredTeams.map(team => {
+                            const teamCostBreakdown =
+                              calculateTeamCostBreakdown(
+                                team,
+                                people,
+                                roles,
+                                config
+                              );
                             return (
                               <tr
                                 key={team.id}
@@ -300,6 +362,24 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
                                     <div className="text-xs text-gray-500">
                                       {team.capacity}h/week capacity
                                     </div>
+                                    <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                                      <DollarSign className="w-3 h-3" />
+                                      {formatCurrency(
+                                        teamCostBreakdown.totalWeeklyCost,
+                                        config.currencySymbol
+                                      )}
+                                      /week
+                                    </div>
+                                    {people.filter(
+                                      p => p.teamId === team.id && p.isActive
+                                    ).length > 0 && (
+                                      <div className="mt-1">
+                                        <RoleComposition
+                                          team={team}
+                                          size="sm"
+                                        />
+                                      </div>
+                                    )}
                                   </div>
                                 </td>
                                 {iterations.map((iteration, index) => {
