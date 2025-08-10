@@ -1658,4 +1658,4 @@ const AdvancedDataImport = () => {
   );
 };
 
-export default AdvancedDataImport;
+export default React.memo(AdvancedDataImport);

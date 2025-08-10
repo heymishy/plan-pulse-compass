@@ -535,4 +535,4 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
   );
 };
 
-export default HeatMapView;
+export default React.memo(HeatMapView);

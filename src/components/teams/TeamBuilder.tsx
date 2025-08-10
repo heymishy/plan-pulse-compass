@@ -1316,4 +1316,4 @@ const TeamBuilder: React.FC<TeamBuilderProps> = ({
   );
 };
 
-export default TeamBuilder;
+export default React.memo(TeamBuilder);
