@@ -36,6 +36,10 @@ import {
   Info,
   AlertCircle,
   XCircle,
+  ChevronDown,
+  ChevronRight,
+  Expand,
+  Minimize,
 } from 'lucide-react';
 import { Project, Team, Skill, Solution } from '@/types';
 import {
@@ -91,6 +95,100 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   const [matchTypeFilter, setMatchTypeFilter] = useState('all');
   const [projectSortBy, setProjectSortBy] = useState('name');
   const [teamSortBy, setTeamSortBy] = useState('division');
+
+  // Collapse/expand states with localStorage persistence
+  const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(
+    () => {
+      try {
+        const saved = localStorage.getItem('matrix-collapsed-projects');
+        return saved ? new Set(JSON.parse(saved)) : new Set();
+      } catch {
+        return new Set();
+      }
+    }
+  );
+
+  const [collapsedDivisions, setCollapsedDivisions] = useState<Set<string>>(
+    () => {
+      try {
+        const saved = localStorage.getItem('matrix-collapsed-divisions');
+        return saved ? new Set(JSON.parse(saved)) : new Set();
+      } catch {
+        return new Set();
+      }
+    }
+  );
+
+  const [showOnlyExpandedProjects, setShowOnlyExpandedProjects] = useState(
+    () => {
+      try {
+        const saved = localStorage.getItem(
+          'matrix-show-only-expanded-projects'
+        );
+        return saved ? JSON.parse(saved) : false;
+      } catch {
+        return false;
+      }
+    }
+  );
+
+  const [showOnlyExpandedDivisions, setShowOnlyExpandedDivisions] = useState(
+    () => {
+      try {
+        const saved = localStorage.getItem(
+          'matrix-show-only-expanded-divisions'
+        );
+        return saved ? JSON.parse(saved) : false;
+      } catch {
+        return false;
+      }
+    }
+  );
+
+  // Persist collapsed state to localStorage
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(
+        'matrix-collapsed-projects',
+        JSON.stringify(Array.from(collapsedProjects))
+      );
+    } catch (error) {
+      console.warn('Failed to save collapsed projects state:', error);
+    }
+  }, [collapsedProjects]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(
+        'matrix-collapsed-divisions',
+        JSON.stringify(Array.from(collapsedDivisions))
+      );
+    } catch (error) {
+      console.warn('Failed to save collapsed divisions state:', error);
+    }
+  }, [collapsedDivisions]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(
+        'matrix-show-only-expanded-projects',
+        JSON.stringify(showOnlyExpandedProjects)
+      );
+    } catch (error) {
+      console.warn('Failed to save show only expanded projects state:', error);
+    }
+  }, [showOnlyExpandedProjects]);
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(
+        'matrix-show-only-expanded-divisions',
+        JSON.stringify(showOnlyExpandedDivisions)
+      );
+    } catch (error) {
+      console.warn('Failed to save show only expanded divisions state:', error);
+    }
+  }, [showOnlyExpandedDivisions]);
 
   // Group teams by division
   const divisionGroups = useMemo((): DivisionGroup[] => {
@@ -226,6 +324,11 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
       );
     }
 
+    // Apply collapse filter - show only expanded projects if collapse mode is on
+    if (showOnlyExpandedProjects) {
+      filtered = filtered.filter(project => !collapsedProjects.has(project.id));
+    }
+
     // Apply project sorting
     if (projectSortBy === 'name') {
       filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
@@ -243,7 +346,13 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     }
 
     return filtered;
-  }, [projects, projectFilter, projectSortBy]);
+  }, [
+    projects,
+    projectFilter,
+    projectSortBy,
+    showOnlyExpandedProjects,
+    collapsedProjects,
+  ]);
 
   const filteredDivisionGroups = useMemo(() => {
     let filtered = divisionGroups;
@@ -251,6 +360,13 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     // Division filter
     if (divisionFilter !== 'all') {
       filtered = filtered.filter(group => group.division === divisionFilter);
+    }
+
+    // Apply collapse filter - show only expanded divisions if collapse mode is on
+    if (showOnlyExpandedDivisions) {
+      filtered = filtered.filter(
+        group => !collapsedDivisions.has(group.division)
+      );
     }
 
     // Apply team sorting within divisions
@@ -269,7 +385,14 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     }));
 
     return filtered;
-  }, [divisionGroups, divisionFilter, teamSortBy, teamCapacityMap]);
+  }, [
+    divisionGroups,
+    divisionFilter,
+    teamSortBy,
+    teamCapacityMap,
+    showOnlyExpandedDivisions,
+    collapsedDivisions,
+  ]);
 
   // Get cell data for project-team combination
   const getCellData = (
@@ -313,6 +436,51 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
       new Set(teams.map(team => team.division || 'Unassigned'))
     ).sort();
   }, [teams]);
+
+  // Collapse/expand helper functions
+  const toggleProjectCollapse = (projectId: string) => {
+    setCollapsedProjects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId);
+      } else {
+        newSet.add(projectId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleDivisionCollapse = (division: string) => {
+    setCollapsedDivisions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(division)) {
+        newSet.delete(division);
+      } else {
+        newSet.add(division);
+      }
+      return newSet;
+    });
+  };
+
+  const expandAllProjects = () => {
+    setCollapsedProjects(new Set());
+    setShowOnlyExpandedProjects(false);
+  };
+
+  const collapseAllProjects = () => {
+    setCollapsedProjects(new Set(filteredProjects.map(p => p.id)));
+    setShowOnlyExpandedProjects(true);
+  };
+
+  const expandAllDivisions = () => {
+    setCollapsedDivisions(new Set());
+    setShowOnlyExpandedDivisions(false);
+  };
+
+  const collapseAllDivisions = () => {
+    setCollapsedDivisions(new Set(filteredDivisionGroups.map(d => d.division)));
+    setShowOnlyExpandedDivisions(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -397,6 +565,57 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
             </div>
           </div>
 
+          {/* Expand/Collapse Controls */}
+          <div className="flex flex-wrap gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">
+                Projects:
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={expandAllProjects}
+                className="flex items-center gap-1"
+              >
+                <Expand className="h-3 w-3" />
+                Expand All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={collapseAllProjects}
+                className="flex items-center gap-1"
+              >
+                <Minimize className="h-3 w-3" />
+                Collapse All
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">
+                Divisions:
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={expandAllDivisions}
+                className="flex items-center gap-1"
+              >
+                <Expand className="h-3 w-3" />
+                Expand All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={collapseAllDivisions}
+                className="flex items-center gap-1"
+              >
+                <Minimize className="h-3 w-3" />
+                Collapse All
+              </Button>
+            </div>
+          </div>
+
           {/* Legend */}
           <div className="flex flex-wrap gap-6 p-4 bg-gray-50 rounded-lg mb-6">
             <div className="flex items-center gap-3">
@@ -438,138 +657,190 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
                   <TableHead className="w-48 sticky left-0 bg-white z-20 border-r">
                     Teams / Projects
                   </TableHead>
-                  {filteredProjects.map(project => (
-                    <TableHead
-                      key={project.id}
-                      className="text-center min-w-16 px-1 h-32"
-                    >
-                      <div className="h-full flex flex-col items-center justify-end pb-2">
-                        <div
-                          className="transform -rotate-45 origin-bottom whitespace-nowrap text-xs font-medium mb-2"
-                          style={{ transformOrigin: 'center bottom' }}
-                        >
-                          {project.name.length > 15
-                            ? `${project.name.substring(0, 15)}...`
-                            : project.name}
-                        </div>
-                        {project.priority && (
-                          <Badge
-                            variant={
-                              project.priority === 'high'
-                                ? 'destructive'
-                                : project.priority === 'medium'
-                                  ? 'default'
-                                  : 'secondary'
-                            }
-                            className="text-xs"
+                  {filteredProjects.map(project => {
+                    const isCollapsed = collapsedProjects.has(project.id);
+
+                    return (
+                      <TableHead
+                        key={project.id}
+                        className={`text-center px-1 h-32 ${isCollapsed ? 'w-8' : 'min-w-16'}`}
+                      >
+                        <div className="h-full flex flex-col items-center justify-end pb-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleProjectCollapse(project.id)}
+                            className="mb-1 h-6 w-6 p-0 hover:bg-gray-200"
                           >
-                            {typeof project.priority === 'string'
-                              ? project.priority.charAt(0).toUpperCase()
-                              : String(project.priority)
-                                  .charAt(0)
-                                  .toUpperCase()}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableHead>
-                  ))}
+                            {isCollapsed ? (
+                              <ChevronRight className="h-3 w-3" />
+                            ) : (
+                              <ChevronDown className="h-3 w-3" />
+                            )}
+                          </Button>
+
+                          {!isCollapsed && (
+                            <>
+                              <div
+                                className="transform -rotate-45 origin-bottom whitespace-nowrap text-xs font-medium mb-2"
+                                style={{ transformOrigin: 'center bottom' }}
+                              >
+                                {project.name.length > 15
+                                  ? `${project.name.substring(0, 15)}...`
+                                  : project.name}
+                              </div>
+                              {project.priority && (
+                                <Badge
+                                  variant={
+                                    project.priority === 'high'
+                                      ? 'destructive'
+                                      : project.priority === 'medium'
+                                        ? 'default'
+                                        : 'secondary'
+                                  }
+                                  className="text-xs"
+                                >
+                                  {typeof project.priority === 'string'
+                                    ? project.priority.charAt(0).toUpperCase()
+                                    : String(project.priority)
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                </Badge>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDivisionGroups.map(divisionGroup => (
-                  <React.Fragment key={divisionGroup.division}>
-                    {/* Division Header */}
-                    <TableRow className="bg-gray-100">
-                      <TableCell
-                        colSpan={filteredProjects.length + 1}
-                        className="font-semibold text-gray-700 sticky left-0 z-10"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4" />
-                          {divisionGroup.division} ({divisionGroup.teams.length}{' '}
-                          teams)
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                {filteredDivisionGroups.map(divisionGroup => {
+                  const isDivisionCollapsed = collapsedDivisions.has(
+                    divisionGroup.division
+                  );
 
-                    {/* Team Rows */}
-                    {divisionGroup.teams.map(team => (
-                      <TableRow key={team.id} className="hover:bg-gray-50">
-                        <TableCell className="sticky left-0 bg-white z-10 border-r font-medium">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">{team.name}</span>
-                            <div className="text-xs text-gray-500">
-                              {teamCapacityMap.get(team.id) || 0}%
-                            </div>
+                  return (
+                    <React.Fragment key={divisionGroup.division}>
+                      {/* Division Header */}
+                      <TableRow className="bg-gray-100">
+                        <TableCell
+                          colSpan={filteredProjects.length + 1}
+                          className="font-semibold text-gray-700 sticky left-0 z-10"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                toggleDivisionCollapse(divisionGroup.division)
+                              }
+                              className="h-6 w-6 p-0 hover:bg-gray-300"
+                            >
+                              {isDivisionCollapsed ? (
+                                <ChevronRight className="h-3 w-3" />
+                              ) : (
+                                <ChevronDown className="h-3 w-3" />
+                              )}
+                            </Button>
+                            <Building2 className="h-4 w-4" />
+                            {divisionGroup.division} (
+                            {divisionGroup.teams.length} teams)
                           </div>
                         </TableCell>
-
-                        {filteredProjects.map(project => {
-                          const cellData = getCellData(project.id, team.id);
-
-                          return (
-                            <TableCell
-                              key={`${team.id}-${project.id}`}
-                              className="p-1 text-center"
-                            >
-                              {cellData ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div
-                                        className={getCellStyling(
-                                          cellData.matchType,
-                                          cellData.capacityStatus
-                                        )}
-                                      >
-                                        <div className="text-xs text-white font-semibold leading-none pt-1">
-                                          {Math.round(
-                                            cellData.compatibilityScore * 100
-                                          )}
-                                        </div>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-sm">
-                                      <div className="space-y-2">
-                                        <div className="font-medium">
-                                          {team.name} × {project.name}
-                                        </div>
-                                        <div className="text-sm">
-                                          <div>Match: {cellData.matchType}</div>
-                                          <div>
-                                            Skills: {cellData.skillsMatched}/
-                                            {cellData.skillsRequired}
-                                          </div>
-                                          <div>
-                                            Compatibility:{' '}
-                                            {Math.round(
-                                              cellData.compatibilityScore * 100
-                                            )}
-                                            %
-                                          </div>
-                                          <div>
-                                            Capacity:{' '}
-                                            {teamCapacityMap.get(team.id) || 0}%
-                                            ({cellData.capacityStatus})
-                                          </div>
-                                          <div className="mt-2 text-xs text-gray-600">
-                                            {cellData.reasoning.join('. ')}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <div className="w-12 h-8 bg-gray-100"></div>
-                              )}
-                            </TableCell>
-                          );
-                        })}
                       </TableRow>
-                    ))}
-                  </React.Fragment>
-                ))}
+
+                      {/* Team Rows - only show if division is not collapsed */}
+                      {!isDivisionCollapsed &&
+                        divisionGroup.teams.map(team => (
+                          <TableRow key={team.id} className="hover:bg-gray-50">
+                            <TableCell className="sticky left-0 bg-white z-10 border-r font-medium">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">{team.name}</span>
+                                <div className="text-xs text-gray-500">
+                                  {teamCapacityMap.get(team.id) || 0}%
+                                </div>
+                              </div>
+                            </TableCell>
+
+                            {filteredProjects.map(project => {
+                              const cellData = getCellData(project.id, team.id);
+                              const isProjectCollapsed = collapsedProjects.has(
+                                project.id
+                              );
+
+                              return (
+                                <TableCell
+                                  key={`${team.id}-${project.id}`}
+                                  className={`p-1 text-center ${isProjectCollapsed ? 'w-8' : ''}`}
+                                >
+                                  {!isProjectCollapsed && cellData ? (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div
+                                            className={getCellStyling(
+                                              cellData.matchType,
+                                              cellData.capacityStatus
+                                            )}
+                                          >
+                                            <div className="text-xs text-white font-semibold leading-none pt-1">
+                                              {Math.round(
+                                                cellData.compatibilityScore *
+                                                  100
+                                              )}
+                                            </div>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-sm">
+                                          <div className="space-y-2">
+                                            <div className="font-medium">
+                                              {team.name} × {project.name}
+                                            </div>
+                                            <div className="text-sm">
+                                              <div>
+                                                Match: {cellData.matchType}
+                                              </div>
+                                              <div>
+                                                Skills: {cellData.skillsMatched}
+                                                /{cellData.skillsRequired}
+                                              </div>
+                                              <div>
+                                                Compatibility:{' '}
+                                                {Math.round(
+                                                  cellData.compatibilityScore *
+                                                    100
+                                                )}
+                                                %
+                                              </div>
+                                              <div>
+                                                Capacity:{' '}
+                                                {teamCapacityMap.get(team.id) ||
+                                                  0}
+                                                % ({cellData.capacityStatus})
+                                              </div>
+                                              <div className="mt-2 text-xs text-gray-600">
+                                                {cellData.reasoning.join('. ')}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    <div
+                                      className={`${isProjectCollapsed ? 'w-6 h-8' : 'w-12 h-8'} bg-gray-100`}
+                                    ></div>
+                                  )}
+                                </TableCell>
+                              );
+                            })}
+                          </TableRow>
+                        ))}
+                    </React.Fragment>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
