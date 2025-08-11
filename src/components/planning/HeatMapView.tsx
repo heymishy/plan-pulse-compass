@@ -289,15 +289,17 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
             <table className="w-full border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-10">
                 <tr>
-                  <th className="text-left p-3 border-b font-semibold">Team</th>
+                  <th className="text-left p-3 border-b font-semibold bg-white sticky left-0 z-20">
+                    Team
+                  </th>
                   {iterations.map((iteration, index) => (
                     <th
                       key={iteration.id}
-                      className="text-center p-3 border-b font-semibold min-w-24"
+                      className="text-center p-3 border-b font-semibold min-w-24 bg-white"
                     >
                       <div className="text-sm">Iter {index + 1}</div>
                       <div className="text-xs text-gray-500 font-normal">

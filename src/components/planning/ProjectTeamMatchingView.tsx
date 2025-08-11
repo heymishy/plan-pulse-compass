@@ -836,7 +836,7 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
             style={{ scrollbarWidth: 'thin' }}
           >
             <Table className="border-collapse">
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10">
                 <TableRow>
                   <TableHead className="w-48 sticky left-0 bg-white z-20 border-r">
                     <div className="flex items-center gap-2">
@@ -861,7 +861,7 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
                     return (
                       <TableHead
                         key={project.id}
-                        className={`text-center px-1 h-40 ${colWidth} border-r border-gray-200`}
+                        className={`text-center px-1 h-40 ${colWidth} border-r border-gray-200 bg-white`}
                       >
                         <div className="h-full flex flex-col items-center justify-end pb-2">
                           <Button

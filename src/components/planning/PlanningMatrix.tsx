@@ -285,15 +285,17 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
           )}
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
             <table className="w-full border-collapse">
-              <thead>
+              <thead className="sticky top-0 z-10">
                 <tr>
-                  <th className="text-left p-3 border-b font-semibold">Team</th>
+                  <th className="text-left p-3 border-b font-semibold bg-white sticky left-0 z-20">
+                    Team
+                  </th>
                   {iterations.map((iteration, index) => (
                     <th
                       key={iteration.id}
-                      className="text-center p-3 border-b font-semibold min-w-32"
+                      className="text-center p-3 border-b font-semibold min-w-32 bg-white"
                     >
                       Iteration {index + 1}
                       <div className="text-xs text-gray-500 font-normal">
@@ -365,10 +367,10 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
                                     <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                                       <DollarSign className="w-3 h-3" />
                                       {formatCurrency(
-                                        teamCostBreakdown.totalWeeklyCost,
+                                        teamCostBreakdown.totalQuarterlyCost,
                                         config.currencySymbol
                                       )}
-                                      /week
+                                      /qtr
                                     </div>
                                     {people.filter(
                                       p => p.teamId === team.id && p.isActive
