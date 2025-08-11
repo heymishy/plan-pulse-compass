@@ -225,7 +225,7 @@ jobs:
         run: npm run build
         env:
           CI: true
-          NODE_OPTIONS: '--max-old-space-size=384'
+          NODE_OPTIONS: '--max-old-space-size=768'
 
       - name: Upload quality assurance results
         uses: actions/upload-artifact@v4
@@ -317,6 +317,7 @@ jobs:
         run: npm run build
         env:
           CI: true
+          NODE_OPTIONS: '--max-old-space-size=768'
           VITE_APP_VERSION: ${{ steps.version.outputs.version }}
           VITE_APP_BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
           VITE_APP_COMMIT_HASH_SHORT: ${{ steps.version.outputs.commit_hash_short }}

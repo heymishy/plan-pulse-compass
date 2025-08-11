@@ -88,6 +88,8 @@ import {
   Role,
   Team,
   AppConfig,
+  Solution,
+  ProjectSolution,
 } from '@/types';
 
 // ...
@@ -159,11 +161,11 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
   );
 
   // Get project solutions
-  const currentProjectSolutions = projectSolutions.filter(
+  const currentProjectSolutions = (projectSolutions || []).filter(
     ps => ps.projectId === project.id
   );
   const projectSolutionNames = currentProjectSolutions.map(ps => {
-    const solution = solutions.find(s => s.id === ps.solutionId);
+    const solution = (solutions || []).find(s => s.id === ps.solutionId);
     return solution?.name || 'Unknown';
   });
 
