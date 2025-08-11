@@ -9,6 +9,7 @@ import {
 } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Plus,
   AlertTriangle,
@@ -16,6 +17,7 @@ import {
   ChevronRight,
   DollarSign,
   TrendingUp,
+  Filter,
 } from 'lucide-react';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
 import { useApp } from '@/context/AppContext';
@@ -74,6 +76,7 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
   const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(
     new Set(divisions.map(d => d.id)) // Expand all divisions by default
   );
+  const [hideEmptyTeams, setHideEmptyTeams] = useState(true);
 
   // Get a sample team for legend (first team with members)
   const sampleTeam = teams.find(team => {
@@ -176,6 +179,23 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
       }
       return newSet;
     });
+  };
+
+  // Helper function to check if team should be visible
+  const shouldShowTeam = (team: Team) => {
+    if (!hideEmptyTeams) return true;
+
+    const teamInfo = getTeamInfo(team);
+    // Check if team has members
+    if (teamInfo.memberCount === 0) return false;
+
+    // Check if team has any allocations in any quarter
+    const hasAllocations = quarters.some(quarter => {
+      const capacity = getTeamQuarterCapacity(team, quarter);
+      return capacity.allocated > 0;
+    });
+
+    return hasAllocations;
   };
   const getQuartersForFinancialYear = () => {
     if (!selectedFinancialYear || selectedFinancialYear === 'all') {
@@ -667,6 +687,22 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
           <div className="flex items-center gap-6">
             <h2 className="text-lg font-semibold">Financial Year Matrix</h2>
 
+            {/* Filter Toggle */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="hide-empty-teams"
+                checked={hideEmptyTeams}
+                onCheckedChange={checked => setHideEmptyTeams(checked === true)}
+              />
+              <label
+                htmlFor="hide-empty-teams"
+                className="text-sm text-gray-700 cursor-pointer flex items-center gap-1"
+              >
+                <Filter className="w-3 h-3" />
+                Hide empty teams
+              </label>
+            </div>
+
             {/* Allocation Type Legend */}
             <div className="flex items-center gap-3 text-xs">
               <span className="font-medium text-gray-700">Work Types:</span>
@@ -798,20 +834,8 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
               <tbody>
                 {Object.entries(teamsByDivision).map(
                   ([divisionId, divisionTeams]) => {
-                    // Filter teams for this division (same logic as in team rows)
-                    const visibleTeams = divisionTeams.filter(team => {
-                      const teamInfo = getTeamInfo(team);
-                      // Check if team has members
-                      if (teamInfo.memberCount === 0) return false;
-
-                      // Check if team has any allocations in any quarter
-                      const hasAllocations = quarters.some(quarter => {
-                        const capacity = getTeamQuarterCapacity(team, quarter);
-                        return capacity.allocated > 0;
-                      });
-
-                      return hasAllocations;
-                    });
+                    // Filter teams for this division using the helper function
+                    const visibleTeams = divisionTeams.filter(shouldShowTeam);
 
                     // Hide division if no visible teams
                     if (visibleTeams.length === 0) return null;

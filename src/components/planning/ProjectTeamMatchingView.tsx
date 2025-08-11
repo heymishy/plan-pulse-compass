@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -38,6 +39,7 @@ import {
   XCircle,
   ChevronDown,
   ChevronRight,
+  Filter,
 } from 'lucide-react';
 import { Project, Team, Skill, Solution } from '@/types';
 import {
@@ -108,6 +110,7 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     'normal'
   );
   const [showShortNames, setShowShortNames] = useState(false);
+  const [hideEmptyTeams, setHideEmptyTeams] = useState(false);
 
   // Collapse/expand states with localStorage persistence
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(
@@ -267,6 +270,19 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
 
     return capacityMap;
   }, [teams, allocations, cycles]);
+
+  // Helper function to check if team should be visible
+  const shouldShowTeam = (team: Team) => {
+    if (!hideEmptyTeams) return true;
+
+    const teamMembers = people.filter(p => p.teamId === team.id && p.isActive);
+    // Check if team has members
+    if (teamMembers.length === 0) return false;
+
+    // Check if team has any capacity/allocations
+    const teamCapacity = teamCapacityMap.get(team.id) || 0;
+    return teamCapacity > 0;
+  };
 
   // Create matrix cells for all project-team combinations
   const matrixData = useMemo((): MatrixCell[] => {
@@ -471,10 +487,10 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
       );
     }
 
-    // Apply team sorting within divisions
+    // Apply team filtering and sorting within divisions
     filtered = filtered.map(group => ({
       ...group,
-      teams: [...group.teams].sort((a, b) => {
+      teams: [...group.teams].filter(shouldShowTeam).sort((a, b) => {
         if (teamSortBy === 'name') {
           return a.name.localeCompare(b.name);
         } else if (teamSortBy === 'capacity') {
@@ -494,6 +510,8 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     teamCapacityMap,
     showOnlyExpandedDivisions,
     collapsedDivisions,
+    hideEmptyTeams,
+    shouldShowTeam,
   ]);
 
   // Get cell data for project-team combination
@@ -714,6 +732,23 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
                 <Info className="h-3 w-3" />
                 {showShortNames ? 'Full Names' : 'Short Names'}
               </Button>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="hide-empty-teams-matrix"
+                  checked={hideEmptyTeams}
+                  onCheckedChange={checked =>
+                    setHideEmptyTeams(checked === true)
+                  }
+                />
+                <label
+                  htmlFor="hide-empty-teams-matrix"
+                  className="text-sm text-gray-700 cursor-pointer flex items-center gap-1"
+                >
+                  <Filter className="w-3 h-3" />
+                  Hide empty teams
+                </label>
+              </div>
 
               <Button
                 variant="outline"
