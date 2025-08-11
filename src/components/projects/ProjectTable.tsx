@@ -79,7 +79,16 @@ const formatBudgetDisplay = (amount: number): string => {
 };
 
 // Sortable Project Row Component
-import { Project, Epic, Allocation, Cycle, Person, Role, Team } from '@/types';
+import {
+  Project,
+  Epic,
+  Allocation,
+  Cycle,
+  Person,
+  Role,
+  Team,
+  AppConfig,
+} from '@/types';
 
 // ...
 
@@ -92,6 +101,7 @@ interface SortableProjectRowProps {
   people: Person[];
   roles: Role[];
   teams: Team[];
+  config: AppConfig;
   selectedProjects: Set<string>;
   onSelectProject: (projectId: string, checked: boolean) => void;
   onViewProject: (projectId: string) => void;
@@ -107,6 +117,7 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
   people,
   roles,
   teams,
+  config,
   selectedProjects,
   onSelectProject,
   onViewProject,
@@ -139,7 +150,8 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
     cycles,
     people,
     roles,
-    teams
+    teams,
+    config
   );
 
   const getStatusBadge = (status: string | undefined) => {
@@ -778,7 +790,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
                   </Button>
                 </TableHead>
                 <TableHead>Epics</TableHead>
-                <TableHead>Est. Cost</TableHead>
+                <TableHead>FY Cost</TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
@@ -820,6 +832,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
                     people={people}
                     roles={roles}
                     teams={teams}
+                    config={config}
                     selectedProjects={selectedProjects}
                     onSelectProject={handleSelectProject}
                     onViewProject={onViewProject}

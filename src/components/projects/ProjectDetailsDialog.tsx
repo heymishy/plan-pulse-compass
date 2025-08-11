@@ -23,6 +23,7 @@ import { Calendar, Target, DollarSign, Plus, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import EpicDialog from '@/components/projects/EpicDialog';
 import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/context/SettingsContext';
 import { calculateProjectCost } from '@/utils/financialCalculations';
 
 interface ProjectDetailsDialogProps {
@@ -38,6 +39,7 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({
 }) => {
   const { epics, setEpics, allocations, cycles, people, roles, teams } =
     useApp();
+  const { config } = useSettings();
   const { toast } = useToast();
   const [isEpicDialogOpen, setIsEpicDialogOpen] = useState(false);
   const [selectedEpic, setSelectedEpic] = useState<Epic | null>(null);
@@ -58,9 +60,10 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({
       cycles,
       people,
       roles,
-      teams
+      teams,
+      config
     );
-  }, [project, epics, allocations, cycles, people, roles, teams]);
+  }, [project, epics, allocations, cycles, people, roles, teams, config]);
 
   if (!project) return null;
 
@@ -371,9 +374,7 @@ const ProjectDetailsDialog: React.FC<ProjectDetailsDialogProps> = ({
                             </TableRow>
                           ))}
                         <TableRow className="font-bold bg-gray-50 dark:bg-gray-800">
-                          <TableCell colSpan={2}>
-                            Total Estimated Cost
-                          </TableCell>
+                          <TableCell colSpan={2}>Total FY Cost</TableCell>
                           <TableCell className="text-right font-mono">
                             $
                             {projectFinancials.totalCost.toLocaleString(

@@ -41,6 +41,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSettings } from '@/context/SettingsContext';
 import ProjectSolutionsSkillsSection from './ProjectSolutionsSkillsSection';
 import { calculateProjectCost } from '@/utils/financialCalculations';
 import { calculateProjectedEndDate } from '@/utils/calculateProjectedEndDate';
@@ -79,6 +80,7 @@ export const ProjectCommandCenterModal: React.FC<
     setProjectSolutions,
     setProjectSkills,
   } = useApp();
+  const { config } = useSettings();
 
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
@@ -122,9 +124,10 @@ export const ProjectCommandCenterModal: React.FC<
       cycles,
       people,
       roles,
-      teams
+      teams,
+      config
     );
-  }, [project, epics, allocations, cycles, people, roles, teams]);
+  }, [project, epics, allocations, cycles, people, roles, teams, config]);
 
   // Calculate projected end date
   const projectedEndDate = useMemo(() => {
@@ -645,7 +648,7 @@ export const ProjectCommandCenterModal: React.FC<
                     <CardContent>
                       <div className="space-y-2">
                         <div className="flex justify-between">
-                          <span>Total Estimated Cost:</span>
+                          <span>Total FY Cost:</span>
                           <span className="font-semibold">
                             {formatCurrencyDisplay(projectFinancials.totalCost)}
                           </span>

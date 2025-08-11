@@ -139,7 +139,7 @@ export const calculateTeamWeeklyCost = (
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role, config);
+      const personCost = calculatePersonCost(person, role, safeConfig);
       weeklyCost += personCost.costPerWeek;
     }
   });
@@ -155,7 +155,7 @@ export const calculateTeamMonthlyCost = (
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role, config);
+      const personCost = calculatePersonCost(person, role, safeConfig);
       monthlyCost += personCost.costPerMonth;
     }
   });
@@ -179,7 +179,7 @@ export const calculateTeamAnnualCost = (
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role, config);
+      const personCost = calculatePersonCost(person, role, safeConfig);
       annualCost += personCost.costPerYear;
     }
   });
@@ -244,6 +244,18 @@ export const calculateProjectCost = (
   monthlyBurnRate: number;
   totalDurationInDays: number;
 } => {
+  // Validate inputs to prevent NaN errors
+  if (!project || !config) {
+    return {
+      totalCost: 0,
+      breakdown: [],
+      teamBreakdown: [],
+      monthlyBurnRate: 0,
+      totalDurationInDays: 0,
+    };
+  }
+
+  const safeConfig = config || getDefaultConfig();
   const projectEpics = epics.filter(epic => epic.projectId === project.id);
   const projectAllocations = allocations.filter(
     allocation =>
@@ -291,7 +303,7 @@ export const calculateProjectCost = (
       const role = roles.find(r => r.id === person.roleId);
       if (!role) return;
 
-      const personCost = calculatePersonCost(person, role, config);
+      const personCost = calculatePersonCost(person, role, safeConfig);
       const cycleDurationInDays = Math.ceil(
         (new Date(cycle.endDate).getTime() -
           new Date(cycle.startDate).getTime()) /
@@ -302,7 +314,11 @@ export const calculateProjectCost = (
         personCost.costPerDay *
         cycleDurationInDays *
         (allocation.percentage / 100);
-      totalCost += allocationCost;
+
+      // Validate the calculated cost to prevent NaN
+      const validAllocationCost =
+        isNaN(allocationCost) || !isFinite(allocationCost) ? 0 : allocationCost;
+      totalCost += validAllocationCost;
 
       // Find existing breakdown entry or create new one
       let breakdownEntry = breakdown.find(b => b.personId === person.id);
@@ -319,12 +335,12 @@ export const calculateProjectCost = (
         breakdown.push(breakdownEntry);
       }
 
-      breakdownEntry.totalCost += allocationCost;
+      breakdownEntry.totalCost += validAllocationCost;
       breakdownEntry.allocations.push({
         allocationId: allocation.id,
         cycleName: cycle.name,
         percentage: allocation.percentage,
-        cost: allocationCost,
+        cost: validAllocationCost,
       });
 
       // Update team breakdown
@@ -333,7 +349,7 @@ export const calculateProjectCost = (
         if (!teamBreakdown[team.id]) {
           teamBreakdown[team.id] = { teamName: team.name, totalCost: 0 };
         }
-        teamBreakdown[team.id].totalCost += allocationCost;
+        teamBreakdown[team.id].totalCost += validAllocationCost;
       }
     });
   });
@@ -351,14 +367,24 @@ export const calculateProjectCost = (
       ? (totalCost / totalDurationInDays) * WORKING_DAYS_PER_MONTH
       : 0;
 
+  // Validate all return values to prevent NaN
+  const validTotalCost =
+    isNaN(totalCost) || !isFinite(totalCost) ? 0 : totalCost;
+  const validMonthlyBurnRate =
+    isNaN(monthlyBurnRate) || !isFinite(monthlyBurnRate) ? 0 : monthlyBurnRate;
+  const validTotalDurationInDays =
+    isNaN(totalDurationInDays) || !isFinite(totalDurationInDays)
+      ? 0
+      : totalDurationInDays;
+
   return {
-    totalCost,
+    totalCost: validTotalCost,
     breakdown,
     teamBreakdown: Object.values(teamBreakdown).sort(
-      (a, b) => b.totalCost - a.totalCost
+      (a, b) => (b.totalCost || 0) - (a.totalCost || 0)
     ),
-    monthlyBurnRate,
-    totalDurationInDays,
+    monthlyBurnRate: validMonthlyBurnRate,
+    totalDurationInDays: validTotalDurationInDays,
   };
 };
 
