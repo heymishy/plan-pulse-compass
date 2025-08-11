@@ -38,7 +38,8 @@ interface AllocationClipboardContextType {
   pasteAllocations: (
     targetTeamId: string,
     targetIterationNumber: number,
-    options?: PasteOptions
+    options?: PasteOptions,
+    targetCycleId?: string
   ) => Promise<Allocation[]>;
   clearClipboard: () => void;
   hasData: boolean;
@@ -130,7 +131,8 @@ export const AllocationClipboardProvider: React.FC<
   const pasteAllocations = async (
     targetTeamId: string,
     targetIterationNumber: number,
-    options: PasteOptions = {}
+    options: PasteOptions = {},
+    targetCycleId?: string
   ): Promise<Allocation[]> => {
     if (!clipboardData) {
       toast({
@@ -162,12 +164,15 @@ export const AllocationClipboardProvider: React.FC<
       return [];
     }
 
+    // Use targetCycleId if provided, otherwise fall back to selectedCycleId
+    const effectiveCycleId = targetCycleId || selectedCycleId;
+
     // Get existing allocations for target
     const existingAllocations = allAllocations.filter(
       a =>
         a.teamId === targetTeamId &&
         a.iterationNumber === targetIterationNumber &&
-        a.cycleId === selectedCycleId
+        a.cycleId === effectiveCycleId
     );
 
     if (existingAllocations.length > 0 && !overwrite) {
@@ -193,7 +198,7 @@ export const AllocationClipboardProvider: React.FC<
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Generate unique ID
         teamId: targetTeamId,
         iterationNumber: targetIterationNumber,
-        cycleId: selectedCycleId,
+        cycleId: effectiveCycleId,
         percentage: Math.round(sourceAlloc.percentage * scalingFactor),
       })
     );
@@ -208,7 +213,7 @@ export const AllocationClipboardProvider: React.FC<
           !(
             a.teamId === targetTeamId &&
             a.iterationNumber === targetIterationNumber &&
-            a.cycleId === selectedCycleId
+            a.cycleId === effectiveCycleId
           )
       );
     }
@@ -258,6 +263,7 @@ interface ClipboardControlsProps {
   allocations: Allocation[];
   onPaste?: (newAllocations: Allocation[]) => void;
   compact?: boolean;
+  cycleId?: string;
 }
 
 export const ClipboardControls: React.FC<ClipboardControlsProps> = ({
@@ -267,6 +273,7 @@ export const ClipboardControls: React.FC<ClipboardControlsProps> = ({
   allocations,
   onPaste,
   compact = false,
+  cycleId,
 }) => {
   const { clipboardData, copyAllocations, pasteAllocations, hasData } =
     useAllocationClipboard();
@@ -286,7 +293,8 @@ export const ClipboardControls: React.FC<ClipboardControlsProps> = ({
       const newAllocations = await pasteAllocations(
         teamId,
         iterationNumber,
-        options
+        options,
+        cycleId
       );
       if (newAllocations.length > 0 && onPaste) {
         onPaste(newAllocations);

@@ -639,9 +639,10 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
           <ClipboardControls
             teamId={team.id}
             teamName={team.name}
-            iterationNumber={1}
+            iterationNumber={quarters.findIndex(q => q.id === quarter.id) + 1}
             allocations={capacity.allocations}
             compact={true}
+            cycleId={quarter.id}
           />
         </div>
 
@@ -682,7 +683,7 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
             {/* Role Composition Legend */}
             {sampleTeam && (
               <div className="flex items-center gap-3 text-xs">
-                <span className="font-medium text-gray-700">Role Types:</span>
+                <span className="font-medium text-gray-700">Team Roles:</span>
                 {getRoleCompositionLegend(sampleTeam.id, people, roles).map(
                   role => (
                     <div
@@ -698,6 +699,14 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
                 )}
               </div>
             )}
+
+            {/* Role Mix Percentages Legend */}
+            <div className="flex items-center gap-3 text-xs">
+              <span className="font-medium text-gray-700">Role Mix:</span>
+              <div className="text-xs text-gray-600">
+                Color bars show role distribution percentages in each team
+              </div>
+            </div>
           </div>
           <Badge variant="outline">
             {selectedFinancialYear !== 'all'
@@ -788,85 +797,108 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
               </thead>
               <tbody>
                 {Object.entries(teamsByDivision).map(
-                  ([divisionId, divisionTeams]) => (
-                    <React.Fragment key={divisionId}>
-                      {/* Division Header Row */}
-                      <tr className="bg-gray-100 border-t-2 border-gray-300">
-                        <td className="border p-3 font-bold text-gray-700 sticky left-0 bg-gray-100 z-10">
-                          <button
-                            onClick={() => toggleDivisionExpansion(divisionId)}
-                            className="flex items-center gap-2 w-full text-left hover:bg-gray-200 p-1 rounded"
-                          >
-                            {expandedDivisions.has(divisionId) ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
-                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                            {getDivisionName(divisionId)}
-                            <span className="text-sm font-normal text-gray-500">
-                              ({divisionTeams.length} team
-                              {divisionTeams.length !== 1 ? 's' : ''})
-                            </span>
-                          </button>
-                        </td>
-                        {quarters.map(quarter => (
-                          <td
-                            key={quarter.id}
-                            className="border p-3 bg-gray-100 text-center text-sm text-gray-600"
-                          >
-                            —
+                  ([divisionId, divisionTeams]) => {
+                    // Filter teams for this division (same logic as in team rows)
+                    const visibleTeams = divisionTeams.filter(team => {
+                      const teamInfo = getTeamInfo(team);
+                      // Check if team has members
+                      if (teamInfo.memberCount === 0) return false;
+
+                      // Check if team has any allocations in any quarter
+                      const hasAllocations = quarters.some(quarter => {
+                        const capacity = getTeamQuarterCapacity(team, quarter);
+                        return capacity.allocated > 0;
+                      });
+
+                      return hasAllocations;
+                    });
+
+                    // Hide division if no visible teams
+                    if (visibleTeams.length === 0) return null;
+
+                    return (
+                      <React.Fragment key={divisionId}>
+                        {/* Division Header Row */}
+                        <tr className="bg-gray-100 border-t-2 border-gray-300">
+                          <td className="border p-3 font-bold text-gray-700 sticky left-0 bg-gray-100 z-10">
+                            <button
+                              onClick={() =>
+                                toggleDivisionExpansion(divisionId)
+                              }
+                              className="flex items-center gap-2 w-full text-left hover:bg-gray-200 p-1 rounded"
+                            >
+                              {expandedDivisions.has(divisionId) ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                              {getDivisionName(divisionId)}
+                              <span className="text-sm font-normal text-gray-500">
+                                ({visibleTeams.length} team
+                                {visibleTeams.length !== 1 ? 's' : ''})
+                              </span>
+                            </button>
                           </td>
-                        ))}
-                      </tr>
-                      {/* Team Rows */}
-                      {expandedDivisions.has(divisionId) &&
-                        divisionTeams.map(team => {
-                          const teamInfo = getTeamInfo(team);
-                          const teamCostBreakdown = calculateTeamCostBreakdown(
-                            team,
-                            people,
-                            roles,
-                            config
-                          );
-                          return (
-                            <tr key={team.id} className="hover:bg-gray-50">
-                              <td className="border p-2 pl-6 font-semibold sticky left-0 bg-white z-10">
-                                <div className="flex flex-col gap-1">
-                                  <div>{team.name}</div>
-                                  <div className="text-xs text-gray-600">
-                                    {teamInfo.memberCount} member
-                                    {teamInfo.memberCount !== 1 ? 's' : ''}
-                                  </div>
-                                  {teamInfo.memberCount > 0 && (
-                                    <RoleComposition team={team} size="sm" />
-                                  )}
-                                  <div className="text-xs text-gray-500">
-                                    Capacity: {team.capacity}h/week
-                                  </div>
-                                  <div className="text-xs text-gray-600 flex items-center gap-1">
-                                    <DollarSign className="w-3 h-3" />
-                                    {formatCurrency(
-                                      teamCostBreakdown.totalQuarterlyCost,
-                                      config.currencySymbol
+                          {quarters.map(quarter => (
+                            <td
+                              key={quarter.id}
+                              className="border p-3 bg-gray-100 text-center text-sm text-gray-600"
+                            >
+                              —
+                            </td>
+                          ))}
+                        </tr>
+                        {/* Team Rows */}
+                        {expandedDivisions.has(divisionId) &&
+                          visibleTeams.map(team => {
+                            const teamInfo = getTeamInfo(team);
+                            const teamCostBreakdown =
+                              calculateTeamCostBreakdown(
+                                team,
+                                people,
+                                roles,
+                                config
+                              );
+                            return (
+                              <tr key={team.id} className="hover:bg-gray-50">
+                                <td className="border p-2 pl-6 font-semibold sticky left-0 bg-white z-10">
+                                  <div className="flex flex-col gap-1">
+                                    <div>{team.name}</div>
+                                    <div className="text-xs text-gray-600">
+                                      {teamInfo.memberCount} member
+                                      {teamInfo.memberCount !== 1 ? 's' : ''}
+                                    </div>
+                                    {teamInfo.memberCount > 0 && (
+                                      <RoleComposition team={team} size="sm" />
                                     )}
-                                    /qtr
+                                    <div className="text-xs text-gray-500">
+                                      Capacity: {team.capacity}h/week
+                                    </div>
+                                    <div className="text-xs text-gray-600 flex items-center gap-1">
+                                      <DollarSign className="w-3 h-3" />
+                                      {formatCurrency(
+                                        teamCostBreakdown.totalQuarterlyCost,
+                                        config.currencySymbol
+                                      )}
+                                      /qtr
+                                    </div>
                                   </div>
-                                </div>
-                              </td>
-                              {quarters.map(quarter => (
-                                <td
-                                  key={quarter.id}
-                                  className="border align-top"
-                                >
-                                  {renderAllocationCell(team, quarter)}
                                 </td>
-                              ))}
-                            </tr>
-                          );
-                        })}
-                    </React.Fragment>
-                  )
+                                {quarters.map(quarter => (
+                                  <td
+                                    key={quarter.id}
+                                    className="border align-top"
+                                  >
+                                    {renderAllocationCell(team, quarter)}
+                                  </td>
+                                ))}
+                              </tr>
+                            );
+                          })}
+                      </React.Fragment>
+                    );
+                  }
                 )}
               </tbody>
             </table>
