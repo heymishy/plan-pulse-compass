@@ -204,7 +204,52 @@ export const calculateTeamCostBreakdown = (
   const activeMembers = people.filter(p => p.teamId === team.id && p.isActive);
 
   const memberCosts = activeMembers.map(person => {
-    const weeklyCost = calculatePersonWeeklyCost(person, roles, config);
+    let weeklyCost = calculatePersonWeeklyCost(person, roles, config);
+
+    // If calculatePersonWeeklyCost returns 0, try to use fallback estimates
+    if (weeklyCost <= 0) {
+      const role = roles.find(r => r.id === person.roleId);
+      if (role) {
+        // Fallback: use role default rate or estimate based on typical salaries
+        if (role.defaultRate && role.defaultRate > 0) {
+          // If defaultRate is hourly, calculate weekly cost
+          weeklyCost =
+            role.defaultRate *
+            (config.workingHoursPerDay || 8) *
+            (config.workingDaysPerWeek || 5);
+        } else if (role.defaultAnnualSalary && role.defaultAnnualSalary > 0) {
+          // If defaultAnnualSalary is available, calculate weekly cost
+          const workingWeeksPerYear =
+            (config.workingDaysPerYear || 260) /
+            (config.workingDaysPerWeek || 5);
+          weeklyCost = role.defaultAnnualSalary / workingWeeksPerYear;
+        } else {
+          // Final fallback: estimate based on role type (very rough estimates for demo purposes)
+          const roleBasedEstimates: Record<string, number> = {
+            'Senior Engineer': 120000,
+            Engineer: 90000,
+            'Junior Engineer': 65000,
+            'Principal Engineer': 150000,
+            'Staff Engineer': 135000,
+            'Product Manager': 110000,
+            'Senior Product Manager': 130000,
+            Designer: 85000,
+            'Senior Designer': 105000,
+            'QA Engineer': 75000,
+            'DevOps Engineer': 100000,
+            'Data Analyst': 80000,
+            'Technical Lead': 140000,
+          };
+
+          const estimatedAnnual = roleBasedEstimates[role.name] || 80000; // Default to 80k
+          const workingWeeksPerYear =
+            (config.workingDaysPerYear || 260) /
+            (config.workingDaysPerWeek || 5);
+          weeklyCost = estimatedAnnual / workingWeeksPerYear;
+        }
+      }
+    }
+
     const validWeeklyCost =
       isNaN(weeklyCost) || !isFinite(weeklyCost) ? 0 : weeklyCost;
 
