@@ -46,6 +46,7 @@ import {
   TeamProjectCompatibility,
 } from '@/utils/skillBasedPlanning';
 import { getDivisionName } from '@/utils/teamUtils';
+import { getDisplayName } from '@/utils/shortnameUtils';
 
 interface ProjectTeamMatchingViewProps {
   projects: Project[];
@@ -96,6 +97,17 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   const [matchTypeFilter, setMatchTypeFilter] = useState('all');
   const [projectSortBy, setProjectSortBy] = useState('name');
   const [teamSortBy, setTeamSortBy] = useState('division');
+
+  // Advanced project filtering states
+  const [projectStatusFilter, setProjectStatusFilter] = useState('all');
+  const [projectSolutionFilter, setProjectSolutionFilter] = useState('all');
+  const [projectGroupBy, setProjectGroupBy] = useState('none');
+
+  // Column width and display states
+  const [columnWidth, setColumnWidth] = useState<'compact' | 'normal' | 'wide'>(
+    'normal'
+  );
+  const [showShortNames, setShowShortNames] = useState(false);
 
   // Collapse/expand states with localStorage persistence
   const [collapsedProjects, setCollapsedProjects] = useState<Set<string>>(
@@ -325,15 +337,68 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     teamCapacityMap,
   ]);
 
+  // Get project solutions map for filtering
+  const projectSolutionsMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    projectSolutions.forEach((ps: any) => {
+      if (!map.has(ps.projectId)) {
+        map.set(ps.projectId, []);
+      }
+      const solution = solutions.find(s => s.id === ps.solutionId);
+      if (solution) {
+        map.get(ps.projectId)!.push(solution.name);
+      }
+    });
+    return map;
+  }, [projectSolutions, solutions]);
+
+  // Get unique project values for filters
+  const projectFilterOptions = useMemo(() => {
+    const statuses = new Set<string>();
+    const solutionTypes = new Set<string>();
+
+    projects.forEach(project => {
+      if (project.status) statuses.add(project.status);
+      const projectSolutions = projectSolutionsMap.get(project.id) || [];
+      projectSolutions.forEach(solution => solutionTypes.add(solution));
+    });
+
+    return {
+      statuses: Array.from(statuses).sort(),
+      solutionTypes: Array.from(solutionTypes).sort(),
+    };
+  }, [projects, projectSolutionsMap]);
+
   // Apply filters and get sorted projects and teams
   const filteredProjects = useMemo(() => {
     let filtered = projects;
 
     // Project name filter
     if (projectFilter) {
-      filtered = filtered.filter(project =>
-        project.name.toLowerCase().includes(projectFilter.toLowerCase())
+      filtered = filtered.filter(
+        project =>
+          project.name.toLowerCase().includes(projectFilter.toLowerCase()) ||
+          (showShortNames &&
+            getDisplayName(project, true)
+              .toLowerCase()
+              .includes(projectFilter.toLowerCase())) ||
+          project.id.toLowerCase().includes(projectFilter.toLowerCase())
       );
+    }
+
+    // Status filter
+    if (projectStatusFilter !== 'all') {
+      filtered = filtered.filter(
+        project => project.status === projectStatusFilter
+      );
+    }
+
+    // Solution filter
+    if (projectSolutionFilter !== 'all') {
+      filtered = filtered.filter(project => {
+        const projectSolutions = projectSolutionsMap.get(project.id) || [];
+        return projectSolutions.includes(projectSolutionFilter);
+      });
     }
 
     // Apply collapse filter - show only expanded projects if collapse mode is on
@@ -342,11 +407,12 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     }
 
     // Apply project sorting
+    const sortedFiltered = [...filtered];
     if (projectSortBy === 'name') {
-      filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+      sortedFiltered.sort((a, b) => a.name.localeCompare(b.name));
     } else if (projectSortBy === 'priority') {
       const priorityOrder = { high: 3, medium: 2, low: 1 };
-      filtered = [...filtered].sort((a, b) => {
+      sortedFiltered.sort((a, b) => {
         const aPriority =
           typeof a.priority === 'string' ? a.priority : 'medium';
         const bPriority =
@@ -355,15 +421,39 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
           (priorityOrder as any)[bPriority] - (priorityOrder as any)[aPriority]
         );
       });
+    } else if (projectSortBy === 'status') {
+      const statusOrder = {
+        active: 4,
+        planning: 3,
+        'on-hold': 2,
+        completed: 1,
+      };
+      sortedFiltered.sort((a, b) => {
+        const aStatus = a.status || 'planning';
+        const bStatus = b.status || 'planning';
+        return (statusOrder as any)[bStatus] - (statusOrder as any)[aStatus];
+      });
+    } else if (projectSortBy === 'solution') {
+      sortedFiltered.sort((a, b) => {
+        const aSolutions = projectSolutionsMap.get(a.id) || [];
+        const bSolutions = projectSolutionsMap.get(b.id) || [];
+        const aMainSolution = aSolutions[0] || '';
+        const bMainSolution = bSolutions[0] || '';
+        return aMainSolution.localeCompare(bMainSolution);
+      });
     }
 
-    return filtered;
+    return sortedFiltered;
   }, [
     projects,
     projectFilter,
     projectSortBy,
+    projectStatusFilter,
+    projectSolutionFilter,
     showOnlyExpandedProjects,
     collapsedProjects,
+    projectSolutionsMap,
+    showShortNames,
   ]);
 
   const filteredDivisionGroups = useMemo(() => {
@@ -493,74 +583,182 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
         </CardHeader>
         <CardContent>
           {/* Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Filter projects..."
-                value={projectFilter}
-                onChange={e => setProjectFilter(e.target.value)}
-                className="pl-10"
-              />
+          <div className="space-y-4 mb-6">
+            {/* Primary Controls Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={
+                    showShortNames
+                      ? 'Filter projects/names...'
+                      : 'Filter projects...'
+                  }
+                  value={projectFilter}
+                  onChange={e => setProjectFilter(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Select value={divisionFilter} onValueChange={setDivisionFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Division" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Divisions</SelectItem>
+                  {uniqueDivisions.map(division => (
+                    <SelectItem key={division} value={division}>
+                      {division}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={projectStatusFilter}
+                onValueChange={setProjectStatusFilter}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Project Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {projectFilterOptions.statuses.map(status => (
+                    <SelectItem key={status} value={status}>
+                      <Badge
+                        variant={
+                          status === 'active'
+                            ? 'default'
+                            : status === 'completed'
+                              ? 'secondary'
+                              : 'outline'
+                        }
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </Badge>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={projectSolutionFilter}
+                onValueChange={setProjectSolutionFilter}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Solution Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Solutions</SelectItem>
+                  {projectFilterOptions.solutionTypes.map(solution => (
+                    <SelectItem key={solution} value={solution}>
+                      {solution}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Division" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Divisions</SelectItem>
-                {uniqueDivisions.map(division => (
-                  <SelectItem key={division} value={division}>
-                    {division}
+            {/* Secondary Controls Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-4">
+              <Select value={projectSortBy} onValueChange={setProjectSortBy}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort Projects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown className="h-3 w-3" />
+                      Name
+                    </div>
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  <SelectItem value="priority">Priority</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                  <SelectItem value="solution">Solution</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={projectSortBy} onValueChange={setProjectSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort Projects" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="h-3 w-3" />
-                    Name
-                  </div>
-                </SelectItem>
-                <SelectItem value="priority">Priority</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={teamSortBy} onValueChange={setTeamSortBy}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sort Teams" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="division">Division</SelectItem>
+                  <SelectItem value="name">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown className="h-3 w-3" />
+                      Name
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="capacity">Capacity</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={teamSortBy} onValueChange={setTeamSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort Teams" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="division">Division</SelectItem>
-                <SelectItem value="name">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="h-3 w-3" />
-                    Name
-                  </div>
-                </SelectItem>
-                <SelectItem value="capacity">Capacity</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={columnWidth} onValueChange={setColumnWidth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Column Width" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="compact">Compact</SelectItem>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="wide">Wide</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <div className="text-sm text-gray-600 flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              {filteredProjects.length} projects
-            </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowShortNames(!showShortNames)}
+                className="flex items-center gap-2"
+              >
+                <Info className="h-3 w-3" />
+                {showShortNames ? 'Full Names' : 'Short Names'}
+              </Button>
 
-            <div className="text-sm text-gray-600 flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              {filteredDivisionGroups.reduce(
-                (sum, group) => sum + group.teams.length,
-                0
-              )}{' '}
-              teams
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setProjectFilter('');
+                  setProjectStatusFilter('all');
+                  setProjectSolutionFilter('all');
+                  setDivisionFilter('all');
+                }}
+                className="flex items-center gap-2"
+                disabled={
+                  projectFilter === '' &&
+                  projectStatusFilter === 'all' &&
+                  projectSolutionFilter === 'all' &&
+                  divisionFilter === 'all'
+                }
+              >
+                <XCircle className="h-3 w-3" />
+                Clear Filters
+              </Button>
+
+              <div className="text-sm text-gray-600 flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                {filteredProjects.length}/{projects.length} projects
+              </div>
+
+              <div className="text-sm text-gray-600 flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                {filteredDivisionGroups.reduce(
+                  (sum, group) => sum + group.teams.length,
+                  0
+                )}
+                /{teams.length} teams
+              </div>
+
+              <div className="text-sm text-gray-600 flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                {filteredProjects.length *
+                  filteredDivisionGroups.reduce(
+                    (sum, group) => sum + group.teams.length,
+                    0
+                  )}{' '}
+                matches
+              </div>
             </div>
           </div>
 
@@ -598,20 +796,37 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
       {/* Matrix Grid */}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-auto">
-            <Table>
+          <div
+            className="overflow-auto max-h-[80vh]"
+            style={{ scrollbarWidth: 'thin' }}
+          >
+            <Table className="border-collapse">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-48 sticky left-0 bg-white z-20 border-r">
-                    Teams / Projects
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Teams / Projects
+                    </div>
                   </TableHead>
                   {filteredProjects.map(project => {
                     const isCollapsed = collapsedProjects.has(project.id);
+                    const projectSolutions =
+                      projectSolutionsMap.get(project.id) || [];
+
+                    // Dynamic column width based on setting
+                    const colWidth = isCollapsed
+                      ? 'w-8'
+                      : columnWidth === 'compact'
+                        ? 'min-w-12 max-w-16'
+                        : columnWidth === 'wide'
+                          ? 'min-w-24 max-w-32'
+                          : 'min-w-16 max-w-20'; // normal
 
                     return (
                       <TableHead
                         key={project.id}
-                        className={`text-center px-1 h-32 ${isCollapsed ? 'w-8' : 'min-w-16'}`}
+                        className={`text-center px-1 h-40 ${colWidth} border-r border-gray-200`}
                       >
                         <div className="h-full flex flex-col items-center justify-end pb-2">
                           <Button
@@ -628,15 +843,49 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
                           </Button>
 
                           {!isCollapsed && (
-                            <>
+                            <div className="flex flex-col items-center gap-1">
+                              {/* Project Name */}
                               <div
-                                className="transform -rotate-45 origin-bottom whitespace-nowrap text-xs font-medium mb-2"
+                                className="transform -rotate-45 origin-bottom whitespace-nowrap text-xs font-medium mb-1"
                                 style={{ transformOrigin: 'center bottom' }}
+                                title={`${project.name}${project.shortname ? ` (${project.shortname})` : ''}`}
                               >
-                                {project.name.length > 15
-                                  ? `${project.name.substring(0, 15)}...`
-                                  : project.name}
+                                {(() => {
+                                  const displayName = getDisplayName(
+                                    project,
+                                    showShortNames
+                                  );
+                                  const maxLength =
+                                    columnWidth === 'compact'
+                                      ? 10
+                                      : columnWidth === 'wide'
+                                        ? 25
+                                        : 15;
+                                  return displayName.length > maxLength
+                                    ? `${displayName.substring(0, maxLength)}...`
+                                    : displayName;
+                                })()}
                               </div>
+
+                              {/* Status Badge */}
+                              {project.status && (
+                                <Badge
+                                  variant={
+                                    project.status === 'active'
+                                      ? 'default'
+                                      : project.status === 'completed'
+                                        ? 'secondary'
+                                        : project.status === 'on-hold'
+                                          ? 'destructive'
+                                          : 'outline'
+                                  }
+                                  className="text-xs mb-1"
+                                >
+                                  {project.status.charAt(0).toUpperCase()}
+                                </Badge>
+                              )}
+
+                              {/* Priority Badge */}
                               {project.priority && (
                                 <Badge
                                   variant={
@@ -646,7 +895,7 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
                                         ? 'default'
                                         : 'secondary'
                                   }
-                                  className="text-xs"
+                                  className="text-xs mb-1"
                                 >
                                   {typeof project.priority === 'string'
                                     ? project.priority.charAt(0).toUpperCase()
@@ -655,7 +904,17 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
                                         .toUpperCase()}
                                 </Badge>
                               )}
-                            </>
+
+                              {/* Solution Badge */}
+                              {projectSolutions.length > 0 &&
+                                columnWidth !== 'compact' && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {projectSolutions[0].length > 6
+                                      ? `${projectSolutions[0].substring(0, 6)}...`
+                                      : projectSolutions[0]}
+                                  </Badge>
+                                )}
+                            </div>
                           )}
                         </div>
                       </TableHead>

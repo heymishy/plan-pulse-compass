@@ -23,6 +23,7 @@ import { toast } from '@/components/ui/use-toast';
 import { getRoleCompositionLegend } from '@/utils/teamUtils';
 import RoleComposition from '../teams/RoleComposition';
 import QuickAllocationDialog from './QuickAllocationDialog';
+import { ClipboardControls } from './AllocationClipboard';
 import {
   calculateQuarterlyFinancialSummary,
   calculateTeamCostBreakdown,
@@ -632,6 +633,17 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
             Available: {capacity.available}%
           </div>
         )}
+
+        {/* Clipboard Controls */}
+        <div className="flex justify-center mb-1">
+          <ClipboardControls
+            teamId={team.id}
+            teamName={team.name}
+            iterationNumber={1}
+            allocations={capacity.allocations}
+            compact={true}
+          />
+        </div>
 
         {/* Quick Add Button */}
         <Button

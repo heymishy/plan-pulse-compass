@@ -47,6 +47,10 @@ import { Project, Team, Cycle, Skill, Solution } from '@/types';
 import { getProjectRequiredSkills } from '@/utils/skillBasedPlanning';
 import { getDivisionName } from '@/utils/teamUtils';
 import ProjectTeamMatchingView from '@/components/planning/ProjectTeamMatchingView';
+import {
+  AllocationClipboardProvider,
+  ClipboardStatus,
+} from '@/components/planning/AllocationClipboard';
 
 interface FYProjectPlanningData {
   fyProjects: Project[];
@@ -124,6 +128,8 @@ const FYProjectPlanning: React.FC = () => {
     personSkills,
     divisions,
     allocations,
+    setAllocations,
+    epics,
   } = useApp();
 
   const [selectedFY, setSelectedFY] = useState<string>('2024');
@@ -509,828 +515,873 @@ const FYProjectPlanning: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">FY Project Portfolio Planning</h1>
-          <p className="text-muted-foreground">
-            Strategic planning for project allocation, team capacity, and skill
-            requirements
-          </p>
-        </div>
-        <div className="flex gap-4">
-          <Select value={selectedFY} onValueChange={setSelectedFY}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {availableFYs.map(fy => (
-                <SelectItem key={fy} value={fy}>
-                  FY {fy}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-blue-600" />
-              <div>
-                <div className="text-2xl font-bold">{fyProjects.length}</div>
-                <div className="text-sm text-gray-600">FY Projects</div>
-              </div>
+    <AllocationClipboardProvider
+      onAllocationsChange={setAllocations}
+      allAllocations={allocations}
+      selectedCycleId={selectedFY}
+    >
+      <div className="h-full w-full flex flex-col overflow-hidden">
+        <div className="flex-1 p-6 space-y-6 w-full overflow-auto">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">
+                FY Project Portfolio Planning
+              </h1>
+              <p className="text-muted-foreground">
+                Strategic planning for project allocation, team capacity, and
+                skill requirements
+              </p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <div>
-                <div className="text-2xl font-bold">
-                  {
-                    projectRiskAssessment.filter(
-                      p => p.riskLevel === 'critical' || p.riskLevel === 'high'
-                    ).length
-                  }
-                </div>
-                <div className="text-sm text-gray-600">High Risk Projects</div>
-              </div>
+            <div className="flex gap-4">
+              <Select value={selectedFY} onValueChange={setSelectedFY}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFYs.map(fy => (
+                    <SelectItem key={fy} value={fy}>
+                      FY {fy}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-orange-600" />
-              <div>
-                <div className="text-2xl font-bold">
-                  {
-                    skillBottlenecks.filter(b => b.severity === 'critical')
-                      .length
-                  }
-                </div>
-                <div className="text-sm text-gray-600">
-                  Critical Skill Bottlenecks
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-green-600" />
-              <div>
-                <div className="text-2xl font-bold">
-                  {
-                    teamCapacityAnalysis.filter(t => t.availableCapacity > 400)
-                      .length
-                  }
-                </div>
-                <div className="text-sm text-gray-600">Available Teams</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search projects or teams..."
-                value={searchFilter}
-                onChange={e => setSearchFilter(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Divisions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Divisions</SelectItem>
-                {divisions.map(div => (
-                  <SelectItem key={div.id} value={div.name}>
-                    {div.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={riskFilter} onValueChange={setRiskFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Risk Levels" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Risk Levels</SelectItem>
-                <SelectItem value="low">Low Risk</SelectItem>
-                <SelectItem value="medium">Medium Risk</SelectItem>
-                <SelectItem value="high">High Risk</SelectItem>
-                <SelectItem value="critical">Critical Risk</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline">
-              <DollarSign className="h-4 w-4 mr-2" />
-              Export Analysis
-            </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="matching" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="matching">Project-Team Matching</TabsTrigger>
-          <TabsTrigger value="projects">Project Risk Assessment</TabsTrigger>
-          <TabsTrigger value="teams">Team Capacity Analysis</TabsTrigger>
-          <TabsTrigger value="skills">Skill Bottlenecks</TabsTrigger>
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-        </TabsList>
+          {/* Clipboard Status */}
+          <ClipboardStatus epics={epics} />
 
-        {/* Project-Team Matching Tab */}
-        <TabsContent value="matching" className="space-y-4">
-          <ProjectTeamMatchingView
-            projects={projects}
-            teams={teams}
-            skills={skills}
-            solutions={solutions}
-            projectSolutions={projectSolutions}
-            projectSkills={projectSkills}
-            people={people}
-            personSkills={personSkills}
-            allocations={allocations}
-            cycles={cycles}
-            divisions={divisions}
-          />
-        </TabsContent>
-
-        <TabsContent value="projects" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Project Risk Assessment for FY {selectedFY}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Risk Level</TableHead>
-                    <TableHead>Skill Availability</TableHead>
-                    <TableHead>Team Capacity</TableHead>
-                    <TableHead>Competition</TableHead>
-                    <TableHead>Recommended Teams</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredData.projects.map(project => (
-                    <TableRow key={project.project.id}>
-                      <TableCell className="font-medium">
-                        {project.project.name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getRiskColor(project.riskLevel)}>
-                          {project.riskLevel.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {Math.round(project.risks.skillAvailability * 100)}%
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {Math.round(project.risks.teamCapacity * 100)}%
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {Math.round(
-                            project.risks.competitionForResources * 100
-                          )}
-                          %
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {project.recommendedTeams.slice(0, 2).map(team => (
-                            <Badge
-                              key={team}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {team}
-                            </Badge>
-                          ))}
-                          {project.recommendedTeams.length > 2 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{project.recommendedTeams.length - 2}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                              View Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2">
-                                <Target className="h-5 w-5" />
-                                {project.project.name} - Risk Assessment Details
-                              </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-6">
-                              {/* Risk Overview */}
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <Card>
-                                  <CardContent className="pt-4">
-                                    <div className="text-center">
-                                      <div className="text-2xl font-bold mb-1">
-                                        {Math.round(
-                                          ((project.risks.skillAvailability +
-                                            project.risks.teamCapacity +
-                                            project.risks
-                                              .competitionForResources) /
-                                            3) *
-                                            100
-                                        )}
-                                        %
-                                      </div>
-                                      <div className="text-sm text-muted-foreground">
-                                        Overall Score
-                                      </div>
-                                      <Badge
-                                        className={`mt-2 ${getRiskColor(project.riskLevel)}`}
-                                      >
-                                        {project.riskLevel.toUpperCase()}
-                                      </Badge>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                                <Card>
-                                  <CardContent className="pt-4">
-                                    <div className="space-y-3">
-                                      <div>
-                                        <div className="flex justify-between text-sm mb-1">
-                                          <span>Skill Availability</span>
-                                          <span>
-                                            {Math.round(
-                                              project.risks.skillAvailability *
-                                                100
-                                            )}
-                                            %
-                                          </span>
-                                        </div>
-                                        <Progress
-                                          value={
-                                            project.risks.skillAvailability *
-                                            100
-                                          }
-                                          className="h-2"
-                                        />
-                                      </div>
-                                      <div>
-                                        <div className="flex justify-between text-sm mb-1">
-                                          <span>Team Capacity</span>
-                                          <span>
-                                            {Math.round(
-                                              project.risks.teamCapacity * 100
-                                            )}
-                                            %
-                                          </span>
-                                        </div>
-                                        <Progress
-                                          value={
-                                            project.risks.teamCapacity * 100
-                                          }
-                                          className="h-2"
-                                        />
-                                      </div>
-                                      <div>
-                                        <div className="flex justify-between text-sm mb-1">
-                                          <span>Resource Competition</span>
-                                          <span>
-                                            {Math.round(
-                                              project.risks
-                                                .competitionForResources * 100
-                                            )}
-                                            %
-                                          </span>
-                                        </div>
-                                        <Progress
-                                          value={
-                                            project.risks
-                                              .competitionForResources * 100
-                                          }
-                                          className="h-2"
-                                        />
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                                <Card>
-                                  <CardContent className="pt-4">
-                                    <div className="text-center">
-                                      <div className="text-2xl font-bold mb-1">
-                                        {project.recommendedTeams.length}
-                                      </div>
-                                      <div className="text-sm text-muted-foreground">
-                                        Suitable Teams
-                                      </div>
-                                      <div className="text-2xl font-bold mb-1 mt-2">
-                                        {project.skillGaps.length}
-                                      </div>
-                                      <div className="text-sm text-muted-foreground">
-                                        Skill Gaps
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              </div>
-
-                              {/* Recommended Teams */}
-                              {project.recommendedTeams.length > 0 && (
-                                <div>
-                                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                                    <Users className="h-5 w-5" />
-                                    Recommended Teams
-                                  </h3>
-                                  <div className="space-y-2">
-                                    {project.recommendedTeams.map(
-                                      (teamName, index) => {
-                                        const teamAnalysis =
-                                          teamCapacityAnalysis.find(
-                                            t => t.team.name === teamName
-                                          );
-                                        return (
-                                          <div
-                                            key={teamName}
-                                            className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                                          >
-                                            <div className="flex items-center gap-3">
-                                              <div className="text-sm font-medium text-primary">
-                                                #{index + 1}
-                                              </div>
-                                              <div>
-                                                <div className="font-medium">
-                                                  {teamName}
-                                                </div>
-                                                {teamAnalysis && (
-                                                  <div className="text-sm text-muted-foreground">
-                                                    {teamAnalysis.division} •{' '}
-                                                    {Math.round(
-                                                      teamAnalysis.utilization
-                                                    )}
-                                                    % utilized
-                                                  </div>
-                                                )}
-                                              </div>
-                                            </div>
-                                            <div className="text-right">
-                                              {teamAnalysis && (
-                                                <div className="text-sm">
-                                                  <div className="font-medium">
-                                                    {Math.round(
-                                                      teamAnalysis.availableCapacity
-                                                    )}
-                                                    h available
-                                                  </div>
-                                                  <div className="text-xs text-muted-foreground">
-                                                    {teamAnalysis.skills.length}{' '}
-                                                    skills
-                                                  </div>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        );
-                                      }
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Skill Gaps */}
-                              {project.skillGaps.length > 0 && (
-                                <div>
-                                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                                    <AlertTriangle className="h-5 w-5 text-orange-500" />
-                                    Critical Skill Gaps
-                                  </h3>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {project.skillGaps.map(skillName => {
-                                      const bottleneck = skillBottlenecks.find(
-                                        b => b.skill.name === skillName
-                                      );
-                                      return (
-                                        <div
-                                          key={skillName}
-                                          className="p-3 border border-red-200 bg-red-50 rounded-lg"
-                                        >
-                                          <div className="font-medium text-red-800">
-                                            {skillName}
-                                          </div>
-                                          {bottleneck && (
-                                            <div className="text-sm text-red-600 mt-1">
-                                              <div>
-                                                Gap:{' '}
-                                                {Math.round(
-                                                  bottleneck.gapHours
-                                                )}{' '}
-                                                hours
-                                              </div>
-                                              <div>
-                                                Available teams:{' '}
-                                                {bottleneck.availableTeams
-                                                  .length || 'None'}
-                                              </div>
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Project Required Skills */}
-                              <div>
-                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                                  <Target className="h-5 w-5" />
-                                  Required Skills
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                  {(() => {
-                                    const requiredSkills =
-                                      getProjectRequiredSkills(
-                                        project.project,
-                                        projectSkills,
-                                        solutions,
-                                        skills,
-                                        projectSolutions
-                                      );
-                                    return requiredSkills.map(skillInfo => (
-                                      <Badge
-                                        key={skillInfo.skillId}
-                                        variant="outline"
-                                        className="justify-start"
-                                      >
-                                        {skillInfo.skillName}
-                                        <span className="ml-1 text-xs text-muted-foreground">
-                                          ({skillInfo.source})
-                                        </span>
-                                      </Badge>
-                                    ));
-                                  })()}
-                                </div>
-                              </div>
-
-                              {/* Timeline */}
-                              <div>
-                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                                  <Calendar className="h-5 w-5" />
-                                  Timeline
-                                </h3>
-                                <div className="p-3 bg-muted rounded-lg">
-                                  <div className="text-lg font-medium">
-                                    {project.timeline}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground mt-1">
-                                    Strategic planning for financial year
-                                    capacity allocation
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="teams" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Team Capacity Analysis for FY {selectedFY}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Team</TableHead>
-                    <TableHead>Division</TableHead>
-                    <TableHead>Utilization</TableHead>
-                    <TableHead>Available Capacity</TableHead>
-                    <TableHead>Key Skills</TableHead>
-                    <TableHead>Current Projects</TableHead>
-                    <TableHead>Risk Level</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredData.teams.map(analysis => (
-                    <TableRow key={analysis.team.id}>
-                      <TableCell className="font-medium">
-                        {analysis.team.name}
-                      </TableCell>
-                      <TableCell>{analysis.division}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="text-sm">
-                            {Math.round(analysis.utilization)}%
-                          </div>
-                          <div className="w-16 h-2 bg-gray-200 rounded-full">
-                            <div
-                              className={`h-2 rounded-full ${
-                                analysis.utilization > 90
-                                  ? 'bg-red-500'
-                                  : analysis.utilization > 75
-                                    ? 'bg-orange-500'
-                                    : analysis.utilization > 60
-                                      ? 'bg-yellow-500'
-                                      : 'bg-green-500'
-                              }`}
-                              style={{
-                                width: `${Math.min(analysis.utilization, 100)}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {Math.round(analysis.availableCapacity)}h
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {analysis.skills.slice(0, 3).map(skill => (
-                            <Badge
-                              key={skill}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {skill}
-                            </Badge>
-                          ))}
-                          {analysis.skills.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{analysis.skills.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {analysis.currentProjects.length > 0
-                            ? analysis.currentProjects.join(', ')
-                            : 'Available'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getRiskColor(analysis.riskLevel)}>
-                          {analysis.riskLevel.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="skills" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5" />
-                Skill Bottlenecks for FY {selectedFY}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Skill</TableHead>
-                    <TableHead>Severity</TableHead>
-                    <TableHead>Demand (Hours)</TableHead>
-                    <TableHead>Supply (Hours)</TableHead>
-                    <TableHead>Gap (Hours)</TableHead>
-                    <TableHead>Demanding Projects</TableHead>
-                    <TableHead>Available Teams</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {skillBottlenecks.map(bottleneck => (
-                    <TableRow key={bottleneck.skill.id}>
-                      <TableCell className="font-medium">
-                        {bottleneck.skill.name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getRiskColor(bottleneck.severity)}>
-                          {bottleneck.severity.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {Math.round(bottleneck.demandHours)}
-                      </TableCell>
-                      <TableCell>
-                        {Math.round(bottleneck.supplyHours)}
-                      </TableCell>
-                      <TableCell className="text-red-600 font-medium">
-                        {Math.round(bottleneck.gapHours)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {bottleneck.demandProjects.slice(0, 2).join(', ')}
-                          {bottleneck.demandProjects.length > 2 &&
-                            ` (+${bottleneck.demandProjects.length - 2})`}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {bottleneck.availableTeams.length > 0
-                            ? bottleneck.availableTeams.slice(0, 2).join(', ')
-                            : 'None'}
-                          {bottleneck.availableTeams.length > 2 &&
-                            ` (+${bottleneck.availableTeams.length - 2})`}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="recommendations" className="space-y-4">
-          <div className="grid gap-4">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Strategic Recommendations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  Based on the analysis above, here are key recommendations for
-                  FY {selectedFY} planning:
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {fyProjects.length}
+                    </div>
+                    <div className="text-sm text-gray-600">FY Projects</div>
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                {/* Hiring Recommendations */}
-                {skillBottlenecks.filter(b => b.severity === 'critical')
-                  .length > 0 && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <h4 className="font-semibold text-red-800 mb-2">
-                      🚨 Critical Skill Shortages - Immediate Hiring Required
-                    </h4>
-                    <ul className="space-y-1 text-sm text-red-700">
-                      {skillBottlenecks
-                        .filter(b => b.severity === 'critical')
-                        .map(bottleneck => (
-                          <li key={bottleneck.skill.id}>
-                            • <strong>{bottleneck.skill.name}</strong>: Need ~
-                            {Math.ceil(bottleneck.gapHours / 2000)} additional
-                            team members (Gap: {Math.round(bottleneck.gapHours)}{' '}
-                            hours across {bottleneck.demandProjects.length}{' '}
-                            projects)
-                          </li>
-                        ))}
-                    </ul>
-                    <div className="mt-2 text-xs text-red-600">
-                      ⏰ Assuming 1 quarter hiring lead time, start immediately
-                      to avoid Q2 delays
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {
+                        projectRiskAssessment.filter(
+                          p =>
+                            p.riskLevel === 'critical' || p.riskLevel === 'high'
+                        ).length
+                      }
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      High Risk Projects
                     </div>
                   </div>
-                )}
+                </div>
+              </CardContent>
+            </Card>
 
-                {/* Team Redistribution */}
-                {teamCapacityAnalysis.filter(t => t.availableCapacity > 400)
-                  .length > 0 && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h4 className="font-semibold text-blue-800 mb-2">
-                      🔄 Optimize Team Allocation
-                    </h4>
-                    <div className="text-sm text-blue-700">
-                      <strong>
-                        {
-                          teamCapacityAnalysis.filter(
-                            t => t.availableCapacity > 400
-                          ).length
-                        }{' '}
-                        teams
-                      </strong>{' '}
-                      have significant available capacity. Consider
-                      redistributing workload from over-utilized teams.
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-orange-600" />
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {
+                        skillBottlenecks.filter(b => b.severity === 'critical')
+                          .length
+                      }
                     </div>
-                    <div className="mt-2">
-                      {teamCapacityAnalysis
-                        .filter(t => t.availableCapacity > 400)
-                        .slice(0, 3)
-                        .map(team => (
-                          <Badge
-                            key={team.team.id}
-                            variant="outline"
-                            className="mr-2 mb-1"
-                          >
-                            {team.team.name} (
-                            {Math.round(team.availableCapacity)}h available)
-                          </Badge>
-                        ))}
+                    <div className="text-sm text-gray-600">
+                      Critical Skill Bottlenecks
                     </div>
                   </div>
-                )}
+                </div>
+              </CardContent>
+            </Card>
 
-                {/* High Risk Projects */}
-                {projectRiskAssessment.filter(p => p.riskLevel === 'critical')
-                  .length > 0 && (
-                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                    <h4 className="font-semibold text-orange-800 mb-2">
-                      ⚠️ High Risk Projects - Require Immediate Attention
-                    </h4>
-                    <ul className="space-y-1 text-sm text-orange-700">
-                      {projectRiskAssessment
-                        .filter(p => p.riskLevel === 'critical')
-                        .slice(0, 5)
-                        .map(project => (
-                          <li key={project.project.id}>
-                            • <strong>{project.project.name}</strong>:
-                            {project.skillGaps.length > 0 &&
-                              ` Missing skills: ${project.skillGaps.join(', ')}`}
-                            {project.recommendedTeams.length > 0 &&
-                              ` | Consider: ${project.recommendedTeams.slice(0, 2).join(', ')}`}
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Upskilling Opportunities */}
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-semibold text-green-800 mb-2">
-                    📈 Upskilling Opportunities
-                  </h4>
-                  <div className="text-sm text-green-700">
-                    Cross-train teams in high-demand skills to increase
-                    flexibility and reduce bottlenecks. Focus on skills with
-                    medium severity bottlenecks that can be addressed through
-                    training.
-                  </div>
-                  <div className="mt-2">
-                    {skillBottlenecks
-                      .filter(
-                        b => b.severity === 'medium' || b.severity === 'high'
-                      )
-                      .slice(0, 4)
-                      .map(bottleneck => (
-                        <Badge
-                          key={bottleneck.skill.id}
-                          variant="outline"
-                          className="mr-2 mb-1"
-                        >
-                          {bottleneck.skill.name}
-                        </Badge>
-                      ))}
+            <Card>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-green-600" />
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {
+                        teamCapacityAnalysis.filter(
+                          t => t.availableCapacity > 400
+                        ).length
+                      }
+                    </div>
+                    <div className="text-sm text-gray-600">Available Teams</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+
+          {/* Filters */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search projects or teams..."
+                    value={searchFilter}
+                    onChange={e => setSearchFilter(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+
+                <Select
+                  value={divisionFilter}
+                  onValueChange={setDivisionFilter}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Divisions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Divisions</SelectItem>
+                    {divisions.map(div => (
+                      <SelectItem key={div.id} value={div.name}>
+                        {div.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={riskFilter} onValueChange={setRiskFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Risk Levels" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Risk Levels</SelectItem>
+                    <SelectItem value="low">Low Risk</SelectItem>
+                    <SelectItem value="medium">Medium Risk</SelectItem>
+                    <SelectItem value="high">High Risk</SelectItem>
+                    <SelectItem value="critical">Critical Risk</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button variant="outline">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Export Analysis
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Main Content Tabs */}
+          <Tabs defaultValue="matching" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="matching">Project-Team Matching</TabsTrigger>
+              <TabsTrigger value="projects">
+                Project Risk Assessment
+              </TabsTrigger>
+              <TabsTrigger value="teams">Team Capacity Analysis</TabsTrigger>
+              <TabsTrigger value="skills">Skill Bottlenecks</TabsTrigger>
+              <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+            </TabsList>
+
+            {/* Project-Team Matching Tab */}
+            <TabsContent value="matching" className="space-y-4">
+              <ProjectTeamMatchingView
+                projects={projects}
+                teams={teams}
+                skills={skills}
+                solutions={solutions}
+                projectSolutions={projectSolutions}
+                projectSkills={projectSkills}
+                people={people}
+                personSkills={personSkills}
+                allocations={allocations}
+                cycles={cycles}
+                divisions={divisions}
+              />
+            </TabsContent>
+
+            <TabsContent value="projects" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Project Risk Assessment for FY {selectedFY}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Project</TableHead>
+                        <TableHead>Risk Level</TableHead>
+                        <TableHead>Skill Availability</TableHead>
+                        <TableHead>Team Capacity</TableHead>
+                        <TableHead>Competition</TableHead>
+                        <TableHead>Recommended Teams</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredData.projects.map(project => (
+                        <TableRow key={project.project.id}>
+                          <TableCell className="font-medium">
+                            {project.project.name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getRiskColor(project.riskLevel)}>
+                              {project.riskLevel.toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {Math.round(
+                                project.risks.skillAvailability * 100
+                              )}
+                              %
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {Math.round(project.risks.teamCapacity * 100)}%
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {Math.round(
+                                project.risks.competitionForResources * 100
+                              )}
+                              %
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {project.recommendedTeams
+                                .slice(0, 2)
+                                .map(team => (
+                                  <Badge
+                                    key={team}
+                                    variant="outline"
+                                    className="text-xs"
+                                  >
+                                    {team}
+                                  </Badge>
+                                ))}
+                              {project.recommendedTeams.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{project.recommendedTeams.length - 2}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline">
+                                  View Details
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <Target className="h-5 w-5" />
+                                    {project.project.name} - Risk Assessment
+                                    Details
+                                  </DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-6">
+                                  {/* Risk Overview */}
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <Card>
+                                      <CardContent className="pt-4">
+                                        <div className="text-center">
+                                          <div className="text-2xl font-bold mb-1">
+                                            {Math.round(
+                                              ((project.risks
+                                                .skillAvailability +
+                                                project.risks.teamCapacity +
+                                                project.risks
+                                                  .competitionForResources) /
+                                                3) *
+                                                100
+                                            )}
+                                            %
+                                          </div>
+                                          <div className="text-sm text-muted-foreground">
+                                            Overall Score
+                                          </div>
+                                          <Badge
+                                            className={`mt-2 ${getRiskColor(project.riskLevel)}`}
+                                          >
+                                            {project.riskLevel.toUpperCase()}
+                                          </Badge>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                    <Card>
+                                      <CardContent className="pt-4">
+                                        <div className="space-y-3">
+                                          <div>
+                                            <div className="flex justify-between text-sm mb-1">
+                                              <span>Skill Availability</span>
+                                              <span>
+                                                {Math.round(
+                                                  project.risks
+                                                    .skillAvailability * 100
+                                                )}
+                                                %
+                                              </span>
+                                            </div>
+                                            <Progress
+                                              value={
+                                                project.risks
+                                                  .skillAvailability * 100
+                                              }
+                                              className="h-2"
+                                            />
+                                          </div>
+                                          <div>
+                                            <div className="flex justify-between text-sm mb-1">
+                                              <span>Team Capacity</span>
+                                              <span>
+                                                {Math.round(
+                                                  project.risks.teamCapacity *
+                                                    100
+                                                )}
+                                                %
+                                              </span>
+                                            </div>
+                                            <Progress
+                                              value={
+                                                project.risks.teamCapacity * 100
+                                              }
+                                              className="h-2"
+                                            />
+                                          </div>
+                                          <div>
+                                            <div className="flex justify-between text-sm mb-1">
+                                              <span>Resource Competition</span>
+                                              <span>
+                                                {Math.round(
+                                                  project.risks
+                                                    .competitionForResources *
+                                                    100
+                                                )}
+                                                %
+                                              </span>
+                                            </div>
+                                            <Progress
+                                              value={
+                                                project.risks
+                                                  .competitionForResources * 100
+                                              }
+                                              className="h-2"
+                                            />
+                                          </div>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                    <Card>
+                                      <CardContent className="pt-4">
+                                        <div className="text-center">
+                                          <div className="text-2xl font-bold mb-1">
+                                            {project.recommendedTeams.length}
+                                          </div>
+                                          <div className="text-sm text-muted-foreground">
+                                            Suitable Teams
+                                          </div>
+                                          <div className="text-2xl font-bold mb-1 mt-2">
+                                            {project.skillGaps.length}
+                                          </div>
+                                          <div className="text-sm text-muted-foreground">
+                                            Skill Gaps
+                                          </div>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  </div>
+
+                                  {/* Recommended Teams */}
+                                  {project.recommendedTeams.length > 0 && (
+                                    <div>
+                                      <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                        <Users className="h-5 w-5" />
+                                        Recommended Teams
+                                      </h3>
+                                      <div className="space-y-2">
+                                        {project.recommendedTeams.map(
+                                          (teamName, index) => {
+                                            const teamAnalysis =
+                                              teamCapacityAnalysis.find(
+                                                t => t.team.name === teamName
+                                              );
+                                            return (
+                                              <div
+                                                key={teamName}
+                                                className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                                              >
+                                                <div className="flex items-center gap-3">
+                                                  <div className="text-sm font-medium text-primary">
+                                                    #{index + 1}
+                                                  </div>
+                                                  <div>
+                                                    <div className="font-medium">
+                                                      {teamName}
+                                                    </div>
+                                                    {teamAnalysis && (
+                                                      <div className="text-sm text-muted-foreground">
+                                                        {teamAnalysis.division}{' '}
+                                                        •{' '}
+                                                        {Math.round(
+                                                          teamAnalysis.utilization
+                                                        )}
+                                                        % utilized
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                                <div className="text-right">
+                                                  {teamAnalysis && (
+                                                    <div className="text-sm">
+                                                      <div className="font-medium">
+                                                        {Math.round(
+                                                          teamAnalysis.availableCapacity
+                                                        )}
+                                                        h available
+                                                      </div>
+                                                      <div className="text-xs text-muted-foreground">
+                                                        {
+                                                          teamAnalysis.skills
+                                                            .length
+                                                        }{' '}
+                                                        skills
+                                                      </div>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            );
+                                          }
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Skill Gaps */}
+                                  {project.skillGaps.length > 0 && (
+                                    <div>
+                                      <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                        <AlertTriangle className="h-5 w-5 text-orange-500" />
+                                        Critical Skill Gaps
+                                      </h3>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {project.skillGaps.map(skillName => {
+                                          const bottleneck =
+                                            skillBottlenecks.find(
+                                              b => b.skill.name === skillName
+                                            );
+                                          return (
+                                            <div
+                                              key={skillName}
+                                              className="p-3 border border-red-200 bg-red-50 rounded-lg"
+                                            >
+                                              <div className="font-medium text-red-800">
+                                                {skillName}
+                                              </div>
+                                              {bottleneck && (
+                                                <div className="text-sm text-red-600 mt-1">
+                                                  <div>
+                                                    Gap:{' '}
+                                                    {Math.round(
+                                                      bottleneck.gapHours
+                                                    )}{' '}
+                                                    hours
+                                                  </div>
+                                                  <div>
+                                                    Available teams:{' '}
+                                                    {bottleneck.availableTeams
+                                                      .length || 'None'}
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Project Required Skills */}
+                                  <div>
+                                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                      <Target className="h-5 w-5" />
+                                      Required Skills
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                      {(() => {
+                                        const requiredSkills =
+                                          getProjectRequiredSkills(
+                                            project.project,
+                                            projectSkills,
+                                            solutions,
+                                            skills,
+                                            projectSolutions
+                                          );
+                                        return requiredSkills.map(skillInfo => (
+                                          <Badge
+                                            key={skillInfo.skillId}
+                                            variant="outline"
+                                            className="justify-start"
+                                          >
+                                            {skillInfo.skillName}
+                                            <span className="ml-1 text-xs text-muted-foreground">
+                                              ({skillInfo.source})
+                                            </span>
+                                          </Badge>
+                                        ));
+                                      })()}
+                                    </div>
+                                  </div>
+
+                                  {/* Timeline */}
+                                  <div>
+                                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                      <Calendar className="h-5 w-5" />
+                                      Timeline
+                                    </h3>
+                                    <div className="p-3 bg-muted rounded-lg">
+                                      <div className="text-lg font-medium">
+                                        {project.timeline}
+                                      </div>
+                                      <div className="text-sm text-muted-foreground mt-1">
+                                        Strategic planning for financial year
+                                        capacity allocation
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="teams" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Team Capacity Analysis for FY {selectedFY}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Team</TableHead>
+                        <TableHead>Division</TableHead>
+                        <TableHead>Utilization</TableHead>
+                        <TableHead>Available Capacity</TableHead>
+                        <TableHead>Key Skills</TableHead>
+                        <TableHead>Current Projects</TableHead>
+                        <TableHead>Risk Level</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredData.teams.map(analysis => (
+                        <TableRow key={analysis.team.id}>
+                          <TableCell className="font-medium">
+                            {analysis.team.name}
+                          </TableCell>
+                          <TableCell>{analysis.division}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm">
+                                {Math.round(analysis.utilization)}%
+                              </div>
+                              <div className="w-16 h-2 bg-gray-200 rounded-full">
+                                <div
+                                  className={`h-2 rounded-full ${
+                                    analysis.utilization > 90
+                                      ? 'bg-red-500'
+                                      : analysis.utilization > 75
+                                        ? 'bg-orange-500'
+                                        : analysis.utilization > 60
+                                          ? 'bg-yellow-500'
+                                          : 'bg-green-500'
+                                  }`}
+                                  style={{
+                                    width: `${Math.min(analysis.utilization, 100)}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {Math.round(analysis.availableCapacity)}h
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {analysis.skills.slice(0, 3).map(skill => (
+                                <Badge
+                                  key={skill}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {skill}
+                                </Badge>
+                              ))}
+                              {analysis.skills.length > 3 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  +{analysis.skills.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {analysis.currentProjects.length > 0
+                                ? analysis.currentProjects.join(', ')
+                                : 'Available'}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getRiskColor(analysis.riskLevel)}>
+                              {analysis.riskLevel.toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="skills" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5" />
+                    Skill Bottlenecks for FY {selectedFY}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Skill</TableHead>
+                        <TableHead>Severity</TableHead>
+                        <TableHead>Demand (Hours)</TableHead>
+                        <TableHead>Supply (Hours)</TableHead>
+                        <TableHead>Gap (Hours)</TableHead>
+                        <TableHead>Demanding Projects</TableHead>
+                        <TableHead>Available Teams</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {skillBottlenecks.map(bottleneck => (
+                        <TableRow key={bottleneck.skill.id}>
+                          <TableCell className="font-medium">
+                            {bottleneck.skill.name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={getRiskColor(bottleneck.severity)}
+                            >
+                              {bottleneck.severity.toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {Math.round(bottleneck.demandHours)}
+                          </TableCell>
+                          <TableCell>
+                            {Math.round(bottleneck.supplyHours)}
+                          </TableCell>
+                          <TableCell className="text-red-600 font-medium">
+                            {Math.round(bottleneck.gapHours)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {bottleneck.demandProjects.slice(0, 2).join(', ')}
+                              {bottleneck.demandProjects.length > 2 &&
+                                ` (+${bottleneck.demandProjects.length - 2})`}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {bottleneck.availableTeams.length > 0
+                                ? bottleneck.availableTeams
+                                    .slice(0, 2)
+                                    .join(', ')
+                                : 'None'}
+                              {bottleneck.availableTeams.length > 2 &&
+                                ` (+${bottleneck.availableTeams.length - 2})`}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="recommendations" className="space-y-4">
+              <div className="grid gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Strategic Recommendations
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm text-muted-foreground">
+                      Based on the analysis above, here are key recommendations
+                      for FY {selectedFY} planning:
+                    </div>
+
+                    {/* Hiring Recommendations */}
+                    {skillBottlenecks.filter(b => b.severity === 'critical')
+                      .length > 0 && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <h4 className="font-semibold text-red-800 mb-2">
+                          🚨 Critical Skill Shortages - Immediate Hiring
+                          Required
+                        </h4>
+                        <ul className="space-y-1 text-sm text-red-700">
+                          {skillBottlenecks
+                            .filter(b => b.severity === 'critical')
+                            .map(bottleneck => (
+                              <li key={bottleneck.skill.id}>
+                                • <strong>{bottleneck.skill.name}</strong>: Need
+                                ~{Math.ceil(bottleneck.gapHours / 2000)}{' '}
+                                additional team members (Gap:{' '}
+                                {Math.round(bottleneck.gapHours)} hours across{' '}
+                                {bottleneck.demandProjects.length} projects)
+                              </li>
+                            ))}
+                        </ul>
+                        <div className="mt-2 text-xs text-red-600">
+                          ⏰ Assuming 1 quarter hiring lead time, start
+                          immediately to avoid Q2 delays
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Team Redistribution */}
+                    {teamCapacityAnalysis.filter(t => t.availableCapacity > 400)
+                      .length > 0 && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="font-semibold text-blue-800 mb-2">
+                          🔄 Optimize Team Allocation
+                        </h4>
+                        <div className="text-sm text-blue-700">
+                          <strong>
+                            {
+                              teamCapacityAnalysis.filter(
+                                t => t.availableCapacity > 400
+                              ).length
+                            }{' '}
+                            teams
+                          </strong>{' '}
+                          have significant available capacity. Consider
+                          redistributing workload from over-utilized teams.
+                        </div>
+                        <div className="mt-2">
+                          {teamCapacityAnalysis
+                            .filter(t => t.availableCapacity > 400)
+                            .slice(0, 3)
+                            .map(team => (
+                              <Badge
+                                key={team.team.id}
+                                variant="outline"
+                                className="mr-2 mb-1"
+                              >
+                                {team.team.name} (
+                                {Math.round(team.availableCapacity)}h available)
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* High Risk Projects */}
+                    {projectRiskAssessment.filter(
+                      p => p.riskLevel === 'critical'
+                    ).length > 0 && (
+                      <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                        <h4 className="font-semibold text-orange-800 mb-2">
+                          ⚠️ High Risk Projects - Require Immediate Attention
+                        </h4>
+                        <ul className="space-y-1 text-sm text-orange-700">
+                          {projectRiskAssessment
+                            .filter(p => p.riskLevel === 'critical')
+                            .slice(0, 5)
+                            .map(project => (
+                              <li key={project.project.id}>
+                                • <strong>{project.project.name}</strong>:
+                                {project.skillGaps.length > 0 &&
+                                  ` Missing skills: ${project.skillGaps.join(', ')}`}
+                                {project.recommendedTeams.length > 0 &&
+                                  ` | Consider: ${project.recommendedTeams.slice(0, 2).join(', ')}`}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Upskilling Opportunities */}
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <h4 className="font-semibold text-green-800 mb-2">
+                        📈 Upskilling Opportunities
+                      </h4>
+                      <div className="text-sm text-green-700">
+                        Cross-train teams in high-demand skills to increase
+                        flexibility and reduce bottlenecks. Focus on skills with
+                        medium severity bottlenecks that can be addressed
+                        through training.
+                      </div>
+                      <div className="mt-2">
+                        {skillBottlenecks
+                          .filter(
+                            b =>
+                              b.severity === 'medium' || b.severity === 'high'
+                          )
+                          .slice(0, 4)
+                          .map(bottleneck => (
+                            <Badge
+                              key={bottleneck.skill.id}
+                              variant="outline"
+                              className="mr-2 mb-1"
+                            >
+                              {bottleneck.skill.name}
+                            </Badge>
+                          ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </AllocationClipboardProvider>
   );
 };
 
