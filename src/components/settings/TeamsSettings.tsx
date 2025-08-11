@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Users, Plus, Trash2, MapPin, Palette } from 'lucide-react';
 import { RunWorkCategory } from '@/types';
 import RoleTypeManager from './RoleTypeManager';
-import RoleTypeMappingTable from './RoleTypeMappingTable';
+import EnhancedRoleTypeMappingTable from './EnhancedRoleTypeMappingTable';
 
 const TeamsSettings = () => {
   const { runWorkCategories, setRunWorkCategories } = useApp();
@@ -117,7 +117,7 @@ const TeamsSettings = () => {
         </TabsContent>
 
         <TabsContent value="role-mappings" className="mt-6">
-          <RoleTypeMappingTable />
+          <EnhancedRoleTypeMappingTable />
         </TabsContent>
 
         <TabsContent value="run-work" className="mt-6">
