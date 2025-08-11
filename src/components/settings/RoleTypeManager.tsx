@@ -57,7 +57,7 @@ import {
   Palette,
   Settings,
 } from 'lucide-react';
-import { useRoleTypes } from '@/hooks/useRoleTypes';
+import { useEnhancedRoleTypes } from '@/hooks/useRoleTypes';
 import {
   RoleType,
   RoleCategory,
@@ -111,7 +111,7 @@ const RoleTypeManager: React.FC = () => {
     getMostCommonRoleTypes,
     getNextAvailableColor,
     validateRoleTypeData,
-  } = useRoleTypes();
+  } = useEnhancedRoleTypes();
   const { toast } = useToast();
 
   // State management

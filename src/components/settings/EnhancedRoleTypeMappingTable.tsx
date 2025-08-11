@@ -60,7 +60,7 @@ import {
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
-import { useRoleTypes } from '@/hooks/useRoleTypes';
+import { useEnhancedRoleTypes } from '@/hooks/useRoleTypes';
 import { useApp } from '@/context/AppContext';
 import { RoleTypeMapping } from '@/types/roleTypes';
 import { useToast } from '@/hooks/use-toast';
@@ -99,7 +99,7 @@ const EnhancedRoleTypeMappingTable: React.FC = () => {
     updateMapping,
     suggestMappings,
     autoMapUnmappedRoles,
-  } = useRoleTypes();
+  } = useEnhancedRoleTypes();
   const { toast } = useToast();
 
   // State

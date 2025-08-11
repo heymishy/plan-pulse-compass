@@ -71,7 +71,7 @@ export interface UseRoleTypesReturn {
   validateRoleTypeData: (roleType: Partial<RoleType>) => string[];
 }
 
-export const useRoleTypes = (): UseRoleTypesReturn => {
+export const useEnhancedRoleTypes = (): UseRoleTypesReturn => {
   const { people, roles, config } = useApp();
   const roleTypeContext = useRoleTypeContext();
 

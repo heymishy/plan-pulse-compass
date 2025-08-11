@@ -63,7 +63,7 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
-import { useRoleTypes } from '@/hooks/useRoleTypes';
+import { useEnhancedRoleTypes } from '@/hooks/useRoleTypes';
 import { useApp } from '@/context/AppContext';
 import { RoleTypeMapping, RoleTypeSuggestion } from '@/types/roleTypes';
 import { ROLE_TYPE_CATEGORIES } from '@/utils/roleTypeUtils';
@@ -96,7 +96,7 @@ const RoleTypeMappingTable: React.FC = () => {
     suggestMappings,
     getUnmappedJobTitles,
     autoMapUnmappedRoles,
-  } = useRoleTypes();
+  } = useEnhancedRoleTypes();
   const { toast } = useToast();
 
   // State

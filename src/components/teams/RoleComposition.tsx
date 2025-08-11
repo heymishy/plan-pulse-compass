@@ -1,7 +1,7 @@
 import React from 'react';
 import { Team } from '@/types';
 import { useApp } from '@/context/AppContext';
-import { useRoleTypes } from '@/hooks/useRoleTypes';
+import { useEnhancedRoleTypes } from '@/hooks/useRoleTypes';
 import {
   calculateRoleCompositionPercentages,
   calculateRoleTypeComposition,
@@ -21,7 +21,7 @@ const RoleComposition: React.FC<RoleCompositionProps> = ({
   useRoleTypes = true,
 }) => {
   const { people, roles } = useApp();
-  const { roleTypes, roleTypeMappings } = useRoleTypes();
+  const { roleTypes, roleTypeMappings } = useEnhancedRoleTypes();
 
   const barHeight = size === 'sm' ? 'h-1.5' : 'h-2';
   const textSize = size === 'sm' ? 'text-xs' : 'text-xs';
