@@ -7,7 +7,9 @@ import {
   Cycle,
   Team,
   AppConfig,
+  RoleType,
 } from '@/types';
+import { calculatePersonCostWithRoleType } from './roleTypeUtils';
 
 const WORKING_DAYS_PER_MONTH = 22; // Default working days per month
 
@@ -38,95 +40,41 @@ export interface PersonCostCalculation {
 export const calculatePersonCost = (
   person: Person,
   role: Role,
-  config: AppConfig
+  config: AppConfig,
+  roleType?: RoleType
 ): PersonCostCalculation => {
   const safeConfig = config || getDefaultConfig();
-  const {
-    workingHoursPerDay,
-    workingDaysPerYear,
-    workingDaysPerWeek,
-    workingDaysPerMonth,
-  } = safeConfig;
-  let costPerHour = 0;
-  let rateSource: 'personal' | 'role-default' | 'legacy-fallback' =
-    'legacy-fallback';
-  let effectiveRate = 0;
-  let rateType: 'hourly' | 'daily' | 'annual' = 'hourly';
 
-  if (person.employmentType === 'permanent') {
-    // Priority 1: Individual salary
-    if (person.annualSalary && person.annualSalary > 0) {
-      costPerHour =
-        person.annualSalary / (workingDaysPerYear * workingHoursPerDay);
-      rateSource = 'personal';
-      effectiveRate = person.annualSalary;
-      rateType = 'annual';
-    }
-    // Priority 2: Role default annual salary
-    else if (role.defaultAnnualSalary && role.defaultAnnualSalary > 0) {
-      costPerHour =
-        role.defaultAnnualSalary / (workingDaysPerYear * workingHoursPerDay);
-      rateSource = 'role-default';
-      effectiveRate = role.defaultAnnualSalary;
-      rateType = 'annual';
-    }
-    // Priority 3: Legacy fallback
-    else if (role.defaultRate && role.defaultRate > 0) {
-      costPerHour = role.defaultRate;
-      rateSource = 'legacy-fallback';
-      effectiveRate = role.defaultRate;
-      rateType = 'hourly';
-    }
-  } else if (person.employmentType === 'contractor') {
-    // Priority 1: Individual contract rates
-    if (
-      person.contractDetails?.hourlyRate &&
-      person.contractDetails.hourlyRate > 0
-    ) {
-      costPerHour = person.contractDetails.hourlyRate;
-      rateSource = 'personal';
-      effectiveRate = person.contractDetails.hourlyRate;
-      rateType = 'hourly';
-    } else if (
-      person.contractDetails?.dailyRate &&
-      person.contractDetails.dailyRate > 0
-    ) {
-      costPerHour = person.contractDetails.dailyRate / 8;
-      rateSource = 'personal';
-      effectiveRate = person.contractDetails.dailyRate;
-      rateType = 'daily';
-    }
-    // Priority 2: Role default contractor rates
-    else if (role.defaultHourlyRate && role.defaultHourlyRate > 0) {
-      costPerHour = role.defaultHourlyRate;
-      rateSource = 'role-default';
-      effectiveRate = role.defaultHourlyRate;
-      rateType = 'hourly';
-    } else if (role.defaultDailyRate && role.defaultDailyRate > 0) {
-      costPerHour = role.defaultDailyRate / 8;
-      rateSource = 'role-default';
-      effectiveRate = role.defaultDailyRate;
-      rateType = 'daily';
-    }
-    // Priority 3: Legacy fallback
-    else if (role.defaultRate && role.defaultRate > 0) {
-      costPerHour = role.defaultRate;
-      rateSource = 'legacy-fallback';
-      effectiveRate = role.defaultRate;
-      rateType = 'hourly';
-    }
-  }
+  // Use new role type calculation if available
+  const roleTypeCalc = calculatePersonCostWithRoleType(
+    person,
+    role,
+    roleType,
+    safeConfig
+  );
 
   return {
     personId: person.id,
-    costPerHour,
-    costPerDay: costPerHour * workingHoursPerDay,
-    costPerWeek: costPerHour * workingHoursPerDay * workingDaysPerWeek,
-    costPerMonth: costPerHour * workingHoursPerDay * workingDaysPerMonth,
-    costPerYear: costPerHour * workingHoursPerDay * workingDaysPerYear,
-    rateSource,
-    effectiveRate,
-    rateType,
+    costPerHour: roleTypeCalc.costPerHour,
+    costPerDay: roleTypeCalc.costPerHour * safeConfig.workingHoursPerDay,
+    costPerWeek:
+      roleTypeCalc.costPerHour *
+      safeConfig.workingHoursPerDay *
+      safeConfig.workingDaysPerWeek,
+    costPerMonth:
+      roleTypeCalc.costPerHour *
+      safeConfig.workingHoursPerDay *
+      safeConfig.workingDaysPerMonth,
+    costPerYear:
+      roleTypeCalc.costPerHour *
+      safeConfig.workingHoursPerDay *
+      safeConfig.workingDaysPerYear,
+    rateSource:
+      roleTypeCalc.rateSource === 'role-type'
+        ? 'role-default'
+        : roleTypeCalc.rateSource, // Map role-type to role-default for backward compatibility
+    effectiveRate: roleTypeCalc.effectiveRate,
+    rateType: roleTypeCalc.rateType,
   };
 };
 
@@ -139,7 +87,7 @@ export const calculateTeamWeeklyCost = (
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role, safeConfig);
+      const personCost = calculatePersonCost(person, role, config);
       weeklyCost += personCost.costPerWeek;
     }
   });
@@ -155,7 +103,7 @@ export const calculateTeamMonthlyCost = (
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role, safeConfig);
+      const personCost = calculatePersonCost(person, role, config);
       monthlyCost += personCost.costPerMonth;
     }
   });
@@ -179,7 +127,7 @@ export const calculateTeamAnnualCost = (
   teamMembers.forEach(person => {
     const role = roles.find(r => r.id === person.roleId);
     if (role) {
-      const personCost = calculatePersonCost(person, role, safeConfig);
+      const personCost = calculatePersonCost(person, role, config);
       annualCost += personCost.costPerYear;
     }
   });
@@ -303,7 +251,7 @@ export const calculateProjectCost = (
       const role = roles.find(r => r.id === person.roleId);
       if (!role) return;
 
-      const personCost = calculatePersonCost(person, role, safeConfig);
+      const personCost = calculatePersonCost(person, role, config);
       const cycleDurationInDays = Math.ceil(
         (new Date(cycle.endDate).getTime() -
           new Date(cycle.startDate).getTime()) /

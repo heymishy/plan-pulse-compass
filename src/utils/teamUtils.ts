@@ -1,4 +1,5 @@
 import { Team, Person, Role } from '@/types';
+import { RoleType } from '@/types/roleTypes';
 
 /**
  * Get the display name for a team's product owner with proper handling of acting vs natural PO
@@ -232,8 +233,129 @@ export const calculateEmploymentTypePercentages = (
 };
 
 /**
- * Calculate role composition percentages for SE and QE roles
+ * Calculate role type composition for team members
+ * Uses role type system with fallback to job title-based categorization
+ */
+export const calculateRoleTypeComposition = (
+  teamId: string,
+  people: Person[],
+  roles: Role[],
+  roleTypes: RoleType[] = [],
+  roleTypeMappings: Array<{ jobTitle: string; roleTypeId: string }> = []
+): {
+  roleTypeBreakdown: Array<{
+    roleTypeId: string;
+    roleTypeName: string;
+    count: number;
+    percentage: number;
+    color: string;
+  }>;
+  unmappedBreakdown: Array<{
+    roleName: string;
+    count: number;
+    percentage: number;
+    color: string;
+  }>;
+  totalCount: number;
+} => {
+  const teamMembers = getTeamMembers(teamId, people);
+
+  if (teamMembers.length === 0) {
+    return {
+      roleTypeBreakdown: [],
+      unmappedBreakdown: [],
+      totalCount: 0,
+    };
+  }
+
+  const totalCount = teamMembers.length;
+  const roleTypeCounts = new Map<
+    string,
+    { roleType: RoleType; count: number }
+  >();
+  const unmappedRoleCounts = new Map<string, { name: string; count: number }>();
+
+  teamMembers.forEach(person => {
+    const role = roles.find(r => r.id === person.roleId);
+    if (!role) return;
+
+    // First, check if role has direct roleTypeId
+    if (role.roleTypeId) {
+      const roleType = roleTypes.find(rt => rt.id === role.roleTypeId);
+      if (roleType) {
+        const existing = roleTypeCounts.get(roleType.id);
+        roleTypeCounts.set(roleType.id, {
+          roleType,
+          count: existing ? existing.count + 1 : 1,
+        });
+        return;
+      }
+    }
+
+    // Second, check role type mappings by job title
+    const mapping = roleTypeMappings.find(
+      m => m.jobTitle.toLowerCase() === role.name.toLowerCase()
+    );
+    if (mapping) {
+      const roleType = roleTypes.find(rt => rt.id === mapping.roleTypeId);
+      if (roleType) {
+        const existing = roleTypeCounts.get(roleType.id);
+        roleTypeCounts.set(roleType.id, {
+          roleType,
+          count: existing ? existing.count + 1 : 1,
+        });
+        return;
+      }
+    }
+
+    // If no role type mapping found, add to unmapped
+    const roleName = role.name;
+    const existing = unmappedRoleCounts.get(roleName);
+    unmappedRoleCounts.set(roleName, {
+      name: roleName,
+      count: existing ? existing.count + 1 : 1,
+    });
+  });
+
+  // Create role type breakdown
+  const roleTypeBreakdown = Array.from(roleTypeCounts.entries())
+    .map(([roleTypeId, { roleType, count }]) => ({
+      roleTypeId,
+      roleTypeName: roleType.name,
+      count,
+      percentage: Math.round((count / totalCount) * 100),
+      color: roleType.color,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  // Create unmapped role breakdown with fallback colors
+  const fallbackColors = [
+    '#64748b', // slate-500
+    '#6b7280', // gray-500
+    '#78716c', // stone-500
+    '#71717a', // zinc-500
+  ];
+
+  const unmappedBreakdown = Array.from(unmappedRoleCounts.entries())
+    .map(([roleName, { count }], index) => ({
+      roleName,
+      count,
+      percentage: Math.round((count / totalCount) * 100),
+      color: fallbackColors[index % fallbackColors.length],
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    roleTypeBreakdown,
+    unmappedBreakdown,
+    totalCount,
+  };
+};
+
+/**
+ * Calculate role composition percentages for SE and QE roles (legacy compatibility)
  * Returns percentages and role breakdown with other roles
+ * @deprecated Use calculateRoleTypeComposition for new implementations
  */
 export const calculateRoleCompositionPercentages = (
   teamId: string,

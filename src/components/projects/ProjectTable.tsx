@@ -102,6 +102,8 @@ interface SortableProjectRowProps {
   roles: Role[];
   teams: Team[];
   config: AppConfig;
+  solutions: Solution[];
+  projectSolutions: ProjectSolution[];
   selectedProjects: Set<string>;
   onSelectProject: (projectId: string, checked: boolean) => void;
   onViewProject: (projectId: string) => void;
@@ -118,6 +120,8 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
   roles,
   teams,
   config,
+  solutions,
+  projectSolutions,
   selectedProjects,
   onSelectProject,
   onViewProject,
@@ -153,6 +157,15 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
     teams,
     config
   );
+
+  // Get project solutions
+  const currentProjectSolutions = projectSolutions.filter(
+    ps => ps.projectId === project.id
+  );
+  const projectSolutionNames = currentProjectSolutions.map(ps => {
+    const solution = solutions.find(s => s.id === ps.solutionId);
+    return solution?.name || 'Unknown';
+  });
 
   const getStatusBadge = (status: string | undefined) => {
     const statusConfig = {
@@ -210,6 +223,19 @@ const SortableProjectRow: React.FC<SortableProjectRowProps> = ({
         <div className="flex items-center space-x-2">
           <Layers className="h-4 w-4 text-gray-500" />
           <span>{projectEpics.length}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          {projectSolutionNames.length > 0 ? (
+            projectSolutionNames.map((name, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {name}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-gray-400 text-sm">None</span>
+          )}
         </div>
       </TableCell>
       <TableCell>
@@ -285,6 +311,8 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
     people,
     roles,
     teams,
+    solutions,
+    projectSolutions,
   } = useApp();
   const { toast } = useToast();
   const { config } = useSettings();
@@ -790,6 +818,7 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
                   </Button>
                 </TableHead>
                 <TableHead>Epics</TableHead>
+                <TableHead>Solutions</TableHead>
                 <TableHead>FY Cost</TableHead>
                 <TableHead>
                   <Button
@@ -833,6 +862,8 @@ const ProjectTable: React.FC<ProjectTableProps> = ({
                     roles={roles}
                     teams={teams}
                     config={config}
+                    solutions={solutions}
+                    projectSolutions={projectSolutions}
                     selectedProjects={selectedProjects}
                     onSelectProject={handleSelectProject}
                     onViewProject={onViewProject}

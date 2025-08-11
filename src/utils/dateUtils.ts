@@ -110,3 +110,39 @@ export const getCurrentQuarterByDate = (
 
   return sortedQuarters[0] || null;
 };
+
+/**
+ * Gets the start date of the next quarter based on the current date and available quarterly cycles
+ * @param quarterCycles - Array of quarterly cycles to check against
+ * @param currentDate - Optional date to check against (defaults to current date)
+ * @returns The start date of the next quarter as an ISO string, or current date if no quarters found
+ */
+export const getNextQuarterStartDate = (
+  quarterCycles: Cycle[],
+  currentDate: Date = new Date()
+): string => {
+  if (!quarterCycles || quarterCycles.length === 0) {
+    return format(currentDate, 'yyyy-MM-dd');
+  }
+
+  // Find the next quarter after the current date
+  const futureQuarters = quarterCycles
+    .filter(cycle => new Date(cycle.startDate) > currentDate)
+    .sort(
+      (a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
+
+  if (futureQuarters.length > 0) {
+    return format(new Date(futureQuarters[0].startDate), 'yyyy-MM-dd');
+  }
+
+  // If no future quarters, use the current quarter or first available quarter
+  const currentQuarter = getCurrentQuarterByDate(quarterCycles, currentDate);
+  if (currentQuarter) {
+    return format(new Date(currentQuarter.startDate), 'yyyy-MM-dd');
+  }
+
+  // Fallback to current date if no quarters available
+  return format(currentDate, 'yyyy-MM-dd');
+};

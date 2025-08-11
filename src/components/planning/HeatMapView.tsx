@@ -111,7 +111,7 @@ const HeatMapView: React.FC<HeatMapViewProps> = ({
   const getEpicName = (epicId: string) => {
     const epic = epics.find(e => e.id === epicId);
     if (!epic) return 'Unknown Epic';
-    const project = projects.find(p => p.id === epic.projectId);
+    const project = projects.find(p => p.id === epic?.projectId);
     return `${project?.name || 'Unknown'} - ${epic.name}`;
   };
 

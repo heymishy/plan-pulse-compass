@@ -331,10 +331,17 @@ export interface Division {
 
 export interface Role {
   id: string;
-  name: string;
+  name: string; // Job title (e.g., "Senior Software Engineer", "Quality Engineer II")
+  roleTypeId?: string; // Reference to standardized role type (optional for backward compatibility)
   rateType: 'annual' | 'daily' | 'hourly';
   defaultAnnualSalary: number;
+  defaultHourlyRate?: number; // Rate for contractor roles
+  defaultDailyRate?: number; // Rate for contractor roles
+  defaultRate?: number; // Legacy field - maintained for backward compatibility
   description?: string;
+  seniorityLevel?: 'junior' | 'mid' | 'senior' | 'lead' | 'principal';
+  createdDate: string;
+  lastModified: string;
 }
 
 export interface ProjectFinancialYearBudget {
@@ -557,3 +564,15 @@ export type CanvasViewType =
   | 'skill-gap-analysis'
   | 'division-sizing'
   | 'financial-impact-analysis';
+
+// Role Type System
+export type {
+  RoleType,
+  RoleTypeMapping,
+  RoleTypeSuggestion,
+  RoleTypeDistribution,
+  RoleTypeConfiguration,
+  RoleCategory,
+  SeniorityLevel,
+  RoleTypeRate,
+} from './roleTypes';

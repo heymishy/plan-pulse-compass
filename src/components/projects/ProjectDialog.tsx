@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
+import { getNextQuarterStartDate } from '@/utils/dateUtils';
 import {
   Project,
   Milestone,
@@ -52,6 +53,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
     setProjectSolutions,
     projectSkills,
     setProjectSkills,
+    cycles,
   } = useApp();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -98,11 +100,15 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
         projectSkills.filter(ps => ps.projectId === project.id)
       );
     } else {
+      // Get quarterly cycles for default start date calculation
+      const quarterCycles = cycles.filter(cycle => cycle.type === 'quarterly');
+      const defaultStartDate = getNextQuarterStartDate(quarterCycles);
+
       setFormData({
         name: '',
         description: '',
         status: 'planning',
-        startDate: '',
+        startDate: defaultStartDate,
         endDate: '',
         budget: '',
         priority: 2,
@@ -113,7 +119,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
       setCurrentProjectSolutions([]);
       setCurrentProjectSkills([]);
     }
-  }, [project, isOpen, projectSolutions, projectSkills]);
+  }, [project, isOpen, projectSolutions, projectSkills, cycles]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
