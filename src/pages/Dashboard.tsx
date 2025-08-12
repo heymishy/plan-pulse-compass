@@ -16,6 +16,8 @@ import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import QuickActionsCard from '@/components/dashboard/QuickActionsCard';
 import IterationMetricsCard from '@/components/dashboard/IterationMetricsCard';
 import TeamPortfolioInsights from '@/components/dashboard/TeamPortfolioInsights';
+import FinancialOverviewCard from '@/components/dashboard/FinancialOverviewCard';
+import SkillsInsightsCard from '@/components/dashboard/SkillsInsightsCard';
 
 const Dashboard = () => {
   const {
@@ -144,6 +146,8 @@ const Dashboard = () => {
 
         {/* Sidebar column */}
         <div className="space-y-6">
+          <FinancialOverviewCard />
+          <SkillsInsightsCard />
           <TeamPortfolioInsights />
           <AttentionItemsCard attentionItems={attentionItems} />
           <QuickActionsCard />
