@@ -124,36 +124,29 @@ const EnhancedRoleTypeMappingTable: React.FC = () => {
   const jobTitleSummary = useMemo((): JobTitleSummary[] => {
     const titleMap = new Map<string, JobTitleSummary>();
 
-    // Aggregate titles from roles (which contain job titles)
-    roles.forEach(role => {
-      const existing = titleMap.get(role.name);
-      const mapping = roleTypeMappings.find(m => m.jobTitle === role.name);
-      const roleType = mapping
-        ? roleTypes.find(rt => rt.id === mapping.roleTypeId)
-        : undefined;
-
-      if (existing) {
-        existing.count++;
-      } else {
-        titleMap.set(role.name, {
-          jobTitle: role.name,
-          count: 1,
-          people: [],
-          isMapped: !!mapping,
-          currentRoleType: roleType?.name,
-          currentRoleTypeId: roleType?.id,
-          confidence: mapping?.confidence,
-        });
-      }
-    });
-
-    // Add people names to each title
+    // Count people by job title (from their roles)
     people.forEach(person => {
       const role = roles.find(r => r.id === person.roleId);
       if (role) {
-        const summary = titleMap.get(role.name);
-        if (summary) {
-          summary.people.push(person.name);
+        const mapping = roleTypeMappings.find(m => m.jobTitle === role.name);
+        const roleType = mapping
+          ? roleTypes.find(rt => rt.id === mapping.roleTypeId)
+          : undefined;
+
+        const existing = titleMap.get(role.name);
+        if (existing) {
+          existing.count++;
+          existing.people.push(person.name);
+        } else {
+          titleMap.set(role.name, {
+            jobTitle: role.name,
+            count: 1,
+            people: [person.name],
+            isMapped: !!mapping,
+            currentRoleType: roleType?.name,
+            currentRoleTypeId: roleType?.id,
+            confidence: mapping?.confidence,
+          });
         }
       }
     });

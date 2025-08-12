@@ -27,6 +27,7 @@ import {
   FolderOpen,
   Target,
   Calendar,
+  CalendarDays,
   BarChart3,
   Settings,
   Activity,
@@ -212,6 +213,14 @@ const navigationGroups: NavigationGroup[] = [
         label: 'Milestones',
         description: 'Key project milestones',
         keywords: ['milestones', 'deadlines', 'checkpoints', 'goals'],
+      },
+      {
+        id: 'calendar',
+        path: '/calendar',
+        icon: CalendarDays,
+        label: 'Calendar',
+        description: 'Calendar view of projects and milestones',
+        keywords: ['calendar', 'schedule', 'timeline', 'dates'],
       },
       {
         id: 'planning-basic',

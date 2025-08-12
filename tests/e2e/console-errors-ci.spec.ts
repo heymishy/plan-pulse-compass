@@ -35,9 +35,10 @@ function isCriticalError(error: string): boolean {
   return criticalPatterns.some(pattern => error.includes(pattern));
 }
 
-// Optimized console error detection - consolidated from removed page-console-errors.spec.ts
-test.describe('Console Error Detection - Comprehensive & Optimized', () => {
-  // Test critical pages that cover major functionality areas
+// Optimized console error detection - CI focused on critical pages only
+// For comprehensive coverage of all pages/tabs/views, use: comprehensive-console-errors.spec.ts
+test.describe('Console Error Detection - CI Critical Pages', () => {
+  // Test critical pages that cover major functionality areas (CI optimized)
   const criticalPages = [
     { name: 'Dashboard', path: '/' },
     { name: 'Projects', path: '/projects' },
@@ -147,6 +148,13 @@ test.describe('Console Error Detection - Comprehensive & Optimized', () => {
   }
 
   test('Summary report', async () => {
-    console.log('📊 Console error detection completed for CI');
+    console.log('📊 CI console error detection completed');
+    console.log('ℹ️ This test covers 5 critical pages for CI efficiency');
+    console.log(
+      'ℹ️ For comprehensive coverage of all 24+ pages, tabs, and views:'
+    );
+    console.log(
+      '   npx playwright test tests/e2e/comprehensive-console-errors.spec.ts'
+    );
   });
 });

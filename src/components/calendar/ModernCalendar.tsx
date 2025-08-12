@@ -511,7 +511,7 @@ const ModernCalendar: React.FC = () => {
   }, [showIterations, visibleIterations, calendarDays]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="calendar-container">
       {/* Header */}
       <Card>
         <CardHeader>
