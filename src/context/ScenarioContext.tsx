@@ -76,7 +76,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
 
   // Initialize templates on first load
   useEffect(() => {
-    if (!isInitialized && templates.length === 0) {
+    if (!isInitialized) {
       const builtinTemplates = BUILTIN_SCENARIO_TEMPLATES.map(template => ({
         ...template,
         usageCount: 0,
@@ -85,7 +85,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
       setTemplates(builtinTemplates);
       setIsInitialized(true);
     }
-  }, [templates, isInitialized, setTemplates]);
+  }, [isInitialized, setTemplates]);
 
   // Check if we're in scenario mode
   const isInScenarioMode = Boolean(activeScenarioId);
@@ -98,31 +98,133 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
 
   // Create a deep clone of application state for scenarios
   const cloneCurrentState = useCallback((): ScenarioData => {
-    return {
-      people: structuredClone(teamContext.people),
-      teams: structuredClone(teamContext.teams),
-      projects: structuredClone(projectContext.projects),
-      epics: structuredClone(projectContext.epics),
-      allocations: structuredClone(planningContext.allocations),
-      divisions: structuredClone(teamContext.divisions),
-      roles: structuredClone(teamContext.roles),
-      releases: structuredClone(projectContext.releases),
-      projectSolutions: structuredClone(projectContext.projectSolutions),
-      projectSkills: structuredClone(projectContext.projectSkills),
-      runWorkCategories: structuredClone(planningContext.runWorkCategories),
-      teamMembers: structuredClone(teamContext.teamMembers),
-      divisionLeadershipRoles: structuredClone(
-        teamContext.divisionLeadershipRoles
-      ),
-      unmappedPeople: structuredClone(teamContext.unmappedPeople),
-      actualAllocations: structuredClone(planningContext.actualAllocations),
-      iterationSnapshots: structuredClone(planningContext.iterationSnapshots),
-      goals: structuredClone(goalContext.goals),
-      goalEpics: structuredClone(goalContext.goalEpics),
-      goalMilestones: structuredClone(goalContext.goalMilestones),
-      goalTeams: structuredClone(goalContext.goalTeams),
-      config: structuredClone(settingsContext.config || {}),
-    };
+    try {
+      // Ensure all contexts are available before cloning
+      if (
+        !teamContext ||
+        !projectContext ||
+        !planningContext ||
+        !settingsContext ||
+        !goalContext
+      ) {
+        console.warn('Some contexts are not available, returning empty state');
+        return {
+          people: [],
+          teams: [],
+          projects: [],
+          epics: [],
+          allocations: [],
+          divisions: [],
+          roles: [],
+          releases: [],
+          projectSolutions: [],
+          projectSkills: [],
+          runWorkCategories: [],
+          teamMembers: [],
+          divisionLeadershipRoles: [],
+          unmappedPeople: [],
+          actualAllocations: [],
+          iterationSnapshots: [],
+          goals: [],
+          goalEpics: [],
+          goalMilestones: [],
+          goalTeams: [],
+          config: {},
+        };
+      }
+
+      // Create direct copies without JSON serialization to avoid potential issues
+      const state: ScenarioData = {
+        people: Array.isArray(teamContext.people)
+          ? [...teamContext.people]
+          : [],
+        teams: Array.isArray(teamContext.teams) ? [...teamContext.teams] : [],
+        projects: Array.isArray(projectContext.projects)
+          ? [...projectContext.projects]
+          : [],
+        epics: Array.isArray(projectContext.epics)
+          ? [...projectContext.epics]
+          : [],
+        allocations: Array.isArray(planningContext.allocations)
+          ? [...planningContext.allocations]
+          : [],
+        divisions: Array.isArray(teamContext.divisions)
+          ? [...teamContext.divisions]
+          : [],
+        roles: Array.isArray(teamContext.roles) ? [...teamContext.roles] : [],
+        releases: Array.isArray(projectContext.releases)
+          ? [...projectContext.releases]
+          : [],
+        projectSolutions: Array.isArray(projectContext.projectSolutions)
+          ? [...projectContext.projectSolutions]
+          : [],
+        projectSkills: Array.isArray(projectContext.projectSkills)
+          ? [...projectContext.projectSkills]
+          : [],
+        runWorkCategories: Array.isArray(planningContext.runWorkCategories)
+          ? [...planningContext.runWorkCategories]
+          : [],
+        teamMembers: Array.isArray(teamContext.teamMembers)
+          ? [...teamContext.teamMembers]
+          : [],
+        divisionLeadershipRoles: Array.isArray(
+          teamContext.divisionLeadershipRoles
+        )
+          ? [...teamContext.divisionLeadershipRoles]
+          : [],
+        unmappedPeople: Array.isArray(teamContext.unmappedPeople)
+          ? [...teamContext.unmappedPeople]
+          : [],
+        actualAllocations: Array.isArray(planningContext.actualAllocations)
+          ? [...planningContext.actualAllocations]
+          : [],
+        iterationSnapshots: Array.isArray(planningContext.iterationSnapshots)
+          ? [...planningContext.iterationSnapshots]
+          : [],
+        goals: Array.isArray(goalContext.goals) ? [...goalContext.goals] : [],
+        goalEpics: Array.isArray(goalContext.goalEpics)
+          ? [...goalContext.goalEpics]
+          : [],
+        goalMilestones: Array.isArray(goalContext.goalMilestones)
+          ? [...goalContext.goalMilestones]
+          : [],
+        goalTeams: Array.isArray(goalContext.goalTeams)
+          ? [...goalContext.goalTeams]
+          : [],
+        config:
+          settingsContext.config && typeof settingsContext.config === 'object'
+            ? { ...settingsContext.config }
+            : {},
+      };
+
+      return state;
+    } catch (error) {
+      console.error('Error cloning state for scenario:', error);
+      // Fallback to empty state if cloning fails
+      return {
+        people: [],
+        teams: [],
+        projects: [],
+        epics: [],
+        allocations: [],
+        divisions: [],
+        roles: [],
+        releases: [],
+        projectSolutions: [],
+        projectSkills: [],
+        runWorkCategories: [],
+        teamMembers: [],
+        divisionLeadershipRoles: [],
+        unmappedPeople: [],
+        actualAllocations: [],
+        iterationSnapshots: [],
+        goals: [],
+        goalEpics: [],
+        goalMilestones: [],
+        goalTeams: [],
+        config: {},
+      };
+    }
   }, [
     teamContext.people,
     teamContext.teams,

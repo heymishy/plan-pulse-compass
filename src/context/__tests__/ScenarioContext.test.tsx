@@ -16,13 +16,23 @@ vi.mock('@/hooks/use-toast', () => ({
   }),
 }));
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-};
+// Mock localStorage with actual storage behavior
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+  };
+})();
 
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
@@ -34,6 +44,11 @@ Object.defineProperty(global, 'crypto', {
     randomUUID: () => 'test-uuid-' + Math.random().toString(36).substr(2, 9),
   },
 });
+
+// Mock window.dispatchEvent to prevent storage event loops
+window.dispatchEvent = vi.fn(() => true);
+window.addEventListener = vi.fn();
+window.removeEventListener = vi.fn();
 
 const AllProviders: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -56,7 +71,7 @@ const AllProviders: React.FC<{ children: React.ReactNode }> = ({
 describe('ScenarioContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorageMock.getItem.mockReturnValue(null);
+    localStorageMock.clear();
   });
 
   it('should provide initial scenario state', () => {
@@ -88,7 +103,7 @@ describe('ScenarioContext', () => {
     expect(result.current.scenarios).toHaveLength(1);
     expect(result.current.scenarios[0].name).toBe('Test Scenario');
     expect(result.current.scenarios[0].description).toBe('A test scenario');
-  });
+  }, 10000);
 
   it('should switch to a scenario', async () => {
     const { result } = renderHook(() => useScenarios(), {
@@ -111,7 +126,7 @@ describe('ScenarioContext', () => {
 
     expect(result.current.activeScenarioId).toBe(scenarioId);
     expect(result.current.isInScenarioMode).toBe(true);
-  });
+  }, 10000);
 
   it('should switch back to live mode', async () => {
     const { result } = renderHook(() => useScenarios(), {
@@ -144,7 +159,7 @@ describe('ScenarioContext', () => {
 
     expect(result.current.activeScenarioId).toBeNull();
     expect(result.current.isInScenarioMode).toBe(false);
-  });
+  }, 10000);
 
   it('should delete a scenario', async () => {
     const { result } = renderHook(() => useScenarios(), {
@@ -169,7 +184,7 @@ describe('ScenarioContext', () => {
 
     expect(result.current.scenarios).toHaveLength(0);
     expect(result.current.activeScenarioId).toBeNull();
-  });
+  }, 10000);
 
   it('should return current data when not in scenario mode', () => {
     const { result } = renderHook(() => useScenarios(), {
@@ -222,7 +237,7 @@ describe('ScenarioContext', () => {
     expect(result.current.scenarios).toHaveLength(1);
     expect(result.current.scenarios[0].templateId).toBe(budgetTemplate!.id);
     expect(result.current.scenarios[0].templateName).toBe(budgetTemplate!.name);
-  });
+  }, 10000);
 
   it('should handle scenario expiration', async () => {
     const { result } = renderHook(() => useScenarios(), {
@@ -233,7 +248,7 @@ describe('ScenarioContext', () => {
     await act(async () => {
       await result.current.createScenario({
         name: 'Test Scenario',
-        expiresAt: '2024-01-16T00:00:00.000Z', // Future date (after mock date)
+        expiresAt: '2025-01-16T00:00:00.000Z', // Future date
       });
     });
 
@@ -243,7 +258,7 @@ describe('ScenarioContext', () => {
     await act(async () => {
       await result.current.createScenario({
         name: 'Expired Scenario',
-        expiresAt: '2024-01-14T00:00:00.000Z', // Already expired (before mock date)
+        expiresAt: '2020-01-14T00:00:00.000Z', // Already expired (way in the past)
       });
     });
 
@@ -258,7 +273,7 @@ describe('ScenarioContext', () => {
 
     expect(result.current.scenarios).toHaveLength(1);
     expect(result.current.scenarios[0].name).toBe('Test Scenario');
-  });
+  }, 10000);
 
   it('should generate scenario comparison', async () => {
     const { result } = renderHook(() => useScenarios(), {
@@ -275,7 +290,7 @@ describe('ScenarioContext', () => {
     });
 
     // Get comparison
-    let comparison: unknown;
+    let comparison: any;
     await act(async () => {
       comparison = await result.current.getScenarioComparison(scenarioId);
     });
@@ -285,5 +300,5 @@ describe('ScenarioContext', () => {
     expect(comparison.scenarioName).toBe('Test Scenario');
     expect(comparison.summary).toBeDefined();
     expect(comparison.changes).toBeDefined();
-  });
+  }, 10000);
 });

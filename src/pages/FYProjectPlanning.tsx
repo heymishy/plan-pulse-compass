@@ -133,6 +133,7 @@ const FYProjectPlanning: React.FC = () => {
   } = useApp();
 
   const [selectedFY, setSelectedFY] = useState<string>('2024');
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('all');
   const [searchFilter, setSearchFilter] = useState('');
   const [divisionFilter, setDivisionFilter] = useState<string>('all');
   const [riskFilter, setRiskFilter] = useState<string>('all');
@@ -148,6 +149,17 @@ const FYProjectPlanning: React.FC = () => {
       .sort();
     return [...new Set(fys)];
   }, [cycles]);
+
+  // Get available quarters for selected FY
+  const availableQuarters = useMemo(() => {
+    const quarters = cycles
+      .filter(
+        c => c.type === 'quarter' && (c.name || c.id).includes(selectedFY)
+      )
+      .map(c => c.name || c.id)
+      .sort();
+    return quarters;
+  }, [cycles, selectedFY]);
 
   // Get projects for selected FY - for now, show all projects for portfolio planning
   const fyProjects = useMemo(() => {
@@ -173,8 +185,8 @@ const FYProjectPlanning: React.FC = () => {
       // Calculate quarterly capacity: team capacity * weeks per quarter
       const quarterlyCapacity = team.capacity * 13; // 13 weeks per quarter
 
-      // Get current allocations for this team in the FY
-      const fyQuarters = cycles.filter(
+      // Get current allocations for this team in the FY/Quarter
+      let fyQuarters = cycles.filter(
         c =>
           c.type === 'quarter' &&
           c.parentCycleId &&
@@ -182,6 +194,13 @@ const FYProjectPlanning: React.FC = () => {
             fy => fy.id === c.parentCycleId && (fy.name || fy.id) === selectedFY
           )
       );
+
+      // Filter by selected quarter if not 'all'
+      if (selectedQuarter !== 'all') {
+        fyQuarters = fyQuarters.filter(
+          c => (c.name || c.id) === selectedQuarter
+        );
+      }
 
       const currentAllocations = allocations.filter(
         a =>
@@ -252,6 +271,7 @@ const FYProjectPlanning: React.FC = () => {
     cycles,
     allocations,
     selectedFY,
+    selectedQuarter,
     skills,
     personSkills,
     divisions,
@@ -450,7 +470,8 @@ const FYProjectPlanning: React.FC = () => {
         },
         recommendedTeams,
         skillGaps,
-        timeline: `Q1-Q4 ${selectedFY}`,
+        timeline:
+          selectedQuarter === 'all' ? `Q1-Q4 ${selectedFY}` : selectedQuarter,
       };
     });
   }, [
@@ -462,6 +483,7 @@ const FYProjectPlanning: React.FC = () => {
     solutions,
     projectSolutions,
     selectedFY,
+    selectedQuarter,
   ]);
 
   // Filter data based on user selections
@@ -541,6 +563,22 @@ const FYProjectPlanning: React.FC = () => {
                   {availableFYs.map(fy => (
                     <SelectItem key={fy} value={fy}>
                       FY {fy}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={selectedQuarter}
+                onValueChange={setSelectedQuarter}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Quarters</SelectItem>
+                  {availableQuarters.map(quarter => (
+                    <SelectItem key={quarter} value={quarter}>
+                      {quarter}
                     </SelectItem>
                   ))}
                 </SelectContent>

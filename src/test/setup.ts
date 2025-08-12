@@ -555,6 +555,11 @@ afterEach(() => {
   // Cleanup DOM elements created by React Testing Library
   cleanup();
 
+  // Clear localStorage to prevent state pollution
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.clear();
+  }
+
   // Clear any remaining timers
   if (typeof window !== 'undefined') {
     window.clearTimeout = vi.fn();

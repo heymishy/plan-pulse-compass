@@ -3,6 +3,7 @@ import {
   useEncryptedLocalStorage,
   useLocalStorage,
 } from '@/hooks/useLocalStorage';
+import { useLargeDatasetStorage } from '@/hooks/useLargeDatasetStorage';
 import {
   Person,
   Role,
@@ -16,8 +17,20 @@ import {
 interface TeamContextType {
   people: Person[];
   setPeople: (people: Person[] | ((prev: Person[]) => Person[])) => void;
-  addPerson: (personData: Omit<Person, 'id'>) => Person;
-  updatePerson: (personId: string, personData: Partial<Person>) => void;
+  addPerson: (personData: Omit<Person, 'id'>) => Promise<Person>;
+  updatePerson: (
+    personId: string,
+    personData: Partial<Person>
+  ) => Promise<void>;
+  deletePerson: (personId: string) => Promise<void>;
+  isPeopleLoading: boolean;
+  peopleError: string | null;
+  peopleStorageStats: {
+    isChunked: boolean;
+    chunkCount: number;
+    totalSize: number;
+    compressionRatio: number;
+  };
   roles: Role[];
   setRoles: (roles: Role[] | ((prev: Role[]) => Role[])) => void;
   teams: Team[];
@@ -80,10 +93,8 @@ export const useTeams = () => {
 export const TeamProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [people, setPeople] = useEncryptedLocalStorage<Person[]>(
-    'planning-people',
-    []
-  );
+  const [people, setPeople, isPeopleLoading, peopleError, peopleStats] =
+    useLargeDatasetStorage<Person>('planning-people', []);
   const [roles, setRoles] = useLocalStorage<Role[]>('planning-roles', []);
   const [teams, setTeams] = useLocalStorage<Team[]>('planning-teams', []);
   const [divisions, setDivisions] = useLocalStorage<Division[]>(
@@ -102,20 +113,29 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     DivisionLeadershipRole[]
   >('planning-division-leadership-roles', []);
 
-  const addPerson = (personData: Omit<Person, 'id'>): Person => {
+  const addPerson = async (personData: Omit<Person, 'id'>): Promise<Person> => {
     const newPerson: Person = {
       ...personData,
       id: crypto.randomUUID(),
     };
-    setPeople(prevPeople => [...prevPeople, newPerson]);
+    await setPeople(prevPeople => [...prevPeople, newPerson]);
     return newPerson;
   };
 
-  const updatePerson = (personId: string, personData: Partial<Person>) => {
-    setPeople(prevPeople =>
+  const updatePerson = async (
+    personId: string,
+    personData: Partial<Person>
+  ): Promise<void> => {
+    await setPeople(prevPeople =>
       prevPeople.map(person =>
         person.id === personId ? { ...person, ...personData } : person
       )
+    );
+  };
+
+  const deletePerson = async (personId: string): Promise<void> => {
+    await setPeople(prevPeople =>
+      prevPeople.filter(person => person.id !== personId)
     );
   };
 
@@ -233,6 +253,10 @@ export const TeamProvider: React.FC<{ children: ReactNode }> = ({
     setPeople,
     addPerson,
     updatePerson,
+    deletePerson,
+    isPeopleLoading,
+    peopleError,
+    peopleStorageStats: peopleStats,
     roles,
     setRoles,
     teams,

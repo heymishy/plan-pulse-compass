@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useTeams } from '@/context/TeamContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,11 +8,13 @@ import { Plus, Grid, Table, Eye, Star } from 'lucide-react';
 import PeopleTable from '@/components/people/PeopleTable';
 import PersonDialog from '@/components/teams/PersonDialog';
 import PersonSkillsDisplay from '@/components/people/PersonSkillsDisplay';
+import { StorageStatusIndicator } from '@/components/ui/storage-status-indicator';
 import { Person } from '@/types';
 import SearchAndFilter from '@/components/planning/SearchAndFilter';
 
 const People = () => {
   const { people, roles, teams, addPerson, updatePerson, divisions } = useApp();
+  const { isPeopleLoading, peopleError, peopleStorageStats } = useTeams();
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -29,11 +32,16 @@ const People = () => {
     const division = divisions.find(d => d.id === team?.divisionId);
 
     return (
-      (filters.searchQuery === '' || person.name.toLowerCase().includes(filters.searchQuery.toLowerCase())) &&
+      (filters.searchQuery === '' ||
+        person.name
+          .toLowerCase()
+          .includes(filters.searchQuery.toLowerCase())) &&
       (filters.roleId === 'all' || person.roleId === filters.roleId) &&
       (filters.teamId === 'all' || person.teamId === filters.teamId) &&
       (filters.divisionId === 'all' || division?.id === filters.divisionId) &&
-      (filters.status === 'all' || (filters.status === 'active' && person.isActive) || (filters.status === 'inactive' && !person.isActive))
+      (filters.status === 'all' ||
+        (filters.status === 'active' && person.isActive) ||
+        (filters.status === 'inactive' && !person.isActive))
     );
   });
 
@@ -79,7 +87,16 @@ const People = () => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">People</h1>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl font-bold text-gray-900">People</h1>
+              <StorageStatusIndicator
+                isLoading={isPeopleLoading}
+                error={peopleError}
+                stats={peopleStorageStats}
+                itemCount={people.length}
+                dataType="people"
+              />
+            </div>
             <p className="text-gray-600">
               Manage your team members and their skills
             </p>
@@ -112,11 +129,39 @@ const People = () => {
           filters={filters}
           onFiltersChange={setFilters}
           filterFields={[
-            { id: 'searchQuery', label: 'Search', type: 'text', placeholder: 'Search people...' },
-            { id: 'roleId', label: 'Role', type: 'select', options: roles.map(r => ({ value: r.id, label: r.name })) },
-            { id: 'teamId', label: 'Team', type: 'select', options: teams.map(t => ({ value: t.id, label: t.name })) },
-            { id: 'divisionId', label: 'Division', type: 'select', options: divisions.map(d => ({ value: d.id, label: d.name })) },
-            { id: 'status', label: 'Status', type: 'select', options: [{ value: 'active', label: 'Active' }, { value: 'inactive', label: 'Inactive' }] },
+            {
+              id: 'searchQuery',
+              label: 'Search',
+              type: 'text',
+              placeholder: 'Search people...',
+            },
+            {
+              id: 'roleId',
+              label: 'Role',
+              type: 'select',
+              options: roles.map(r => ({ value: r.id, label: r.name })),
+            },
+            {
+              id: 'teamId',
+              label: 'Team',
+              type: 'select',
+              options: teams.map(t => ({ value: t.id, label: t.name })),
+            },
+            {
+              id: 'divisionId',
+              label: 'Division',
+              type: 'select',
+              options: divisions.map(d => ({ value: d.id, label: d.name })),
+            },
+            {
+              id: 'status',
+              label: 'Status',
+              type: 'select',
+              options: [
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ],
+            },
           ]}
         />
 
@@ -146,7 +191,10 @@ const People = () => {
 
         {/* People List */}
         {viewMode === 'table' ? (
-          <PeopleTable people={filteredPeople} onEditPerson={handleEditPerson} />
+          <PeopleTable
+            people={filteredPeople}
+            onEditPerson={handleEditPerson}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPeople.map(person => {

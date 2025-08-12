@@ -4,7 +4,7 @@
 - dialog "Create New Epic":
     - heading "Create New Epic" [level=2]
     - text: Epic Name *
-    - textbox "Epic Name *": Test Epic 1754797339429
+    - textbox "Epic Name *": Test Epic 1754940298993
     - text: Project *
     - combobox: Select a project
     - text: Description
