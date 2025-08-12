@@ -2,12 +2,6 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScenarioProvider, useScenarios } from '../ScenarioContext';
-import { AppProvider } from '../AppContext';
-import { TeamProvider } from '../TeamContext';
-import { ProjectProvider } from '../ProjectContext';
-import { PlanningProvider } from '../PlanningContext';
-import { SettingsProvider } from '../SettingsContext';
-import { GoalProvider } from '../GoalContext';
 
 // Mock the toast hook
 vi.mock('@/hooks/use-toast', () => ({
@@ -15,6 +9,64 @@ vi.mock('@/hooks/use-toast', () => ({
     toast: vi.fn(),
   }),
 }));
+
+// Mock all context dependencies to prevent complex initialization
+vi.mock('../TeamContext', () => ({
+  useTeams: () => ({
+    people: [],
+    teams: [],
+    divisions: [],
+    roles: [],
+    teamMembers: [],
+    divisionLeadershipRoles: [],
+    unmappedPeople: [],
+  }),
+}));
+
+vi.mock('../ProjectContext', () => ({
+  useProjects: () => ({
+    projects: [],
+    epics: [],
+    releases: [],
+    projectSolutions: [],
+    projectSkills: [],
+  }),
+}));
+
+vi.mock('../PlanningContext', () => ({
+  usePlanning: () => ({
+    allocations: [],
+    runWorkCategories: [],
+    actualAllocations: [],
+    iterationSnapshots: [],
+  }),
+}));
+
+vi.mock('../SettingsContext', () => ({
+  useSettings: () => ({
+    config: {},
+  }),
+}));
+
+vi.mock('../GoalContext', () => ({
+  useGoals: () => ({
+    goals: [],
+    goalEpics: [],
+    goalMilestones: [],
+    goalTeams: [],
+  }),
+}));
+
+// Mock useLocalStorage to prevent localStorage issues
+vi.mock('@/hooks/useLocalStorage', () => {
+  const { useState } = require('react');
+  return {
+    useLocalStorage: (key: string, initialValue: any) => {
+      const [value, setValue] = useState(initialValue);
+      return [value, setValue];
+    },
+  };
+});
 
 // Mock localStorage with actual storage behavior
 const localStorageMock = (() => {
@@ -50,22 +102,8 @@ window.dispatchEvent = vi.fn(() => true);
 window.addEventListener = vi.fn();
 window.removeEventListener = vi.fn();
 
-const AllProviders: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => (
-  <SettingsProvider>
-    <TeamProvider>
-      <ProjectProvider>
-        <PlanningProvider>
-          <GoalProvider>
-            <ScenarioProvider>
-              <AppProvider>{children}</AppProvider>
-            </ScenarioProvider>
-          </GoalProvider>
-        </PlanningProvider>
-      </ProjectProvider>
-    </TeamProvider>
-  </SettingsProvider>
+const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ScenarioProvider>{children}</ScenarioProvider>
 );
 
 describe('ScenarioContext', () => {
@@ -76,7 +114,7 @@ describe('ScenarioContext', () => {
 
   it('should provide initial scenario state', () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     expect(result.current.scenarios).toEqual([]);
@@ -87,7 +125,7 @@ describe('ScenarioContext', () => {
 
   it('should create a new scenario', async () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     let scenarioId: string;
@@ -107,7 +145,7 @@ describe('ScenarioContext', () => {
 
   it('should switch to a scenario', async () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     let scenarioId: string;
@@ -130,7 +168,7 @@ describe('ScenarioContext', () => {
 
   it('should switch back to live mode', async () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     let scenarioId: string;
@@ -163,7 +201,7 @@ describe('ScenarioContext', () => {
 
   it('should delete a scenario', async () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     let scenarioId: string;
@@ -188,7 +226,7 @@ describe('ScenarioContext', () => {
 
   it('should return current data when not in scenario mode', () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     const currentData = result.current.getCurrentData();
@@ -201,7 +239,7 @@ describe('ScenarioContext', () => {
 
   it('should have built-in templates available', () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     expect(result.current.templates.length).toBeGreaterThan(0);
@@ -215,7 +253,7 @@ describe('ScenarioContext', () => {
 
   it('should create scenario from template', async () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     const budgetTemplate = result.current.templates.find(t =>
@@ -241,7 +279,7 @@ describe('ScenarioContext', () => {
 
   it('should handle scenario expiration', async () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     // Create a scenario with future expiration date first
@@ -277,7 +315,7 @@ describe('ScenarioContext', () => {
 
   it('should generate scenario comparison', async () => {
     const { result } = renderHook(() => useScenarios(), {
-      wrapper: AllProviders,
+      wrapper: TestWrapper,
     });
 
     let scenarioId: string;
