@@ -135,15 +135,32 @@ const FYProjectPlanning: React.FC = () => {
 
   // Get current FY based on organization's fiscal year start (assuming April 1st for now)
   const currentFY = useMemo(() => {
+    // Extract years from cycle names since cycles don't have financialYearId
+    if (cycles.length > 0) {
+      const cycleYears = cycles
+        .map(c => {
+          const name = c.name || c.id;
+          const yearMatch = name.match(/(\d{4})/);
+          return yearMatch ? yearMatch[1] : null;
+        })
+        .filter(Boolean);
+
+      const uniqueYears = [...new Set(cycleYears)].sort();
+      console.log('Available years from cycles:', uniqueYears);
+
+      // Use the latest available year
+      if (uniqueYears.length > 0) {
+        const latestYear = uniqueYears[uniqueYears.length - 1];
+        console.log('Using latest available FY:', latestYear);
+        return latestYear;
+      }
+    }
+
+    // Fallback: calculate based on current date
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    // If current date is before April 1st, we're in previous FY
-    if (currentDate < new Date(currentYear, 3, 1)) {
-      // April is month 3 (0-indexed)
-      return String(currentYear - 1);
-    }
     return String(currentYear);
-  }, []);
+  }, [cycles]);
 
   const [selectedFY, setSelectedFY] = useState<string>(currentFY);
   const [searchFilter, setSearchFilter] = useState('');
@@ -156,6 +173,7 @@ const FYProjectPlanning: React.FC = () => {
   // Get financial years from cycles
   const availableFYs = useMemo(() => {
     console.log('All cycles:', cycles);
+    console.log('Sample cycle structure:', cycles[0]);
 
     // Extract unique financial year IDs from cycles
     const fyIds = cycles.map(c => c.financialYearId).filter(Boolean);
@@ -163,12 +181,29 @@ const FYProjectPlanning: React.FC = () => {
     const uniqueFYs = [...new Set(fyIds)];
     console.log('Financial Year IDs from cycles:', uniqueFYs);
 
+    // Debug: Show what properties cycles actually have
+    if (cycles.length > 0) {
+      console.log('Cycle properties:', Object.keys(cycles[0]));
+      console.log(
+        'First 3 cycles with type info:',
+        cycles.slice(0, 3).map(c => ({
+          id: c.id,
+          name: c.name,
+          type: c.type,
+          financialYearId: c.financialYearId,
+          startDate: c.startDate,
+          endDate: c.endDate,
+          parentCycleId: c.parentCycleId,
+        }))
+      );
+    }
+
     // If we have financial year IDs, use them
     if (uniqueFYs.length > 0) {
       return uniqueFYs.sort();
     }
 
-    // Fallback: extract years from cycle names or create default range
+    // Your cycles don't have financialYearId, so extract years from names
     const cycleYears = cycles
       .map(c => {
         const name = c.name || c.id;
@@ -176,6 +211,8 @@ const FYProjectPlanning: React.FC = () => {
         return yearMatch ? yearMatch[1] : null;
       })
       .filter(Boolean);
+
+    console.log('Extracted years from cycle names:', cycleYears);
 
     if (cycleYears.length > 0) {
       return [...new Set(cycleYears)].sort();
@@ -539,17 +576,107 @@ const FYProjectPlanning: React.FC = () => {
 
   // Create project allocation data for the new tab
   const projectAllocations = useMemo(() => {
+    console.log('=== PROJECT ALLOCATIONS DEBUG ===');
+    console.log('selectedFY:', selectedFY);
+    console.log('All cycles:', cycles.length);
+    console.log('All allocations:', allocations.length);
+    console.log('All epics:', epics.length);
+    console.log('fyProjects:', fyProjects.length);
+
+    // Debug allocations structure
+    if (allocations.length > 0) {
+      console.log('Sample allocation structure:', allocations[0]);
+      console.log('Allocation properties:', Object.keys(allocations[0]));
+      console.log(
+        'First 3 allocations:',
+        allocations.slice(0, 3).map(a => ({
+          id: a.id,
+          teamId: a.teamId,
+          projectId: a.projectId,
+          epicId: a.epicId,
+          cycleId: a.cycleId,
+          percentage: a.percentage,
+          startDate: a.startDate,
+          endDate: a.endDate,
+        }))
+      );
+    }
+
+    // Since cycles don't have financialYearId, filter by year in name
     const fyQuarters = cycles
-      .filter(c => c.type === 'quarterly' && c.financialYearId === selectedFY)
+      .filter(c => {
+        if (c.type !== 'quarterly') return false;
+        const name = c.name || c.id;
+        const yearMatch = name.match(/(\d{4})/);
+        return yearMatch && yearMatch[1] === selectedFY;
+      })
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+    console.log(
+      'FY Quarters found:',
+      fyQuarters.length,
+      fyQuarters.map(q => ({ id: q.id, name: q.name, fyId: q.financialYearId }))
+    );
 
     const quarterNames = fyQuarters.map(q => q.name || q.id);
 
     return fyProjects.map(project => {
       // Get all allocations for this project in the selected FY
-      const projectAllocations = allocations.filter(
-        a =>
-          a.projectId === project.id && fyQuarters.some(q => q.id === a.cycleId)
+      // Include direct project allocations AND epic-based allocations
+      const projectEpics = epics.filter(e => e.projectId === project.id);
+      const projectEpicIds = projectEpics.map(e => e.id);
+
+      console.log(`Project "${project.name}" (${project.id}):`, {
+        projectEpics: projectEpics.length,
+        projectEpicIds,
+      });
+
+      // Since allocations only have epicId (not projectId), only check epic-based allocations
+      const projectAllocations = allocations.filter(a => {
+        // Epic-based allocation (this is the only type in your data)
+        if (a.epicId && projectEpicIds.includes(a.epicId)) {
+          // Check if allocation cycle is in the selected FY
+          const allocationCycle = cycles.find(c => c.id === a.cycleId);
+          if (allocationCycle) {
+            // Check if it's a quarter in the selected FY
+            if (fyQuarters.some(q => q.id === a.cycleId)) {
+              return true;
+            }
+
+            // Check if it's an iteration within a quarter of the selected FY
+            if (
+              allocationCycle.parentCycleId &&
+              fyQuarters.some(q => q.id === allocationCycle.parentCycleId)
+            ) {
+              return true;
+            }
+
+            // Check if it's any cycle in the selected year (fallback)
+            const cycleName = allocationCycle.name || allocationCycle.id;
+            const cycleYearMatch = cycleName.match(/(\d{4})/);
+            if (cycleYearMatch && cycleYearMatch[1] === selectedFY) {
+              return true;
+            }
+          }
+        }
+
+        return false;
+      });
+
+      console.log(
+        `Project "${project.name}" allocations found:`,
+        projectAllocations.length
+      );
+      console.log(
+        'Allocation details:',
+        projectAllocations.map(a => ({
+          id: a.id,
+          teamId: a.teamId,
+          projectId: a.projectId,
+          epicId: a.epicId,
+          cycleId: a.cycleId,
+          percentage: a.percentage,
+        }))
       );
 
       // Group by team
@@ -563,10 +690,40 @@ const FYProjectPlanning: React.FC = () => {
 
       projectAllocations.forEach(allocation => {
         const team = teams.find(t => t.id === allocation.teamId);
-        const quarter = fyQuarters.find(q => q.id === allocation.cycleId);
 
-        if (team && quarter) {
-          const quarterName = quarter.name || quarter.id;
+        // Find the quarter - either directly or through parent cycle
+        let quarter = fyQuarters.find(q => q.id === allocation.cycleId);
+        let quarterName = quarter?.name || quarter?.id;
+
+        // If not found directly, check if it's an iteration within a quarter
+        if (!quarter) {
+          const iterationCycle = cycles.find(c => c.id === allocation.cycleId);
+          if (iterationCycle) {
+            // Check if iteration has a parent quarter
+            if (iterationCycle.parentCycleId) {
+              quarter = fyQuarters.find(
+                q => q.id === iterationCycle.parentCycleId
+              );
+              quarterName = quarter?.name || quarter?.id;
+            }
+            // Or if iteration is in the same FY
+            else if (iterationCycle.financialYearId === selectedFY) {
+              // Map iteration to quarter based on date overlap
+              quarter = fyQuarters.find(q => {
+                const qStart = new Date(q.startDate);
+                const qEnd = new Date(q.endDate);
+                const iterStart = new Date(iterationCycle.startDate);
+                const iterEnd = new Date(iterationCycle.endDate);
+
+                // Check if iteration overlaps with quarter
+                return iterStart <= qEnd && iterEnd >= qStart;
+              });
+              quarterName = quarter?.name || quarter?.id || 'Q?';
+            }
+          }
+        }
+
+        if (team && quarterName) {
           if (!teamAllocations.has(team.id)) {
             teamAllocations.set(team.id, {
               team,
@@ -585,7 +742,7 @@ const FYProjectPlanning: React.FC = () => {
         quarterNames,
       };
     });
-  }, [fyProjects, allocations, teams, cycles, selectedFY]);
+  }, [fyProjects, allocations, teams, cycles, selectedFY, epics]);
 
   const getRiskColor = (risk: 'low' | 'medium' | 'high' | 'critical') => {
     switch (risk) {

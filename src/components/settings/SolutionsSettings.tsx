@@ -482,54 +482,98 @@ const SolutionsSettings = () => {
                 </div>
               )}
 
-              {/* Skills Selection Grid */}
-              <div className="border rounded-lg p-4 max-h-96 overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {filteredSkills.map(skill => (
-                    <div
-                      key={skill.id}
-                      className={`flex items-center space-x-2 p-2 rounded border transition-colors ${
-                        formData.skillIds.includes(skill.id)
-                          ? 'bg-blue-50 border-blue-200'
-                          : 'hover:bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <Checkbox
-                        id={skill.id}
-                        checked={formData.skillIds.includes(skill.id)}
-                        onCheckedChange={() => handleSkillToggle(skill.id)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <Label
-                          htmlFor={skill.id}
-                          className="text-sm font-medium cursor-pointer"
-                        >
-                          {skill.name}
-                        </Label>
-                        <div className="text-xs text-gray-500 truncate">
-                          {skill.category.replace('-', ' ')}
-                        </div>
-                      </div>
+              {/* Skills Selection List - Responsive Multi-Column Layout */}
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                {filteredSkills.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No skills found matching your criteria</p>
+                    {(skillSearchTerm || skillCategoryFilter !== 'all') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSkillSearchTerm('');
+                          setSkillCategoryFilter('all');
+                        }}
+                        className="text-blue-600 hover:text-blue-800 text-sm mt-2"
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {/* Responsive Grid: 1 col on mobile, 2 cols on tablet, 3 cols on desktop */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                      {filteredSkills.map((skill, index) => {
+                        const isLastInColumn =
+                          (index + 1) % 3 === 0 ||
+                          index === filteredSkills.length - 1;
+                        const isLastRow =
+                          index >=
+                          filteredSkills.length -
+                            (filteredSkills.length % 3 || 3);
+
+                        return (
+                          <label
+                            key={skill.id}
+                            className={`flex items-center justify-between px-3 py-2 hover:bg-gray-50 cursor-pointer transition-colors border-r border-b last:border-r-0 md:last:border-r lg:last:border-r-0 ${
+                              formData.skillIds.includes(skill.id)
+                                ? 'bg-blue-50'
+                                : ''
+                            } ${
+                              // Remove right border for last column in each row
+                              (index + 1) % 3 === 0 ||
+                              index === filteredSkills.length - 1
+                                ? 'lg:border-r-0'
+                                : ''
+                            } ${
+                              // Remove right border for last column in medium screens
+                              (index + 1) % 2 === 0 ||
+                              index === filteredSkills.length - 1
+                                ? 'md:border-r-0 lg:border-r'
+                                : ''
+                            } ${
+                              // Remove bottom border for last row
+                              isLastRow ? 'border-b-0' : ''
+                            }`}
+                            htmlFor={skill.id}
+                          >
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <Checkbox
+                                id={skill.id}
+                                checked={formData.skillIds.includes(skill.id)}
+                                onCheckedChange={() =>
+                                  handleSkillToggle(skill.id)
+                                }
+                              />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-medium text-gray-900 truncate block">
+                                  {skill.name}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
+                              <Badge
+                                variant="outline"
+                                className="text-xs bg-gray-50 text-gray-600"
+                              >
+                                {skill.category.replace('-', ' ')}
+                              </Badge>
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
-                  ))}
-                  {filteredSkills.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-gray-500">
-                      <p>No skills found matching your criteria</p>
-                      {(skillSearchTerm || skillCategoryFilter !== 'all') && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSkillSearchTerm('');
-                            setSkillCategoryFilter('all');
-                          }}
-                          className="text-blue-600 hover:text-blue-800 text-sm mt-2"
-                        >
-                          Clear filters
-                        </button>
-                      )}
+
+                    {/* Skills count indicator */}
+                    <div className="px-3 py-2 bg-gray-50 border-t text-xs text-gray-500">
+                      Showing {filteredSkills.length} skills
+                      {skillSearchTerm || skillCategoryFilter !== 'all' ? (
+                        <span> (filtered from {skills.length} total)</span>
+                      ) : null}
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
 
               <div className="text-sm text-gray-500">
