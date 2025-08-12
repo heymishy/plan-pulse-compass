@@ -12,7 +12,10 @@ import {
   Calculator,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { calculateAllocationCost } from '@/utils/financialCalculations';
+import {
+  calculateAllocationCost,
+  getDefaultConfig,
+} from '@/utils/financialCalculations';
 import { getCurrentQuarterByDate } from '@/utils/dateUtils';
 
 interface FinancialMetrics {
@@ -60,7 +63,7 @@ const FinancialOverviewCard = () => {
           cycle,
           teamMembers,
           roles,
-          config
+          config || getDefaultConfig()
         );
         totalSpend += cost;
       }
@@ -119,7 +122,7 @@ const FinancialOverviewCard = () => {
               cycle,
               teamMembers,
               roles,
-              config
+              config || getDefaultConfig()
             )
           );
         }
@@ -141,12 +144,14 @@ const FinancialOverviewCard = () => {
   }, [allocations, projects, people, roles, cycles, config]);
 
   const formatCurrency = (amount: number) => {
+    // Handle NaN, null, undefined values
+    const safeAmount = isNaN(amount) || !isFinite(amount) ? 0 : amount;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: config.currencySymbol || 'USD',
+      currency: (config && config.currencySymbol) || 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(safeAmount);
   };
 
   const getVarianceColor = (percentage: number) => {

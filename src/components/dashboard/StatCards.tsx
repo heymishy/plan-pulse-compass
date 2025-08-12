@@ -13,7 +13,10 @@ import {
 } from 'lucide-react';
 import { Person, Team, Project, Allocation } from '@/types';
 import { useApp } from '@/context/AppContext';
-import { calculateAllocationCost } from '@/utils/financialCalculations';
+import {
+  calculateAllocationCost,
+  getDefaultConfig,
+} from '@/utils/financialCalculations';
 import { getCurrentQuarterByDate } from '@/utils/dateUtils';
 
 interface StatCardsProps {
@@ -64,7 +67,13 @@ const StatCards: React.FC<StatCardsProps> = ({
         );
         return (
           sum +
-          calculateAllocationCost(allocation, cycle, teamMembers, roles, config)
+          calculateAllocationCost(
+            allocation,
+            cycle,
+            teamMembers,
+            roles,
+            config || getDefaultConfig()
+          )
         );
       }
       return sum;
@@ -178,14 +187,16 @@ const StatCards: React.FC<StatCardsProps> = ({
 
   const formatValue = (value: number, format?: string) => {
     if (format === 'currency') {
+      // Handle NaN, null, undefined values
+      const safeValue = isNaN(value) || !isFinite(value) ? 0 : value;
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: config.currencySymbol || 'USD',
+        currency: (config && config.currencySymbol) || 'USD',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-      }).format(value);
+      }).format(safeValue);
     }
-    return value.toString();
+    return (isNaN(value) || !isFinite(value) ? 0 : value).toString();
   };
 
   const getTrendIcon = (trend: string) => {
