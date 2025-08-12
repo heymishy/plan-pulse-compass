@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,25 +38,64 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Edit2, Trash2, Plus, Search } from 'lucide-react';
+import {
+  Edit2,
+  Trash2,
+  Plus,
+  Search,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react';
 import { Skill, SkillCategory } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
-const skillCategories: { value: SkillCategory; label: string; color: string }[] = [
-  { value: 'programming-language', label: 'Programming Language', color: 'bg-blue-100 text-blue-800' },
-  { value: 'framework', label: 'Framework', color: 'bg-green-100 text-green-800' },
-  { value: 'platform', label: 'Platform', color: 'bg-purple-100 text-purple-800' },
-  { value: 'domain-knowledge', label: 'Domain Knowledge', color: 'bg-orange-100 text-orange-800' },
-  { value: 'methodology', label: 'Methodology', color: 'bg-pink-100 text-pink-800' },
+const skillCategories: {
+  value: SkillCategory;
+  label: string;
+  color: string;
+}[] = [
+  {
+    value: 'programming-language',
+    label: 'Programming Language',
+    color: 'bg-blue-100 text-blue-800',
+  },
+  {
+    value: 'framework',
+    label: 'Framework',
+    color: 'bg-green-100 text-green-800',
+  },
+  {
+    value: 'platform',
+    label: 'Platform',
+    color: 'bg-purple-100 text-purple-800',
+  },
+  {
+    value: 'domain-knowledge',
+    label: 'Domain Knowledge',
+    color: 'bg-orange-100 text-orange-800',
+  },
+  {
+    value: 'methodology',
+    label: 'Methodology',
+    color: 'bg-pink-100 text-pink-800',
+  },
   { value: 'tool', label: 'Tool', color: 'bg-gray-100 text-gray-800' },
   { value: 'other', label: 'Other', color: 'bg-yellow-100 text-yellow-800' },
 ];
+
+type SortField = 'name' | 'category' | 'usage' | 'created';
+type SortDirection = 'asc' | 'desc';
 
 const SkillsSettings: React.FC = () => {
   const { skills, setSkills, personSkills, setPersonSkills } = useApp();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<SkillCategory | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<
+    SkillCategory | 'all'
+  >('all');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
   const [deleteSkillId, setDeleteSkillId] = useState<string | null>(null);
@@ -68,17 +106,73 @@ const SkillsSettings: React.FC = () => {
   });
 
   const filteredSkills = skills.filter(skill => {
-    const matchesSearch = skill.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || skill.category === selectedCategory;
+    const matchesSearch = skill.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === 'all' || skill.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
+  const sortedSkills = [...filteredSkills].sort((a, b) => {
+    let aValue: string | number;
+    let bValue: string | number;
+
+    switch (sortField) {
+      case 'name':
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+        break;
+      case 'category':
+        aValue = a.category;
+        bValue = b.category;
+        break;
+      case 'usage':
+        aValue = getSkillUsageCount(a.id);
+        bValue = getSkillUsageCount(b.id);
+        break;
+      case 'created':
+        aValue = new Date(a.createdDate).getTime();
+        bValue = new Date(b.createdDate).getTime();
+        break;
+      default:
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+    }
+
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   const getCategoryConfig = (category: SkillCategory) => {
-    return skillCategories.find(cat => cat.value === category) || skillCategories[6];
+    return (
+      skillCategories.find(cat => cat.value === category) || skillCategories[6]
+    );
   };
 
   const getSkillUsageCount = (skillId: string) => {
     return personSkills.filter(ps => ps.skillId === skillId).length;
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
+    }
+    return sortDirection === 'asc' ? (
+      <ChevronUp className="h-4 w-4 text-blue-600" />
+    ) : (
+      <ChevronDown className="h-4 w-4 text-blue-600" />
+    );
   };
 
   const handleEdit = (skill: Skill) => {
@@ -104,44 +198,47 @@ const SkillsSettings: React.FC = () => {
   const handleSave = () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Skill name is required",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Skill name is required',
+        variant: 'destructive',
       });
       return;
     }
 
     // Check for duplicate names (case insensitive)
-    const existingSkill = skills.find(s => 
-      s.name.toLowerCase() === formData.name.toLowerCase() && 
-      s.id !== editingSkill?.id
+    const existingSkill = skills.find(
+      s =>
+        s.name.toLowerCase() === formData.name.toLowerCase() &&
+        s.id !== editingSkill?.id
     );
 
     if (existingSkill) {
       toast({
-        title: "Error",
-        description: "A skill with this name already exists",
-        variant: "destructive",
+        title: 'Error',
+        description: 'A skill with this name already exists',
+        variant: 'destructive',
       });
       return;
     }
 
     if (editingSkill) {
       // Update existing skill
-      setSkills(prev => prev.map(skill =>
-        skill.id === editingSkill.id
-          ? {
-              ...skill,
-              name: formData.name.trim(),
-              category: formData.category,
-              description: formData.description.trim() || undefined,
-            }
-          : skill
-      ));
+      setSkills(prev =>
+        prev.map(skill =>
+          skill.id === editingSkill.id
+            ? {
+                ...skill,
+                name: formData.name.trim(),
+                category: formData.category,
+                description: formData.description.trim() || undefined,
+              }
+            : skill
+        )
+      );
 
       toast({
-        title: "Success",
-        description: "Skill updated successfully",
+        title: 'Success',
+        description: 'Skill updated successfully',
       });
     } else {
       // Create new skill
@@ -156,8 +253,8 @@ const SkillsSettings: React.FC = () => {
       setSkills(prev => [...prev, newSkill]);
 
       toast({
-        title: "Success",
-        description: "Skill created successfully",
+        title: 'Success',
+        description: 'Skill created successfully',
       });
     }
 
@@ -166,24 +263,24 @@ const SkillsSettings: React.FC = () => {
 
   const handleDelete = (skillId: string) => {
     const usageCount = getSkillUsageCount(skillId);
-    
+
     if (usageCount > 0) {
       toast({
-        title: "Cannot Delete",
+        title: 'Cannot Delete',
         description: `This skill is used by ${usageCount} person${usageCount !== 1 ? 's' : ''}. Remove it from all people first.`,
-        variant: "destructive",
+        variant: 'destructive',
       });
       return;
     }
 
     // Remove skill
     setSkills(prev => prev.filter(skill => skill.id !== skillId));
-    
+
     toast({
-      title: "Success",
-      description: "Skill deleted successfully",
+      title: 'Success',
+      description: 'Skill deleted successfully',
     });
-    
+
     setDeleteSkillId(null);
   };
 
@@ -205,7 +302,9 @@ const SkillsSettings: React.FC = () => {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{skills.length}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {skills.length}
+              </div>
               <div className="text-sm text-blue-600">Total Skills</div>
             </div>
             <div className="text-center p-3 bg-green-50 rounded-lg">
@@ -221,7 +320,9 @@ const SkillsSettings: React.FC = () => {
               <div className="text-sm text-purple-600">Categories</div>
             </div>
             <div className="text-center p-3 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">{personSkills.length}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {personSkills.length}
+              </div>
               <div className="text-sm text-orange-600">Total Assignments</div>
             </div>
           </div>
@@ -233,11 +334,16 @@ const SkillsSettings: React.FC = () => {
               <Input
                 placeholder="Search skills..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={(value: SkillCategory | 'all') => setSelectedCategory(value)}>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value: SkillCategory | 'all') =>
+                setSelectedCategory(value)
+              }
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
@@ -261,22 +367,60 @@ const SkillsSettings: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 font-medium"
+                      onClick={() => handleSort('name')}
+                    >
+                      Name {getSortIcon('name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 font-medium"
+                      onClick={() => handleSort('category')}
+                    >
+                      Category {getSortIcon('category')}
+                    </Button>
+                  </TableHead>
                   <TableHead>Description</TableHead>
-                  <TableHead>Usage</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 font-medium"
+                      onClick={() => handleSort('usage')}
+                    >
+                      Usage {getSortIcon('usage')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto p-0 font-medium"
+                      onClick={() => handleSort('created')}
+                    >
+                      Created {getSortIcon('created')}
+                    </Button>
+                  </TableHead>
                   <TableHead className="w-20">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSkills.map(skill => {
+                {sortedSkills.map(skill => {
                   const categoryConfig = getCategoryConfig(skill.category);
                   const usageCount = getSkillUsageCount(skill.id);
 
                   return (
                     <TableRow key={skill.id}>
-                      <TableCell className="font-medium">{skill.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {skill.name}
+                      </TableCell>
                       <TableCell>
                         <Badge className={categoryConfig.color}>
                           {categoryConfig.label}
@@ -314,9 +458,12 @@ const SkillsSettings: React.FC = () => {
                     </TableRow>
                   );
                 })}
-                {filteredSkills.length === 0 && (
+                {sortedSkills.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-gray-500"
+                    >
                       No skills found
                     </TableCell>
                   </TableRow>
@@ -341,7 +488,9 @@ const SkillsSettings: React.FC = () => {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({ ...prev, name: e.target.value }))
+                }
                 placeholder="e.g., React, Python, Design Thinking"
               />
             </div>
@@ -349,7 +498,9 @@ const SkillsSettings: React.FC = () => {
               <Label htmlFor="category">Category</Label>
               <Select
                 value={formData.category}
-                onValueChange={(value: SkillCategory) => setFormData(prev => ({ ...prev, category: value }))}
+                onValueChange={(value: SkillCategory) =>
+                  setFormData(prev => ({ ...prev, category: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -368,7 +519,12 @@ const SkillsSettings: React.FC = () => {
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 placeholder="Optional description or notes about this skill"
               />
             </div>
@@ -385,12 +541,16 @@ const SkillsSettings: React.FC = () => {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteSkillId} onOpenChange={() => setDeleteSkillId(null)}>
+      <AlertDialog
+        open={!!deleteSkillId}
+        onOpenChange={() => setDeleteSkillId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Skill</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this skill? This action cannot be undone.
+              Are you sure you want to delete this skill? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

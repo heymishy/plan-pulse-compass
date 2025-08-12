@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { getCurrentFinancialYear } from '@/utils/dateUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -132,8 +133,19 @@ const FYProjectPlanning: React.FC = () => {
     epics,
   } = useApp();
 
-  const [selectedFY, setSelectedFY] = useState<string>('2024');
-  const [selectedQuarter, setSelectedQuarter] = useState<string>('all');
+  // Get current FY based on organization's fiscal year start (assuming April 1st for now)
+  const currentFY = useMemo(() => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    // If current date is before April 1st, we're in previous FY
+    if (currentDate < new Date(currentYear, 3, 1)) {
+      // April is month 3 (0-indexed)
+      return String(currentYear - 1);
+    }
+    return String(currentYear);
+  }, []);
+
+  const [selectedFY, setSelectedFY] = useState<string>(currentFY);
   const [searchFilter, setSearchFilter] = useState('');
   const [divisionFilter, setDivisionFilter] = useState<string>('all');
   const [riskFilter, setRiskFilter] = useState<string>('all');
@@ -143,23 +155,40 @@ const FYProjectPlanning: React.FC = () => {
 
   // Get financial years from cycles
   const availableFYs = useMemo(() => {
-    const fys = cycles
-      .filter(c => c.type === 'fy')
-      .map(c => c.name || c.id)
-      .sort();
-    return [...new Set(fys)];
-  }, [cycles]);
+    console.log('All cycles:', cycles);
 
-  // Get available quarters for selected FY
-  const availableQuarters = useMemo(() => {
-    const quarters = cycles
-      .filter(
-        c => c.type === 'quarter' && (c.name || c.id).includes(selectedFY)
-      )
-      .map(c => c.name || c.id)
-      .sort();
-    return quarters;
-  }, [cycles, selectedFY]);
+    // Extract unique financial year IDs from cycles
+    const fyIds = cycles.map(c => c.financialYearId).filter(Boolean);
+
+    const uniqueFYs = [...new Set(fyIds)];
+    console.log('Financial Year IDs from cycles:', uniqueFYs);
+
+    // If we have financial year IDs, use them
+    if (uniqueFYs.length > 0) {
+      return uniqueFYs.sort();
+    }
+
+    // Fallback: extract years from cycle names or create default range
+    const cycleYears = cycles
+      .map(c => {
+        const name = c.name || c.id;
+        const yearMatch = name.match(/(\d{4})/);
+        return yearMatch ? yearMatch[1] : null;
+      })
+      .filter(Boolean);
+
+    if (cycleYears.length > 0) {
+      return [...new Set(cycleYears)].sort();
+    }
+
+    // Final fallback: current and nearby years
+    const currentYear = new Date().getFullYear();
+    return [
+      String(currentYear - 1),
+      String(currentYear),
+      String(currentYear + 1),
+    ];
+  }, [cycles]);
 
   // Get projects for selected FY - for now, show all projects for portfolio planning
   const fyProjects = useMemo(() => {
@@ -185,22 +214,10 @@ const FYProjectPlanning: React.FC = () => {
       // Calculate quarterly capacity: team capacity * weeks per quarter
       const quarterlyCapacity = team.capacity * 13; // 13 weeks per quarter
 
-      // Get current allocations for this team in the FY/Quarter
-      let fyQuarters = cycles.filter(
-        c =>
-          c.type === 'quarter' &&
-          c.parentCycleId &&
-          cycles.find(
-            fy => fy.id === c.parentCycleId && (fy.name || fy.id) === selectedFY
-          )
+      // Get current allocations for this team in the FY
+      const fyQuarters = cycles.filter(
+        c => c.type === 'quarterly' && c.financialYearId === selectedFY
       );
-
-      // Filter by selected quarter if not 'all'
-      if (selectedQuarter !== 'all') {
-        fyQuarters = fyQuarters.filter(
-          c => (c.name || c.id) === selectedQuarter
-        );
-      }
 
       const currentAllocations = allocations.filter(
         a =>
@@ -271,7 +288,6 @@ const FYProjectPlanning: React.FC = () => {
     cycles,
     allocations,
     selectedFY,
-    selectedQuarter,
     skills,
     personSkills,
     divisions,
@@ -470,8 +486,7 @@ const FYProjectPlanning: React.FC = () => {
         },
         recommendedTeams,
         skillGaps,
-        timeline:
-          selectedQuarter === 'all' ? `Q1-Q4 ${selectedFY}` : selectedQuarter,
+        timeline: `FY ${selectedFY}`,
       };
     });
   }, [
@@ -483,7 +498,6 @@ const FYProjectPlanning: React.FC = () => {
     solutions,
     projectSolutions,
     selectedFY,
-    selectedQuarter,
   ]);
 
   // Filter data based on user selections
@@ -522,6 +536,56 @@ const FYProjectPlanning: React.FC = () => {
     divisionFilter,
     riskFilter,
   ]);
+
+  // Create project allocation data for the new tab
+  const projectAllocations = useMemo(() => {
+    const fyQuarters = cycles
+      .filter(c => c.type === 'quarterly' && c.financialYearId === selectedFY)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+    const quarterNames = fyQuarters.map(q => q.name || q.id);
+
+    return fyProjects.map(project => {
+      // Get all allocations for this project in the selected FY
+      const projectAllocations = allocations.filter(
+        a =>
+          a.projectId === project.id && fyQuarters.some(q => q.id === a.cycleId)
+      );
+
+      // Group by team
+      const teamAllocations = new Map<
+        string,
+        {
+          team: any;
+          quarters: Record<string, number>;
+        }
+      >();
+
+      projectAllocations.forEach(allocation => {
+        const team = teams.find(t => t.id === allocation.teamId);
+        const quarter = fyQuarters.find(q => q.id === allocation.cycleId);
+
+        if (team && quarter) {
+          const quarterName = quarter.name || quarter.id;
+          if (!teamAllocations.has(team.id)) {
+            teamAllocations.set(team.id, {
+              team,
+              quarters: {},
+            });
+          }
+          const teamAlloc = teamAllocations.get(team.id)!;
+          teamAlloc.quarters[quarterName] =
+            (teamAlloc.quarters[quarterName] || 0) + allocation.percentage;
+        }
+      });
+
+      return {
+        project,
+        teams: Array.from(teamAllocations.values()),
+        quarterNames,
+      };
+    });
+  }, [fyProjects, allocations, teams, cycles, selectedFY]);
 
   const getRiskColor = (risk: 'low' | 'medium' | 'high' | 'critical') => {
     switch (risk) {
@@ -563,22 +627,6 @@ const FYProjectPlanning: React.FC = () => {
                   {availableFYs.map(fy => (
                     <SelectItem key={fy} value={fy}>
                       FY {fy}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={selectedQuarter}
-                onValueChange={setSelectedQuarter}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Quarters</SelectItem>
-                  {availableQuarters.map(quarter => (
-                    <SelectItem key={quarter} value={quarter}>
-                      {quarter}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -717,8 +765,9 @@ const FYProjectPlanning: React.FC = () => {
           </Card>
 
           {/* Main Content Tabs */}
-          <Tabs defaultValue="matching" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-5">
+          <Tabs defaultValue="allocations" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="allocations">Project Allocations</TabsTrigger>
               <TabsTrigger value="matching">Project-Team Matching</TabsTrigger>
               <TabsTrigger value="projects">
                 Project Risk Assessment
@@ -727,6 +776,144 @@ const FYProjectPlanning: React.FC = () => {
               <TabsTrigger value="skills">Skill Bottlenecks</TabsTrigger>
               <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
             </TabsList>
+
+            {/* Project Allocations Tab */}
+            <TabsContent value="allocations" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>
+                    Project Allocations by Quarter - FY {selectedFY}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {projectAllocations.map(
+                      ({ project, teams, quarterNames }) => (
+                        <div key={project.id} className="border rounded-lg p-4">
+                          <div className="mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {project.name}
+                            </h3>
+                            {project.description && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {project.description}
+                              </p>
+                            )}
+                          </div>
+
+                          {teams.length > 0 ? (
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                  <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Team
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Division
+                                    </th>
+                                    {quarterNames.map(quarter => (
+                                      <th
+                                        key={quarter}
+                                        className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                      >
+                                        {quarter}
+                                      </th>
+                                    ))}
+                                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Total
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                  {teams.map(({ team, quarters }) => {
+                                    const total = Object.values(
+                                      quarters
+                                    ).reduce((sum, val) => sum + val, 0);
+                                    const division = divisions.find(
+                                      d => d.id === team.divisionId
+                                    );
+
+                                    return (
+                                      <tr key={team.id}>
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {team.name}
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                          <div className="text-sm text-gray-500">
+                                            {division?.name || 'Unassigned'}
+                                          </div>
+                                        </td>
+                                        {quarterNames.map(quarter => {
+                                          const percentage =
+                                            quarters[quarter] || 0;
+                                          return (
+                                            <td
+                                              key={quarter}
+                                              className="px-4 py-4 whitespace-nowrap text-center"
+                                            >
+                                              <span
+                                                className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                                                  percentage > 0
+                                                    ? percentage >= 80
+                                                      ? 'bg-red-100 text-red-800'
+                                                      : percentage >= 50
+                                                        ? 'bg-yellow-100 text-yellow-800'
+                                                        : 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-500'
+                                                }`}
+                                              >
+                                                {percentage > 0
+                                                  ? `${percentage}%`
+                                                  : '-'}
+                                              </span>
+                                            </td>
+                                          );
+                                        })}
+                                        <td className="px-4 py-4 whitespace-nowrap text-center">
+                                          <span
+                                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                              total >= 200
+                                                ? 'bg-red-100 text-red-800'
+                                                : total >= 100
+                                                  ? 'bg-yellow-100 text-yellow-800'
+                                                  : total > 0
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-500'
+                                            }`}
+                                          >
+                                            {total > 0
+                                              ? `${Math.round(total)}%`
+                                              : '-'}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              No team allocations found for this project in FY{' '}
+                              {selectedFY}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )}
+
+                    {projectAllocations.length === 0 && (
+                      <div className="text-center py-12 text-gray-500">
+                        No projects found for FY {selectedFY}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Project-Team Matching Tab */}
             <TabsContent value="matching" className="space-y-4">

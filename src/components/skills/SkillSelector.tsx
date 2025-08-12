@@ -33,25 +33,29 @@ const skillCategories: { value: SkillCategory; label: string }[] = [
 const SkillSelector: React.FC<SkillSelectorProps> = ({
   selectedSkillIds,
   onSkillsChange,
-  label = "Skills"
+  label = 'Skills',
 }) => {
   const { skills, setSkills } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [newSkillName, setNewSkillName] = useState('');
-  const [newSkillCategory, setNewSkillCategory] = useState<SkillCategory>('other');
+  const [newSkillCategory, setNewSkillCategory] =
+    useState<SkillCategory>('other');
   const [showAddForm, setShowAddForm] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const selectedSkills = skills.filter(skill => selectedSkillIds.includes(skill.id));
-  
-  const filteredSkills = skills.filter(skill => 
-    !selectedSkillIds.includes(skill.id) &&
-    skill.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const selectedSkills = skills.filter(skill =>
+    selectedSkillIds.includes(skill.id)
   );
 
-  const exactMatch = skills.find(skill => 
-    skill.name.toLowerCase() === searchTerm.toLowerCase()
+  const filteredSkills = skills.filter(
+    skill =>
+      !selectedSkillIds.includes(skill.id) &&
+      skill.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const exactMatch = skills.find(
+    skill => skill.name.toLowerCase() === searchTerm.toLowerCase()
   );
 
   const handleSkillSelect = (skillId: string) => {
@@ -76,7 +80,7 @@ const SkillSelector: React.FC<SkillSelectorProps> = ({
 
     setSkills(prev => [...prev, newSkill]);
     onSkillsChange([...selectedSkillIds, newSkill.id]);
-    
+
     setNewSkillName('');
     setShowAddForm(false);
     setSearchTerm('');
@@ -104,7 +108,7 @@ const SkillSelector: React.FC<SkillSelectorProps> = ({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      
+
       {/* Selected Skills */}
       {selectedSkills.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
@@ -131,16 +135,25 @@ const SkillSelector: React.FC<SkillSelectorProps> = ({
           ref={inputRef}
           placeholder="Search or add skills..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
         />
 
         {/* Suggestions Dropdown */}
         {showSuggestions && (searchTerm || filteredSkills.length > 0) && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-y-auto">
+            {/* Skills count indicator */}
+            {filteredSkills.length > 0 && (
+              <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-b">
+                {filteredSkills.length} skill
+                {filteredSkills.length !== 1 ? 's' : ''} found
+                {searchTerm && ` for "${searchTerm}"`}
+              </div>
+            )}
+
             {/* Existing Skills */}
-            {filteredSkills.map(skill => (
+            {filteredSkills.slice(0, 50).map(skill => (
               <button
                 key={skill.id}
                 type="button"
@@ -149,10 +162,20 @@ const SkillSelector: React.FC<SkillSelectorProps> = ({
               >
                 <span>{skill.name}</span>
                 <Badge variant="outline" className="text-xs">
-                  {skillCategories.find(cat => cat.value === skill.category)?.label}
+                  {
+                    skillCategories.find(cat => cat.value === skill.category)
+                      ?.label
+                  }
                 </Badge>
               </button>
             ))}
+
+            {/* Show more indicator if truncated */}
+            {filteredSkills.length > 50 && (
+              <div className="px-3 py-2 text-xs text-gray-500 bg-gray-50 border-t">
+                Showing first 50 skills. Continue typing to narrow results.
+              </div>
+            )}
 
             {/* Add New Skill Option */}
             {showAddForm && (
@@ -160,9 +183,16 @@ const SkillSelector: React.FC<SkillSelectorProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Plus className="h-4 w-4" />
-                    <span className="text-sm font-medium">Add "{newSkillName}"</span>
+                    <span className="text-sm font-medium">
+                      Add "{newSkillName}"
+                    </span>
                   </div>
-                  <Select value={newSkillCategory} onValueChange={(value: SkillCategory) => setNewSkillCategory(value)}>
+                  <Select
+                    value={newSkillCategory}
+                    onValueChange={(value: SkillCategory) =>
+                      setNewSkillCategory(value)
+                    }
+                  >
                     <SelectTrigger className="h-8">
                       <SelectValue />
                     </SelectTrigger>
@@ -174,9 +204,9 @@ const SkillSelector: React.FC<SkillSelectorProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button 
-                    type="button" 
-                    size="sm" 
+                  <Button
+                    type="button"
+                    size="sm"
                     onClick={handleCreateSkill}
                     className="w-full"
                   >

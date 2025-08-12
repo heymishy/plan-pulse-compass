@@ -656,17 +656,29 @@ const ModernCalendar: React.FC = () => {
                   <span>Show Iterations</span>
                 </Button>
 
-                {showIterations && (
+                {showIterations && visibleIterations.length > 0 && (
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <span>Iterations:</span>
-                    <div className="flex items-center space-x-1">
-                      {ITERATION_COLORS.slice(0, 4).map((color, index) => (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {visibleIterations.slice(0, 6).map(iteration => (
                         <div
-                          key={index}
-                          className={`w-4 h-4 rounded border-2 ${color.split(' ')[0]} ${color.split(' ')[1]}`}
-                        />
+                          key={iteration.id}
+                          className="flex items-center space-x-1 px-2 py-1 rounded-md border bg-white"
+                          title={`${iteration.name}: ${format(parseISO(iteration.startDate), 'MMM d')} - ${format(parseISO(iteration.endDate), 'MMM d')}`}
+                        >
+                          <div
+                            className={`w-3 h-3 rounded border-2 ${iteration.colorClass.split(' ')[0]} ${iteration.colorClass.split(' ')[1]}`}
+                          />
+                          <span className="text-xs font-medium truncate max-w-[100px]">
+                            {iteration.name}
+                          </span>
+                        </div>
                       ))}
-                      <span className="text-xs">+more</span>
+                      {visibleIterations.length > 6 && (
+                        <div className="text-xs px-2 py-1 rounded-md border bg-gray-50">
+                          +{visibleIterations.length - 6} more
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

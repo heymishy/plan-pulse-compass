@@ -35,6 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import SearchableSelect from '@/components/common/SearchableSelect';
 import {
   Plus,
   X,
@@ -127,6 +128,18 @@ const ProjectSolutionsSkillsSection: React.FC<
           !(projectSolutions || []).some(ps => ps.solutionId === solution.id)
       ),
     [solutions, projectSolutions]
+  );
+
+  // Convert solutions to searchable select options
+  const solutionOptions = useMemo(
+    () =>
+      availableSolutions.map(solution => ({
+        value: solution.id,
+        label: solution.name,
+        description: solution.description,
+        category: solution.category.replace('-', ' '),
+      })),
+    [availableSolutions]
   );
 
   const allProjectSkillsInfo = useMemo(() => {
@@ -562,24 +575,15 @@ const ProjectSolutionsSkillsSection: React.FC<
                 <Card className="mt-4">
                   <CardContent className="pt-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="solution-select">Solution</Label>
-                        <Select
-                          value={selectedSolutionId}
-                          onValueChange={setSelectedSolutionId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a solution" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableSolutions.map(solution => (
-                              <SelectItem key={solution.id} value={solution.id}>
-                                {solution.name} ({solution.category})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <SearchableSelect
+                        label="Solution"
+                        placeholder="Select a solution"
+                        value={selectedSolutionId}
+                        onValueChange={setSelectedSolutionId}
+                        options={solutionOptions}
+                        searchPlaceholder="Search solutions..."
+                        emptyMessage="No available solutions found"
+                      />
                       <div>
                         <Label htmlFor="solution-importance">Importance</Label>
                         <Select
