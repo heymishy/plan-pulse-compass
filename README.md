@@ -11,7 +11,7 @@
 ![Coverage](https://img.shields.io/badge/coverage-80%25%2B-brightgreen.svg)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
-[![CI/CD Pipeline](https://github.com/heymishy/plan-pulse-compass/workflows/CI/badge.svg)](https://github.com/heymishy/plan-pulse-compass/actions)
+[![CI/CD Pipeline](https://github.com/heymishy/plan-pulse-compass/workflows/3-Tier%20Optimized%20CI%20Pipeline/badge.svg)](https://github.com/heymishy/plan-pulse-compass/actions)
 [![Build Status](https://github.com/heymishy/plan-pulse-compass/actions/workflows/ci.yml/badge.svg)](https://github.com/heymishy/plan-pulse-compass/actions/workflows/ci.yml)
 
 ![Vite](https://img.shields.io/badge/vite-6.0.1-646cff.svg)
