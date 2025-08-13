@@ -43,35 +43,44 @@ const SkillsInsightsCard = () => {
   } = useApp();
 
   const skillsMetrics = useMemo((): SkillsMetrics => {
+    // Add null safety checks for all arrays
+    const safeSkills = skills || [];
+    const safePeople = people || [];
+    const safePersonSkills = personSkills || [];
+    const safeTeams = teams || [];
+    const safeProjects = projects || [];
+    const safeProjectSkills = projectSkills || [];
+    const safeTeamMembers = teamMembers || [];
+
     // Analyze skill coverage across organization
     const coverageAnalysis = analyzeSkillCoverage(
-      skills,
-      people,
-      personSkills,
-      teams,
-      teamMembers
+      safeSkills,
+      safePeople,
+      safePersonSkills,
+      safeTeams,
+      safeTeamMembers
     );
 
     // Analyze project skill gaps for active projects
-    const activeProjects = projects.filter(p => p.status === 'active');
+    const activeProjects = safeProjects.filter(p => p.status === 'active');
     let totalGaps = 0;
     let criticalGaps = 0;
     const skillGapMap = new Map<string, { gap: number; projects: number }>();
 
     activeProjects.forEach(project => {
-      const projectSkillReqs = projectSkills.filter(
+      const projectSkillReqs = safeProjectSkills.filter(
         ps => ps.projectId === project.id
       );
       if (projectSkillReqs.length === 0) return;
 
       const gapAnalysis = analyzeProjectSkillGaps(
         project,
-        teams,
-        people,
-        personSkills,
-        skills,
-        projectSkills,
-        teamMembers
+        safeTeams,
+        safePeople,
+        safePersonSkills,
+        safeSkills,
+        safeProjectSkills,
+        safeTeamMembers
       );
 
       gapAnalysis.skillGaps.forEach(gap => {
@@ -92,7 +101,7 @@ const SkillsInsightsCard = () => {
     // Get top skill gaps
     const topSkillGaps = Array.from(skillGapMap.entries())
       .map(([skillId, data]) => {
-        const skill = skills.find(s => s.id === skillId);
+        const skill = safeSkills.find(s => s.id === skillId);
         const avgGap = data.gap / data.projects;
         return {
           skillName: skill?.name || 'Unknown',
@@ -105,15 +114,17 @@ const SkillsInsightsCard = () => {
       .slice(0, 3);
 
     // Count teams that could benefit from skill recommendations
-    const teamsNeedingSkills = teams.filter(team => {
+    const teamsNeedingSkills = safeTeams.filter(team => {
       const teamSkillAnalysis = analyzeSkillCoverage(
-        skills,
-        people.filter(p =>
-          teamMembers.some(tm => tm.teamId === team.id && tm.personId === p.id)
+        safeSkills,
+        safePeople.filter(p =>
+          safeTeamMembers.some(
+            tm => tm.teamId === team.id && tm.personId === p.id
+          )
         ),
-        personSkills,
+        safePersonSkills,
         [team],
-        teamMembers.filter(tm => tm.teamId === team.id)
+        safeTeamMembers.filter(tm => tm.teamId === team.id)
       );
       return (
         teamSkillAnalysis.riskLevel === 'high' || teamSkillAnalysis.gapCount > 3
@@ -121,7 +132,7 @@ const SkillsInsightsCard = () => {
     }).length;
 
     return {
-      totalSkills: skills.length,
+      totalSkills: safeSkills.length,
       coveredSkills: coverageAnalysis.coveredSkills,
       skillCoverage: coverageAnalysis.coveragePercentage,
       criticalGaps,
