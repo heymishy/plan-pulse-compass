@@ -38,7 +38,6 @@ import {
   Search,
   Map,
   FileText,
-  Star,
   Clock,
   ChevronRight,
   ChevronDown,
@@ -186,7 +185,7 @@ const navigationGroups: NavigationGroup[] = [
     id: 'planning',
     label: 'Planning',
     icon: GitBranch,
-    defaultExpanded: false,
+    defaultExpanded: true,
     description: 'Project and resource planning tools',
     items: [
       {
@@ -351,7 +350,6 @@ interface EnhancedNavigationProps {
 }
 
 interface NavigationState {
-  favorites: string[];
   recentItems: string[];
   collapsedGroups: string[];
 }
@@ -361,7 +359,6 @@ export function EnhancedNavigation({ className }: EnhancedNavigationProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [navigationState, setNavigationState] = useState<NavigationState>({
-    favorites: [],
     recentItems: [],
     collapsedGroups: ['planning', 'execution', 'insights', 'administration'],
   });
@@ -415,24 +412,6 @@ export function EnhancedNavigation({ className }: EnhancedNavigationProps) {
       .filter(Boolean) as NavigationItem[];
   }, [navigationState.recentItems]);
 
-  // Get favorite items
-  const favoriteItems = useMemo(() => {
-    const allItems = navigationGroups.flatMap(group => group.items);
-    return navigationState.favorites
-      .map(id => allItems.find(item => item.id === id))
-      .filter(Boolean) as NavigationItem[];
-  }, [navigationState.favorites]);
-
-  // Toggle favorite status
-  const toggleFavorite = useCallback((itemId: string) => {
-    setNavigationState(prev => ({
-      ...prev,
-      favorites: prev.favorites.includes(itemId)
-        ? prev.favorites.filter(id => id !== itemId)
-        : [...prev.favorites, itemId],
-    }));
-  }, []);
-
   // Toggle group collapse
   const toggleGroupCollapse = useCallback((groupId: string) => {
     setNavigationState(prev => ({
@@ -480,7 +459,6 @@ export function EnhancedNavigation({ className }: EnhancedNavigationProps) {
     (item: NavigationItem, isSubItem = false) => {
       const Icon = item.icon;
       const isActive = location.pathname === item.path;
-      const isFavorite = navigationState.favorites.includes(item.id);
       const isRecent = navigationState.recentItems.includes(item.id);
 
       const menuButton = (
@@ -519,34 +497,6 @@ export function EnhancedNavigation({ className }: EnhancedNavigationProps) {
               )}
 
               {item.badge && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
-
-              {!isSubItem && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    'opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 p-0',
-                    isFavorite && 'opacity-100'
-                  )}
-                  onClick={e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleFavorite(item.id);
-                  }}
-                  aria-label={
-                    isFavorite ? 'Remove from favorites' : 'Add to favorites'
-                  }
-                >
-                  <Star
-                    className={cn(
-                      'h-3 w-3',
-                      isFavorite
-                        ? 'fill-current text-yellow-500'
-                        : 'text-muted-foreground'
-                    )}
-                  />
-                </Button>
-              )}
             </div>
           </Link>
         </SidebarMenuButton>
@@ -577,12 +527,7 @@ export function EnhancedNavigation({ className }: EnhancedNavigationProps) {
 
       return menuButton;
     },
-    [
-      location.pathname,
-      navigationState.favorites,
-      navigationState.recentItems,
-      toggleFavorite,
-    ]
+    [location.pathname, navigationState.recentItems]
   );
 
   return (
@@ -619,48 +564,29 @@ export function EnhancedNavigation({ className }: EnhancedNavigationProps) {
 
         <SidebarContent className="flex-1 overflow-auto">
           {/* Quick Access Section */}
-          {(favoriteItems.length > 0 || recentItems.length > 0) &&
-            !searchQuery && (
-              <>
-                {favoriteItems.length > 0 && (
-                  <SidebarGroup>
-                    <SidebarGroupLabel>
-                      <Heart className="h-4 w-4" />
-                      Favorites
-                    </SidebarGroupLabel>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {favoriteItems.map(item => (
-                          <SidebarMenuItem key={`fav-${item.id}`}>
-                            {renderNavItem(item)}
-                          </SidebarMenuItem>
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                )}
+          {recentItems.length > 0 && !searchQuery && (
+            <>
+              {recentItems.length > 0 && (
+                <SidebarGroup>
+                  <SidebarGroupLabel>
+                    <Clock className="h-4 w-4" />
+                    Recent
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {recentItems.slice(0, 3).map(item => (
+                        <SidebarMenuItem key={`recent-${item.id}`}>
+                          {renderNavItem(item)}
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+              )}
 
-                {recentItems.length > 0 && (
-                  <SidebarGroup>
-                    <SidebarGroupLabel>
-                      <Clock className="h-4 w-4" />
-                      Recent
-                    </SidebarGroupLabel>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {recentItems.slice(0, 3).map(item => (
-                          <SidebarMenuItem key={`recent-${item.id}`}>
-                            {renderNavItem(item)}
-                          </SidebarMenuItem>
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                )}
-
-                <SidebarSeparator />
-              </>
-            )}
+              <SidebarSeparator />
+            </>
+          )}
 
           {/* Main Navigation Groups */}
           {filteredGroups.map(group => {

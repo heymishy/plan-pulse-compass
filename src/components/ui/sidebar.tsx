@@ -376,8 +376,8 @@ const SidebarHeader = React.forwardRef<
     >
       <div className="flex items-center justify-between">
         {props.children}
-        {/* Minimize/collapse button, only show if expanded */}
-        {typeof minimizeSidebar === 'function' && state === 'expanded' && (
+        {/* Minimize/collapse button - always show */}
+        {typeof minimizeSidebar === 'function' && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

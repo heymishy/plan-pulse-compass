@@ -48,6 +48,7 @@ import {
   SidebarProvider,
   Sidebar,
   SidebarInset,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import './App.css';
 
@@ -84,6 +85,7 @@ function App() {
                                     <div className="flex flex-col space-y-3">
                                       <div className="flex items-center justify-between min-w-0">
                                         <div className="flex items-center space-x-4 min-w-0">
+                                          <SidebarTrigger />
                                           <h1 className="text-lg font-semibold truncate">
                                             Plan Pulse Compass
                                           </h1>

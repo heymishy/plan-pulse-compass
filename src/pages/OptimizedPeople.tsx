@@ -8,7 +8,6 @@ import { Plus, Grid, Table, Eye, Star, Search, Filter } from 'lucide-react';
 import OptimizedPeopleTable from '@/components/people/OptimizedPeopleTable';
 import PersonDialog from '@/components/teams/PersonDialog';
 import PersonSkillsDisplay from '@/components/people/PersonSkillsDisplay';
-import { StorageStatusIndicator } from '@/components/ui/storage-status-indicator';
 import PerformanceMonitor from '@/components/ui/PerformanceMonitor';
 import PaginationControls from '@/components/ui/PaginationControls';
 import { Person } from '@/types';
@@ -105,13 +104,9 @@ const OptimizedPeople = () => {
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-2xl font-bold text-gray-900">People</h1>
-              <StorageStatusIndicator
-                isLoading={false}
-                error={null}
-                stats={{ size: 0, lastModified: Date.now() }}
-                itemCount={people.length}
-                dataType="people"
-              />
+              <Badge variant="outline" className="text-gray-600">
+                {people.length.toLocaleString()} people
+              </Badge>
             </div>
             <p className="text-gray-600">
               Manage your team members and their information
