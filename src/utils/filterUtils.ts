@@ -32,10 +32,23 @@ export const applyFilters = (
   let epics = initialEpics;
   let allocations = initialAllocations;
 
-  // Filter allocations by selected cycle
-  const relevantAllocations = allocations.filter(
-    a => a.cycleId === selectedCycleId
-  );
+  // Filter allocations by selected cycle (include both quarter and iteration allocations)
+  const relevantAllocations = allocations.filter(allocation => {
+    // Direct match with selected cycle (quarter)
+    if (allocation.cycleId === selectedCycleId) {
+      return true;
+    }
+
+    // Also include allocations from iterations that belong to the selected quarter
+    const allocationCycle = iterations.find(
+      iter => iter.id === allocation.cycleId
+    );
+    if (allocationCycle && allocationCycle.parentCycleId === selectedCycleId) {
+      return true;
+    }
+
+    return false;
+  });
 
   // Apply search query
   if (filters.searchQuery.trim()) {

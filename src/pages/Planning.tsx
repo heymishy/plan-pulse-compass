@@ -483,6 +483,70 @@ const Planning = () => {
     selectedCycleId,
   ]);
 
+  // Filter allocations for financial year view (all quarters in selected FY)
+  const financialYearFilteredAllocations = React.useMemo(() => {
+    if (!selectedFinancialYear || selectedFinancialYear === 'all') {
+      return allocations;
+    }
+
+    const selectedFY = financialYearOptions.find(
+      fy => fy.value === selectedFinancialYear
+    );
+    if (!selectedFY) return allocations;
+
+    // Get all quarters for the selected financial year
+    const allQuarters = cycles.filter(c => c.type === 'quarterly');
+    const fyStart = new Date(selectedFY.startDate);
+    const fyEnd = new Date(selectedFY.endDate);
+
+    const fyQuarters = allQuarters.filter(quarter => {
+      const quarterStart = new Date(quarter.startDate);
+      const quarterEnd = new Date(quarter.endDate);
+
+      // Quarter overlaps with financial year if either:
+      // 1. Quarter starts within FY, or
+      // 2. Quarter ends within FY, or
+      // 3. Quarter spans entire FY
+      return (
+        (quarterStart >= fyStart && quarterStart <= fyEnd) ||
+        (quarterEnd >= fyStart && quarterEnd <= fyEnd) ||
+        (quarterStart <= fyStart && quarterEnd >= fyEnd)
+      );
+    });
+
+    const fyQuarterIds = fyQuarters.map(q => q.id);
+
+    // Also get iteration IDs that belong to these quarters
+    const fyIterations = cycles.filter(
+      c => c.type === 'iteration' && fyQuarterIds.includes(c.parentCycleId)
+    );
+    const fyIterationIds = fyIterations.map(i => i.id);
+
+    // Combine quarter and iteration IDs for filtering
+    const allValidCycleIds = [...fyQuarterIds, ...fyIterationIds];
+
+    console.log('🔥 [FINANCIAL YEAR FILTERING]', {
+      selectedFY: selectedFY.label,
+      fyQuarters: fyQuarters.map(q => ({ id: q.id, name: q.name })),
+      fyQuarterIds,
+      fyIterationIds: fyIterationIds.slice(0, 5), // Show first 5 for brevity
+      totalIterations: fyIterationIds.length,
+      totalAllocations: allocations.length,
+      allValidCycleIds: allValidCycleIds.slice(0, 10), // Show first 10 for brevity
+    });
+
+    const filtered = allocations.filter(allocation =>
+      allValidCycleIds.includes(allocation.cycleId)
+    );
+
+    console.log(
+      '🔥 [FINANCIAL YEAR FILTERING] Filtered allocations:',
+      filtered.length
+    );
+
+    return filtered;
+  }, [allocations, selectedFinancialYear, financialYearOptions, cycles]);
+
   // Filter teams for display (combine existing division/team filters with search filters)
   const filteredTeams = React.useMemo(() => {
     let teams = filteredData.teams;
@@ -1239,25 +1303,19 @@ const Planning = () => {
                         <FinancialYearMatrix
                           teams={filteredData.teams}
                           cycles={cycles}
-                          allocations={allocations}
+                          allocations={financialYearFilteredAllocations}
                           projects={projects}
                           epics={epics}
                           runWorkCategories={runWorkCategories}
                           selectedFinancialYear={selectedFinancialYear}
                           financialYearOptions={financialYearOptions}
-                          onCreateAllocation={(teamId, cycleId, projectId) => {
-                            // Create a project-level allocation (no epic)
-                            setSelectedAllocation(null);
-                            setSelectedTeamId(teamId);
-                            setSelectedCycleId(cycleId);
-                            setSelectedProjectId(projectId || '');
-                            setSelectedEpicId('');
-                            setIsAllocationDialogOpen(true);
-                          }}
                           onEditAllocation={allocation => {
                             setSelectedAllocation(allocation);
                             setSelectedTeamId(allocation.teamId);
-                            setSelectedCycleId(allocation.cycleId);
+                            // Don't change selectedCycleId unless it's different from current
+                            if (allocation.cycleId !== selectedCycleId) {
+                              setSelectedCycleId(allocation.cycleId);
+                            }
                             const epic = epics.find(
                               e => e.id === allocation.epicId
                             );

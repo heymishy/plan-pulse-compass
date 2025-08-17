@@ -2,9 +2,19 @@ import React, { useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
+import {
+  AlertTriangle,
+  Users,
+  FolderOpen,
+  Calendar,
+  Target,
+  BarChart3,
+  Settings,
+} from 'lucide-react';
 import { getDashboardData } from '@/utils/dashboardUtils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileDashboard from '@/components/mobile/MobileDashboard';
 
 // Dashboard Components
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -32,6 +42,8 @@ const Dashboard = () => {
     epics,
     isDataLoading,
   } = useApp();
+
+  const isMobile = useIsMobile();
 
   const dashboardData = useMemo(() => {
     if (!isSetupComplete || isDataLoading) {
@@ -119,6 +131,48 @@ const Dashboard = () => {
     attentionItems,
     iterationMetrics,
   } = dashboardData;
+
+  // Mobile dashboard data
+  const mobileStats = {
+    totalPeople: people.length,
+    totalTeams: teams.length,
+    totalProjects: projects.length,
+    currentIteration: currentIteration?.name || 'N/A',
+    attentionItemsCount: attentionItems?.length || 0,
+    quarterProgress: quarterlyProgress?.percentage || 0,
+  };
+
+  const quickActions = [
+    {
+      label: 'Teams',
+      href: '/teams',
+      icon: <Users className="h-5 w-5" />,
+      variant: 'default' as const,
+    },
+    {
+      label: 'Projects',
+      href: '/projects',
+      icon: <FolderOpen className="h-5 w-5" />,
+      variant: 'default' as const,
+    },
+    {
+      label: 'Planning',
+      href: '/planning',
+      icon: <Calendar className="h-5 w-5" />,
+      variant: 'default' as const,
+    },
+    {
+      label: 'Tracking',
+      href: '/tracking',
+      icon: <BarChart3 className="h-5 w-5" />,
+      variant: 'default' as const,
+    },
+  ];
+
+  // Mobile-first approach
+  if (isMobile) {
+    return <MobileDashboard stats={mobileStats} quickActions={quickActions} />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-6">

@@ -298,6 +298,11 @@ export interface ScenarioContextType {
 
   // Analysis
   getScenarioComparison: (scenarioId: string) => Promise<ScenarioComparison>;
+  getScenarioFinancialComparison?: (
+    scenarioId: string
+  ) => Promise<
+    import('@/types/scenarioFinancialTypes').ScenarioFinancialComparison
+  >;
 
   // Data access (proxies to scenario data when in scenario mode)
   getCurrentData: () => ScenarioData;
@@ -310,6 +315,7 @@ export interface ScenarioContextType {
   hasUnsavedChanges: boolean;
   saveCurrentScenario: () => Promise<void>;
   discardChanges: () => void;
+  refreshScenarioFinancialAnalysis: () => Promise<void>;
 }
 
 export interface CreateScenarioParams {

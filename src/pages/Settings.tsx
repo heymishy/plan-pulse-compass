@@ -10,6 +10,7 @@ import SolutionsSettings from '@/components/settings/SolutionsSettings';
 import ImportExportSettings from '@/components/settings/ImportExportSettings';
 import AdvancedSettings from '@/components/settings/AdvancedSettings';
 import IntegrationsSettings from '@/components/settings/IntegrationsSettings';
+import ComplianceSettings from '@/components/settings/ComplianceSettings';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -31,13 +32,14 @@ const Settings = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="financial">Financial</TabsTrigger>
             <TabsTrigger value="teams">Teams & Roles</TabsTrigger>
             <TabsTrigger value="skills">Skills</TabsTrigger>
             <TabsTrigger value="solutions">Solutions</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
+            <TabsTrigger value="compliance">Security</TabsTrigger>
             <TabsTrigger value="import">Import/Export</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
@@ -64,6 +66,10 @@ const Settings = () => {
 
           <TabsContent value="integrations" className="mt-6">
             <IntegrationsSettings />
+          </TabsContent>
+
+          <TabsContent value="compliance" className="mt-6">
+            <ComplianceSettings />
           </TabsContent>
 
           <TabsContent value="import" className="mt-6">

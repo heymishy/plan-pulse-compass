@@ -62,6 +62,7 @@ interface ProjectTeamMatchingViewProps {
   allocations: any[];
   cycles: any[];
   divisions: any[];
+  selectedCycleId?: string; // Selected quarter/financial year to filter allocations by
 }
 
 interface MatrixCell {
@@ -92,6 +93,7 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   allocations,
   cycles,
   divisions,
+  selectedCycleId,
 }) => {
   // Filter and sort states
   const [projectFilter, setProjectFilter] = useState('');
@@ -210,7 +212,10 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   const divisionGroups = useMemo((): DivisionGroup[] => {
     const divisionsMap = new Map<string, Team[]>();
 
-    teams.forEach(team => {
+    // Add null safety check for teams array
+    const safeTeams = teams || [];
+
+    safeTeams.forEach(team => {
       const divisionKey = team.divisionId || 'no-division';
       if (!divisionsMap.has(divisionKey)) {
         divisionsMap.set(divisionKey, []);
@@ -236,29 +241,184 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
 
   // Calculate team capacity utilization
   const teamCapacityMap = useMemo(() => {
+    console.log(
+      '🔍 [ProjectTeamMatchingView] STARTING ALLOCATION FILTERING DEBUG'
+    );
+    console.log(
+      '🔍 [ProjectTeamMatchingView] selectedCycleId:',
+      selectedCycleId
+    );
+    console.log(
+      '🔍 [ProjectTeamMatchingView] allocations received:',
+      allocations?.length || 0
+    );
+
     const capacityMap = new Map<string, number>();
 
-    // Get current quarter cycles
-    const now = new Date();
-    const currentQuarterCycles = cycles.filter((cycle: any) => {
-      const cycleStart = new Date(cycle.startDate);
-      const cycleEnd = new Date(cycle.endDate);
-      return (
-        (now >= cycleStart && now <= cycleEnd) ||
-        (cycleStart.getFullYear() === now.getFullYear() &&
-          Math.floor(cycleStart.getMonth() / 3) ===
-            Math.floor(now.getMonth() / 3))
+    // Add null safety checks for all arrays
+    const safeCycles = cycles || [];
+    const safeTeams = teams || [];
+    const safeAllocations = allocations || [];
+
+    // Debug: Log sample allocations
+    if (safeAllocations.length > 0) {
+      console.log('[ProjectTeamMatchingView] Sample allocations:');
+      safeAllocations.slice(0, 5).forEach((alloc: any, index: number) => {
+        console.log(`  [${index}]:`, {
+          id: alloc.id,
+          teamId: alloc.teamId,
+          cycleId: alloc.cycleId,
+          percentage: alloc.percentage,
+          notes: alloc.notes?.substring(0, 50),
+        });
+      });
+    }
+
+    // Get quarter cycles to display - use selected cycle if provided, otherwise current quarter
+    let targetQuarterCycles: any[];
+
+    if (selectedCycleId) {
+      // Find the selected quarter and all its child iterations
+      const selectedQuarter = safeCycles.find(
+        (c: any) => c.id === selectedCycleId && c.type === 'quarterly'
       );
-    });
+      if (selectedQuarter) {
+        // Get all iterations within the selected quarter
+        const iterationsInQuarter = safeCycles.filter(
+          (c: any) =>
+            c.type === 'iteration' && c.parentCycleId === selectedCycleId
+        );
+        targetQuarterCycles = [selectedQuarter, ...iterationsInQuarter];
+        console.log(
+          '[ProjectTeamMatchingView] Using selected quarter:',
+          selectedQuarter.name
+        );
+        console.log(
+          '[ProjectTeamMatchingView] Found',
+          iterationsInQuarter.length,
+          'iterations in quarter'
+        );
+      } else {
+        // selectedCycleId might be a financial year (e.g., "2025") - find quarters within that FY
+        const fyQuarters = safeCycles.filter(
+          (c: any) => c.type === 'quarterly'
+        );
+        console.log(
+          '[ProjectTeamMatchingView] All quarters:',
+          fyQuarters.map(q => ({ name: q.name, id: q.id, start: q.startDate }))
+        );
 
-    const currentQuarterCycleIds = currentQuarterCycles.map((c: any) => c.id);
+        // Filter quarters that belong to the selected financial year
+        const quartersInSelectedFY = fyQuarters.filter((q: any) => {
+          return q.name && q.name.includes(selectedCycleId);
+        });
 
-    teams.forEach(team => {
-      const teamAllocations = allocations.filter(
+        console.log(
+          '[ProjectTeamMatchingView] Quarters in selected FY',
+          selectedCycleId + ':',
+          quartersInSelectedFY.map(q => q.name)
+        );
+
+        if (quartersInSelectedFY.length > 0) {
+          // Try to find the current quarter first (based on today's date)
+          const now = new Date();
+          const currentQuarterInFY = quartersInSelectedFY.find((q: any) => {
+            const qStart = new Date(q.startDate);
+            const qEnd = new Date(q.endDate);
+            return now >= qStart && now <= qEnd;
+          });
+
+          if (currentQuarterInFY) {
+            // Use only the current quarter and its iterations
+            const iterationsInCurrentQuarter = safeCycles.filter(
+              (c: any) =>
+                c.type === 'iteration' &&
+                c.parentCycleId === currentQuarterInFY.id
+            );
+            targetQuarterCycles = [
+              currentQuarterInFY,
+              ...iterationsInCurrentQuarter,
+            ];
+            console.log(
+              '[ProjectTeamMatchingView] Using current quarter in FY:',
+              currentQuarterInFY.name,
+              'with',
+              iterationsInCurrentQuarter.length,
+              'iterations'
+            );
+          } else {
+            // Fall back to all quarters in the selected FY
+            const allIterationsInFY: any[] = [];
+            quartersInSelectedFY.forEach(quarter => {
+              const iterationsInQuarter = safeCycles.filter(
+                (c: any) =>
+                  c.type === 'iteration' && c.parentCycleId === quarter.id
+              );
+              allIterationsInFY.push(...iterationsInQuarter);
+            });
+
+            targetQuarterCycles = [
+              ...quartersInSelectedFY,
+              ...allIterationsInFY,
+            ];
+            console.log(
+              '[ProjectTeamMatchingView] Using all quarters in FY (no current quarter):',
+              quartersInSelectedFY.length,
+              'quarters,',
+              allIterationsInFY.length,
+              'iterations'
+            );
+          }
+        } else {
+          targetQuarterCycles = [];
+          console.log(
+            '[ProjectTeamMatchingView] No quarters found for financial year:',
+            selectedCycleId
+          );
+        }
+      }
+    } else {
+      // Fallback to current quarter logic
+      const now = new Date();
+      targetQuarterCycles = safeCycles.filter((cycle: any) => {
+        const cycleStart = new Date(cycle.startDate);
+        const cycleEnd = new Date(cycle.endDate);
+        return (
+          (now >= cycleStart && now <= cycleEnd) ||
+          (cycleStart.getFullYear() === now.getFullYear() &&
+            Math.floor(cycleStart.getMonth() / 3) ===
+              Math.floor(now.getMonth() / 3))
+        );
+      });
+      console.log(
+        '[ProjectTeamMatchingView] Using current quarter logic (no selectedCycleId)'
+      );
+    }
+
+    const targetCycleIds = targetQuarterCycles.map((c: any) => c.id);
+    console.log(
+      '[ProjectTeamMatchingView] Target cycle IDs for filtering:',
+      targetCycleIds
+    );
+
+    safeTeams.forEach(team => {
+      const teamAllocations = safeAllocations.filter(
         (alloc: any) =>
-          alloc.teamId === team.id &&
-          currentQuarterCycleIds.includes(alloc.cycleId)
+          alloc.teamId === team.id && targetCycleIds.includes(alloc.cycleId)
       );
+
+      // Debug: Log team allocations found
+      if (teamAllocations.length > 0) {
+        console.log(
+          `[ProjectTeamMatchingView] Team ${team.name} allocations:`,
+          teamAllocations.length
+        );
+        teamAllocations.forEach(alloc => {
+          console.log(
+            `  - ${alloc.percentage}% to cycle ${alloc.cycleId} (${alloc.notes?.substring(0, 30)})`
+          );
+        });
+      }
 
       const totalPercentage = teamAllocations.reduce(
         (sum: number, alloc: any) => sum + alloc.percentage,
@@ -269,7 +429,7 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     });
 
     return capacityMap;
-  }, [teams, allocations, cycles]);
+  }, [teams, allocations, cycles, selectedCycleId]);
 
   // Helper function to check if team should be visible
   const shouldShowTeam = (team: Team) => {
@@ -288,17 +448,27 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   const matrixData = useMemo((): MatrixCell[] => {
     const cells: MatrixCell[] = [];
 
-    projects.forEach(project => {
-      teams.forEach(team => {
+    // Add null safety checks for all arrays
+    const safeProjects = projects || [];
+    const safeTeams = teams || [];
+    const safeSkills = skills || [];
+    const safeSolutions = solutions || [];
+    const safeProjectSkills = projectSkills || [];
+    const safeProjectSolutions = projectSolutions || [];
+    const safePeople = people || [];
+    const safePersonSkills = personSkills || [];
+
+    safeProjects.forEach(project => {
+      safeTeams.forEach(team => {
         const compatibility = calculateTeamProjectCompatibility(
           team,
           project,
-          projectSkills,
-          solutions,
-          skills,
-          projectSolutions,
-          people,
-          personSkills
+          safeProjectSkills,
+          safeSolutions,
+          safeSkills,
+          safeProjectSolutions,
+          safePeople,
+          safePersonSkills
         );
 
         const capacityPercentage = teamCapacityMap.get(team.id) || 0;
@@ -356,11 +526,15 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   // Get project solutions map for filtering
   const projectSolutionsMap = useMemo(() => {
     const map = new Map<string, string[]>();
-    projectSolutions.forEach((ps: any) => {
+    // Add null safety checks
+    const safeProjectSolutions = projectSolutions || [];
+    const safeSolutions = solutions || [];
+
+    safeProjectSolutions.forEach((ps: any) => {
       if (!map.has(ps.projectId)) {
         map.set(ps.projectId, []);
       }
-      const solution = solutions.find(s => s.id === ps.solutionId);
+      const solution = safeSolutions.find(s => s.id === ps.solutionId);
       if (solution) {
         map.get(ps.projectId)!.push(solution.name);
       }
@@ -373,7 +547,10 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
     const statuses = new Set<string>();
     const solutionTypes = new Set<string>();
 
-    projects.forEach(project => {
+    // Add null safety check
+    const safeProjects = projects || [];
+
+    safeProjects.forEach(project => {
       if (project.status) statuses.add(project.status);
       const projectSolutions = projectSolutionsMap.get(project.id) || [];
       projectSolutions.forEach(solution => solutionTypes.add(solution));
@@ -387,7 +564,8 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
 
   // Apply filters and get sorted projects and teams
   const filteredProjects = useMemo(() => {
-    let filtered = projects;
+    // Add null safety check
+    let filtered = projects || [];
 
     // Project name filter
     if (projectFilter) {
@@ -473,7 +651,8 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   ]);
 
   const filteredDivisionGroups = useMemo(() => {
-    let filtered = divisionGroups;
+    // Add null safety check for divisionGroups
+    let filtered = divisionGroups || [];
 
     // Division filter
     if (divisionFilter !== 'all') {
@@ -1104,4 +1283,22 @@ const ProjectTeamMatchingView: React.FC<ProjectTeamMatchingViewProps> = ({
   );
 };
 
-export default React.memo(ProjectTeamMatchingView);
+export default React.memo(ProjectTeamMatchingView, (prevProps, nextProps) => {
+  // Force re-render if allocations array length changes
+  if (prevProps.allocations?.length !== nextProps.allocations?.length) {
+    return false; // Props are different, re-render
+  }
+
+  // Also check if allocation content changed by comparing last allocation
+  const prevLastAllocation =
+    prevProps.allocations?.[prevProps.allocations.length - 1];
+  const nextLastAllocation =
+    nextProps.allocations?.[nextProps.allocations.length - 1];
+
+  if (prevLastAllocation?.id !== nextLastAllocation?.id) {
+    return false; // Props are different, re-render
+  }
+
+  // Default shallow comparison for other props
+  return true; // Props are same, skip re-render
+});

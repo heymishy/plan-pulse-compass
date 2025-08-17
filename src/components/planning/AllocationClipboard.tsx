@@ -14,6 +14,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { Allocation, Team, Epic } from '@/types';
+import { useScenarioAwareOperations } from '@/hooks/useScenarioAwareOperations';
 
 interface ClipboardData {
   allocations: Allocation[];
@@ -83,6 +84,7 @@ export const AllocationClipboardProvider: React.FC<
   const [clipboardData, setClipboardData] = useState<ClipboardData | null>(
     null
   );
+  const scenarioOps = useScenarioAwareOperations();
 
   const copyAllocations = (
     allocations: Allocation[],
@@ -203,24 +205,37 @@ export const AllocationClipboardProvider: React.FC<
       })
     );
 
-    // Update allocations list
-    let updatedAllocations = [...allAllocations];
-
-    // Remove existing allocations if overwriting
-    if (overwrite) {
-      updatedAllocations = updatedAllocations.filter(
-        a =>
-          !(
+    // Use scenario-aware operations for allocation management
+    try {
+      // Remove existing allocations if overwriting
+      if (overwrite) {
+        const existingToRemove = allAllocations.filter(
+          a =>
             a.teamId === targetTeamId &&
             a.iterationNumber === targetIterationNumber &&
             a.cycleId === effectiveCycleId
-          )
-      );
-    }
+        );
 
-    // Add new allocations
-    updatedAllocations = [...updatedAllocations, ...newAllocations];
-    onAllocationsChange(updatedAllocations);
+        // Delete existing allocations using scenario-aware operations
+        for (const allocation of existingToRemove) {
+          await scenarioOps.allocation.delete(allocation.id);
+        }
+      }
+
+      // Add new allocations using scenario-aware operations
+      for (const allocation of newAllocations) {
+        const { id, ...allocationWithoutId } = allocation;
+        await scenarioOps.allocation.add(allocationWithoutId);
+      }
+    } catch (error) {
+      console.error('Error pasting allocations:', error);
+      toast({
+        title: 'Paste failed',
+        description: 'Could not paste allocations. Please try again.',
+        variant: 'destructive',
+      });
+      return [];
+    }
 
     const scalingText = scaleToCapacity
       ? ` (scaled ${Math.round(scalingFactor * 100)}%)`

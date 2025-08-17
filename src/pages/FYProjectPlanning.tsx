@@ -136,8 +136,8 @@ const FYProjectPlanning: React.FC = () => {
   // Get current FY based on organization's fiscal year start (assuming April 1st for now)
   const currentFY = useMemo(() => {
     // Extract years from cycle names since cycles don't have financialYearId
-    if (cycles.length > 0) {
-      const cycleYears = cycles
+    if ((cycles || []).length > 0) {
+      const cycleYears = (cycles || [])
         .map(c => {
           const name = c.name || c.id;
           const yearMatch = name.match(/(\d{4})/);
@@ -146,12 +146,10 @@ const FYProjectPlanning: React.FC = () => {
         .filter(Boolean);
 
       const uniqueYears = [...new Set(cycleYears)].sort();
-      console.log('Available years from cycles:', uniqueYears);
 
       // Use the latest available year
       if (uniqueYears.length > 0) {
         const latestYear = uniqueYears[uniqueYears.length - 1];
-        console.log('Using latest available FY:', latestYear);
         return latestYear;
       }
     }
@@ -172,31 +170,10 @@ const FYProjectPlanning: React.FC = () => {
 
   // Get financial years from cycles
   const availableFYs = useMemo(() => {
-    console.log('All cycles:', cycles);
-    console.log('Sample cycle structure:', cycles[0]);
-
     // Extract unique financial year IDs from cycles
-    const fyIds = cycles.map(c => c.financialYearId).filter(Boolean);
+    const fyIds = (cycles || []).map(c => c.financialYearId).filter(Boolean);
 
     const uniqueFYs = [...new Set(fyIds)];
-    console.log('Financial Year IDs from cycles:', uniqueFYs);
-
-    // Debug: Show what properties cycles actually have
-    if (cycles.length > 0) {
-      console.log('Cycle properties:', Object.keys(cycles[0]));
-      console.log(
-        'First 3 cycles with type info:',
-        cycles.slice(0, 3).map(c => ({
-          id: c.id,
-          name: c.name,
-          type: c.type,
-          financialYearId: c.financialYearId,
-          startDate: c.startDate,
-          endDate: c.endDate,
-          parentCycleId: c.parentCycleId,
-        }))
-      );
-    }
 
     // If we have financial year IDs, use them
     if (uniqueFYs.length > 0) {
@@ -204,15 +181,13 @@ const FYProjectPlanning: React.FC = () => {
     }
 
     // Your cycles don't have financialYearId, so extract years from names
-    const cycleYears = cycles
+    const cycleYears = (cycles || [])
       .map(c => {
         const name = c.name || c.id;
         const yearMatch = name.match(/(\d{4})/);
         return yearMatch ? yearMatch[1] : null;
       })
       .filter(Boolean);
-
-    console.log('Extracted years from cycle names:', cycleYears);
 
     if (cycleYears.length > 0) {
       return [...new Set(cycleYears)].sort();
@@ -231,7 +206,7 @@ const FYProjectPlanning: React.FC = () => {
   const fyProjects = useMemo(() => {
     // For portfolio planning, we want to analyze all active projects
     // regardless of current allocations, so we can plan capacity for them
-    const filtered = projects.filter(
+    const filtered = (projects || []).filter(
       p =>
         p.status === 'active' ||
         p.status === 'planned' ||
@@ -244,19 +219,19 @@ const FYProjectPlanning: React.FC = () => {
 
   // Analyze team capacity across the FY
   const teamCapacityAnalysis = useMemo((): TeamCapacityAnalysis[] => {
-    return teams.map(team => {
-      const teamMembers = people.filter(
+    return (teams || []).map(team => {
+      const teamMembers = (people || []).filter(
         p => p.teamId === team.id && p.isActive
       );
       // Calculate quarterly capacity: team capacity * weeks per quarter
       const quarterlyCapacity = team.capacity * 13; // 13 weeks per quarter
 
       // Get current allocations for this team in the FY
-      const fyQuarters = cycles.filter(
+      const fyQuarters = (cycles || []).filter(
         c => c.type === 'quarterly' && c.financialYearId === selectedFY
       );
 
-      const currentAllocations = allocations.filter(
+      const currentAllocations = (allocations || []).filter(
         a =>
           a.teamId === team.id &&
           fyQuarters.some(
@@ -277,7 +252,7 @@ const FYProjectPlanning: React.FC = () => {
       // Get team skills
       const teamSkillIds = new Set<string>();
       teamMembers.forEach(member => {
-        personSkills
+        (personSkills || [])
           .filter(ps => ps.personId === member.id)
           .forEach(ps => teamSkillIds.add(ps.skillId));
       });
@@ -287,7 +262,7 @@ const FYProjectPlanning: React.FC = () => {
       }
 
       const teamSkillNames = Array.from(teamSkillIds)
-        .map(skillId => skills.find(s => s.id === skillId)?.name)
+        .map(skillId => (skills || []).find(s => s.id === skillId)?.name)
         .filter(Boolean) as string[];
 
       // Get current project names
@@ -295,7 +270,7 @@ const FYProjectPlanning: React.FC = () => {
         ...new Set(currentAllocations.map(a => a.projectId).filter(Boolean)),
       ] as string[];
       const currentProjects = currentProjectIds
-        .map(pid => projects.find(p => p.id === pid)?.name)
+        .map(pid => (projects || []).find(p => p.id === pid)?.name)
         .filter(Boolean) as string[];
 
       // Calculate risk level based on utilization and skill demand
@@ -305,7 +280,8 @@ const FYProjectPlanning: React.FC = () => {
       else if (utilization > 60) riskLevel = 'medium';
 
       const division =
-        divisions.find(d => d.id === team.divisionId)?.name || 'Unassigned';
+        (divisions || []).find(d => d.id === team.divisionId)?.name ||
+        'Unassigned';
 
       return {
         team,
@@ -387,7 +363,7 @@ const FYProjectPlanning: React.FC = () => {
     // Create bottleneck analysis
     const bottlenecks: SkillBottleneck[] = [];
     skillDemand.forEach((demand, skillName) => {
-      const skill = skills.find(s => s.name === skillName);
+      const skill = (skills || []).find(s => s.name === skillName);
       if (!skill) return;
 
       const supply = skillSupply.get(skillName) || {
@@ -428,7 +404,7 @@ const FYProjectPlanning: React.FC = () => {
 
   // Assess project risks
   const projectRiskAssessment = useMemo((): ProjectRisk[] => {
-    return fyProjects.map(project => {
+    return (fyProjects || []).map(project => {
       const requiredSkills = getProjectRequiredSkills(
         project,
         projectSkills,
@@ -443,7 +419,7 @@ const FYProjectPlanning: React.FC = () => {
       const skillAvailability =
         skillIds.length > 0
           ? skillIds.reduce((sum, skillId) => {
-              const skill = skills.find(s => s.id === skillId);
+              const skill = (skills || []).find(s => s.id === skillId);
               const skillName = skill?.name || '';
               const bottleneck = skillBottlenecks.find(
                 b => b.skill.name === skillName
@@ -461,7 +437,7 @@ const FYProjectPlanning: React.FC = () => {
         analysis =>
           analysis.availableCapacity > 200 && // At least 200 hours available
           skillIds.some(skillId => {
-            const skill = skills.find(s => s.id === skillId);
+            const skill = (skills || []).find(s => s.id === skillId);
             return skill && analysis.skills.includes(skill.name);
           })
       );
@@ -502,7 +478,7 @@ const FYProjectPlanning: React.FC = () => {
       // Skill gaps
       const skillGaps = skillIds
         .filter(skillId => {
-          const skill = skills.find(s => s.id === skillId);
+          const skill = (skills || []).find(s => s.id === skillId);
           return (
             skill &&
             skillBottlenecks.some(
@@ -510,7 +486,7 @@ const FYProjectPlanning: React.FC = () => {
             )
           );
         })
-        .map(skillId => skills.find(s => s.id === skillId)?.name)
+        .map(skillId => (skills || []).find(s => s.id === skillId)?.name)
         .filter(Boolean) as string[];
 
       return {
@@ -576,32 +552,6 @@ const FYProjectPlanning: React.FC = () => {
 
   // Create project allocation data for the new tab
   const projectAllocations = useMemo(() => {
-    console.log('=== PROJECT ALLOCATIONS DEBUG ===');
-    console.log('selectedFY:', selectedFY);
-    console.log('All cycles:', cycles.length);
-    console.log('All allocations:', allocations.length);
-    console.log('All epics:', epics.length);
-    console.log('fyProjects:', fyProjects.length);
-
-    // Debug allocations structure
-    if (allocations.length > 0) {
-      console.log('Sample allocation structure:', allocations[0]);
-      console.log('Allocation properties:', Object.keys(allocations[0]));
-      console.log(
-        'First 3 allocations:',
-        allocations.slice(0, 3).map(a => ({
-          id: a.id,
-          teamId: a.teamId,
-          projectId: a.projectId,
-          epicId: a.epicId,
-          cycleId: a.cycleId,
-          percentage: a.percentage,
-          startDate: a.startDate,
-          endDate: a.endDate,
-        }))
-      );
-    }
-
     // Since cycles don't have financialYearId, filter by year in name
     const fyQuarters = cycles
       .filter(c => {
@@ -612,12 +562,6 @@ const FYProjectPlanning: React.FC = () => {
       })
       .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
-    console.log(
-      'FY Quarters found:',
-      fyQuarters.length,
-      fyQuarters.map(q => ({ id: q.id, name: q.name, fyId: q.financialYearId }))
-    );
-
     const quarterNames = fyQuarters.map(q => q.name || q.id);
 
     return fyProjects.map(project => {
@@ -625,11 +569,6 @@ const FYProjectPlanning: React.FC = () => {
       // Include direct project allocations AND epic-based allocations
       const projectEpics = epics.filter(e => e.projectId === project.id);
       const projectEpicIds = projectEpics.map(e => e.id);
-
-      console.log(`Project "${project.name}" (${project.id}):`, {
-        projectEpics: projectEpics.length,
-        projectEpicIds,
-      });
 
       // Since allocations only have epicId (not projectId), only check epic-based allocations
       const projectAllocations = allocations.filter(a => {
@@ -662,22 +601,6 @@ const FYProjectPlanning: React.FC = () => {
 
         return false;
       });
-
-      console.log(
-        `Project "${project.name}" allocations found:`,
-        projectAllocations.length
-      );
-      console.log(
-        'Allocation details:',
-        projectAllocations.map(a => ({
-          id: a.id,
-          teamId: a.teamId,
-          projectId: a.projectId,
-          epicId: a.epicId,
-          cycleId: a.cycleId,
-          percentage: a.percentage,
-        }))
-      );
 
       // Group by team
       const teamAllocations = new Map<
@@ -1086,6 +1009,7 @@ const FYProjectPlanning: React.FC = () => {
                 allocations={allocations}
                 cycles={cycles}
                 divisions={divisions}
+                selectedCycleId={selectedFY}
               />
             </TabsContent>
 

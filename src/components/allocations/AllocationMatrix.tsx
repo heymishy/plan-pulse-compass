@@ -50,6 +50,51 @@ const AllocationMatrix: React.FC<AllocationMatrixProps> = ({
   epics,
   runWorkCategories,
 }) => {
+  // Debug: Log allocation data received by AllocationMatrix
+  console.log('🔍 [AllocationMatrix] Component rendered');
+  console.log('🔍 [AllocationMatrix] Teams count:', teams?.length || 0);
+  console.log(
+    '🔍 [AllocationMatrix] Iterations count:',
+    iterations?.length || 0
+  );
+  console.log(
+    '🔍 [AllocationMatrix] Allocations count:',
+    allocations?.length || 0
+  );
+
+  if (allocations && allocations.length > 0) {
+    console.log('🔍 [AllocationMatrix] Sample allocations:');
+    allocations.slice(0, 5).forEach((alloc, index) => {
+      console.log(`  [${index}]:`, {
+        id: alloc.id,
+        teamId: alloc.teamId,
+        cycleId: alloc.cycleId,
+        percentage: alloc.percentage,
+        notes: alloc.notes?.substring(0, 50),
+      });
+    });
+
+    // Check specifically for Q2 2025 allocations
+    const q2Allocations = allocations.filter(
+      alloc =>
+        alloc.notes?.includes('Quick allocation') ||
+        alloc.notes?.includes('cards switch upgrade')
+    );
+    console.log(
+      '🔍 [AllocationMatrix] Q2 2025 allocations found:',
+      q2Allocations.length
+    );
+    q2Allocations.forEach((alloc, index) => {
+      console.log(`  Q2[${index}]:`, {
+        id: alloc.id,
+        teamId: alloc.teamId,
+        cycleId: alloc.cycleId,
+        percentage: alloc.percentage,
+        notes: alloc.notes,
+      });
+    });
+  }
+
   const { setAllocations } = useApp();
   const { toast } = useToast();
   const [selectedAllocations, setSelectedAllocations] = useState<Set<string>>(

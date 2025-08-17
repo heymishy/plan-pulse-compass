@@ -49,6 +49,10 @@ const NoDataForQuarter = ({ selectedCycleId }: { selectedCycleId: string }) => (
 );
 
 const Allocations = () => {
+  console.log(
+    '🔥 [ALLOCATIONS PAGE] Component loaded - this is the Planning page with Matrix tab'
+  );
+
   const {
     teams,
     cycles,
@@ -92,14 +96,50 @@ const Allocations = () => {
       ? teams
       : teams.filter(t => t.id === selectedTeamId);
   const filteredAllocations = useMemo(() => {
-    let filtered = allocations.filter(a => a.cycleId === selectedCycleId);
+    console.log('🔍 [Allocations] Filtering allocations...');
+    console.log('🔍 [Allocations] selectedCycleId:', selectedCycleId);
+    console.log('🔍 [Allocations] Total allocations:', allocations.length);
+    console.log('🔍 [Allocations] Iterations count:', iterations.length);
+
+    // Include allocations that match either:
+    // 1. cycleId === selectedCycleId (quarter-level allocations)
+    // 2. cycleId matches any iteration within the selected quarter
+    const iterationIds = iterations.map(i => i.id);
+    console.log('🔍 [Allocations] Iteration IDs for filtering:', iterationIds);
+
+    let filtered = allocations.filter(
+      a => a.cycleId === selectedCycleId || iterationIds.includes(a.cycleId)
+    );
+
+    console.log(
+      '🔍 [Allocations] Allocations after cycle filtering:',
+      filtered.length
+    );
 
     if (selectedTeamId !== 'all') {
       filtered = filtered.filter(a => a.teamId === selectedTeamId);
+      console.log(
+        '🔍 [Allocations] Allocations after team filtering:',
+        filtered.length
+      );
+    }
+
+    // Debug: Show sample filtered allocations
+    if (filtered.length > 0) {
+      console.log('🔍 [Allocations] Sample filtered allocations:');
+      filtered.slice(0, 3).forEach((alloc, index) => {
+        console.log(`  [${index}]:`, {
+          id: alloc.id,
+          teamId: alloc.teamId,
+          cycleId: alloc.cycleId,
+          percentage: alloc.percentage,
+          notes: alloc.notes?.substring(0, 50),
+        });
+      });
     }
 
     return filtered;
-  }, [allocations, selectedCycleId, selectedTeamId]);
+  }, [allocations, selectedCycleId, selectedTeamId, iterations]);
 
   const handleImportComplete = () => {
     toast({

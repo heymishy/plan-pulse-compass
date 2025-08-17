@@ -25,6 +25,20 @@ import {
   BUILTIN_SCENARIO_TEMPLATES,
   SCENARIO_STORAGE_KEYS,
 } from '@/types/scenarioTypes';
+import type {
+  EnhancedScenarioData,
+  ScenarioFinancialComparison,
+} from '@/types/scenarioFinancialTypes';
+import {
+  calculateFinancialsInBatches,
+  compareScenarioFinancials,
+  DEFAULT_ROLE_COSTS,
+} from '@/utils/scenarioFinancialCalculations';
+import {
+  executeScenarioTemplate,
+  type ModificationResult,
+} from '@/utils/scenarioModificationEngine';
+import { DEFAULT_PERFORMANCE_CONFIG } from '@/types/scenarioFinancialTypes';
 import { useToast } from '@/hooks/use-toast';
 
 /**
@@ -96,18 +110,132 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
     return scenarios.find(s => s.id === activeScenarioId) || null;
   }, [activeScenarioId, scenarios]);
 
-  // Create a deep clone of application state for scenarios
-  const cloneCurrentState = useCallback((): ScenarioData => {
-    try {
-      // Ensure all contexts are available before cloning
-      if (
-        !teamContext ||
-        !projectContext ||
-        !planningContext ||
-        !settingsContext ||
-        !goalContext
-      ) {
-        console.warn('Some contexts are not available, returning empty state');
+  // Create a deep clone of application state for scenarios with financial analysis
+  const cloneCurrentState =
+    useCallback(async (): Promise<EnhancedScenarioData> => {
+      try {
+        // Ensure all contexts are available before cloning
+        if (
+          !teamContext ||
+          !projectContext ||
+          !planningContext ||
+          !settingsContext ||
+          !goalContext
+        ) {
+          console.warn(
+            'Some contexts are not available, returning empty state'
+          );
+          return {
+            people: [],
+            teams: [],
+            projects: [],
+            epics: [],
+            allocations: [],
+            divisions: [],
+            roles: [],
+            releases: [],
+            projectSolutions: [],
+            projectSkills: [],
+            runWorkCategories: [],
+            teamMembers: [],
+            divisionLeadershipRoles: [],
+            unmappedPeople: [],
+            actualAllocations: [],
+            iterationSnapshots: [],
+            goals: [],
+            goalEpics: [],
+            goalMilestones: [],
+            goalTeams: [],
+            config: {},
+          } as EnhancedScenarioData;
+        }
+
+        // Create direct copies without JSON serialization to avoid potential issues
+        const baseState: ScenarioData = {
+          people: Array.isArray(teamContext.people)
+            ? [...teamContext.people]
+            : [],
+          teams: Array.isArray(teamContext.teams) ? [...teamContext.teams] : [],
+          projects: Array.isArray(projectContext.projects)
+            ? [...projectContext.projects]
+            : [],
+          epics: Array.isArray(projectContext.epics)
+            ? [...projectContext.epics]
+            : [],
+          allocations: Array.isArray(planningContext.allocations)
+            ? [...planningContext.allocations]
+            : [],
+          divisions: Array.isArray(teamContext.divisions)
+            ? [...teamContext.divisions]
+            : [],
+          roles: Array.isArray(teamContext.roles) ? [...teamContext.roles] : [],
+          releases: Array.isArray(projectContext.releases)
+            ? [...projectContext.releases]
+            : [],
+          projectSolutions: Array.isArray(projectContext.projectSolutions)
+            ? [...projectContext.projectSolutions]
+            : [],
+          projectSkills: Array.isArray(projectContext.projectSkills)
+            ? [...projectContext.projectSkills]
+            : [],
+          runWorkCategories: Array.isArray(planningContext.runWorkCategories)
+            ? [...planningContext.runWorkCategories]
+            : [],
+          teamMembers: Array.isArray(teamContext.teamMembers)
+            ? [...teamContext.teamMembers]
+            : [],
+          divisionLeadershipRoles: Array.isArray(
+            teamContext.divisionLeadershipRoles
+          )
+            ? [...teamContext.divisionLeadershipRoles]
+            : [],
+          unmappedPeople: Array.isArray(teamContext.unmappedPeople)
+            ? [...teamContext.unmappedPeople]
+            : [],
+          actualAllocations: Array.isArray(planningContext.actualAllocations)
+            ? [...planningContext.actualAllocations]
+            : [],
+          iterationSnapshots: Array.isArray(planningContext.iterationSnapshots)
+            ? [...planningContext.iterationSnapshots]
+            : [],
+          goals: Array.isArray(goalContext.goals) ? [...goalContext.goals] : [],
+          goalEpics: Array.isArray(goalContext.goalEpics)
+            ? [...goalContext.goalEpics]
+            : [],
+          goalMilestones: Array.isArray(goalContext.goalMilestones)
+            ? [...goalContext.goalMilestones]
+            : [],
+          goalTeams: Array.isArray(goalContext.goalTeams)
+            ? [...goalContext.goalTeams]
+            : [],
+          config:
+            settingsContext.config && typeof settingsContext.config === 'object'
+              ? { ...settingsContext.config }
+              : {},
+        };
+
+        // Calculate financial analysis for the current state
+        const enhancedState: EnhancedScenarioData = {
+          ...baseState,
+        };
+
+        try {
+          const financialAnalysis = await calculateFinancialsInBatches(
+            enhancedState,
+            DEFAULT_PERFORMANCE_CONFIG,
+            DEFAULT_ROLE_COSTS,
+            []
+          );
+          enhancedState.financialAnalysis = financialAnalysis;
+        } catch (error) {
+          console.warn('Failed to calculate financial analysis:', error);
+          // Continue without financial analysis rather than failing
+        }
+
+        return enhancedState;
+      } catch (error) {
+        console.error('Error cloning state for scenario:', error);
+        // Fallback to empty state if cloning fails
         return {
           people: [],
           teams: [],
@@ -130,124 +258,31 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
           goalMilestones: [],
           goalTeams: [],
           config: {},
-        };
+        } as EnhancedScenarioData;
       }
-
-      // Create direct copies without JSON serialization to avoid potential issues
-      const state: ScenarioData = {
-        people: Array.isArray(teamContext.people)
-          ? [...teamContext.people]
-          : [],
-        teams: Array.isArray(teamContext.teams) ? [...teamContext.teams] : [],
-        projects: Array.isArray(projectContext.projects)
-          ? [...projectContext.projects]
-          : [],
-        epics: Array.isArray(projectContext.epics)
-          ? [...projectContext.epics]
-          : [],
-        allocations: Array.isArray(planningContext.allocations)
-          ? [...planningContext.allocations]
-          : [],
-        divisions: Array.isArray(teamContext.divisions)
-          ? [...teamContext.divisions]
-          : [],
-        roles: Array.isArray(teamContext.roles) ? [...teamContext.roles] : [],
-        releases: Array.isArray(projectContext.releases)
-          ? [...projectContext.releases]
-          : [],
-        projectSolutions: Array.isArray(projectContext.projectSolutions)
-          ? [...projectContext.projectSolutions]
-          : [],
-        projectSkills: Array.isArray(projectContext.projectSkills)
-          ? [...projectContext.projectSkills]
-          : [],
-        runWorkCategories: Array.isArray(planningContext.runWorkCategories)
-          ? [...planningContext.runWorkCategories]
-          : [],
-        teamMembers: Array.isArray(teamContext.teamMembers)
-          ? [...teamContext.teamMembers]
-          : [],
-        divisionLeadershipRoles: Array.isArray(
-          teamContext.divisionLeadershipRoles
-        )
-          ? [...teamContext.divisionLeadershipRoles]
-          : [],
-        unmappedPeople: Array.isArray(teamContext.unmappedPeople)
-          ? [...teamContext.unmappedPeople]
-          : [],
-        actualAllocations: Array.isArray(planningContext.actualAllocations)
-          ? [...planningContext.actualAllocations]
-          : [],
-        iterationSnapshots: Array.isArray(planningContext.iterationSnapshots)
-          ? [...planningContext.iterationSnapshots]
-          : [],
-        goals: Array.isArray(goalContext.goals) ? [...goalContext.goals] : [],
-        goalEpics: Array.isArray(goalContext.goalEpics)
-          ? [...goalContext.goalEpics]
-          : [],
-        goalMilestones: Array.isArray(goalContext.goalMilestones)
-          ? [...goalContext.goalMilestones]
-          : [],
-        goalTeams: Array.isArray(goalContext.goalTeams)
-          ? [...goalContext.goalTeams]
-          : [],
-        config:
-          settingsContext.config && typeof settingsContext.config === 'object'
-            ? { ...settingsContext.config }
-            : {},
-      };
-
-      return state;
-    } catch (error) {
-      console.error('Error cloning state for scenario:', error);
-      // Fallback to empty state if cloning fails
-      return {
-        people: [],
-        teams: [],
-        projects: [],
-        epics: [],
-        allocations: [],
-        divisions: [],
-        roles: [],
-        releases: [],
-        projectSolutions: [],
-        projectSkills: [],
-        runWorkCategories: [],
-        teamMembers: [],
-        divisionLeadershipRoles: [],
-        unmappedPeople: [],
-        actualAllocations: [],
-        iterationSnapshots: [],
-        goals: [],
-        goalEpics: [],
-        goalMilestones: [],
-        goalTeams: [],
-        config: {},
-      };
-    }
-  }, [
-    teamContext.people,
-    teamContext.teams,
-    teamContext.divisions,
-    teamContext.roles,
-    teamContext.teamMembers,
-    teamContext.divisionLeadershipRoles,
-    teamContext.unmappedPeople,
-    projectContext.projects,
-    projectContext.epics,
-    projectContext.releases,
-    projectContext.projectSolutions,
-    projectContext.projectSkills,
-    planningContext.allocations,
-    planningContext.runWorkCategories,
-    planningContext.actualAllocations,
-    planningContext.iterationSnapshots,
-    goalContext.goals,
-    goalContext.goalEpics,
-    goalContext.goalMilestones,
-    goalContext.goalTeams,
-    settingsContext.config,
-  ]);
+    }, [
+      teamContext.people,
+      teamContext.teams,
+      teamContext.divisions,
+      teamContext.roles,
+      teamContext.teamMembers,
+      teamContext.divisionLeadershipRoles,
+      teamContext.unmappedPeople,
+      projectContext.projects,
+      projectContext.epics,
+      projectContext.releases,
+      projectContext.projectSolutions,
+      projectContext.projectSkills,
+      planningContext.allocations,
+      planningContext.runWorkCategories,
+      planningContext.actualAllocations,
+      planningContext.iterationSnapshots,
+      goalContext.goals,
+      goalContext.goalEpics,
+      goalContext.goalMilestones,
+      goalContext.goalTeams,
+      settingsContext.config,
+    ]);
 
   // Create a new scenario
   const createScenario = useCallback(
@@ -267,16 +302,56 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
         const expiresAt =
           customExpiresAt || new Date(Date.now() + sixtyDaysInMs).toISOString();
 
-        const scenarioData = cloneCurrentState();
+        const scenarioData = await cloneCurrentState();
         const modifications: ScenarioModification[] = [];
 
         // Apply template if specified
         if (templateId && templateParameters) {
           const template = templates.find(t => t.id === templateId);
           if (template) {
-            // TODO: Apply template modifications to scenarioData
-            // This would involve processing template.config.modifications
-            // and applying them based on templateParameters
+            try {
+              const templateResult: ModificationResult =
+                await executeScenarioTemplate(
+                  template,
+                  templateParameters as Record<
+                    string,
+                    string | number | boolean
+                  >,
+                  scenarioData
+                );
+
+              if (templateResult.success) {
+                // Use the modified data from template execution
+                Object.assign(scenarioData, templateResult.modifiedData);
+                modifications.push(...templateResult.modifications);
+
+                // Update metadata with template modifications
+                if (templateResult.financialImpact) {
+                  console.log(
+                    'Template financial impact:',
+                    templateResult.financialImpact
+                  );
+                }
+              } else {
+                console.warn(
+                  'Template execution failed:',
+                  templateResult.errors
+                );
+                toast({
+                  title: 'Template Warning',
+                  description: `Template applied with ${templateResult.errors.length} errors.`,
+                  variant: 'destructive',
+                });
+              }
+            } catch (error) {
+              console.error('Template execution error:', error);
+              toast({
+                title: 'Template Error',
+                description:
+                  'Failed to apply template. Scenario created without template.',
+                variant: 'destructive',
+              });
+            }
 
             // Update template usage
             setTemplates(prev =>
@@ -305,7 +380,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
           metadata: {
             createdFromLiveState: true,
             liveStateSnapshotDate: now,
-            totalModifications: 0,
+            totalModifications: modifications.length,
             lastAccessDate: now,
           },
         };
@@ -356,7 +431,28 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
   const switchToScenario = useCallback(
     async (scenarioId: string): Promise<void> => {
       try {
-        const scenario = scenarios.find(s => s.id === scenarioId);
+        // First check current state
+        let scenario = scenarios.find(s => s.id === scenarioId);
+
+        // If not found in state, check localStorage as fallback (handles timing issues)
+        if (!scenario) {
+          try {
+            const storedScenarios = JSON.parse(
+              localStorage.getItem(SCENARIO_STORAGE_KEYS.SCENARIOS) || '[]'
+            );
+            scenario = storedScenarios.find(
+              (s: Scenario) => s.id === scenarioId
+            );
+
+            // If found in storage but not in state, update state
+            if (scenario) {
+              setScenarios(storedScenarios);
+            }
+          } catch (e) {
+            console.warn('Could not read scenarios from localStorage:', e);
+          }
+        }
+
         if (!scenario) {
           throw new Error('Scenario not found');
         }
@@ -470,7 +566,66 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
     [scenarios, setScenarios, activeScenarioId, setActiveScenarioId, toast]
   );
 
-  // Get scenario comparison with live data
+  // Get scenario financial comparison with live data
+  const getScenarioFinancialComparison = useCallback(
+    async (scenarioId: string): Promise<ScenarioFinancialComparison> => {
+      // First check current state
+      let scenario = scenarios.find(s => s.id === scenarioId);
+
+      // If not found in state, check localStorage as fallback
+      if (!scenario) {
+        try {
+          const storedScenarios = JSON.parse(
+            localStorage.getItem(SCENARIO_STORAGE_KEYS.SCENARIOS) || '[]'
+          );
+          scenario = storedScenarios.find((s: Scenario) => s.id === scenarioId);
+        } catch (e) {
+          console.warn('Could not read scenarios from localStorage:', e);
+        }
+      }
+
+      if (!scenario) {
+        throw new Error('Scenario not found');
+      }
+
+      const liveData = await cloneCurrentState();
+      let scenarioData = scenario.data as EnhancedScenarioData;
+
+      // If scenario data doesn't have financial analysis, calculate it
+      if (!scenarioData.financialAnalysis) {
+        try {
+          const financialAnalysis = await calculateFinancialsInBatches(
+            scenarioData,
+            DEFAULT_PERFORMANCE_CONFIG,
+            DEFAULT_ROLE_COSTS,
+            []
+          );
+          scenarioData = {
+            ...scenarioData,
+            financialAnalysis,
+          };
+        } catch (error) {
+          console.error(
+            'Failed to calculate scenario financial analysis:',
+            error
+          );
+          throw new Error(
+            'Could not calculate financial analysis for scenario'
+          );
+        }
+      }
+
+      // Ensure live data has financial analysis
+      if (!liveData.financialAnalysis) {
+        throw new Error('Financial analysis not available for live data');
+      }
+
+      return compareScenarioFinancials(scenarioData, liveData, scenarioId);
+    },
+    [scenarios, cloneCurrentState, updateScenario]
+  );
+
+  // Get scenario comparison with live data (legacy method)
   const getScenarioComparison = useCallback(
     async (scenarioId: string): Promise<ScenarioComparison> => {
       const scenario = scenarios.find(s => s.id === scenarioId);
@@ -478,7 +633,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
         throw new Error('Scenario not found');
       }
 
-      const liveData = cloneCurrentState();
+      const liveData = await cloneCurrentState();
       const scenarioData = scenario.data;
       const changes: ScenarioChange[] = [];
 
@@ -693,9 +848,74 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
       return activeScenario.data;
     }
 
-    // Return live data when not in scenario mode
-    return cloneCurrentState();
-  }, [isInScenarioMode, activeScenario, cloneCurrentState]);
+    // Return live data when not in scenario mode - synchronously construct the data
+    return {
+      people: Array.isArray(teamContext?.people) ? teamContext.people : [],
+      teams: Array.isArray(teamContext?.teams) ? teamContext.teams : [],
+      projects: Array.isArray(projectContext?.projects)
+        ? projectContext.projects
+        : [],
+      epics: Array.isArray(projectContext?.epics) ? projectContext.epics : [],
+      allocations: Array.isArray(planningContext?.allocations)
+        ? planningContext.allocations
+        : [],
+      divisions: Array.isArray(teamContext?.divisions)
+        ? teamContext.divisions
+        : [],
+      roles: Array.isArray(teamContext?.roles) ? teamContext.roles : [],
+      releases: Array.isArray(projectContext?.releases)
+        ? projectContext.releases
+        : [],
+      projectSolutions: Array.isArray(projectContext?.projectSolutions)
+        ? projectContext.projectSolutions
+        : [],
+      projectSkills: Array.isArray(projectContext?.projectSkills)
+        ? projectContext.projectSkills
+        : [],
+      runWorkCategories: Array.isArray(planningContext?.runWorkCategories)
+        ? planningContext.runWorkCategories
+        : [],
+      teamMembers: Array.isArray(teamContext?.teamMembers)
+        ? teamContext.teamMembers
+        : [],
+      divisionLeadershipRoles: Array.isArray(
+        teamContext?.divisionLeadershipRoles
+      )
+        ? teamContext.divisionLeadershipRoles
+        : [],
+      unmappedPeople: Array.isArray(teamContext?.unmappedPeople)
+        ? teamContext.unmappedPeople
+        : [],
+      actualAllocations: Array.isArray(planningContext?.actualAllocations)
+        ? planningContext.actualAllocations
+        : [],
+      iterationSnapshots: Array.isArray(planningContext?.iterationSnapshots)
+        ? planningContext.iterationSnapshots
+        : [],
+      goals: Array.isArray(goalContext?.goals) ? goalContext.goals : [],
+      goalEpics: Array.isArray(goalContext?.goalEpics)
+        ? goalContext.goalEpics
+        : [],
+      goalMilestones: Array.isArray(goalContext?.goalMilestones)
+        ? goalContext.goalMilestones
+        : [],
+      goalTeams: Array.isArray(goalContext?.goalTeams)
+        ? goalContext.goalTeams
+        : [],
+      config:
+        settingsContext?.config && typeof settingsContext.config === 'object'
+          ? settingsContext.config
+          : {},
+    };
+  }, [
+    isInScenarioMode,
+    activeScenario,
+    teamContext,
+    projectContext,
+    planningContext,
+    goalContext,
+    settingsContext,
+  ]);
 
   // Save current scenario
   const saveCurrentScenario = useCallback(async (): Promise<void> => {
@@ -723,6 +943,34 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
       throw error;
     }
   }, [activeScenarioId, activeScenario, getCurrentData, updateScenario, toast]);
+
+  // Refresh financial analysis for current scenario
+  const refreshScenarioFinancialAnalysis =
+    useCallback(async (): Promise<void> => {
+      if (!activeScenarioId || !activeScenario) return;
+
+      try {
+        const currentData = getCurrentData();
+        const financialAnalysis = await calculateFinancialsInBatches(
+          currentData,
+          DEFAULT_PERFORMANCE_CONFIG,
+          DEFAULT_ROLE_COSTS,
+          []
+        );
+
+        const updatedData: EnhancedScenarioData = {
+          ...currentData,
+          financialAnalysis,
+        };
+
+        await updateScenario(activeScenarioId, {
+          data: updatedData,
+          lastModified: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Failed to refresh scenario financial analysis:', error);
+      }
+    }, [activeScenarioId, activeScenario, getCurrentData, updateScenario]);
 
   // Discard changes
   const discardChanges = useCallback(() => {
@@ -814,6 +1062,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
 
     // Analysis
     getScenarioComparison,
+    getScenarioFinancialComparison,
 
     // Data access
     getCurrentData,
@@ -826,6 +1075,7 @@ export const ScenarioProvider: React.FC<{ children: ReactNode }> = ({
     hasUnsavedChanges,
     saveCurrentScenario,
     discardChanges,
+    refreshScenarioFinancialAnalysis,
   };
 
   return (

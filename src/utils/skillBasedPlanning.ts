@@ -82,11 +82,17 @@ export function getProjectRequiredSkills(
   category: string;
   source: 'project' | 'solution';
 }> {
+  // Add null safety checks for all array parameters
+  const safeProjectSkills = projectSkills || [];
+  const safeSolutions = solutions || [];
+  const safeSkills = skills || [];
+  const safeProjectSolutions = projectSolutions || [];
+
   const requiredSkillIds = new Set<string>();
   const skillSources: Record<string, 'project' | 'solution'> = {};
 
   // Add project-specific skills
-  const projectSpecificSkills = projectSkills.filter(
+  const projectSpecificSkills = safeProjectSkills.filter(
     ps => ps.projectId === project.id
   );
   projectSpecificSkills.forEach(ps => {
@@ -95,12 +101,19 @@ export function getProjectRequiredSkills(
   });
 
   // Add solution skills
-  const relevantProjectSolutions = projectSolutions.filter(
+  const relevantProjectSolutions = safeProjectSolutions.filter(
     ps => ps.projectId === project.id
   );
 
   relevantProjectSolutions.forEach(projectSolution => {
-    const solution = solutions.find(s => s.id === projectSolution.solutionId);
+    // Add null safety check for solutions array
+    if (!safeSolutions || safeSolutions.length === 0) {
+      return; // Skip if solutions array is undefined or empty
+    }
+
+    const solution = safeSolutions.find(
+      s => s.id === projectSolution.solutionId
+    );
     // Fix: Check for both 'skills' and 'skillIds' properties for backward compatibility
     const solutionSkills = solution?.skills || solution?.skillIds || [];
     if (solutionSkills && solutionSkills.length > 0) {
@@ -116,7 +129,7 @@ export function getProjectRequiredSkills(
   // Map to skill details
   return Array.from(requiredSkillIds)
     .map(skillId => {
-      const skill = skills.find(s => s.id === skillId);
+      const skill = safeSkills.find(s => s.id === skillId);
       return skill
         ? {
             skillId: skill.id,

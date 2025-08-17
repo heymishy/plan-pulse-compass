@@ -319,10 +319,10 @@ export function useLargeDatasetStorage<T>(
     [storedValue, key, encryptionKey, metadataKey]
   );
 
-  // Load data on mount and when dependencies change
+  // Load data on mount and when key changes
   useEffect(() => {
     loadValue();
-  }, [loadValue]);
+  }, [key, encryptionKey]); // Only depend on key and encryptionKey, not the loadValue function
 
   // Listen for storage events
   useEffect(() => {
@@ -352,7 +352,7 @@ export function useLargeDatasetStorage<T>(
         handleStorageChange as EventListener
       );
     };
-  }, [key, metadataKey, loadValue]);
+  }, [key, metadataKey]); // Removed loadValue from dependencies to prevent infinite loop
 
   return [storedValue, setValue, isLoading, error, storageStats] as const;
 }

@@ -74,29 +74,38 @@ const PeopleTable: React.FC<PeopleTableProps> = ({ people, onEditPerson }) => {
   };
 
   const getTeamName = (teamId: string) => {
+    if (!teams || !Array.isArray(teams)) return 'Unknown Team';
     const team = teams.find(t => t.id === teamId);
     return team?.name || 'Unknown Team';
   };
 
   const getRoleName = (roleId: string) => {
+    if (!roles || !Array.isArray(roles)) return 'Unknown Role';
     const role = roles.find(r => r.id === roleId);
     return role?.name || 'Unknown Role';
   };
 
   const getDivisionName = (teamId: string) => {
+    if (!teams || !Array.isArray(teams)) return '-';
     const team = teams.find(t => t.id === teamId);
     if (!team?.divisionId) return '-';
+    if (!divisions || !Array.isArray(divisions)) return 'Unknown Division';
     const division = divisions.find(d => d.id === team.divisionId);
     return division?.name || 'Unknown Division';
   };
 
   const getPersonSkills = (personId: string) => {
+    if (!personSkills || !Array.isArray(personSkills)) return [];
+
     const personSkillsList = personSkills.filter(
       ps => ps.personId === personId
     );
     return personSkillsList
       .map(ps => {
-        const skill = skills.find(s => s.id === ps.skillId);
+        const skill =
+          skills && Array.isArray(skills)
+            ? skills.find(s => s.id === ps.skillId)
+            : null;
         return {
           name: skill?.name || 'Unknown',
           proficiency: ps.proficiencyLevel,
@@ -106,6 +115,7 @@ const PeopleTable: React.FC<PeopleTableProps> = ({ people, onEditPerson }) => {
   };
 
   const getPersonCostInfo = (person: Person) => {
+    if (!roles || !Array.isArray(roles)) return '-';
     const role = roles.find(r => r.id === person.roleId);
     if (!role) return '-';
 
@@ -227,14 +237,17 @@ const PeopleTable: React.FC<PeopleTableProps> = ({ people, onEditPerson }) => {
                       ) : (
                         <span className="text-xs text-gray-500">No skills</span>
                       )}
-                      {personSkills.filter(ps => ps.personId === person.id)
-                        .length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +
-                          {personSkills.filter(ps => ps.personId === person.id)
-                            .length - 3}
-                        </Badge>
-                      )}
+                      {personSkills &&
+                        Array.isArray(personSkills) &&
+                        personSkills.filter(ps => ps.personId === person.id)
+                          .length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +
+                            {personSkills.filter(
+                              ps => ps.personId === person.id
+                            ).length - 3}
+                          </Badge>
+                        )}
                     </div>
                   </TableCell>
                   <TableCell>

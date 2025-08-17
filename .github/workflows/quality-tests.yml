@@ -1,0 +1,55 @@
+# Auto-generated CI workflow for quality tests
+# Do not edit manually - regenerate using npm run generate:ci
+
+name: CI Pipeline - Quality
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  schedule:
+    0: { 'cron': '0 2 * * *' }
+
+env:
+  NODE_VERSION: 18
+  CI: true
+  NODE_OPTIONS: --max-old-space-size=2048
+
+jobs:
+  quality-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    strategy:
+      matrix:
+        browser: ['chromium', 'firefox', 'webkit']
+        node-version: ['18', '20']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run quality tests
+        run: npm run test:coverage && npm run test:e2e && npm run test:accessibility && npm run test:performance && npm audit --audit-level=high && npm run build
+        env:
+          BROWSER: ${{ matrix.browser }}
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-quality-${{ matrix.browser || 'default' }}
+          path: test-results/
+          retention: 30
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: quality
+          name: quality-coverage

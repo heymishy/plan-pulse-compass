@@ -9,6 +9,7 @@ test.describe('CRUD Operations - Consolidated Management Tests', () => {
   });
 
   // Entity configurations for parameterized testing
+  // Order is important: Projects must be created before Epics since Epics require a project
   const entities = [
     {
       name: 'Teams',

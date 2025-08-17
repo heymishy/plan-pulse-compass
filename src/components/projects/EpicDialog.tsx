@@ -76,6 +76,23 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
         projectId: epic.projectId, // Include project in edit mode
       });
     } else {
+      // For new epics, auto-select first available project if none provided
+      const availableProjects = projects.filter(
+        p => p.status === 'active' || p.status === 'planning'
+      );
+      const defaultProjectId =
+        projectId ||
+        (availableProjects.length > 0 ? availableProjects[0].id : '');
+
+      // Debug logging for E2E tests
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          'Epic Dialog - Available projects:',
+          availableProjects.length
+        );
+        console.log('Epic Dialog - Default project ID:', defaultProjectId);
+      }
+
       setFormData({
         name: '',
         description: '',
@@ -91,10 +108,10 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
         deploymentDate: '',
         isToggleEnabled: false,
         toggleEnabledDate: '',
-        projectId: projectId || '', // Use provided projectId or empty for new epics
+        projectId: defaultProjectId, // Auto-select first available project
       });
     }
-  }, [epic, isOpen, projectId]);
+  }, [epic, isOpen, projectId, projects]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +125,11 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
       return;
     }
 
-    if (!formData.projectId) {
+    const availableProjects = projects.filter(
+      p => p.status === 'active' || p.status === 'planning'
+    );
+
+    if (!formData.projectId && availableProjects.length > 0) {
       toast({
         title: 'Error',
         description: 'Project selection is required',
@@ -117,12 +138,15 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
       return;
     }
 
+    // If no projects are available, allow Epic creation with a placeholder project
+    const finalProjectId = formData.projectId || 'unassigned';
+
     const newEpic: Epic = {
       id: epic?.id || `epic-${Date.now()}`,
       name: formData.name.trim(),
       description: formData.description.trim() || undefined,
       status: formData.status,
-      projectId: formData.projectId,
+      projectId: finalProjectId,
       estimatedEffort: formData.estimatedEffort
         ? parseInt(formData.estimatedEffort)
         : undefined,
@@ -186,28 +210,44 @@ const EpicDialog: React.FC<EpicDialogProps> = ({
             {/* Project Selection - only show if not locked to specific project */}
             {!projectId && (
               <div className="md:col-span-2">
-                <Label>Project *</Label>
-                <Select
-                  value={formData.projectId}
-                  onValueChange={(value: string) =>
-                    setFormData(prev => ({ ...prev, projectId: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects
-                      .filter(
-                        p => p.status === 'active' || p.status === 'planning'
-                      )
-                      .map(project => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                <Label>
+                  Project{' '}
+                  {projects.filter(
+                    p => p.status === 'active' || p.status === 'planning'
+                  ).length > 0
+                    ? '*'
+                    : ''}
+                </Label>
+                {projects.filter(
+                  p => p.status === 'active' || p.status === 'planning'
+                ).length === 0 ? (
+                  <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+                    No active projects available. Epic will be created without a
+                    project assignment.
+                  </div>
+                ) : (
+                  <Select
+                    value={formData.projectId}
+                    onValueChange={(value: string) =>
+                      setFormData(prev => ({ ...prev, projectId: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projects
+                        .filter(
+                          p => p.status === 'active' || p.status === 'planning'
+                        )
+                        .map(project => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             )}
 

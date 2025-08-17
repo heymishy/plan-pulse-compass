@@ -18,6 +18,8 @@ import {
   DollarSign,
   TrendingUp,
   Filter,
+  Trash2,
+  X,
 } from 'lucide-react';
 import { calculateTeamCapacity } from '@/utils/capacityUtils';
 import { useApp } from '@/context/AppContext';
@@ -69,7 +71,8 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
   onCreateAllocation,
   onEditAllocation,
 }) => {
-  const { addAllocation, divisions, people, roles, config } = useApp();
+  const { addAllocation, deleteAllocation, divisions, people, roles, config } =
+    useApp();
   const [quickDialogOpen, setQuickDialogOpen] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
@@ -228,6 +231,24 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
   };
 
   const quarters = getQuartersForFinancialYear();
+
+  // Handle allocation deletion
+  const handleDeleteAllocation = async (allocation: Allocation) => {
+    try {
+      await deleteAllocation(allocation.id);
+      toast({
+        title: 'Allocation Deleted',
+        description: 'The allocation has been successfully removed.',
+      });
+    } catch (error) {
+      console.error('Error deleting allocation:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete allocation. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Calculate financial summaries for each quarter
   const quarterlyFinancialSummaries = quarters.map(quarter => {
@@ -425,6 +446,20 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
 
   // Handle Quick Add button click
   const handleQuickAdd = (teamId: string, cycleId: string) => {
+    const team = teams.find(t => t.id === teamId);
+    console.log(
+      `🔥 [FINANCIAL YEAR] Quick Add clicked for team: ${team?.name || 'Unknown'} (${teamId})`
+    );
+    console.log(`🔥 [FINANCIAL YEAR] Selected quarter cycleId: ${cycleId}`);
+
+    // Debug: Show all cycles to understand the data structure
+    console.log(`🔥 [FINANCIAL YEAR] ALL CYCLES:`);
+    cycles.forEach(cycle => {
+      console.log(
+        `  ${cycle.type}: ${cycle.name} (${cycle.id}) - parent: ${cycle.parentCycleId || 'none'}`
+      );
+    });
+
     setSelectedTeamId(teamId);
     setSelectedCycleId(cycleId);
     setQuickDialogOpen(true);
@@ -442,17 +477,100 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
         return;
       }
 
-      // Create a project-level allocation directly
-      const allocationData: Omit<Allocation, 'id'> = {
-        teamId: selectedTeamId,
-        cycleId: selectedCycleId,
-        iterationNumber: 1, // Default to iteration 1 for financial year planning
-        percentage,
-        notes: `Quick allocation to ${projects.find(p => p.id === projectId)?.name || 'project'}`,
-        // Leave epicId and runWorkCategoryId undefined for project-level allocation
-      };
+      // Find all iterations within the selected quarter
+      const iterationsInQuarter = cycles.filter(
+        c => c.type === 'iteration' && c.parentCycleId === selectedCycleId
+      );
 
-      await addAllocation(allocationData);
+      console.log(
+        `🔥 [FINANCIAL YEAR] Looking for iterations with parentCycleId: ${selectedCycleId}`
+      );
+      console.log(
+        `🔥 [FINANCIAL YEAR] Found ${iterationsInQuarter.length} iterations in quarter`
+      );
+      if (iterationsInQuarter.length > 0) {
+        iterationsInQuarter.forEach((iter, i) => {
+          console.log(`  Iteration ${i + 1}: ${iter.name} (${iter.id})`);
+        });
+      }
+
+      // If no iterations found by parentCycleId, try alternative approach
+      if (iterationsInQuarter.length === 0) {
+        console.log(
+          `🔥 [FINANCIAL YEAR] No iterations found by parentCycleId, checking date-based approach...`
+        );
+        const quarter = cycles.find(c => c.id === selectedCycleId);
+        if (quarter) {
+          const quarterStart = new Date(quarter.startDate);
+          const quarterEnd = new Date(quarter.endDate);
+          console.log(
+            `🔥 [FINANCIAL YEAR] Quarter date range: ${quarterStart.toISOString()} to ${quarterEnd.toISOString()}`
+          );
+
+          const dateBasedIterations = cycles.filter(cycle => {
+            if (cycle.type !== 'iteration') return false;
+            const cycleStart = new Date(cycle.startDate);
+            const isInRange =
+              cycleStart >= quarterStart && cycleStart <= quarterEnd;
+            console.log(
+              `  Checking ${cycle.name}: ${cycleStart.toISOString()} - ${isInRange ? 'IN RANGE' : 'out of range'}`
+            );
+            return isInRange;
+          });
+          console.log(
+            `🔥 [FINANCIAL YEAR] Found ${dateBasedIterations.length} iterations by date range`
+          );
+        }
+      }
+
+      if (iterationsInQuarter.length === 0) {
+        toast({
+          title: 'No Iterations Found',
+          description: 'Please create iterations for this quarter first.',
+          variant: 'destructive',
+        });
+        setQuickDialogOpen(false);
+        return;
+      }
+
+      const team = teams.find(t => t.id === selectedTeamId);
+      console.log(
+        `🔥 [FINANCIAL YEAR] Creating allocation for team: ${team?.name || 'Unknown'} (${selectedTeamId})`
+      );
+      console.log(
+        `🔥 [FINANCIAL YEAR] Creating ${iterationsInQuarter.length} allocations for iterations`
+      );
+
+      // Create allocations for each iteration in the quarter
+      const allocationPromises = iterationsInQuarter.map((iteration, index) => {
+        // Get the correct iteration number from the iteration name or calculate it properly
+        const iterationMatch = iteration.name.match(/Iteration\s+(\d+)/i);
+        const actualIterationNumber = iterationMatch
+          ? parseInt(iterationMatch[1], 10)
+          : index + 1;
+
+        const allocationData: Omit<Allocation, 'id'> = {
+          teamId: selectedTeamId,
+          cycleId: iteration.id, // Use iteration ID instead of quarter ID
+          iterationNumber: actualIterationNumber, // Use actual iteration number from the iteration name
+          percentage,
+          notes: `Quick allocation to ${projects.find(p => p.id === projectId)?.name || 'project'}`,
+          // Leave epicId and runWorkCategoryId undefined for project-level allocation
+        };
+        console.log(
+          `🔥 [FINANCIAL YEAR] Allocation data for iteration ${index + 1}:`,
+          {
+            teamId: allocationData.teamId,
+            cycleId: allocationData.cycleId,
+            iterationNumber: allocationData.iterationNumber,
+            percentage: allocationData.percentage,
+            notes: allocationData.notes,
+          }
+        );
+        return addAllocation(allocationData);
+      });
+
+      await Promise.all(allocationPromises);
       setQuickDialogOpen(false);
 
       // Show success message
@@ -463,8 +581,8 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
         quarters.find(q => q.id === selectedCycleId)?.name || 'Quarter';
 
       toast({
-        title: 'Allocation Created',
-        description: `${teamName} allocated ${percentage}% to ${projectName} for ${quarterName}`,
+        title: 'Allocations Created',
+        description: `${teamName} allocated ${percentage}% to ${projectName} for all ${iterationsInQuarter.length} iterations in ${quarterName}`,
       });
     } catch (error) {
       console.error('Failed to create quick allocation:', error);
@@ -485,19 +603,43 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
         return;
       }
 
-      // Create a generic run work allocation
-      const allocationData: Omit<Allocation, 'id'> = {
-        teamId: selectedTeamId,
-        cycleId: selectedCycleId,
-        iterationNumber: 1,
-        percentage,
-        notes: `Quick run work allocation (${percentage}%)`,
-        // Set runWorkCategoryId to null/undefined for generic run work
-        runWorkCategoryId: undefined,
-        epicId: undefined,
-      };
+      // Find all iterations within the selected quarter
+      const iterationsInQuarter = cycles.filter(
+        c => c.type === 'iteration' && c.parentCycleId === selectedCycleId
+      );
 
-      await addAllocation(allocationData);
+      if (iterationsInQuarter.length === 0) {
+        toast({
+          title: 'No Iterations Found',
+          description: 'Please create iterations for this quarter first.',
+          variant: 'destructive',
+        });
+        setQuickDialogOpen(false);
+        return;
+      }
+
+      // Create run work allocations for each iteration in the quarter
+      const allocationPromises = iterationsInQuarter.map((iteration, index) => {
+        // Get the correct iteration number from the iteration name or calculate it properly
+        const iterationMatch = iteration.name.match(/Iteration\s+(\d+)/i);
+        const actualIterationNumber = iterationMatch
+          ? parseInt(iterationMatch[1], 10)
+          : index + 1;
+
+        const allocationData: Omit<Allocation, 'id'> = {
+          teamId: selectedTeamId,
+          cycleId: iteration.id, // Use iteration ID instead of quarter ID
+          iterationNumber: actualIterationNumber, // Use actual iteration number from the iteration name
+          percentage,
+          notes: `Quick run work allocation (${percentage}%)`,
+          // Set runWorkCategoryId to null/undefined for generic run work
+          runWorkCategoryId: undefined,
+          epicId: undefined,
+        };
+        return addAllocation(allocationData);
+      });
+
+      await Promise.all(allocationPromises);
       setQuickDialogOpen(false);
 
       // Show success message
@@ -506,8 +648,8 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
         quarters.find(q => q.id === selectedCycleId)?.name || 'Quarter';
 
       toast({
-        title: 'Run Allocation Created',
-        description: `${teamName} allocated ${percentage}% to run work for ${quarterName}`,
+        title: 'Run Allocations Created',
+        description: `${teamName} allocated ${percentage}% to run work for all ${iterationsInQuarter.length} iterations in ${quarterName}`,
       });
     } catch (error) {
       console.error('Failed to create run allocation:', error);
@@ -583,48 +725,66 @@ const FinancialYearMatrix: React.FC<FinancialYearMatrixProps> = ({
           return (
             <div
               key={allocation.id}
-              className={`flex flex-col cursor-pointer hover:opacity-90 p-1 rounded-r ${getAllocationColor(allocation)}`}
-              onClick={() => onEditAllocation?.(allocation)}
+              className={`group relative flex flex-col cursor-pointer hover:opacity-90 p-1 rounded-r ${getAllocationColor(allocation)}`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <div
-                    className="text-xs font-medium truncate"
-                    title={displayName}
-                  >
-                    {displayName}
-                  </div>
-                  {allocationLabel && (
+              <div
+                className="flex-1"
+                onClick={() => onEditAllocation?.(allocation)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
                     <div
-                      className="text-xs text-gray-500 truncate"
-                      title={allocationLabel}
+                      className="text-xs font-medium truncate"
+                      title={displayName}
                     >
-                      {allocationLabel}
+                      {displayName}
                     </div>
-                  )}
+                    {allocationLabel && (
+                      <div
+                        className="text-xs text-gray-500 truncate"
+                        title={allocationLabel}
+                      >
+                        {allocationLabel}
+                      </div>
+                    )}
+                  </div>
+                  <Badge
+                    variant={
+                      capacity.isOverAllocated
+                        ? 'destructive'
+                        : allocation.percentage === 100
+                          ? 'default'
+                          : 'secondary'
+                    }
+                    className="text-xs"
+                  >
+                    {allocation.percentage}%
+                  </Badge>
                 </div>
-                <Badge
-                  variant={
-                    capacity.isOverAllocated
-                      ? 'destructive'
-                      : allocation.percentage === 100
-                        ? 'default'
-                        : 'secondary'
-                  }
-                  className="text-xs"
-                >
-                  {allocation.percentage}%
-                </Badge>
+                <div className="flex items-center justify-between mt-1">
+                  <div className="text-xs text-gray-600 flex items-center gap-1">
+                    <DollarSign className="w-3 h-3" />
+                    {formatCurrency(
+                      costImpact.cycleCost,
+                      config.currencySymbol
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {costImpact.cycleLength}w
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between mt-1">
-                <div className="text-xs text-gray-600 flex items-center gap-1">
-                  <DollarSign className="w-3 h-3" />
-                  {formatCurrency(costImpact.cycleCost, config.currencySymbol)}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {costImpact.cycleLength}w
-                </div>
-              </div>
+              {/* Delete button - appears on hover */}
+              <button
+                className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 rounded-full bg-red-500 hover:bg-red-600 text-white"
+                onClick={e => {
+                  e.stopPropagation();
+                  handleDeleteAllocation(allocation);
+                }}
+                title="Delete allocation"
+              >
+                <X className="w-3 h-3" />
+              </button>
             </div>
           );
         })}

@@ -71,13 +71,135 @@ const PlanningMatrix: React.FC<PlanningMatrixProps> = ({
   const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(
     new Set()
   );
+
+  console.log(
+    '🔥 [PLANNING MATRIX] Component rendered at',
+    new Date().toLocaleTimeString()
+  );
+  console.log(
+    '🔥 [PLANNING MATRIX] Allocations received:',
+    allocations?.length || 0
+  );
+  console.log(
+    '🔥 [PLANNING MATRIX] Iterations received:',
+    iterations?.length || 0
+  );
+
+  // Debug: Show all allocations to see if newly created ones are in the array
+  console.log('🔥 [PLANNING MATRIX] All allocations:');
+  allocations.forEach((alloc, i) => {
+    console.log(
+      `  [${i}]: ${alloc.teamId} - ${alloc.cycleId} - iteration:${alloc.iterationNumber} - ${alloc.percentage}%`
+    );
+  });
+
+  // Debug: Check localStorage directly
+  const localStorageAllocations = localStorage.getItem('planning-allocations');
+  if (localStorageAllocations) {
+    const parsedAllocations = JSON.parse(localStorageAllocations);
+    console.log(
+      '🔥 [PLANNING MATRIX] localStorage allocations count:',
+      parsedAllocations.length
+    );
+    const team037InLS = parsedAllocations.filter(
+      (a: any) => a.teamId === 'team-037'
+    );
+    console.log(
+      '🔥 [PLANNING MATRIX] team-037 allocations in localStorage:',
+      team037InLS.length
+    );
+  }
+
+  // Debug: Show Account Management (team-037) allocations specifically - this is the team we just created allocations for
+  const accountMgmtTeam = teams.find(t => t.id === 'team-037');
+  if (accountMgmtTeam) {
+    console.log(
+      `🔥 [PLANNING MATRIX] Found Account Management team: ${accountMgmtTeam.id} (${accountMgmtTeam.name})`
+    );
+    const accountMgmtAllocations = allocations.filter(
+      a => a.teamId === accountMgmtTeam.id
+    );
+    console.log(
+      `🔥 [PLANNING MATRIX] Account Management allocations: ${accountMgmtAllocations.length}`
+    );
+    if (accountMgmtAllocations.length > 0) {
+      accountMgmtAllocations.forEach((alloc, i) => {
+        console.log(
+          `  [${i}]: cycleId=${alloc.cycleId}, iterationNumber=${alloc.iterationNumber}, ${alloc.percentage}% - ${alloc.notes?.substring(0, 50) || 'No notes'}`
+        );
+      });
+    }
+  }
+
+  // Debug: Show Credit Card Platform team allocations specifically
+  const creditCardTeam = teams.find(t => t.name === 'Credit Card Platform');
+  if (creditCardTeam) {
+    console.log(
+      `🔥 [PLANNING MATRIX] Found Credit Card Platform team: ${creditCardTeam.id}`
+    );
+    const creditCardAllocations = allocations.filter(
+      a => a.teamId === creditCardTeam.id
+    );
+    console.log(
+      `🔥 [PLANNING MATRIX] Credit Card Platform allocations: ${creditCardAllocations.length}`
+    );
+    if (creditCardAllocations.length > 0) {
+      creditCardAllocations.forEach((alloc, i) => {
+        console.log(
+          `  [${i}]: cycleId=${alloc.cycleId}, iterationNumber=${alloc.iterationNumber}, ${alloc.percentage}% - ${alloc.notes?.substring(0, 30) || 'No notes'}`
+        );
+      });
+    }
+  }
   const getTeamIterationAllocations = (
     teamId: string,
     iterationNumber: number
   ) => {
-    return allocations.filter(
-      a => a.teamId === teamId && a.iterationNumber === iterationNumber
+    // Get the iteration object for this iteration number
+    const iteration = iterations[iterationNumber - 1]; // iterationNumber is 1-based, array is 0-based
+
+    if (!iteration) {
+      console.log(
+        `🔥 [PLANNING MATRIX] No iteration found for iterationNumber: ${iterationNumber}`
+      );
+      return [];
+    }
+
+    // Filter by both cycleId (preferred) and iterationNumber (fallback) to handle both storage methods
+    const filteredAllocations = allocations.filter(a => {
+      const matchesTeam = a.teamId === teamId;
+      const matchesCycleId = a.cycleId === iteration.id;
+      const matchesIterationNumber = a.iterationNumber === iterationNumber;
+
+      // Debug: Log the comparison for team-037 specifically
+      if (teamId === 'team-037') {
+        console.log(
+          `    Checking allocation: teamId=${a.teamId}, cycleId=${a.cycleId}, iterationNumber=${a.iterationNumber}`
+        );
+        console.log(
+          `    Against: teamId=${teamId}, iteration.id=${iteration.id}, iterationNumber=${iterationNumber}`
+        );
+        console.log(
+          `    Matches: team=${matchesTeam}, cycleId=${matchesCycleId}, iterNum=${matchesIterationNumber}`
+        );
+      }
+
+      // Prefer cycleId matching, fallback to iterationNumber
+      return matchesTeam && (matchesCycleId || matchesIterationNumber);
+    });
+
+    console.log(
+      `🔥 [PLANNING MATRIX] Team ${teamId}, Iteration ${iterationNumber} (${iteration.id}): Found ${filteredAllocations.length} allocations`
     );
+    if (filteredAllocations.length > 0) {
+      filteredAllocations.forEach((alloc, i) => {
+        console.log(
+          `    [${i}]: cycleId=${alloc.cycleId}, iterationNumber=${alloc.iterationNumber}, ${alloc.percentage}%`
+        );
+      });
+    }
+
+    return filteredAllocations;
   };
 
   const getAllocationBadge = (percentage: number, capacityHours: number) => {

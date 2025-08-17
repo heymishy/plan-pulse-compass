@@ -497,7 +497,27 @@ export const useScenarioAwareOperations = () => {
             id: crypto.randomUUID(),
           };
 
-          planningContext.setAllocations(prev => [...prev, newAllocation]);
+          console.log(
+            '🔥 [SCENARIO AWARE] Adding allocation in LIVE mode:',
+            newAllocation
+          );
+          console.log(
+            '🔥 [SCENARIO AWARE] Current allocations before add:',
+            planningContext.allocations.length
+          );
+
+          planningContext.setAllocations(prev => {
+            const newAllocations = [...prev, newAllocation];
+            console.log(
+              '🔥 [SCENARIO AWARE] New allocations count after add:',
+              newAllocations.length
+            );
+            console.log(
+              '🔥 [SCENARIO AWARE] Added allocation for team:',
+              newAllocation.teamId
+            );
+            return newAllocations;
+          });
           return newAllocation;
         }
 
@@ -630,12 +650,124 @@ export const useScenarioAwareOperations = () => {
     ),
   };
 
+  // Scenario-aware team member operations
+  const scenarioAwareTeamMember = {
+    add: useCallback(
+      async (teamMemberData: Omit<TeamMember, 'id'>) => {
+        if (!isInScenarioMode) {
+          return teamContext.addTeamMember(teamMemberData);
+        }
+
+        const newTeamMember: TeamMember = {
+          id: crypto.randomUUID(),
+          ...teamMemberData,
+        };
+
+        const modification = createModification(
+          'create',
+          'teamMembers',
+          newTeamMember.id,
+          `Team member: ${newTeamMember.personId}`,
+          `Added team member to team ${newTeamMember.teamId}`
+        );
+
+        await updateScenarioData(
+          data => ({
+            ...data,
+            teamMembers: [...data.teamMembers, newTeamMember],
+          }),
+          modification
+        );
+
+        return newTeamMember;
+      },
+      [isInScenarioMode, teamContext, createModification, updateScenarioData]
+    ),
+
+    update: useCallback(
+      async (teamMemberId: string, updates: Partial<TeamMember>) => {
+        if (!isInScenarioMode) {
+          return teamContext.updateTeamMember(teamMemberId, updates);
+        }
+
+        const currentData = scenarioContext.getCurrentData();
+        const existingTeamMember = currentData.teamMembers.find(
+          tm => tm.id === teamMemberId
+        );
+        if (!existingTeamMember) return;
+
+        const modification = createModification(
+          'update',
+          'teamMembers',
+          teamMemberId,
+          `Team member: ${existingTeamMember.personId}`,
+          `Updated team member: ${teamMemberId}`
+        );
+
+        await updateScenarioData(
+          data => ({
+            ...data,
+            teamMembers: data.teamMembers.map(tm =>
+              tm.id === teamMemberId ? { ...tm, ...updates } : tm
+            ),
+          }),
+          modification
+        );
+      },
+      [
+        isInScenarioMode,
+        teamContext,
+        scenarioContext,
+        createModification,
+        updateScenarioData,
+      ]
+    ),
+
+    delete: useCallback(
+      async (teamMemberId: string) => {
+        if (!isInScenarioMode) {
+          return teamContext.removeTeamMember(teamMemberId);
+        }
+
+        const currentData = scenarioContext.getCurrentData();
+        const existingTeamMember = currentData.teamMembers.find(
+          tm => tm.id === teamMemberId
+        );
+        if (!existingTeamMember) return;
+
+        const modification = createModification(
+          'delete',
+          'teamMembers',
+          teamMemberId,
+          `Team member: ${existingTeamMember.personId}`,
+          `Removed team member from team ${existingTeamMember.teamId}`
+        );
+
+        await updateScenarioData(
+          data => ({
+            ...data,
+            teamMembers: data.teamMembers.filter(tm => tm.id !== teamMemberId),
+          }),
+          modification
+        );
+      },
+      [
+        isInScenarioMode,
+        teamContext,
+        scenarioContext,
+        createModification,
+        updateScenarioData,
+      ]
+    ),
+  };
+
   return {
     isInScenarioMode,
     person: scenarioAwarePerson,
     team: scenarioAwareTeam,
     project: scenarioAwareProject,
     allocation: scenarioAwareAllocation,
+    teamMember: scenarioAwareTeamMember,
     // Add more entity operations as needed
   };
 };

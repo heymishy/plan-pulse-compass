@@ -1,8 +1,28 @@
+// Map currency symbols to ISO 4217 currency codes
+const currencySymbolToCode: Record<string, string> = {
+  $: 'USD',
+  '€': 'EUR',
+  '£': 'GBP',
+  '¥': 'JPY',
+  '₹': 'INR',
+  '₽': 'RUB',
+  '¢': 'USD', // Cents
+  USD: 'USD',
+  EUR: 'EUR',
+  GBP: 'GBP',
+  JPY: 'JPY',
+  INR: 'INR',
+  RUB: 'RUB',
+};
+
 export const formatCurrency = (
   amount: number,
-  currency = 'USD',
+  currencySymbolOrCode = '$',
   locale = 'en-US'
 ) => {
+  // Convert currency symbol to ISO 4217 code
+  const currency = currencySymbolToCode[currencySymbolOrCode] || 'USD';
+
   // Handle invalid amounts
   if (
     !isFinite(amount) ||

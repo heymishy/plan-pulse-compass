@@ -44,14 +44,56 @@ describe('formatCurrency', () => {
   });
 
   describe('when using different currencies', () => {
-    it('should format with EUR currency', () => {
+    it('should format with EUR currency code', () => {
       expect(formatCurrency(1000, 'EUR')).toBe('€1,000');
       expect(formatCurrency(1000000, 'EUR')).toBe('€1,000,000');
     });
 
-    it('should format with GBP currency', () => {
+    it('should format with GBP currency code', () => {
       expect(formatCurrency(1000, 'GBP')).toBe('£1,000');
       expect(formatCurrency(1000000, 'GBP')).toBe('£1,000,000');
+    });
+
+    it('should format with JPY currency code', () => {
+      expect(formatCurrency(1000, 'JPY')).toBe('¥1,000');
+      expect(formatCurrency(1000000, 'JPY')).toBe('¥1,000,000');
+    });
+  });
+
+  describe('when using currency symbols', () => {
+    it('should convert dollar symbol to USD currency', () => {
+      expect(formatCurrency(1000, '$')).toBe('$1,000');
+      expect(formatCurrency(1000000, '$')).toBe('$1,000,000');
+    });
+
+    it('should convert euro symbol to EUR currency', () => {
+      expect(formatCurrency(1000, '€')).toBe('€1,000');
+      expect(formatCurrency(1000000, '€')).toBe('€1,000,000');
+    });
+
+    it('should convert pound symbol to GBP currency', () => {
+      expect(formatCurrency(1000, '£')).toBe('£1,000');
+      expect(formatCurrency(1000000, '£')).toBe('£1,000,000');
+    });
+
+    it('should convert yen symbol to JPY currency', () => {
+      expect(formatCurrency(1000, '¥')).toBe('¥1,000');
+      expect(formatCurrency(1000000, '¥')).toBe('¥1,000,000');
+    });
+
+    it('should convert rupee symbol to INR currency', () => {
+      expect(formatCurrency(1000, '₹')).toBe('₹1,000');
+      expect(formatCurrency(1000000, '₹')).toBe('₹1,000,000');
+    });
+
+    it('should convert ruble symbol to RUB currency', () => {
+      expect(formatCurrency(1000, '₽')).toBe('RUB 1,000');
+      expect(formatCurrency(1000000, '₽')).toBe('RUB 1,000,000');
+    });
+
+    it('should fallback to USD for unknown currency symbols', () => {
+      expect(formatCurrency(1000, '¤')).toBe('$1,000');
+      expect(formatCurrency(1000, 'XXX')).toBe('$1,000');
     });
   });
 
@@ -85,8 +127,18 @@ describe('formatCurrency', () => {
     });
 
     it('should handle NaN and undefined values gracefully', () => {
-      expect(formatCurrency(NaN)).toBe('$NaN');
-      expect(formatCurrency(Number('invalid'))).toBe('$NaN');
+      expect(formatCurrency(NaN)).toBe('$0');
+      expect(formatCurrency(Number('invalid'))).toBe('$0');
+    });
+
+    it('should handle null and undefined values', () => {
+      expect(formatCurrency(null as any)).toBe('$0');
+      expect(formatCurrency(undefined as any)).toBe('$0');
+    });
+
+    it('should handle Infinity values', () => {
+      expect(formatCurrency(Infinity)).toBe('$0');
+      expect(formatCurrency(-Infinity)).toBe('$0');
     });
   });
 });

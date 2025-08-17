@@ -50,9 +50,16 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { useIsMobile } from './hooks/use-mobile';
+import { useServiceWorker } from './hooks/usePWA';
+import MobileNavigation from './components/mobile/MobileNavigation';
+import OfflineIndicator from './components/mobile/OfflineIndicator';
 import './App.css';
 
 function App() {
+  const isMobile = useIsMobile();
+  useServiceWorker(); // Register service worker for PWA functionality
+
   return (
     <ThemeProvider>
       <SettingsProvider>
@@ -65,28 +72,42 @@ function App() {
                     <SafeScenarioAwareAppProvider>
                       <Router>
                         <KeyboardShortcutsProvider>
-                          <SidebarProvider defaultOpen={true}>
+                          <SidebarProvider defaultOpen={!isMobile}>
                             <div
                               data-testid="app-container"
-                              className="flex h-screen w-screen bg-background overflow-hidden"
+                              className={`flex h-screen w-screen bg-background overflow-hidden ${
+                                isMobile ? 'pb-16' : ''
+                              }`}
                             >
-                              <Sidebar
-                                side="left"
-                                variant="sidebar"
-                                collapsible="icon"
-                                className="border-r"
-                              >
-                                <EnhancedNavigation />
-                              </Sidebar>
+                              {!isMobile && (
+                                <Sidebar
+                                  side="left"
+                                  variant="sidebar"
+                                  collapsible="icon"
+                                  className="border-r"
+                                >
+                                  <EnhancedNavigation />
+                                </Sidebar>
+                              )}
                               <SidebarInset className="flex-1 w-full h-full overflow-hidden">
                                 <div className="flex flex-col h-full w-full overflow-hidden">
                                   <ScenarioBanner />
-                                  <div className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                                  {/* Offline Indicator - Mobile Priority */}
+                                  {isMobile && (
+                                    <div className="px-4 pt-2">
+                                      <OfflineIndicator />
+                                    </div>
+                                  )}
+                                  <div
+                                    className={`${isMobile ? 'p-2' : 'p-4'} border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60`}
+                                  >
                                     <div className="flex flex-col space-y-3">
                                       <div className="flex items-center justify-between min-w-0">
                                         <div className="flex items-center space-x-4 min-w-0">
-                                          <SidebarTrigger />
-                                          <h1 className="text-lg font-semibold truncate">
+                                          {!isMobile && <SidebarTrigger />}
+                                          <h1
+                                            className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold truncate`}
+                                          >
                                             Plan Pulse Compass
                                           </h1>
                                         </div>
@@ -94,12 +115,20 @@ function App() {
                                           <ScenarioSwitcher />
                                         </div>
                                       </div>
-                                      <PageBreadcrumb
-                                        showDescription={false}
-                                        maxItems={5}
-                                      />
+                                      {!isMobile && (
+                                        <PageBreadcrumb
+                                          showDescription={false}
+                                          maxItems={5}
+                                        />
+                                      )}
                                     </div>
                                   </div>
+                                  {/* Desktop Offline Indicator */}
+                                  {!isMobile && (
+                                    <div className="px-4 py-2">
+                                      <OfflineIndicator />
+                                    </div>
+                                  )}
                                   <main
                                     data-testid="app-loaded"
                                     className="flex-1 w-full max-w-none overflow-auto"
@@ -211,6 +240,8 @@ function App() {
                                 </div>
                               </SidebarInset>
                             </div>
+                            {/* Mobile Navigation */}
+                            <MobileNavigation />
                             <Toaster />
                           </SidebarProvider>
                         </KeyboardShortcutsProvider>

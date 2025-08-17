@@ -1,0 +1,33 @@
+# Auto-generated CI workflow for lightning tests
+# Do not edit manually - regenerate using npm run generate:ci
+
+name: CI Pipeline - Lightning
+
+on:
+  push:
+    branches: ['main', 'develop', 'feature/*']
+  pull_request:
+    branches: ['main']
+
+env:
+  NODE_VERSION: 18
+  CI: true
+  NODE_OPTIONS: --max-old-space-size=512
+
+jobs:
+  lightning-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run lightning tests
+        run: npm run test:core && npm run typecheck && npm run lint
+        env:

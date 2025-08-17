@@ -343,12 +343,18 @@ const AppProviderInternal: React.FC<{
 
   // Get current data (either live or scenario)
   const currentData = useMemo(() => {
+    console.log('🔥 [APP CONTEXT] currentData useMemo triggered');
+    console.log(
+      '🔥 [APP CONTEXT] planningContext.allocations count:',
+      planningContext.allocations.length
+    );
+
     if (scenarioContext?.isInScenarioMode && scenarioContext?.getCurrentData) {
       return scenarioContext.getCurrentData();
     }
 
     // Return live data
-    return {
+    const liveData = {
       people: teamContext.people,
       teams: teamContext.teams,
       teamMembers: teamContext.teamMembers,
@@ -374,6 +380,12 @@ const AppProviderInternal: React.FC<{
       personSkills: personSkills,
       config: settingsContext.config,
     };
+
+    console.log(
+      '🔥 [APP CONTEXT] Live data allocations count:',
+      liveData.allocations.length
+    );
+    return liveData;
   }, [
     scenarioContext?.isInScenarioMode,
     scenarioContext?.getCurrentData,
@@ -467,9 +479,9 @@ const AppProviderInternal: React.FC<{
     // Pass through other setters for now (they'll work on live data)
     setRoles: teamContext.setRoles,
     setTeamMembers: teamContext.setTeamMembers,
-    addTeamMember: teamContext.addTeamMember,
-    updateTeamMember: teamContext.updateTeamMember,
-    removeTeamMember: teamContext.removeTeamMember,
+    addTeamMember: scenarioAwareOps.teamMember.add,
+    updateTeamMember: scenarioAwareOps.teamMember.update,
+    removeTeamMember: scenarioAwareOps.teamMember.delete,
     getTeamMembers: teamContext.getTeamMembers,
     setDivisions: teamContext.setDivisions,
     setUnmappedPeople: teamContext.setUnmappedPeople,

@@ -28,6 +28,7 @@ import {
   getNaturalProductOwner,
   getProductOwnerCandidates,
 } from '@/utils/teamUtils';
+import AddTeamMemberDialog from './AddTeamMemberDialog';
 
 interface EnhancedTeamDialogProps {
   isOpen: boolean;
@@ -68,17 +69,18 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
   });
 
   const [selectedSkillId, setSelectedSkillId] = useState('');
+  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
 
   const isEditing = Boolean(teamId);
 
-  // Get current team members from enhanced context
+  // Use consistent team member logic - Person objects filtered by teamId
   const currentTeamMembers =
-    isEditing && teamId ? getTeamMembersFromContext(teamId) : [];
-
-  // Legacy support: Get team members from old utils for PO calculation
-  const legacyTeamMembers =
     isEditing && teamId ? getTeamMembers(teamId, people) : [];
+
+  // Get TeamMember objects for detailed role/allocation info when available
+  const teamMemberDetails =
+    isEditing && teamId ? getTeamMembersFromContext(teamId) : [];
 
   // Get natural PO for the team
   const naturalPO =
@@ -579,7 +581,11 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
                       </p>
                     </div>
                     {isEditing && (
-                      <Button type="button" size="sm">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setIsAddMemberDialogOpen(true)}
+                      >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Member
                       </Button>
@@ -588,32 +594,41 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
 
                   {currentTeamMembers.length > 0 ? (
                     <div className="space-y-2">
-                      {currentTeamMembers.map(member => {
-                        const person = people.find(
-                          p => p.id === member.personId
+                      {currentTeamMembers.map(person => {
+                        // Find matching TeamMember details if available
+                        const memberDetails = teamMemberDetails.find(
+                          tm => tm.personId === person.id
                         );
-                        if (!person) return null;
+                        const role = roles.find(r => r.id === person.roleId);
 
                         return (
                           <div
-                            key={member.id}
+                            key={person.id}
                             className="flex items-center justify-between p-3 border rounded-lg"
                           >
                             <div className="flex items-center gap-3">
                               <div>
                                 <p className="font-medium">{person.name}</p>
                                 <p className="text-sm text-muted-foreground">
-                                  {member.role} • {member.allocation}%
-                                  allocation
+                                  {role?.name || 'No Role'}
+                                  {memberDetails && (
+                                    <>
+                                      {' '}
+                                      • {memberDetails.allocation}% allocation
+                                    </>
+                                  )}
+                                  • {person.employmentType}
                                 </p>
                               </div>
                             </div>
                             <Badge
                               variant={
-                                member.role === 'lead' ? 'default' : 'secondary'
+                                memberDetails?.role === 'lead'
+                                  ? 'default'
+                                  : 'secondary'
                               }
                             >
-                              {member.role}
+                              {memberDetails?.role || 'Member'}
                             </Badge>
                           </div>
                         );
@@ -645,6 +660,16 @@ const EnhancedTeamDialog: React.FC<EnhancedTeamDialogProps> = ({
           </form>
         </Tabs>
       </DialogContent>
+
+      {/* Add Member Dialog */}
+      {isEditing && teamId && (
+        <AddTeamMemberDialog
+          isOpen={isAddMemberDialogOpen}
+          onClose={() => setIsAddMemberDialogOpen(false)}
+          teamId={teamId}
+          teamName={teams.find(t => t.id === teamId)?.name || 'Team'}
+        />
+      )}
     </Dialog>
   );
 };

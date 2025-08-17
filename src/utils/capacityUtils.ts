@@ -15,9 +15,18 @@ export const calculateTeamCapacity = (
   allocations: Allocation[],
   iterations: Cycle[]
 ): CapacityCheck => {
-  const teamAllocations = allocations.filter(
-    a => a.teamId === team.id && a.iterationNumber === iterationNumber
-  );
+  // Get the iteration object for this iteration number
+  const iteration = iterations[iterationNumber - 1]; // iterationNumber is 1-based, array is 0-based
+
+  // Filter by both cycleId (preferred) and iterationNumber (fallback) to handle both storage methods
+  const teamAllocations = allocations.filter(a => {
+    const matchesTeam = a.teamId === team.id;
+    const matchesCycleId = iteration && a.cycleId === iteration.id;
+    const matchesIterationNumber = a.iterationNumber === iterationNumber;
+
+    // Prefer cycleId matching, fallback to iterationNumber
+    return matchesTeam && (matchesCycleId || matchesIterationNumber);
+  });
 
   const totalPercentage = teamAllocations.reduce(
     (sum, a) => sum + a.percentage,
@@ -25,7 +34,6 @@ export const calculateTeamCapacity = (
   );
 
   // Get iteration duration to calculate actual capacity
-  const iteration = iterations[iterationNumber - 1];
   let iterationWeeks = 2; // Default to 2 weeks
 
   if (iteration) {
